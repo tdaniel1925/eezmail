@@ -45,17 +45,16 @@ export function EmailCard({
     <div
       onClick={onClick}
       className={cn(
-        'group relative cursor-pointer rounded-lg border transition-all',
-        // Unread styling
-        !email.isRead && 'border-l-4 border-l-primary',
-        // Selected styling
-        isSelected
-          ? 'border-2 border-primary bg-primary/5 shadow-md'
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:hover:border-gray-700',
-        // Read vs Unread background
-        email.isRead
-          ? 'bg-gray-50 dark:bg-gray-900'
-          : 'bg-white dark:bg-gray-950'
+        'group relative cursor-pointer rounded-lg border transition-all duration-300',
+        // Glass morphism base
+        'border-white/10 bg-white/5 backdrop-blur-md ring-1 ring-white/10',
+        // Hover states
+        'hover:bg-white/[0.07] hover:border-white/20 hover:ring-white/20',
+        'hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]',
+        // Selected state
+        isSelected && 'bg-white/10 border-primary/30 ring-primary/20',
+        // Unread indicator
+        !email.isRead && 'border-l-2 border-l-primary'
       )}
     >
       <div className="flex items-start gap-3 p-4">
@@ -66,8 +65,8 @@ export function EmailCard({
           className={cn(
             'mt-0.5 flex-shrink-0 transition-colors',
             isStarred
-              ? 'text-starred'
-              : 'text-gray-300 hover:text-gray-400 dark:text-gray-700 dark:hover:text-gray-600'
+              ? 'text-amber-400 fill-amber-400'
+              : 'text-white/40 hover:text-white/60'
           )}
           aria-label={isStarred ? 'Unstar email' : 'Star email'}
         >
@@ -82,13 +81,13 @@ export function EmailCard({
               className={cn(
                 'truncate text-sm',
                 !email.isRead
-                  ? 'font-semibold text-gray-900 dark:text-gray-100'
-                  : 'font-medium text-gray-700 dark:text-gray-300'
+                  ? 'font-semibold text-white'
+                  : 'font-medium text-white/80'
               )}
             >
               {displaySender}
             </span>
-            <span className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+            <span className="flex-shrink-0 text-xs text-white/50">
               {formatTime(new Date(email.receivedAt))}
             </span>
           </div>
@@ -98,8 +97,8 @@ export function EmailCard({
             className={cn(
               'mb-1 truncate text-sm',
               !email.isRead
-                ? 'font-semibold text-gray-900 dark:text-gray-100'
-                : 'font-normal text-gray-700 dark:text-gray-300'
+                ? 'font-semibold text-white'
+                : 'font-normal text-white/70'
             )}
           >
             {email.subject || '(No subject)'}
@@ -107,15 +106,15 @@ export function EmailCard({
 
           {/* Third Line: Snippet + Badges */}
           <div className="flex items-center justify-between gap-2">
-            <p className="line-clamp-2 flex-1 text-xs text-gray-600 dark:text-gray-400">
+            <p className="line-clamp-2 flex-1 text-xs text-white/50">
               {email.snippet || email.bodyText?.substring(0, 150) || ''}
             </p>
             <div className="flex flex-shrink-0 items-center gap-1">
               {email.hasAttachments && (
-                <Paperclip className="h-4 w-4 text-gray-400" />
+                <Paperclip className="h-4 w-4 text-white/40" />
               )}
               {email.replyLaterUntil && (
-                <Clock className="h-4 w-4 text-orange-500" />
+                <Clock className="h-4 w-4 text-orange-400" />
               )}
             </div>
           </div>
