@@ -1,0 +1,197 @@
+# Imbox AI Email Client - Cursor Rules
+
+## 🚨 CRITICAL: TypeScript-First Development
+
+This is the Imbox AI Email Client project - an AI-first email management SaaS application.
+
+**Key Documentation:**
+
+- AI_EMAIL_CLIENT_PRD_OVERVIEW.md - Product requirements and vision
+- SETUP_GUIDE.md - Complete setup instructions
+- PAYMENT_INTEGRATION.md - Dual payment processing details
+- BUILD_SUMMARY.md - What's been built so far
+- PRD/ folder - Complete product specifications
+- images/ folder - UI design references
+
+## Technology Stack
+
+- **Framework**: Next.js 14 with App Router (NOT Pages Router)
+- **Language**: TypeScript in strict mode
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Database**: PostgreSQL with Drizzle ORM (via Supabase)
+- **Auth**: Supabase Auth (@supabase/ssr - NOT deprecated auth-helpers)
+- **Payments**: Dual processing with Stripe + Square
+- **Deployment**: Vercel
+
+## Critical Rules
+
+### TypeScript
+
+- **ALWAYS use strict TypeScript** - no `any` types
+- Run `npm run type-check` before completing tasks
+- Fix ALL TypeScript errors immediately
+- Use explicit return types for functions
+- Prefer `unknown` over `any` with type guards
+
+### Architecture
+
+- Use **Server Components by default**
+- Only use `'use client'` when:
+  - Using React hooks (useState, useEffect, etc.)
+  - Handling browser events (onClick, etc.)
+  - Using browser APIs
+- Server Actions for mutations
+- Middleware for auth protection
+
+### Authentication
+
+- Use Supabase SSR package (@supabase/ssr)
+- Server-side: `createClient()` from `@/lib/supabase/server`
+- Client-side: `createClient()` from `@/lib/supabase/client`
+- Protect routes via middleware.ts
+
+### Payments
+
+- Support BOTH Stripe and Square
+- Users choose processor at checkout
+- Store `payment_processor` in user record
+- Webhook signature verification is MANDATORY
+- Idempotent webhook handlers (use upsert)
+
+### Database
+
+- Use Drizzle ORM for type-safe queries
+- Schema: `src/db/schema.ts`
+- Migrations via Drizzle Kit
+- Row Level Security (RLS) enabled
+
+### File Structure
+
+```
+src/
+├── app/              # Next.js App Router
+├── components/       # React components
+├── lib/             # Utilities & integrations
+├── db/              # Database schema
+└── middleware.ts    # Auth middleware
+```
+
+### Styling
+
+- Use Tailwind CSS utility classes
+- Primary color: `#FF4C5A` (red/pink)
+- Use `cn()` utility from `@/lib/utils`
+- shadcn/ui components in `components/ui/`
+
+### Best Practices
+
+- Server Components for data fetching
+- Client Components for interactivity
+- Type-safe API routes
+- Error boundaries for error handling
+- Loading states for async operations
+- Proper input validation with Zod
+
+## Common Patterns
+
+### Server Component with Data
+
+```typescript
+export default async function Page() {
+  const supabase = await createClient();
+  const { data } = await supabase.from('users').select();
+  return <Component data={data} />;
+}
+```
+
+### Client Component
+
+```typescript
+'use client';
+export function Component() {
+  const [state, setState] = useState();
+  // ... hooks and event handlers
+}
+```
+
+### Server Action
+
+```typescript
+'use server';
+export async function updateUser(data: unknown) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error('Unauthorized');
+  // ... update logic
+}
+```
+
+### Webhook Handler
+
+```typescript
+export async function POST(req: Request) {
+  const signature = headers().get('...');
+  // VERIFY SIGNATURE FIRST
+  const event = verifyWebhook(body, signature);
+  // Process event
+  return NextResponse.json({ received: true });
+}
+```
+
+## Environment Variables
+
+Check `.env.local.example` for all required variables:
+
+- Supabase (3 keys)
+- Stripe (7 keys)
+- Square (8 keys)
+
+**NEVER commit `.env.local`** - it's in .gitignore
+
+## Commands
+
+```bash
+npm run dev          # Start dev server
+npm run type-check   # TypeScript check (run often!)
+npm run lint         # ESLint
+npm run format       # Prettier
+npm run build        # Production build
+```
+
+## Design System
+
+**Colors:**
+
+- Primary: `#FF4C5A`
+- Use Tailwind color utilities
+- Dark mode support via next-themes
+
+**Components:**
+
+- Button: primary background, rounded-md
+- Cards: shadow-md, border-2
+- Forms: focus:ring-2 focus:ring-primary
+
+## When in Doubt
+
+1. Check PRD documents in `PRD/` folder
+2. Reference design mockups in `images/` folder
+3. Follow patterns in existing code
+4. Verify types with `npm run type-check`
+5. Test locally before committing
+
+## Important Notes
+
+- This is a **production SaaS application** - code quality matters
+- User data and payments require **security best practices**
+- All APIs must be **authenticated and authorized**
+- Follow the PRD specifications strictly
+- Match the UI design references exactly
+
+---
+
+**Project Status**: Foundation complete, ready for UI development and email integration
+
+**Next Steps**: Configure API keys, build dashboard UI, implement email sync, add AI features

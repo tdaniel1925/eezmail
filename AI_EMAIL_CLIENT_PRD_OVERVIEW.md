@@ -1,0 +1,408 @@
+# AI-Powered Email Client - Product Requirements Document (PRD)
+
+## 📋 Document Information
+
+**Product Name:** Imbox AI Email Client  
+**Version:** 1.0  
+**Date:** October 13, 2025  
+**Document Type:** Standalone SaaS Product Requirements  
+**Target Market:** Knowledge workers, professionals, teams  
+**Pricing Model:** Freemium SaaS with tiered plans  
+
+---
+
+## 🎯 Executive Summary
+
+### Product Vision
+
+Imbox is an **AI-first email client** that transforms inbox chaos into actionable intelligence. By combining the workflow innovations of Hey.com with advanced AI capabilities, Imbox eliminates email overwhelm and makes professionals 10x more productive.
+
+### The Problem
+
+Modern professionals face email paralysis:
+- **Information Overload:** 100+ emails daily, 80% are noise
+- **Context Switching:** Constant interruptions destroy focus
+- **Manual Triage:** Hours spent sorting, labeling, organizing
+- **Lost Conversations:** Important emails buried in clutter
+- **Decision Fatigue:** Every email requires mental energy
+
+### Our Solution
+
+Imbox provides a revolutionary email experience through:
+
+1. **AI-Powered Screening** - Only see emails from people you approve
+2. **Smart Classification** - AI automatically sorts emails into Imbox (important), Feed (newsletters), and Paper Trail (receipts)
+3. **Instant AI Insights** - Hover over any email for AI-generated summary, quick replies, and context
+4. **Focus-First Design** - Reply Later, Set Aside, and batch processing workflows
+5. **Universal Compatibility** - Works with Gmail, Outlook, Yahoo, AOL, and any IMAP/SMTP provider
+
+### Key Differentiators
+
+| Feature | Imbox | Traditional Clients | Hey.com |
+|---------|-------|---------------------|----------|
+| AI Summaries | ✅ Instant (hover) | ❌ None | ❌ None |
+| AI Quick Replies | ✅ 3 suggestions | ❌ None | ❌ None |
+| Smart Classification | ✅ AI + Rules | ❌ Manual | ✅ Manual |
+| Email Screening | ✅ With AI help | ❌ None | ✅ Manual |
+| Multi-Account | ✅ Unified inbox | ✅ Limited | ❌ Hey only |
+| IMAP/SMTP | ✅ Universal | ✅ Limited | ❌ No |
+| Privacy Protection | ✅ Block trackers | ❌ None | ✅ Basic |
+| Custom Rules | ✅ Visual builder | ❌ Basic | ❌ None |
+
+---
+
+## 👥 Target Audience
+
+### Primary Personas
+
+**1. The Overwhelmed Executive**
+- **Demographics:** 35-55, Director+, $150K+ income
+- **Pain Points:** 200+ daily emails, misses important messages
+- **Goals:** Focus on VIP contacts, delegate rest
+- **Willingness to Pay:** $20-50/month
+
+**2. The Remote Knowledge Worker**
+- **Demographics:** 25-45, remote/hybrid worker
+- **Pain Points:** Email scattered across personal + work accounts
+- **Goals:** Unified inbox, work/life balance
+- **Willingness to Pay:** $10-25/month
+
+**3. The Solo Entrepreneur**
+- **Demographics:** 28-50, self-employed, consultant
+- **Pain Points:** Juggling clients, leads, vendors
+- **Goals:** Never miss opportunities, professional image
+- **Willingness to Pay:** $15-30/month
+
+**4. The Sales/Support Team**
+- **Demographics:** Sales reps, customer support
+- **Pain Points:** High email volume, response time pressure
+- **Goals:** Fast replies, track conversations
+- **Willingness to Pay:** $12-20/month/seat
+
+### Secondary Personas
+
+- Small business owners managing team communication
+- Freelancers managing multiple client projects
+- Content creators managing partnerships
+- Students/academics managing research correspondence
+
+---
+
+## 🎨 Product Philosophy
+
+### Design Principles
+
+1. **AI-First, Not AI-Only** - AI augments human decisions, never replaces them
+2. **Focus Over Features** - Every feature must reduce cognitive load
+3. **Privacy by Default** - No tracking, no data mining, no ads
+4. **Universal Compatibility** - Works with existing email providers
+5. **Progressive Disclosure** - Simple by default, powerful when needed
+
+### User Experience Goals
+
+- **Setup < 5 minutes** - One-click OAuth or simple IMAP/SMTP
+- **AI insights < 500ms** - Pre-generated, instant loading
+- **Zero inbox anxiety** - Screening eliminates unwanted senders
+- **Batch processing** - Handle 50 emails in 10 minutes
+- **Beautiful design** - Premium feel, delightful interactions
+
+---
+
+## 📊 Market Opportunity
+
+### Market Size
+
+- **TAM (Total Addressable Market):** $15B email client market
+- **SAM (Serviceable Addressable Market):** $3B premium email clients
+- **SOM (Serviceable Obtainable Market):** $300M AI-powered segment
+
+### Competitive Landscape
+
+**Direct Competitors:**
+- **Hey.com** - Workflow innovation, limited AI, proprietary email
+- **Superhuman** - Speed-focused, expensive ($30/mo), Gmail-only
+- **Spark** - Team email, basic AI, mobile-first
+
+**Indirect Competitors:**
+- Gmail (free, basic features)
+- Outlook (enterprise, legacy)
+- Apple Mail (iOS-only, basic)
+
+**Our Positioning:**
+- **More AI than Hey.com** - AI summaries, quick replies, smart actions
+- **More affordable than Superhuman** - Better value proposition
+- **More powerful than Spark** - Advanced automation, privacy
+
+### Revenue Model
+
+**Freemium SaaS:**
+
+**Free Tier** - Single account, 500 emails/month AI
+- 1 email account
+- Basic screening
+- 500 AI summaries/month
+- 3-day email history
+- Community support
+
+**Pro Tier** - $15/month
+- Unlimited email accounts
+- Unlimited AI features
+- Full email history
+- Advanced rules & automation
+- Priority support
+- Custom domains
+
+**Team Tier** - $12/month/user (min 5 users)
+- All Pro features
+- Shared inboxes
+- Team analytics
+- Admin controls
+- SSO integration
+- Dedicated support
+
+**Enterprise Tier** - Custom pricing
+- Self-hosted option
+- Custom integrations
+- SLA guarantees
+- Compliance certifications
+- White-label option
+
+---
+
+## 🚀 Go-to-Market Strategy
+
+### Launch Plan
+
+**Phase 1: Private Beta (Months 1-2)**
+- 100 hand-picked beta testers
+- Focus on feedback and iteration
+- Build case studies
+- Free for beta participants
+
+**Phase 2: Public Beta (Months 3-4)**
+- Open waitlist (target: 5,000)
+- ProductHunt launch
+- Content marketing campaign
+- Influencer partnerships
+
+**Phase 3: General Availability (Month 5)**
+- Full feature release
+- Paid plans active
+- Referral program
+- Scaling infrastructure
+
+### Marketing Channels
+
+1. **Content Marketing** - SEO-optimized blog, comparison guides
+2. **Product Hunt** - Featured launch campaign
+3. **Twitter/LinkedIn** - Thought leadership, feature demos
+4. **YouTube** - Tutorial videos, productivity tips
+5. **Email Communities** - Partner with productivity influencers
+6. **Affiliate Program** - 20% commission, lifetime revenue share
+
+### Key Metrics (OKRs)
+
+**Acquisition:**
+- 10,000 signups in first 6 months
+- 2,000 active users (20% conversion)
+- 500 paying customers (25% paid conversion)
+
+**Engagement:**
+- 50% DAU/MAU ratio
+- 100+ emails processed per user per week
+- 80% feature adoption (screening, AI insights)
+
+**Revenue:**
+- $10K MRR by Month 6
+- $50K MRR by Month 12
+- <$100 CAC, $30 LTV/CAC ratio
+
+---
+
+## 🔧 Technical Architecture Overview
+
+### Technology Stack
+
+**Frontend:**
+- Next.js 14 (App Router) - React Server Components
+- TypeScript - Type safety
+- Tailwind CSS + shadcn/ui - Consistent design system
+- Framer Motion - Smooth animations
+- TanStack Query - Data caching
+
+**Backend:**
+- Next.js Server Actions - Type-safe API
+- PostgreSQL (Supabase) - Primary database
+- Drizzle ORM - Type-safe queries
+- Redis - Caching layer
+- BullMQ - Background jobs
+
+**AI/ML:**
+- OpenAI GPT-4o - Email analysis, summarization
+- Custom fine-tuned models - Email classification
+- Sentence transformers - Semantic search
+- Vector database (Pinecone) - Similar email detection
+
+**Email Infrastructure:**
+- Nylas API - Unified email API (Gmail, Outlook)
+- Custom IMAP/SMTP clients - Universal provider support
+- Webhooks - Real-time email push
+- Encryption (AES-256-GCM) - Credential security
+
+**Authentication:**
+- Clerk - User authentication
+- OAuth 2.0 - Gmail, Microsoft integration
+- JWT tokens - Session management
+
+**Deployment:**
+- Vercel - Hosting + Edge functions
+- Cloudflare - CDN + DDoS protection
+- Upstash - Redis caching
+- Sentry - Error monitoring
+
+### Infrastructure Requirements
+
+**Database:**
+- PostgreSQL 15+ with pgvector extension
+- 99.9% uptime SLA
+- Automated backups (hourly)
+- Point-in-time recovery
+
+**Compute:**
+- Auto-scaling (1-100 instances)
+- Background workers (email sync, AI processing)
+- Cron jobs (sync, cleanup, analytics)
+
+**Storage:**
+- S3-compatible object storage (attachments)
+- CDN for static assets
+- Encryption at rest + transit
+
+**Monitoring:**
+- Application performance (Vercel Analytics)
+- Error tracking (Sentry)
+- Uptime monitoring (Uptime Robot)
+- User analytics (PostHog)
+
+---
+
+## 📅 Development Roadmap
+
+### MVP (Months 1-3) - Core Features
+
+- ✅ Email account connection (Gmail, Outlook, IMAP/SMTP)
+- ✅ Real-time email sync
+- ✅ Email screening system
+- ✅ Imbox/Feed/Paper Trail views
+- ✅ AI email summaries (hover)
+- ✅ AI quick replies
+- ✅ Email composer with AI assistance
+- ✅ Search and filtering
+- ✅ Privacy protection (tracker blocking)
+
+### V1.1 (Month 4) - Workflow Enhancements
+
+- Reply Later & Set Aside
+- Focus Reply Mode
+- Keyboard shortcuts
+- Command palette (Cmd+K)
+- Email templates
+- Scheduled send
+
+### V1.2 (Month 5) - Advanced AI
+
+- AI-powered rules builder
+- Smart notifications
+- Email priority detection
+- Action item extraction
+- Meeting scheduling intelligence
+- Sentiment analysis
+
+### V1.3 (Month 6) - Team Features
+
+- Shared inboxes
+- Team analytics
+- Collaboration tools
+- @mentions and notes
+- Handoff workflows
+
+### V2.0 (Month 9) - Enterprise
+
+- Self-hosted option
+- Custom integrations (Slack, CRM)
+- Advanced security (SSO, 2FA)
+- Compliance (SOC 2, GDPR)
+- API for developers
+
+---
+
+## 💰 Financial Projections
+
+### Year 1 Projections
+
+| Month | Users | Paid | MRR | Cumulative |
+|-------|-------|------|-----|------------|
+| 1-2 | 100 | 0 | $0 | $0 |
+| 3 | 500 | 50 | $750 | $750 |
+| 4 | 1,200 | 150 | $2,250 | $3,000 |
+| 5 | 2,500 | 350 | $5,250 | $8,250 |
+| 6 | 5,000 | 750 | $11,250 | $19,500 |
+| 9 | 15,000 | 2,500 | $37,500 | $132,000 |
+| 12 | 30,000 | 5,000 | $75,000 | $375,000 |
+
+**Assumptions:**
+- 15% free → paid conversion
+- $15 average revenue per user (ARPU)
+- 5% monthly churn rate
+- 40% gross margin
+
+### Funding Requirements
+
+**Seed Round:** $500K
+- Development: $200K (2 full-stack engineers)
+- Infrastructure: $50K (hosting, APIs, tools)
+- Marketing: $150K (content, ads, partnerships)
+- Operations: $100K (legal, accounting, misc)
+
+**Series A:** $3M (Month 18)
+- Scale engineering team (8-10 people)
+- Expand marketing (growth team)
+- Enterprise sales team
+- International expansion
+
+---
+
+## ✅ Success Criteria
+
+### Product Success
+
+- **User Retention:** 60%+ monthly active users (MAU)
+- **Feature Adoption:** 70%+ users use AI features weekly
+- **Performance:** < 2 second page load, < 500ms AI responses
+- **Reliability:** 99.9% uptime
+- **NPS Score:** 50+ (indicator of product-market fit)
+
+### Business Success
+
+- **Revenue:** $75K MRR by end of Year 1
+- **Growth Rate:** 15% month-over-month
+- **CAC Payback:** < 6 months
+- **Gross Margin:** 70%+
+- **Funding:** Seed round closed within 6 months
+
+### Customer Success
+
+- **Setup Time:** < 5 minutes average
+- **Time Saved:** 30+ minutes daily per user
+- **Customer Satisfaction:** 4.5+ stars
+- **Support Tickets:** < 5% of users require support
+- **Testimonials:** 50+ case studies by Month 12
+
+---
+
+**Next Documents:**
+- [Technical Specifications →](AI_EMAIL_CLIENT_PRD_TECHNICAL.md)
+- [Feature Requirements →](AI_EMAIL_CLIENT_PRD_FEATURES.md)
+- [UI/UX Guidelines →](AI_EMAIL_CLIENT_PRD_DESIGN.md)
+- [Data Models →](AI_EMAIL_CLIENT_PRD_DATA_MODELS.md)
+
