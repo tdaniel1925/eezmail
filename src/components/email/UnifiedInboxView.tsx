@@ -45,19 +45,18 @@ export function UnifiedInboxView({ accounts }: UnifiedInboxViewProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header with account filter */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-between px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white text-2xl">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white text-2xl">
             📬
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Unified Inbox
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h2 className="text-2xl font-bold text-white">Unified Inbox</h2>
+            <p className="text-sm text-gray-300">
               {selectedAccountId === 'all'
                 ? `All ${accounts.length} accounts`
-                : accounts.find((a) => a.id === selectedAccountId)?.emailAddress}
+                : accounts.find((a) => a.id === selectedAccountId)
+                    ?.emailAddress}
             </p>
           </div>
         </div>
@@ -66,7 +65,7 @@ export function UnifiedInboxView({ accounts }: UnifiedInboxViewProps) {
         <select
           value={selectedAccountId}
           onChange={(e) => setSelectedAccountId(e.target.value)}
-          className="px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+          className="px-4 py-2 rounded-lg border border-gray-600 bg-slate-700 text-white hover:bg-slate-600 transition-colors"
         >
           <option value="all">All Accounts</option>
           {accounts.map((account) => (
@@ -78,13 +77,7 @@ export function UnifiedInboxView({ accounts }: UnifiedInboxViewProps) {
       </div>
 
       {/* Email list */}
-      <EmailList
-        emails={emails}
-        isLoading={isLoading}
-        error={error}
-        title=""
-      />
+      <EmailList emails={emails} isLoading={isLoading} error={error} title="" />
     </div>
   );
 }
-

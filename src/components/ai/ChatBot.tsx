@@ -129,17 +129,48 @@ export function ChatBot(): JSX.Element {
     setInput('');
     setIsTyping(true);
 
-    // TODO: Replace with actual AI API call
-    setTimeout(() => {
+    try {
+      // Call real AI API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: generateMockResponse(input),
+        content: data.content || generateMockResponse(input),
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiResponse]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Fallback to mock response on error
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm having trouble connecting right now. Please try again.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   // Mock AI response (replace with real API)

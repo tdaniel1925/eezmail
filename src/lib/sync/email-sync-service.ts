@@ -10,9 +10,34 @@ import { GmailService } from '@/lib/email/gmail-api';
 import { ImapService } from '@/lib/email/imap-service';
 
 /**
+ * Map folder name to email category
+ */
+function mapFolderToCategory(
+  folderName: string
+): 'inbox' | 'newsfeed' | 'receipts' | 'spam' | 'archived' {
+  const normalized = folderName.toLowerCase();
+
+  if (normalized.includes('spam') || normalized.includes('junk')) {
+    return 'spam';
+  }
+  if (normalized.includes('inbox')) {
+    return 'inbox';
+  }
+  if (normalized.includes('archive')) {
+    return 'archived';
+  }
+
+  // Default to inbox for sent, drafts, and other folders
+  return 'inbox';
+}
+
+/**
  * Main email sync service with real-time progress tracking
  */
-export async function syncEmailAccount(accountId: string) {
+export async function syncEmailAccount(
+  accountId: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
+) {
   try {
     console.log('🔵 Starting sync for account:', accountId);
 
@@ -40,6 +65,14 @@ export async function syncEmailAccount(accountId: string) {
     }
 
     console.log('✅ Account found:', account.emailAddress);
+
+    // Detect initial sync automatically by checking if syncCursor is null
+    const isInitialSync = !account.syncCursor;
+    const effectiveSyncType =
+      syncType === 'auto' && isInitialSync ? 'initial' : syncType;
+    console.log(
+      `🔄 Sync type: ${effectiveSyncType} (initial=${isInitialSync}, requested=${syncType})`
+    );
 
     // Check if account needs reconnection
     if (await TokenManager.needsReconnection(accountId)) {
@@ -80,7 +113,13 @@ export async function syncEmailAccount(accountId: string) {
     console.log('✅ Status updated to syncing');
 
     // Start background sync process
-    syncInBackground(accountId, account, user.id, accessToken);
+    syncInBackground(
+      accountId,
+      account,
+      user.id,
+      accessToken,
+      effectiveSyncType
+    );
 
     return { success: true, message: 'Sync started' };
   } catch (error) {
@@ -169,6 +208,7 @@ export async function syncInBackground(
   account: any,
   userId: string,
   accessToken: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto',
   retryCount: number = 0
 ) {
   const MAX_RETRIES = 3;
@@ -183,13 +223,19 @@ export async function syncInBackground(
     // Use Microsoft Graph API for Microsoft accounts
     if (account.provider === 'microsoft') {
       console.log('📧 Using Microsoft Graph API for sync...');
-      await syncWithMicrosoftGraph(account, accountId, userId, accessToken);
+      await syncWithMicrosoftGraph(
+        account,
+        accountId,
+        userId,
+        accessToken,
+        syncType
+      );
     } else if (account.provider === 'gmail') {
       console.log('📧 Using Gmail API for sync...');
-      await syncWithGmail(account, accountId, userId, accessToken);
+      await syncWithGmail(account, accountId, userId, accessToken, syncType);
     } else if (account.provider === 'imap' || account.provider === 'yahoo') {
       console.log('📧 Using IMAP for sync...');
-      await syncWithImap(account, accountId, userId);
+      await syncWithImap(account, accountId, userId, syncType);
     } else {
       console.log('❌ Unsupported provider:', account.provider);
       throw new Error(`Unsupported provider: ${account.provider}`);
@@ -247,6 +293,7 @@ export async function syncInBackground(
           account,
           userId,
           accessToken,
+          syncType,
           retryCount + 1
         );
       }, delay);
@@ -272,7 +319,8 @@ async function syncWithMicrosoftGraph(
   account: any,
   accountId: string,
   userId: string,
-  accessToken: string
+  accessToken: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
   try {
     console.log('📧 Syncing with Microsoft Graph API...');
@@ -293,7 +341,8 @@ async function syncWithMicrosoftGraph(
       accountId,
       userId,
       folderMapping,
-      accessToken
+      accessToken,
+      syncType
     );
 
     console.log('✅ Microsoft Graph sync completed');
@@ -375,7 +424,8 @@ async function syncEmailsWithGraph(
   accountId: string,
   userId: string,
   folderMapping: Record<string, string> = {},
-  accessToken: string
+  accessToken: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
   try {
     // Get the last sync cursor (deltaLink or skiptoken) if exists
@@ -453,27 +503,45 @@ async function syncEmailsWithGraph(
 
         // If email was inserted (not duplicate), categorize it
         if (insertedEmail) {
-          const emailForCategorization = {
-            id: insertedEmail.id,
-            subject: emailData.subject,
-            bodyText: message.bodyPreview || '',
-            bodyHtml: '', // Will be fetched separately if needed
-            fromAddress: emailData.fromAddress,
-            receivedAt: emailData.receivedAt,
-          };
+          let emailCategory;
+          let screenedBy;
 
-          const category = await categorizeIncomingEmail(
-            emailForCategorization,
-            userId
-          );
+          if (syncType === 'initial' || syncType === 'manual') {
+            // Skip AI categorization - use original folder
+            emailCategory = mapFolderToCategory(
+              emailData.folderName || 'inbox'
+            );
+            screenedBy = 'manual_sync';
+            console.log(
+              `📬 ${syncType} sync - Email going to: ${emailCategory}`
+            );
+          } else {
+            // Auto-sync: use AI categorization
+            const emailForCategorization = {
+              id: insertedEmail.id,
+              subject: emailData.subject,
+              bodyText: message.bodyPreview || '',
+              bodyHtml: '', // Will be fetched separately if needed
+              fromAddress: emailData.fromAddress,
+              receivedAt: emailData.receivedAt,
+            };
+
+            emailCategory = await categorizeIncomingEmail(
+              emailForCategorization,
+              userId
+            );
+            screenedBy = 'ai_rule';
+            console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+          }
 
           // Update email with category
           await db
             .update(emails)
             .set({
-              emailCategory: category,
-              screenedBy: 'ai_rule',
+              emailCategory: emailCategory,
+              screenedBy: screenedBy,
               screenedAt: new Date(),
+              screeningStatus: 'screened',
             } as any)
             .where(eq(emails.id, insertedEmail.id));
         }
@@ -636,7 +704,8 @@ async function syncWithGmail(
   account: any,
   accountId: string,
   userId: string,
-  accessToken: string
+  accessToken: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
   try {
     console.log('📧 Syncing with Gmail API...');
@@ -655,7 +724,14 @@ async function syncWithGmail(
 
     // Step 2: Sync messages
     console.log('📧 Step 2: Syncing Gmail messages...');
-    await syncGmailMessages(gmail, account, accountId, userId, accessToken);
+    await syncGmailMessages(
+      gmail,
+      account,
+      accountId,
+      userId,
+      accessToken,
+      syncType
+    );
 
     console.log('✅ Gmail sync completed');
   } catch (error) {
@@ -728,7 +804,8 @@ async function syncGmailMessages(
   account: any,
   accountId: string,
   userId: string,
-  accessToken: string
+  accessToken: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
   try {
     // Get the last sync cursor (pageToken) if exists
@@ -815,15 +892,28 @@ async function syncGmailMessages(
                   ? 'spam'
                   : 'inbox';
 
-        // Categorize email using AI
-        const emailCategory = await categorizeIncomingEmail(
-          {
-            subject,
-            fromAddress: { email: fromEmail, name: from },
-            bodyPreview,
-          } as any,
-          userId
-        );
+        // Categorize email
+        let emailCategory;
+        let screenedBy;
+
+        if (syncType === 'initial' || syncType === 'manual') {
+          // Skip AI categorization - use original folder
+          emailCategory = mapFolderToCategory(folderName);
+          screenedBy = 'manual_sync';
+          console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
+        } else {
+          // Auto-sync: use AI categorization
+          emailCategory = await categorizeIncomingEmail(
+            {
+              subject,
+              fromAddress: { email: fromEmail, name: from },
+              bodyPreview,
+            } as any,
+            userId
+          );
+          screenedBy = 'ai_rule';
+          console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+        }
 
         const emailData = {
           accountId,
@@ -841,9 +931,10 @@ async function syncGmailMessages(
             ) || false,
           folderName,
           labelIds,
-          emailCategory, // Set category from AI
-          screenedAt: emailCategory !== 'unscreened' ? new Date() : null,
-          screenedBy: emailCategory !== 'unscreened' ? 'ai_rule' : null,
+          emailCategory, // Set category
+          screenedBy,
+          screenedAt: new Date(),
+          screeningStatus: 'screened' as const,
         };
 
         // Insert or update email
@@ -912,7 +1003,12 @@ function mapGmailLabelType(
 /**
  * Sync with IMAP
  */
-async function syncWithImap(account: any, accountId: string, userId: string) {
+async function syncWithImap(
+  account: any,
+  accountId: string,
+  userId: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
+) {
   try {
     console.log('📧 Syncing with IMAP...');
 
@@ -969,15 +1065,28 @@ async function syncWithImap(account: any, accountId: string, userId: string) {
     let syncedCount = 0;
     for (const message of messages) {
       try {
-        // Categorize email using AI
-        const emailCategory = await categorizeIncomingEmail(
-          {
-            subject: message.subject,
-            fromAddress: message.from,
-            bodyPreview: message.bodyPreview,
-          } as any,
-          userId
-        );
+        // Categorize email
+        let emailCategory;
+        let screenedBy;
+
+        if (syncType === 'initial' || syncType === 'manual') {
+          // Skip AI categorization - use original folder (INBOX for IMAP)
+          emailCategory = mapFolderToCategory('inbox');
+          screenedBy = 'manual_sync';
+          console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
+        } else {
+          // Auto-sync: use AI categorization
+          emailCategory = await categorizeIncomingEmail(
+            {
+              subject: message.subject,
+              fromAddress: message.from,
+              bodyPreview: message.bodyPreview,
+            } as any,
+            userId
+          );
+          screenedBy = 'ai_rule';
+          console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+        }
 
         const emailData = {
           accountId,
@@ -988,13 +1097,14 @@ async function syncWithImap(account: any, accountId: string, userId: string) {
           receivedAt: message.receivedAt,
           isRead: message.isRead,
           bodyPreview: message.bodyPreview,
+          emailCategory,
+          screenedBy,
+          screenedAt: new Date(),
+          screeningStatus: 'screened' as const,
           bodyHtml: message.bodyHtml,
           bodyText: message.bodyText,
           hasAttachments: message.hasAttachments,
           folderName: message.folderName,
-          emailCategory,
-          screenedAt: emailCategory !== 'unscreened' ? new Date() : null,
-          screenedBy: emailCategory !== 'unscreened' ? 'ai_rule' : null,
         };
 
         // Insert or update email

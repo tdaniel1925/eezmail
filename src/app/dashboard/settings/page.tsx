@@ -17,6 +17,7 @@ import {
   Folder,
   FileSignature,
   Filter,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AccountSettings } from '@/components/settings/AccountSettings';
@@ -30,6 +31,7 @@ import { FolderSettings } from '@/components/settings/FolderSettings';
 import { SignaturesSettings } from '@/components/settings/SignaturesSettings';
 import { RulesSettings } from '@/components/settings/RulesSettings';
 import { HelpCenter } from '@/components/help/HelpCenter';
+import { DangerZone } from '@/components/settings/DangerZone';
 
 type SettingsTab =
   | 'account'
@@ -42,7 +44,8 @@ type SettingsTab =
   | 'appearance'
   | 'billing'
   | 'security'
-  | 'help';
+  | 'help'
+  | 'danger-zone';
 
 interface TabConfig {
   id: SettingsTab;
@@ -117,6 +120,12 @@ const tabs: TabConfig[] = [
     label: 'Help',
     icon: HelpCircle,
     description: 'Get help and learn more',
+  },
+  {
+    id: 'danger-zone',
+    label: 'Danger Zone',
+    icon: AlertTriangle,
+    description: 'Advanced: Reset data or delete account',
   },
 ];
 
@@ -300,6 +309,8 @@ function SettingsPageContent(): JSX.Element {
         );
       case 'help':
         return <HelpCenter />;
+      case 'danger-zone':
+        return <DangerZone />;
       default:
         return null;
     }

@@ -18,21 +18,33 @@ export async function screenEmail(
   decision: 'inbox' | 'newsfeed' | 'receipts' | 'spam' | string
 ): Promise<ScreenEmailResult> {
   try {
-    // Map decision to folder name
+    // Map decision to folder name and email category
     let folderName = decision;
+    let emailCategory: 'inbox' | 'newsfeed' | 'receipts' | 'spam' = 'inbox';
 
-    // Normalize folder names
-    if (decision === 'inbox') folderName = 'inbox';
-    else if (decision === 'newsfeed') folderName = 'newsfeed';
-    else if (decision === 'receipts') folderName = 'receipts';
-    else if (decision === 'spam') folderName = 'spam';
+    // Normalize folder names and categories
+    if (decision === 'inbox') {
+      folderName = 'inbox';
+      emailCategory = 'inbox';
+    } else if (decision === 'newsfeed') {
+      folderName = 'newsfeed';
+      emailCategory = 'newsfeed';
+    } else if (decision === 'receipts') {
+      folderName = 'receipts';
+      emailCategory = 'receipts';
+    } else if (decision === 'spam') {
+      folderName = 'spam';
+      emailCategory = 'spam';
+    }
     // If it's a custom folder ID, it will be used as-is
 
-    // Update the email's folder
+    // Update the email's folder and category
     await db
       .update(emails)
       .set({
         folderName: folderName,
+        emailCategory: emailCategory,
+        screeningStatus: 'screened',
         screenedAt: new Date(),
         screenedBy: 'user',
       } as Partial<typeof emails.$inferInsert>)
@@ -63,11 +75,21 @@ export async function bulkScreenEmails(
 ): Promise<ScreenEmailResult> {
   try {
     let folderName = decision;
+    let emailCategory: 'inbox' | 'newsfeed' | 'receipts' | 'spam' = 'inbox';
 
-    if (decision === 'inbox') folderName = 'inbox';
-    else if (decision === 'newsfeed') folderName = 'newsfeed';
-    else if (decision === 'receipts') folderName = 'receipts';
-    else if (decision === 'spam') folderName = 'spam';
+    if (decision === 'inbox') {
+      folderName = 'inbox';
+      emailCategory = 'inbox';
+    } else if (decision === 'newsfeed') {
+      folderName = 'newsfeed';
+      emailCategory = 'newsfeed';
+    } else if (decision === 'receipts') {
+      folderName = 'receipts';
+      emailCategory = 'receipts';
+    } else if (decision === 'spam') {
+      folderName = 'spam';
+      emailCategory = 'spam';
+    }
 
     // Update all emails
     for (const emailId of emailIds) {
@@ -75,9 +97,11 @@ export async function bulkScreenEmails(
         .update(emails)
         .set({
           folderName: folderName,
+          emailCategory: emailCategory,
+          screeningStatus: 'screened',
           screenedAt: new Date(),
           screenedBy: 'user',
-        })
+        } as Partial<typeof emails.$inferInsert>)
         .where(eq(emails.id, emailId));
     }
 

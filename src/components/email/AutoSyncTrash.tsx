@@ -18,8 +18,9 @@ export function AutoSyncTrash({ accountId }: AutoSyncTrashProps) {
 
   const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
     accountId,
-    intervalMs: 30000, // 30 seconds
+    intervalMs: 180000, // 3 minutes (optimized for performance)
     enabled: true,
+    initialSync: false, // Manual refresh button available
   });
 
   const fetchTrashEmails = async () => {

@@ -7,6 +7,7 @@ import { getUnscreenedEmails } from '@/lib/email/get-emails';
 import { getCustomFolders } from '@/lib/folders/actions';
 import { screenEmail } from '@/lib/screener/actions';
 import { toast } from '@/lib/toast';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { Email, CustomFolder } from '@/db/schema';
 
 interface AutoSyncScreenerProps {
@@ -23,14 +24,15 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
 
   const { isSyncing, syncCount, triggerSync } = useAutoSync({
     accountId,
-    intervalMs: 30000, // 30 seconds
+    intervalMs: 180000, // 3 minutes (optimized for performance)
     enabled: true,
+    initialSync: false, // Manual refresh button available
   });
 
   const fetchScreenerData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch unscreened emails
       const emailsResult = await getUnscreenedEmails();
       if (emailsResult.success) {
@@ -73,14 +75,14 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
     try {
       // Call server action to update email category
       const result = await screenEmail(emailId, decision);
-      
+
       if (result.success) {
         toast.success(`Email moved to ${decision}`);
-        
+
         // Remove the screened email from the list immediately
-        const updatedEmails = emails.filter(email => email.id !== emailId);
+        const updatedEmails = emails.filter((email) => email.id !== emailId);
         setEmails(updatedEmails);
-        
+
         // If no more emails, fetch fresh data
         if (updatedEmails.length === 0) {
           await fetchScreenerData();
@@ -113,16 +115,14 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
   return (
     <div className="flex flex-col h-full bg-gray-50/50 dark:bg-black/50">
       {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-slate-800 dark:bg-slate-900">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-500 text-white text-2xl">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white text-2xl">
             🔍
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Screener
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <h2 className="text-2xl font-bold text-white">Screener</h2>
+            <p className="text-sm text-gray-300">
               {emails.length} email{emails.length !== 1 ? 's' : ''} to screen
             </p>
           </div>
@@ -130,20 +130,16 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
 
         <div className="flex items-center gap-3">
           {/* Sync status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-700">
             {isSyncing ? (
               <>
-                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Syncing...
-                </span>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-300">Syncing...</span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Up to date
-                </span>
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                <span className="text-sm text-gray-300">Up to date</span>
               </>
             )}
           </div>
@@ -152,10 +148,13 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
           <button
             onClick={handleRefresh}
             disabled={isSyncing}
-            className="px-4 py-2 text-sm font-medium bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSyncing ? 'Syncing...' : 'Refresh'}
           </button>
+
+          {/* Theme Toggle */}
+          <ThemeToggle />
         </div>
       </div>
 

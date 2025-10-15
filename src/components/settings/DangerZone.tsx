@@ -1,0 +1,162 @@
+'use client';
+
+import { useState } from 'react';
+import { AlertTriangle, Trash2, TestTube } from 'lucide-react';
+import {
+  wipeAllUserData,
+  generateTestEmailData,
+} from '@/lib/settings/data-actions';
+import { toast } from '@/lib/toast';
+
+export function DangerZone(): JSX.Element {
+  const [confirmText, setConfirmText] = useState('');
+  const [isWiping, setIsWiping] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleWipeData = async (): Promise<void> => {
+    if (confirmText !== 'DELETE ALL DATA') {
+      toast.error('Please type "DELETE ALL DATA" to confirm');
+      return;
+    }
+
+    if (!confirm('Are you absolutely sure? This action CANNOT be undone!')) {
+      return;
+    }
+
+    setIsWiping(true);
+
+    try {
+      const result = await wipeAllUserData();
+
+      if (result.success) {
+        toast.success('All data wiped successfully. Redirecting...');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        toast.error(result.error || 'Failed to wipe data');
+        setIsWiping(false);
+      }
+    } catch (error) {
+      console.error('Error wiping data:', error);
+      toast.error('An unexpected error occurred');
+      setIsWiping(false);
+    }
+  };
+
+  const handleGenerateTestEmails = async (): Promise<void> => {
+    setIsGenerating(true);
+
+    try {
+      const result = await generateTestEmailData();
+
+      if (result.success) {
+        toast.success(`Successfully generated ${result.count} test emails!`);
+        // Refresh the page after a short delay to show new emails
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        toast.error(result.error || 'Failed to generate test emails');
+      }
+    } catch (error) {
+      console.error('Error generating test emails:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsWiping(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Test Data Generation */}
+      <div className="rounded-lg border-2 border-blue-500 bg-blue-50 dark:bg-blue-950/20 p-6">
+        <div className="flex items-start gap-3">
+          <TestTube className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+              Generate Test Emails
+            </h3>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+              Generate sample emails for testing AI features. Creates ~10 emails
+              in each folder (Inbox, Newsfeed, Receipts, Spam) with realistic
+              content.
+            </p>
+            <button
+              onClick={handleGenerateTestEmails}
+              disabled={isGenerating}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {isGenerating ? 'Generating...' : 'Generate Test Emails'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="rounded-lg border-2 border-red-500 bg-red-50 dark:bg-red-950/20 p-6">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
+              Danger Zone
+            </h3>
+            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+              This will permanently delete your account and all associated data
+              including:
+            </p>
+            <ul className="text-sm text-red-700 dark:text-red-300 mb-4 space-y-1 list-disc list-inside">
+              <li>All emails and email threads</li>
+              <li>All contacts and calendar events</li>
+              <li>All email accounts and connections</li>
+              <li>All settings, rules, and signatures</li>
+              <li>Your user account and authentication</li>
+            </ul>
+            <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
+              <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">
+                ⚠️ This action cannot be undone!
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-300">
+                All your data will be permanently deleted from our servers. You
+                will need to create a new account and reconnect all email
+                providers to use the service again.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label
+                  htmlFor="confirm-text"
+                  className="block text-sm font-medium text-red-900 dark:text-red-100 mb-2"
+                >
+                  Type{' '}
+                  <code className="bg-red-200 dark:bg-red-900/50 px-2 py-0.5 rounded text-xs">
+                    DELETE ALL DATA
+                  </code>{' '}
+                  to confirm:
+                </label>
+                <input
+                  id="confirm-text"
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="DELETE ALL DATA"
+                  className="w-full px-3 py-2 border-2 border-red-300 dark:border-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                />
+              </div>
+              <button
+                onClick={handleWipeData}
+                disabled={confirmText !== 'DELETE ALL DATA' || isWiping}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                <Trash2 size={16} />
+                {isWiping
+                  ? 'Wiping All Data...'
+                  : 'Wipe All Data and Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

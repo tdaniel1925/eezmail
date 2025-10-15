@@ -267,14 +267,15 @@ export async function syncEmailAccount(accountId: string) {
     const { syncInBackground } = await import('@/lib/sync/email-sync-service');
 
     // Start background sync
-    console.log('🔄 Starting background sync for account:', accountId);
+    console.log('🔄 Starting manual sync for account:', accountId);
     // Get valid access token for sync
     const tokenResult = await TokenManager.getValidAccessToken(accountId);
     await syncInBackground(
       accountId,
       account,
       user.id,
-      tokenResult.accessToken
+      tokenResult.accessToken,
+      'manual' // Manual sync - bypass screener
     );
 
     revalidatePath('/dashboard/settings');

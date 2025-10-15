@@ -8,7 +8,7 @@ import { eq, desc, inArray, and, or } from 'drizzle-orm';
 /**
  * Get emails for the current user
  */
-export async function getEmails(folderName?: string, limit: number = 50) {
+export async function getEmails(folderName?: string, limit: number = 25) {
   try {
     const supabase = await createClient();
     const {
@@ -66,7 +66,7 @@ export async function getEmails(folderName?: string, limit: number = 50) {
  */
 export async function getEmailsByFolder(
   folderName: string,
-  limit: number = 50
+  limit: number = 25
 ) {
   return getEmails(folderName, limit);
 }
@@ -74,7 +74,7 @@ export async function getEmailsByFolder(
 /**
  * Get inbox emails (emailCategory = 'inbox')
  */
-export async function getInboxEmails(limit: number = 50) {
+export async function getInboxEmails(limit: number = 25) {
   return getEmailsByCategory('inbox', limit);
 }
 
@@ -83,7 +83,7 @@ export async function getInboxEmails(limit: number = 50) {
  */
 export async function getEmailsByCategory(
   category: string,
-  limit: number = 50
+  limit: number = 25
 ) {
   try {
     const supabase = await createClient();
@@ -135,27 +135,27 @@ export async function getEmailsByCategory(
 /**
  * Get unscreened emails (emailCategory = 'unscreened')
  */
-export async function getUnscreenedEmails(limit: number = 50) {
+export async function getUnscreenedEmails(limit: number = 25) {
   return getEmailsByCategory('unscreened', limit);
 }
 
 /**
  * Get newsfeed emails (emailCategory = 'newsfeed')
  */
-export async function getNewsFeedEmails(limit: number = 50) {
+export async function getNewsFeedEmails(limit: number = 25) {
   return getEmailsByCategory('newsfeed', limit);
 }
 
 /**
  * Get receipts emails (emailCategory = 'receipts')
  */
-export async function getReceiptsEmails(limit: number = 50) {
+export async function getReceiptsEmails(limit: number = 25) {
   return getEmailsByCategory('receipts', limit);
 }
 
 /**
  * Get spam emails (emailCategory = 'spam')
  */
-export async function getSpamEmails(limit: number = 50) {
+export async function getSpamEmails(limit: number = 25) {
   return getEmailsByCategory('spam', limit);
 }

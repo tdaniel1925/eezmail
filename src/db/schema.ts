@@ -1220,6 +1220,57 @@ export const emailRules = pgTable(
   })
 );
 
+// AI Reply Drafts Status Enum
+export const aiReplyStatusEnum = pgEnum('ai_reply_status', [
+  'analyzing',
+  'questioning',
+  'drafting',
+  'ready',
+  'approved',
+  'sent',
+]);
+
+// AI Reply Drafts Table
+export const aiReplyDrafts = pgTable(
+  'ai_reply_drafts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Draft content
+    draftBody: text('draft_body').notNull().default(''),
+    draftSubject: text('draft_subject').notNull(),
+
+    // AI conversation
+    conversationHistory: jsonb('conversation_history').$type<
+      Array<{ role: string; content: string }>
+    >(),
+    questions: jsonb('questions').$type<string[]>(),
+    userResponses: jsonb('user_responses').$type<Record<string, string>>(),
+
+    // Status
+    status: aiReplyStatusEnum('status').default('analyzing').notNull(),
+
+    // Metadata
+    tone: text('tone'), // professional, casual, friendly, formal
+    length: text('length'), // brief, moderate, detailed
+    includeContext: boolean('include_context').default(true).notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdIdx: index('ai_reply_drafts_email_id_idx').on(table.emailId),
+    userIdIdx: index('ai_reply_drafts_user_id_idx').on(table.userId),
+    statusIdx: index('ai_reply_drafts_status_idx').on(table.status),
+  })
+);
+
 // ============================================================================
 // TYPE EXPORTS
 // ============================================================================
@@ -1292,3 +1343,6 @@ export type NewEmailRule = typeof emailRules.$inferInsert;
 
 export type SenderTrust = typeof senderTrust.$inferSelect;
 export type NewSenderTrust = typeof senderTrust.$inferInsert;
+
+export type AIReplyDraft = typeof aiReplyDrafts.$inferSelect;
+export type NewAIReplyDraft = typeof aiReplyDrafts.$inferInsert;

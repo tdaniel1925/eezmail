@@ -28,8 +28,9 @@ export function AutoSyncEmailList({
 
   const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
     accountId,
-    intervalMs: 30000, // 30 seconds
+    intervalMs: 180000, // 3 minutes (optimized for performance)
     enabled: true,
+    initialSync: false, // Manual refresh button available
   });
 
   const fetchEmails = async () => {
@@ -77,56 +78,52 @@ export function AutoSyncEmailList({
   return (
     <div className="flex flex-col h-full">
       {/* Auto-sync status indicator */}
-      <div className="flex items-center justify-between p-4 border-b bg-gray-50/50">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{icon}</span>
-            <div>
-              <h2 className="text-lg font-semibold">{title}</h2>
-              {description && (
-                <p className="text-sm text-gray-600">{description}</p>
+      <div className="flex items-center justify-between px-8 py-5 border-b border-gray-200 dark:border-gray-800 bg-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white text-2xl">
+            {icon}
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold mb-1 text-white">{title}</h2>
+            <div className="flex items-center gap-3">
+              {/* Sync status indicator */}
+              {isSyncing ? (
+                <div className="flex items-center gap-2 text-blue-300">
+                  <div className="w-3 h-3 border-2 border-blue-300 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm">Syncing...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-green-300">
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                  <span className="text-sm">
+                    Auto-sync active
+                    {lastSyncAt && (
+                      <span className="text-gray-400 ml-1">
+                        (last: {lastSyncAt.toLocaleTimeString()})
+                      </span>
+                    )}
+                  </span>
+                </div>
               )}
             </div>
           </div>
 
           {/* New emails notification */}
           {newEmailsCount > 0 && (
-            <div className="flex items-center gap-2 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+            <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-3 py-1.5 rounded-full text-sm font-medium animate-pulse">
               <span>📧</span>
               <span>
                 {newEmailsCount} new email{newEmailsCount > 1 ? 's' : ''}
               </span>
             </div>
           )}
-
-          {/* Sync status indicator */}
-          <div className="flex items-center gap-2">
-            {isSyncing ? (
-              <div className="flex items-center gap-2 text-blue-600">
-                <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">Syncing...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-green-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm">
-                  Auto-sync active
-                  {lastSyncAt && (
-                    <span className="text-gray-500 ml-1">
-                      (last: {lastSyncAt.toLocaleTimeString()})
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Manual refresh button */}
         <button
           onClick={handleRefresh}
           disabled={isSyncing}
-          className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSyncing ? 'Syncing...' : 'Refresh'}
         </button>

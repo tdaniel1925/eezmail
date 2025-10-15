@@ -19,8 +19,9 @@ export function AutoSyncReceipts({ accountId }: AutoSyncReceiptsProps) {
 
   const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
     accountId,
-    intervalMs: 30000,
+    intervalMs: 180000, // 3 minutes (optimized for performance)
     enabled: true,
+    initialSync: false, // Manual refresh button available
   });
 
   const fetchReceiptsEmails = async () => {
@@ -83,15 +84,21 @@ export function AutoSyncReceipts({ accountId }: AutoSyncReceiptsProps) {
               >
                 Financial transactions and receipts
               </p>
-              
+
               {/* Sync status indicator */}
               {isSyncing ? (
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                <span
+                  className="text-sm"
+                  style={{ color: 'var(--text-secondary)' }}
+                >
                   •
                 </span>
               ) : null}
               {isSyncing ? (
-                <div className="flex items-center gap-2" style={{ color: 'var(--accent-blue)' }}>
+                <div
+                  className="flex items-center gap-2"
+                  style={{ color: 'var(--accent-blue)' }}
+                >
                   <div
                     className="w-3 h-3 border-2 rounded-full animate-spin"
                     style={{
@@ -144,7 +151,7 @@ export function AutoSyncReceipts({ accountId }: AutoSyncReceiptsProps) {
           >
             {isSyncing ? 'Syncing...' : 'Refresh Receipts'}
           </button>
-          
+
           {/* Theme Toggle */}
           <ThemeToggle />
         </div>

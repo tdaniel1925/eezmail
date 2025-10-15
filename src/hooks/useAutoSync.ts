@@ -5,8 +5,9 @@ import { syncEmailAccount } from '@/lib/settings/email-actions';
 
 interface UseAutoSyncOptions {
   accountId: string;
-  intervalMs?: number; // Default 30 seconds
+  intervalMs?: number; // Default 3 minutes
   enabled?: boolean; // Default true
+  initialSync?: boolean; // Default false - don't sync on mount
 }
 
 interface AutoSyncState {
@@ -18,8 +19,9 @@ interface AutoSyncState {
 
 export function useAutoSync({
   accountId,
-  intervalMs = 30000, // 30 seconds
+  intervalMs = 180000, // 3 minutes (improved performance)
   enabled = true,
+  initialSync = false, // Don't sync on mount by default
 }: UseAutoSyncOptions) {
   const [state, setState] = useState<AutoSyncState>({
     isSyncing: false,
@@ -78,8 +80,10 @@ export function useAutoSync({
       intervalMs + 'ms'
     );
 
-    // Perform initial sync
-    performSync();
+    // Perform initial sync only if requested
+    if (initialSync) {
+      performSync();
+    }
 
     // Set up interval
     intervalRef.current = setInterval(performSync, intervalMs);
