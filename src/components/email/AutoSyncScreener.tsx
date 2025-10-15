@@ -195,13 +195,14 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
             </div>
           </div>
         ) : currentEmail ? (
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto" key={currentEmail.id}>
             <div className="mb-4 text-center">
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Email {currentEmailIndex + 1} of {emails.length}
               </span>
             </div>
             <ScreenerCard
+              key={currentEmail.id}
               email={currentEmail}
               userId={userId}
               customFolders={customFolders}
