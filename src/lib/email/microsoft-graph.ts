@@ -28,7 +28,7 @@ export class MicrosoftGraphService {
       response_type: 'code',
       redirect_uri: this.config.redirectUri,
       scope:
-        'https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read',
+        'https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access',
       state: state,
       response_mode: 'query',
       prompt: 'select_account', // Let user choose which account
