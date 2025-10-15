@@ -16,6 +16,7 @@ import {
   Calendar,
   Users,
   Settings,
+  MailboxIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ComposeButton } from '@/components/email/ComposeButton';
@@ -48,6 +49,13 @@ export function Sidebar({
 
   // Main Views - AI-powered email organization
   const mainViews: NavItem[] = [
+    {
+      label: 'Unified Inbox',
+      href: '/dashboard/unified-inbox',
+      icon: MailboxIcon,
+      badge: null,
+      active: pathname === '/dashboard/unified-inbox',
+    },
     {
       label: 'Inbox',
       href: '/dashboard/inbox',

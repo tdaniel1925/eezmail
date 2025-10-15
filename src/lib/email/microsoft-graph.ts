@@ -3,7 +3,7 @@
  * Direct integration with Microsoft Graph for Outlook accounts
  */
 
-import { Client } from '@microsoft/microsoft-graph-client';
+// import { Client } from '@microsoft/microsoft-graph-client';
 
 export interface MicrosoftGraphConfig {
   clientId: string;

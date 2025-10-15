@@ -1,32 +1,37 @@
 /**
- * IMAP Email Integration
- * Universal IMAP support for any email provider
+ * IMAP Email Service
+ * Provides IMAP connection for universal email providers
  */
 
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
-export interface IMAPConfig {
+export interface ImapConfig {
+  user: string;
+  password: string;
   host: string;
   port: number;
-  secure: boolean;
-  username: string;
-  password: string;
+  tls: boolean;
 }
 
-export interface EmailMessage {
+export interface ImapMessage {
   id: string;
   subject: string;
-  from: string;
-  date: Date;
-  body: string;
+  from: { email: string; name: string };
+  to: Array<{ email: string; name: string }>;
+  receivedAt: Date;
   isRead: boolean;
+  bodyPreview: string;
+  bodyHtml?: string;
+  bodyText?: string;
+  hasAttachments: boolean;
+  folderName: string;
 }
 
-export class IMAPService {
-  private config: IMAPConfig;
+export class ImapService {
+  private config: ImapConfig;
 
-  constructor(config: IMAPConfig) {
+  constructor(config: ImapConfig) {
     this.config = config;
   }
 
@@ -35,20 +40,67 @@ export class IMAPService {
    */
   async testConnection(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      const imap = new Imap({
-        host: this.config.host,
-        port: this.config.port,
-        tls: this.config.secure,
-        user: this.config.username,
-        password: this.config.password,
-      });
+      const imap = new Imap(this.config);
 
       imap.once('ready', () => {
+        console.log('✅ IMAP connection successful');
         imap.end();
         resolve(true);
       });
 
-      imap.once('error', (err) => {
+      imap.once('error', (err: Error) => {
+        console.error('❌ IMAP connection failed:', err);
+        reject(err);
+      });
+
+      imap.once('end', () => {
+        console.log('🔌 IMAP connection closed');
+      });
+
+      imap.connect();
+    });
+  }
+
+  /**
+   * Get list of mailboxes (folders)
+   */
+  async getMailboxes(): Promise<
+    Array<{ name: string; path: string; delimiter: string }>
+  > {
+    return new Promise((resolve, reject) => {
+      const imap = new Imap(this.config);
+      const mailboxes: Array<{ name: string; path: string; delimiter: string }> =
+        [];
+
+      imap.once('ready', () => {
+        imap.getBoxes((err, boxes) => {
+          if (err) {
+            imap.end();
+            return reject(err);
+          }
+
+          const parseBoxes = (boxes: any, prefix = '') => {
+            for (const [name, box] of Object.entries(boxes)) {
+              const fullPath = prefix ? `${prefix}${box.delimiter}${name}` : name;
+              mailboxes.push({
+                name,
+                path: fullPath,
+                delimiter: box.delimiter || '/',
+              });
+
+              if (box.children) {
+                parseBoxes(box.children, fullPath);
+              }
+            }
+          };
+
+          parseBoxes(boxes);
+          imap.end();
+          resolve(mailboxes);
+        });
+      });
+
+      imap.once('error', (err: Error) => {
         reject(err);
       });
 
@@ -57,72 +109,111 @@ export class IMAPService {
   }
 
   /**
-   * Get emails from IMAP
+   * Fetch messages from a mailbox
    */
-  async getEmails(limit: number = 50): Promise<EmailMessage[]> {
+  async fetchMessages(
+    mailbox: string = 'INBOX',
+    limit: number = 50
+  ): Promise<ImapMessage[]> {
     return new Promise((resolve, reject) => {
-      const imap = new Imap({
-        host: this.config.host,
-        port: this.config.port,
-        tls: this.config.secure,
-        user: this.config.username,
-        password: this.config.password,
-      });
-
-      const emails: EmailMessage[] = [];
+      const imap = new Imap(this.config);
+      const messages: ImapMessage[] = [];
 
       imap.once('ready', () => {
-        imap.openBox('INBOX', false, (err, box) => {
+        imap.openBox(mailbox, false, (err, box) => {
           if (err) {
-            reject(err);
-            return;
+            imap.end();
+            return reject(err);
           }
 
-          const fetch = imap.seq.fetch(
-            `1:${Math.min(limit, box.messages.total)}`,
-            {
-              bodies: '',
-              struct: true,
-            }
-          );
+          if (box.messages.total === 0) {
+            imap.end();
+            return resolve([]);
+          }
 
-          fetch.on('message', (msg, seqno) => {
-            let buffer = '';
+          // Fetch the last N messages
+          const start = Math.max(1, box.messages.total - limit + 1);
+          const end = box.messages.total;
+          const fetchRange = `${start}:${end}`;
 
-            msg.on('body', (stream) => {
+          const fetch = imap.seq.fetch(fetchRange, {
+            bodies: ['HEADER', 'TEXT'],
+            struct: true,
+            markSeen: false,
+          });
+
+          fetch.on('message', (msg) => {
+            let uid = '';
+            let flags: string[] = [];
+            let headerBuffer = '';
+            let textBuffer = '';
+
+            msg.on('body', (stream, info) => {
+              let buffer = '';
               stream.on('data', (chunk) => {
                 buffer += chunk.toString('utf8');
               });
-
               stream.once('end', () => {
-                simpleParser(buffer, (err, parsed) => {
-                  if (err) return;
-
-                  emails.push({
-                    id: seqno.toString(),
-                    subject: parsed.subject || 'No Subject',
-                    from: parsed.from?.text || 'Unknown',
-                    date: parsed.date || new Date(),
-                    body: parsed.text || parsed.html || '',
-                    isRead: false, // IMAP doesn't provide read status by default
-                  });
-                });
+                if (info.which === 'HEADER') {
+                  headerBuffer = buffer;
+                } else {
+                  textBuffer = buffer;
+                }
               });
+            });
+
+            msg.once('attributes', (attrs) => {
+              uid = attrs.uid.toString();
+              flags = attrs.flags || [];
+            });
+
+            msg.once('end', async () => {
+              try {
+                const parsed = await simpleParser(headerBuffer + textBuffer);
+
+                const from = parsed.from?.value?.[0] || { address: '', name: '' };
+                const to =
+                  parsed.to?.value?.map((addr) => ({
+                    email: addr.address || '',
+                    name: addr.name || '',
+                  })) || [];
+
+                messages.push({
+                  id: uid,
+                  subject: parsed.subject || '(No Subject)',
+                  from: {
+                    email: from.address || '',
+                    name: from.name || '',
+                  },
+                  to,
+                  receivedAt: parsed.date || new Date(),
+                  isRead: !flags.includes('\\Unseen'),
+                  bodyPreview:
+                    parsed.text?.substring(0, 200) || '(No preview available)',
+                  bodyHtml: parsed.html || undefined,
+                  bodyText: parsed.text || undefined,
+                  hasAttachments: (parsed.attachments?.length || 0) > 0,
+                  folderName: mailbox,
+                });
+              } catch (parseError) {
+                console.error('Error parsing message:', parseError);
+              }
             });
           });
 
-          fetch.once('error', (err) => {
+          fetch.once('error', (err: Error) => {
+            imap.end();
             reject(err);
           });
 
           fetch.once('end', () => {
             imap.end();
-            resolve(emails);
+            resolve(messages);
           });
         });
       });
 
-      imap.once('error', (err) => {
+      imap.once('error', (err: Error) => {
         reject(err);
       });
 
@@ -131,37 +222,29 @@ export class IMAPService {
   }
 
   /**
-   * Mark email as read
+   * Mark messages as read/unread
    */
-  async markAsRead(messageId: string): Promise<void> {
+  async markAsRead(messageIds: string[], read: boolean = true): Promise<void> {
     return new Promise((resolve, reject) => {
-      const imap = new Imap({
-        host: this.config.host,
-        port: this.config.port,
-        tls: this.config.secure,
-        user: this.config.username,
-        password: this.config.password,
-      });
+      const imap = new Imap(this.config);
 
       imap.once('ready', () => {
-        imap.openBox('INBOX', false, (err, box) => {
+        imap.openBox('INBOX', false, (err) => {
           if (err) {
-            reject(err);
-            return;
+            imap.end();
+            return reject(err);
           }
 
-          imap.addFlags(messageId, ['\\Seen'], (err) => {
-            if (err) {
-              reject(err);
-              return;
-            }
+          const flag = read ? '\\Seen' : '!\\Seen';
+          imap.addFlags(messageIds, flag, (err) => {
             imap.end();
+            if (err) return reject(err);
             resolve();
           });
         });
       });
 
-      imap.once('error', (err) => {
+      imap.once('error', (err: Error) => {
         reject(err);
       });
 
@@ -170,41 +253,72 @@ export class IMAPService {
   }
 
   /**
-   * Send email via SMTP (requires separate SMTP configuration)
+   * Move message to another folder
    */
-  async sendEmail(message: {
-    to: string;
-    subject: string;
-    body: string;
-  }): Promise<void> {
-    // This would require a separate SMTP service
-    // For now, we'll throw an error indicating SMTP is needed
-    throw new Error('SMTP configuration required for sending emails via IMAP');
+  async moveMessage(
+    messageId: string,
+    targetFolder: string
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const imap = new Imap(this.config);
+
+      imap.once('ready', () => {
+        imap.openBox('INBOX', false, (err) => {
+          if (err) {
+            imap.end();
+            return reject(err);
+          }
+
+          imap.move(messageId, targetFolder, (err) => {
+            imap.end();
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      });
+
+      imap.once('error', (err: Error) => {
+        reject(err);
+      });
+
+      imap.connect();
+    });
+  }
+
+  /**
+   * Delete message
+   */
+  async deleteMessage(messageId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const imap = new Imap(this.config);
+
+      imap.once('ready', () => {
+        imap.openBox('INBOX', false, (err) => {
+          if (err) {
+            imap.end();
+            return reject(err);
+          }
+
+          imap.addFlags(messageId, '\\Deleted', (err) => {
+            if (err) {
+              imap.end();
+              return reject(err);
+            }
+
+            imap.expunge((err) => {
+              imap.end();
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+        });
+      });
+
+      imap.once('error', (err: Error) => {
+        reject(err);
+      });
+
+      imap.connect();
+    });
   }
 }
-
-/**
- * Predefined IMAP configurations for common providers
- */
-export const IMAP_PROVIDERS = {
-  outlook: {
-    host: 'outlook.office365.com',
-    port: 993,
-    secure: true,
-  },
-  gmail: {
-    host: 'imap.gmail.com',
-    port: 993,
-    secure: true,
-  },
-  yahoo: {
-    host: 'imap.mail.yahoo.com',
-    port: 993,
-    secure: true,
-  },
-  icloud: {
-    host: 'imap.mail.me.com',
-    port: 993,
-    secure: true,
-  },
-} as const;

@@ -34,9 +34,11 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dompurify": "^3.3.0",
     "drizzle-orm": "^0.36.4",
     "framer-motion": "^11.11.17",
     "imap": "^0.8.19",
+    "isomorphic-dompurify": "^2.29.0",
     "lucide-react": "^0.462.0",
     "mailparser": "^3.7.5",
     "next": "14.2.33",
@@ -54,6 +56,9 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/dompurify": "^3.0.5",
+    "@types/imap": "^0.8.42",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "^22.9.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

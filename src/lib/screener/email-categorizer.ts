@@ -2,7 +2,6 @@
 
 import { db } from '@/lib/db';
 import { senderTrust } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
 import { isReceipt, isLikelySpam, Email } from './email-utils';
 
 export type EmailCategory =

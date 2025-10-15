@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import type { Email } from '@/db/schema';
 import { format } from 'date-fns';
 import { EmailComposer } from './EmailComposer';
+import { useEmailBody } from '@/hooks/useEmailBody';
 
 interface EmailViewerProps {
   email: Email | null;
@@ -28,6 +29,16 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const [composerMode, setComposerMode] = useState<'reply' | 'forward' | null>(
     null
   );
+
+  // Use sanitized email body with DOMPurify
+  const { renderedHtml, isLoading } = useEmailBody({
+    bodyHtml: email?.bodyHtml,
+    bodyText: email?.bodyText,
+    allowImages: true,
+    allowStyles: true,
+    allowLinks: true,
+    blockTrackers: true,
+  });
 
   if (!email) {
     return (
@@ -197,15 +208,20 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
 
         {/* Email Body */}
         <div className="bg-gray-50/50 dark:bg-black/30 px-6 py-6">
-          <div
-            className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-white/80"
-            dangerouslySetInnerHTML={{
-              __html:
-                email.bodyHtml ||
-                email.bodyText?.replace(/\n/g, '<br />') ||
-                '',
-            }}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-gray-600 dark:text-white/50">
+                Loading email content...
+              </div>
+            </div>
+          ) : (
+            <div
+              className="prose prose-sm max-w-none dark:prose-invert text-gray-800 dark:text-white/80"
+              dangerouslySetInnerHTML={{
+                __html: renderedHtml,
+              }}
+            />
+          )}
         </div>
 
         {/* AI Summary (if available) */}
