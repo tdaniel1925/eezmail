@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Minimize2, Maximize2, Send, Sparkles } from 'lucide-react';
+import { Send, Sparkles, X, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -13,7 +13,6 @@ interface Message {
 
 export function ChatBot(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -32,7 +31,7 @@ export function ChatBot(): JSX.Element {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Resizing state
-  const [size, setSize] = useState({ width: 400, height: 600 });
+  const [size, setSize] = useState({ width: 380, height: 550 });
   const [isResizing, setIsResizing] = useState(false);
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0 });
 
@@ -41,7 +40,7 @@ export function ChatBot(): JSX.Element {
 
   // Set initial position on right side after mount
   useEffect(() => {
-    setPosition({ x: window.innerWidth - 420, y: 20 });
+    setPosition({ x: window.innerWidth - 400, y: 20 });
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -84,7 +83,7 @@ export function ChatBot(): JSX.Element {
       const deltaY = e.clientY - resizeStart.y;
 
       setSize({
-        width: Math.max(300, Math.min(800, size.width + deltaX)),
+        width: Math.max(300, Math.min(600, size.width + deltaX)),
         height: Math.max(400, Math.min(800, size.height + deltaY)),
       });
 
@@ -173,74 +172,59 @@ export function ChatBot(): JSX.Element {
     }
   };
 
-  // Floating button when minimized
+  // Floating button when closed
   if (!isOpen) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-4 rounded-full shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 flex items-center gap-3 group"
-        aria-label="Open AI Chatbot"
+        className="fixed bottom-6 right-6 z-50 bg-gray-800 dark:bg-gray-700 text-white px-4 py-2.5 rounded-lg shadow-lg hover:bg-gray-900 dark:hover:bg-gray-600 transition-all duration-200 flex items-center gap-2"
+        aria-label="Open AI Assistant"
       >
-        <Sparkles size={24} className="animate-pulse" />
-        <span className="font-semibold text-lg">Ask Me Anything</span>
-        <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+        <Sparkles size={18} />
+        <span className="text-sm font-medium">Ask me anything</span>
       </button>
     );
   }
 
-  const chatWidth = isMaximized ? '90vw' : `${size.width}px`;
-  const chatHeight = isMaximized ? '90vh' : `${size.height}px`;
-  const chatX = isMaximized ? '5vw' : `${position.x}px`;
-  const chatY = isMaximized ? '5vh' : `${position.y}px`;
-
   return (
     <div
       ref={chatRef}
-      className="fixed z-50 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden"
+      className="fixed z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-200 dark:border-white/10 flex flex-col overflow-hidden"
       style={{
-        left: chatX,
-        top: chatY,
-        width: chatWidth,
-        height: chatHeight,
-        transition: isMaximized ? 'all 0.3s ease' : 'none',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+        width: `${size.width}px`,
+        height: `${size.height}px`,
       }}
     >
       {/* Header - Draggable */}
       <div
-        className="chat-header flex items-center justify-between p-4 bg-gradient-to-r from-purple-500 to-blue-500 text-white cursor-move"
+        className="chat-header flex items-center justify-between px-4 py-3 bg-gray-100 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 cursor-move"
         onMouseDown={handleMouseDown}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-            <Sparkles size={20} />
-          </div>
+        <div className="flex items-center gap-2">
+          <GripVertical size={16} className="text-gray-400" />
+          <Sparkles size={16} className="text-gray-600 dark:text-white/60" />
           <div>
-            <h3 className="font-bold text-lg">Email AI Assistant</h3>
-            <p className="text-xs text-white/80">
-              {isTyping ? 'Typing...' : 'Online'}
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Ask me anything
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-white/50">
+              {isTyping ? 'Typing...' : 'About your emails'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsMaximized(!isMaximized)}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            aria-label={isMaximized ? 'Restore' : 'Maximize'}
-          >
-            {isMaximized ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-          </button>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        <button
+          onClick={() => setIsOpen(false)}
+          className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-colors text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white"
+          aria-label="Close"
+        >
+          <X size={16} />
+        </button>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-950">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50 dark:bg-black/20">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -251,10 +235,10 @@ export function ChatBot(): JSX.Element {
           >
             <div
               className={cn(
-                'max-w-[80%] rounded-2xl px-4 py-3 shadow-sm',
+                'max-w-[85%] rounded-lg px-3 py-2',
                 message.role === 'user'
-                  ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-                  : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+                  ? 'bg-primary text-white'
+                  : 'bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10'
               )}
             >
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -262,10 +246,10 @@ export function ChatBot(): JSX.Element {
               </p>
               <p
                 className={cn(
-                  'text-xs mt-2',
+                  'text-xs mt-1',
                   message.role === 'user'
                     ? 'text-white/70'
-                    : 'text-gray-500 dark:text-gray-400'
+                    : 'text-gray-500 dark:text-white/50'
                 )}
               >
                 {message.timestamp.toLocaleTimeString([], {
@@ -279,8 +263,8 @@ export function ChatBot(): JSX.Element {
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm border border-gray-200 dark:border-gray-700">
-              <div className="flex gap-2">
+            <div className="bg-white dark:bg-white/5 rounded-lg px-3 py-2 border border-gray-200 dark:border-white/10">
+              <div className="flex gap-1">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                 <div
                   className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
@@ -299,40 +283,37 @@ export function ChatBot(): JSX.Element {
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+      <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-white/10">
         <div className="flex items-end gap-2">
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about your emails..."
-            className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none"
-            rows={1}
-            style={{ maxHeight: '120px' }}
+            placeholder="Ask me anything..."
+            className="flex-1 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 resize-none text-sm"
+            rows={2}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim()}
-            className="p-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-xl hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="p-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             aria-label="Send message"
           >
-            <Send size={20} />
+            <Send size={16} />
           </button>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Press Enter to send, Shift+Enter for new line
+        <p className="text-xs text-gray-500 dark:text-white/50 mt-1.5">
+          Press Enter to send • Drag header to move
         </p>
       </div>
 
       {/* Resize Handle */}
-      {!isMaximized && (
-        <div
-          className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize group"
-          onMouseDown={handleResizeStart}
-        >
-          <div className="absolute bottom-1 right-1 w-4 h-4 border-r-2 border-b-2 border-gray-400 dark:border-gray-600 group-hover:border-purple-500 transition-colors"></div>
-        </div>
-      )}
+      <div
+        className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize group"
+        onMouseDown={handleResizeStart}
+      >
+        <div className="absolute bottom-0.5 right-0.5 w-3 h-3 border-r-2 border-b-2 border-gray-300 dark:border-white/20 group-hover:border-primary transition-colors"></div>
+      </div>
     </div>
   );
 }

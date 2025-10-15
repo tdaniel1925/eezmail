@@ -135,6 +135,14 @@ function SettingsPageContent(): JSX.Element {
     defaultAccountId: string | null;
   } | null>(null);
 
+  // Read tab from URL on initial load
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tabs.find((t) => t.id === tab)) {
+      setActiveTab(tab as SettingsTab);
+    }
+  }, []); // Run only once on mount
+
   // URL cleaning to prevent error persistence across tabs
   useEffect(() => {
     const error = searchParams.get('error');
@@ -337,7 +345,14 @@ function SettingsPageContent(): JSX.Element {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    window.history.pushState(
+                      {},
+                      '',
+                      `/dashboard/settings?tab=${tab.id}`
+                    );
+                  }}
                   className={cn(
                     'group flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-all duration-200 border border-transparent',
                     isActive

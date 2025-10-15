@@ -1,46 +1,52 @@
 'use client';
 
-import * as React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
-export function ThemeToggle({ className }: { className?: string }) {
+interface ThemeToggleProps {
+  className?: string;
+}
+
+export function ThemeToggle({ className }: ThemeToggleProps): JSX.Element {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Avoid hydration mismatch
-  React.useEffect(() => {
+  useEffect(() => {
     setMounted(true);
   }, []);
 
   if (!mounted) {
-    return (
-      <button
-        className={cn(
-          'flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md transition-all duration-200',
-          className
-        )}
-        aria-label="Toggle theme"
-      >
-        <div className="h-4 w-4" />
-      </button>
-    );
+    return <div className="w-[120px] h-10" />;
   }
+
+  const toggleTheme = (): void => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <button
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      onClick={toggleTheme}
       className={cn(
-        'group flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md transition-all duration-200 hover:bg-gray-100/80 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20',
+        'flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200',
+        'bg-[var(--bg-tertiary)] border-[var(--border-color)]',
+        'text-[var(--text-primary)] hover:bg-[var(--item-hover)]',
+        'hover:border-[var(--accent-blue)] text-sm font-medium',
         className
       )}
-      aria-label="Toggle theme"
+      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
       {theme === 'dark' ? (
-        <Sun className="h-4 w-4 text-gray-700 dark:text-white/70 transition-colors duration-200 group-hover:text-gray-900 dark:group-hover:text-white" />
+        <>
+          <Moon size={16} />
+          <span>Dark Mode</span>
+        </>
       ) : (
-        <Moon className="h-4 w-4 text-gray-700 dark:text-white/70 transition-colors duration-200 group-hover:text-gray-900 dark:group-hover:text-white" />
+        <>
+          <Sun size={16} />
+          <span>Light Mode</span>
+        </>
       )}
     </button>
   );

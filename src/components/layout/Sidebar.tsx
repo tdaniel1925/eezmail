@@ -130,27 +130,32 @@ export function Sidebar({
   }
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+    <div className="flex h-full flex-col bg-gradient-to-b from-[#0f172a] to-[#1e293b] border-r border-[var(--border-color)] shadow-2xl">
       {/* Logo & Compose */}
-      <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <Mail className="text-white" size={16} />
+      <div className="p-6 pb-4">
+        <div className="flex items-center gap-2 mb-8">
+          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center text-xl">
+            ✉️
           </div>
-          <h1 className="text-base font-bold text-gray-800 dark:text-white">
-            eezMail
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">
+            eeZmail
           </h1>
         </div>
-        <ComposeButton variant="sidebar" />
+        <button
+          className="w-full bg-[var(--accent-blue)] text-white px-5 py-3.5 rounded-xl font-semibold text-[15px] transition-all duration-200 hover:bg-[var(--accent-blue-hover)] hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-md"
+        >
+          <span>✍️</span>
+          <span>Compose</span>
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-2 overflow-y-auto">
-        {/* Hey Views Section */}
-        <div className="mb-4">
-          <div className="px-2 mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Hey Views
+      <nav className="flex-1 px-4 overflow-y-auto">
+        {/* Smart Views Section */}
+        <div className="mb-6">
+          <div className="px-3 mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
+              Smart Views
             </span>
           </div>
           {mainViews.map((view) => {
@@ -160,25 +165,18 @@ export function Sidebar({
                 key={view.href}
                 href={view.href}
                 className={cn(
-                  'w-full flex items-center justify-between px-3 py-2 rounded-lg mb-0.5 transition-all duration-200',
+                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-all duration-200',
                   view.active
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    ? 'bg-white/25 text-white font-semibold'
+                    : 'text-white/80 hover:bg-white/15 hover:text-white'
                 )}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <Icon size={16} />
-                  <span className="text-sm font-medium">{view.label}</span>
+                  <span className="text-sm">{view.label}</span>
                 </div>
                 {view.badge !== null && view.badge !== undefined && (
-                  <span
-                    className={cn(
-                      'text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
-                      view.active
-                        ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                    )}
-                  >
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-blue)] text-white">
                     {view.badge}
                   </span>
                 )}
@@ -188,10 +186,10 @@ export function Sidebar({
         </div>
 
         {/* Traditional Folders Section */}
-        <div>
-          <div className="px-2 mb-1">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Folders
+        <div className="mb-6">
+          <div className="px-3 mb-3">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
+              Other
             </span>
           </div>
           {folders.map((folder) => {
@@ -201,25 +199,18 @@ export function Sidebar({
                 key={folder.href}
                 href={folder.href}
                 className={cn(
-                  'w-full flex items-center justify-between px-3 py-2 rounded-lg mb-0.5 transition-all duration-200',
+                  'w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-all duration-200',
                   folder.active
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    ? 'bg-white/25 text-white font-semibold'
+                    : 'text-white/80 hover:bg-white/15 hover:text-white'
                 )}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
                   <Icon size={16} />
-                  <span className="text-sm font-medium">{folder.label}</span>
+                  <span className="text-sm">{folder.label}</span>
                 </div>
                 {folder.badge !== null && folder.badge !== undefined && (
-                  <span
-                    className={cn(
-                      'text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
-                      folder.active
-                        ? 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
-                    )}
-                  >
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-blue)] text-white">
                     {folder.badge}
                   </span>
                 )}
@@ -230,14 +221,14 @@ export function Sidebar({
 
         {/* Custom Folders Section */}
         {customFolders.length > 0 && (
-          <div className="mt-4">
-            <div className="px-2 mb-1 flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <div className="mb-6">
+            <div className="px-3 mb-3 flex items-center justify-between">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-white/70">
                 Custom Folders
               </span>
               <Link
                 href="/dashboard/settings?tab=folders"
-                className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline"
+                className="text-[10px] text-[var(--accent-blue)] hover:text-white transition-colors"
               >
                 Manage
               </Link>
@@ -249,15 +240,15 @@ export function Sidebar({
                   key={folder.id}
                   href={`/dashboard/folder/${folder.id}`}
                   className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 rounded-lg mb-0.5 transition-all duration-200',
+                    'w-full flex items-center justify-between px-3 py-2.5 rounded-lg mb-1 transition-all duration-200',
                     isActive
-                      ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-white/25 text-white font-semibold'
+                      : 'text-white/80 hover:bg-white/15 hover:text-white'
                   )}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <span className="text-base">{folder.icon}</span>
-                    <span className="text-sm font-medium">{folder.name}</span>
+                    <span className="text-sm">{folder.name}</span>
                   </div>
                 </Link>
               );
@@ -266,47 +257,18 @@ export function Sidebar({
         )}
       </nav>
 
+      <div className="flex-shrink-0" />
+
       {/* Quick Actions */}
-      <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-        <div className="space-y-0.5 mb-2">
-          <Link
-            href="/dashboard/calendar"
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
-          >
-            <Calendar size={16} />
-            <span className="text-sm font-medium">Calendar</span>
-          </Link>
-          <Link
-            href="/dashboard/contacts"
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
-          >
-            <Users size={16} />
-            <span className="text-sm font-medium">Contacts</span>
-          </Link>
+      <div className="px-4 pb-2">
+        <div className="space-y-1">
           <Link
             href="/dashboard/settings"
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-white/80 hover:bg-white/15 hover:text-white transition-all duration-200"
           >
             <Settings size={16} />
-            <span className="text-sm font-medium">Settings</span>
+            <span className="text-sm">Settings</span>
           </Link>
-        </div>
-      </div>
-
-      {/* User Profile */}
-      <div className="p-2 border-t border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
-            TD
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-gray-800 dark:text-white truncate">
-              John Doe
-            </p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-              john@example.com
-            </p>
-          </div>
         </div>
       </div>
     </div>
