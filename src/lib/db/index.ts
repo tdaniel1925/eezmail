@@ -7,13 +7,14 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '@/db/schema';
 
-if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
-}
+// Allow build without DATABASE_URL (will fail at runtime if actually used)
+const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/placeholder';
 
-// Create the connection
-const connectionString = process.env.DATABASE_URL;
-const client = postgres(connectionString);
+// Create the connection (only if DATABASE_URL is set, otherwise use placeholder)
+const client = postgres(connectionString, {
+  // Prevent actual connection during build
+  max: process.env.DATABASE_URL ? undefined : 0,
+});
 
 // Create the Drizzle instance
 export const db = drizzle(client, { schema });
