@@ -41,11 +41,23 @@ export function ConnectedAccounts({
     null
   );
 
-  // Show success message when account is connected and reload page
+  // Show success message when account is connected and clean URL
   useEffect(() => {
     const success = searchParams.get('success');
     const email = searchParams.get('email');
+    const error = searchParams.get('error');
 
+    // Clean URL parameters immediately to prevent reload loops
+    if (success || error) {
+      console.log('🧹 Cleaning URL parameters to prevent reload loops');
+      window.history.replaceState(
+        {},
+        '',
+        '/dashboard/settings?tab=email-accounts'
+      );
+    }
+
+    // Show success message
     if (success === 'true' && email) {
       toast.success(
         `✅ Account ${decodeURIComponent(email)} connected successfully!`,
@@ -54,28 +66,10 @@ export function ConnectedAccounts({
         }
       );
 
-      // Force reload the page to show the new account
+      // Force reload ONCE to show the new account
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    }
-
-    // TEMPORARILY DISABLE ERROR HANDLING TO STOP IMMEDIATE ERRORS
-    // const error = searchParams.get('error');
-    // if (error) {
-    //   toast.error(`Failed to connect account: ${decodeURIComponent(error)}`);
-    // }
-
-    // Clean URL parameters to prevent error loops
-    const error = searchParams.get('error');
-    if (error) {
-      console.log('🧹 Cleaning URL parameters to prevent error loops');
-      // Redirect to clean URL without error parameters
-      window.history.replaceState(
-        {},
-        '',
-        '/dashboard/settings?tab=email-accounts'
-      );
     }
 
     // TEMPORARILY DISABLE CLEANUP TO PREVENT REMOVING NEW ACCOUNTS
