@@ -59,10 +59,10 @@ export default function SignupPage(): JSX.Element {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Join Imbox
+            Join eezMail
           </h1>
           <p className="text-gray-600 dark:text-white/60">
-            Start managing emails with AI in seconds
+            A Custom Email Client for Darren Miller Law Firm
           </p>
         </div>
 

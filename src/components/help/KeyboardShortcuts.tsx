@@ -26,7 +26,7 @@ export function KeyboardShortcuts({
     {
       category: 'Navigation',
       shortcuts: [
-        { keys: ['G', 'I'], description: 'Go to Imbox' },
+        { keys: ['G', 'I'], description: 'Go to Inbox' },
         { keys: ['G', 'F'], description: 'Go to Feed' },
         { keys: ['G', 'P'], description: 'Go to Paper Trail' },
         { keys: ['G', 'S'], description: 'Go to Starred' },

@@ -52,10 +52,10 @@ export default function LoginPage(): JSX.Element {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome to Imbox
+            Welcome to eezMail
           </h1>
           <p className="text-gray-600 dark:text-white/60">
-            AI-powered email management
+            A Custom Email Client for Darren Miller Law Firm
           </p>
         </div>
 

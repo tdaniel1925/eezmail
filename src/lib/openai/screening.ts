@@ -249,7 +249,7 @@ Determine:
 1. Is this an important sender? (true/false)
 2. Relationship type (personal/professional/automated/unknown)
 3. Brief reasoning
-4. Suggested action (approve for Imbox / screen each time / block)
+4. Suggested action (approve for Inbox / screen each time / block)
 
 Respond with JSON:
 {

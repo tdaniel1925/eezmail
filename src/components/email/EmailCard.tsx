@@ -134,7 +134,7 @@ export function EmailCard({
                     'bg-paper-blue/10 text-paper-blue'
                 )}
               >
-                {email.heyView === 'imbox' && '✨ Imbox'}
+                {email.heyView === 'imbox' && '✨ Inbox'}
                 {email.heyView === 'feed' && '📰 Feed'}
                 {email.heyView === 'paper_trail' && '🧾 Paper Trail'}
               </span>

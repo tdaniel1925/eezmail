@@ -150,7 +150,7 @@ export function ChatBot(): JSX.Element {
     if (lowerQuery.includes('unread')) {
       return "You have 12 unread emails in your Inbox. The most recent is from Sarah Chen about 'Q4 Marketing Strategy Review'.";
     } else if (lowerQuery.includes('important')) {
-      return 'Your most important emails are in the Imbox. You have 3 starred emails that need attention.';
+      return 'Your most important emails are in the Inbox. You have 3 starred emails that need attention.';
     } else if (
       lowerQuery.includes('summarize') ||
       lowerQuery.includes('summary')

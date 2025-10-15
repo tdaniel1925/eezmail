@@ -25,7 +25,7 @@ export function HelpCenter(): JSX.Element {
       description: 'Learn the basics',
       articles: [
         'Setting up your first email account',
-        'Understanding Imbox vs Feed vs Paper Trail',
+        'Understanding Inbox vs Feed vs Paper Trail',
         'Connecting Gmail, Outlook, or IMAP',
         'Customizing your settings',
       ],
@@ -71,11 +71,11 @@ export function HelpCenter(): JSX.Element {
   const faqItems: AccordionItem[] = [
     {
       id: 'faq-1',
-      title: 'What is the difference between Imbox, Feed, and Paper Trail?',
+      title: 'What is the difference between Inbox, Feed, and Paper Trail?',
       content: (
         <div className="space-y-2">
           <p>
-            <strong>Imbox:</strong> Important emails from people and services
+            <strong>Inbox:</strong> Important emails from people and services
             you care about. Think of it as your VIP inbox.
           </p>
           <p>
@@ -97,7 +97,7 @@ export function HelpCenter(): JSX.Element {
           <p>
             When someone emails you for the first time, our AI analyzes the
             email content, sender information, and context to suggest whether it
-            should go to your Imbox, Feed, or Paper Trail.
+            should go to your Inbox, Feed, or Paper Trail.
           </p>
           <p>
             You can accept, modify, or override the AI&apos;s suggestion. Over
@@ -108,7 +108,7 @@ export function HelpCenter(): JSX.Element {
     },
     {
       id: 'faq-3',
-      title: 'Can I use Imbox with multiple email accounts?',
+      title: 'Can I use eezMail with multiple email accounts?',
       content: (
         <div className="space-y-2">
           <p>
@@ -225,7 +225,7 @@ export function HelpCenter(): JSX.Element {
           Help Center
         </h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-white/60">
-          Find answers to common questions and learn how to use Imbox
+          Find answers to common questions and learn how to use eezMail
         </p>
       </div>
 
