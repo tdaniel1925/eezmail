@@ -141,12 +141,10 @@ export function Sidebar({
             eeZmail
           </h1>
         </div>
-        <button
-          className="w-full bg-[var(--accent-blue)] text-white px-5 py-3.5 rounded-xl font-semibold text-[15px] transition-all duration-200 hover:bg-[var(--accent-blue-hover)] hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 flex items-center justify-center gap-2 shadow-md"
-        >
-          <span>✍️</span>
-          <span>Compose</span>
-        </button>
+        <ComposeButton
+          variant="sidebar"
+          className="!bg-[var(--accent-blue)] hover:!bg-[var(--accent-blue-hover)] !rounded-xl !py-3.5 !px-5 !text-[15px] hover:!shadow-lg hover:!shadow-blue-500/30 hover:!-translate-y-0.5"
+        />
       </div>
 
       {/* Navigation */}
