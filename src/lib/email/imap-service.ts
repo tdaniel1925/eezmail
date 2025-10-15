@@ -322,3 +322,6 @@ export class ImapService {
     });
   }
 }
+
+// Alias for compatibility with imports
+export { ImapService as IMAPService };

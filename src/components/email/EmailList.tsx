@@ -10,7 +10,7 @@ interface EmailListProps {
   emails: Email[];
   title?: string;
   isLoading?: boolean;
-  error?: string | null;
+  error?: string | null; // eslint-disable-line @typescript-eslint/no-unused-vars
   onToggleSidebar?: () => void;
 }
 

@@ -21,7 +21,7 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
   const [currentEmailIndex, setCurrentEmailIndex] = useState(0);
   const [userId, setUserId] = useState<string>('');
 
-  const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
+  const { isSyncing, syncCount, triggerSync } = useAutoSync({
     accountId,
     intervalMs: 30000, // 30 seconds
     enabled: true,
