@@ -1,5 +1,8 @@
 'use client';
 
+// Force dynamic rendering (required for useSearchParams during build)
+export const dynamic = 'force-dynamic';
+
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Mail, CheckCircle, AlertCircle } from 'lucide-react';

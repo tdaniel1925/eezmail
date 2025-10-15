@@ -13,7 +13,9 @@ if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
 }
 
 // Allow build without DATABASE_URL (will fail at runtime if actually used)
-const connectionString = process.env.DATABASE_URL || 'postgresql://placeholder:placeholder@localhost:5432/placeholder';
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://placeholder:placeholder@localhost:5432/placeholder';
 
 // Create the connection (only if DATABASE_URL is set, otherwise use placeholder)
 const client = postgres(connectionString, {
