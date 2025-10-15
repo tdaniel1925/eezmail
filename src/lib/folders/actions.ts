@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { customFolders } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, asc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import type { NewCustomFolder } from '@/db/schema';
 
@@ -195,6 +195,35 @@ export async function deleteCustomFolder(
   } catch (error) {
     console.error('Error deleting custom folder:', error);
     return { success: false, error: 'Failed to delete folder' };
+  }
+}
+
+export async function getCustomFolders(): Promise<{
+  success: boolean;
+  folders: any[];
+  error?: string;
+}> {
+  try {
+    const { createClient } = await import('@/lib/supabase/server');
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, folders: [], error: 'Not authenticated' };
+    }
+
+    const folders = await db
+      .select()
+      .from(customFolders)
+      .where(eq(customFolders.userId, user.id))
+      .orderBy(asc(customFolders.sortOrder));
+
+    return { success: true, folders };
+  } catch (error) {
+    console.error('Error fetching custom folders:', error);
+    return { success: false, folders: [], error: 'Failed to fetch folders' };
   }
 }
 
