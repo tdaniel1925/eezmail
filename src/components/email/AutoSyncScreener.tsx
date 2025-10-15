@@ -1,20 +1,25 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { EmailList } from './EmailList';
+import { ScreenerCard } from '@/components/screener/ScreenerCard';
 import { useAutoSync } from '@/hooks/useAutoSync';
 import { getUnscreenedEmails } from '@/lib/email/get-emails';
+import { getCustomFolders } from '@/lib/folders/actions';
+import { screenEmail } from '@/lib/screener/actions';
+import { toast } from '@/lib/toast';
+import type { Email, CustomFolder } from '@/db/schema';
 
 interface AutoSyncScreenerProps {
   accountId: string;
 }
 
 export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
-  const [emails, setEmails] = useState<any[]>([]);
+  const [emails, setEmails] = useState<Email[]>([]);
+  const [customFolders, setCustomFolders] = useState<CustomFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [previousEmailCount, setPreviousEmailCount] = useState(0);
-  const [newEmailsCount, setNewEmailsCount] = useState(0);
+  const [currentEmailIndex, setCurrentEmailIndex] = useState(0);
+  const [userId, setUserId] = useState<string>('');
 
   const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
     accountId,
@@ -22,28 +27,23 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
     enabled: true,
   });
 
-  const fetchScreenerEmails = async () => {
+  const fetchScreenerData = async () => {
     try {
       setIsLoading(true);
-      const result = await getUnscreenedEmails();
-
-      if (result.success) {
-        const currentCount = result.emails.length;
-
-        // Check for new emails
-        if (previousEmailCount > 0 && currentCount > previousEmailCount) {
-          const newCount = currentCount - previousEmailCount;
-          setNewEmailsCount(newCount);
-
-          // Clear the notification after 5 seconds
-          setTimeout(() => setNewEmailsCount(0), 5000);
-        }
-
-        setEmails(result.emails);
-        setPreviousEmailCount(currentCount);
+      
+      // Fetch unscreened emails
+      const emailsResult = await getUnscreenedEmails();
+      if (emailsResult.success) {
+        setEmails(emailsResult.emails);
         setError(null);
       } else {
-        setError(result.error || 'Failed to fetch emails');
+        setError(emailsResult.error || 'Failed to fetch emails');
+      }
+
+      // Fetch custom folders
+      const foldersResult = await getCustomFolders();
+      if (foldersResult.success) {
+        setCustomFolders(foldersResult.folders);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -52,86 +52,156 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
     }
   };
 
-  // Fetch emails on mount and when sync completes
+  // Fetch data on mount and when sync completes
   useEffect(() => {
-    fetchScreenerEmails();
-  }, [syncCount]); // Re-fetch when sync count changes
+    fetchScreenerData();
+  }, [syncCount]);
 
-  // Manual refresh handler
-  const handleRefresh = async () => {
-    await triggerSync();
-    await fetchScreenerEmails();
+  // Get user ID from first email
+  useEffect(() => {
+    if (emails.length > 0 && emails[0].accountId) {
+      // We'll need to get userId from the account
+      // For now, use a placeholder - you should fetch the actual userId
+      setUserId(accountId);
+    }
+  }, [emails, accountId]);
+
+  const handleDecision = async (
+    emailId: string,
+    decision: 'inbox' | 'newsfeed' | 'receipts' | 'spam' | string
+  ) => {
+    try {
+      // Call server action to update email category
+      const result = await screenEmail(emailId, decision);
+      
+      if (result.success) {
+        toast.success(`Email moved to ${decision}`);
+        
+        // Move to next email
+        setCurrentEmailIndex((prev) => prev + 1);
+        
+        // If we've screened all emails, refresh the list
+        if (currentEmailIndex >= emails.length - 1) {
+          await fetchScreenerData();
+          setCurrentEmailIndex(0);
+        }
+      } else {
+        toast.error(result.error || 'Failed to screen email');
+      }
+    } catch (error) {
+      console.error('Error screening email:', error);
+      toast.error('Failed to screen email');
+    }
   };
 
+  const handleRefresh = async () => {
+    await triggerSync();
+    await fetchScreenerData();
+    setCurrentEmailIndex(0);
+  };
+
+  // Current email to display
+  const currentEmail = emails[currentEmailIndex];
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Auto-sync status indicator */}
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-orange-50 to-red-50">
+    <div className="flex flex-col h-full bg-gray-50/50 dark:bg-black/50">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🔍</span>
-            <div>
-              <h2 className="text-lg font-semibold text-orange-800">
-                Screener
-              </h2>
-              <p className="text-sm text-orange-600">
-                AI-powered email screening
-              </p>
-            </div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-orange-500 to-red-500 text-white text-2xl">
+            🔍
           </div>
-
-          {/* New emails notification */}
-          {newEmailsCount > 0 && (
-            <div className="flex items-center gap-2 bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium animate-pulse">
-              <span>🔍</span>
-              <span>
-                {newEmailsCount} email{newEmailsCount > 1 ? 's' : ''} need
-                screening
-              </span>
-            </div>
-          )}
-
-          {/* Sync status indicator */}
-          <div className="flex items-center gap-2">
-            {isSyncing ? (
-              <div className="flex items-center gap-2 text-orange-600">
-                <div className="w-3 h-3 border-2 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-sm">AI screening...</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-green-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm">
-                  Screening active
-                  {lastSyncAt && (
-                    <span className="text-gray-500 ml-1">
-                      (last: {lastSyncAt.toLocaleTimeString()})
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Screener
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {emails.length} email{emails.length !== 1 ? 's' : ''} to screen
+            </p>
           </div>
         </div>
 
-        {/* Manual refresh button */}
-        <button
-          onClick={handleRefresh}
-          disabled={isSyncing}
-          className="px-3 py-1 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSyncing ? 'Screening...' : 'Refresh Screener'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Sync status */}
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+            {isSyncing ? (
+              <>
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Syncing...
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  Up to date
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Refresh button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isSyncing}
+            className="px-4 py-2 text-sm font-medium bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSyncing ? 'Syncing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
-      {/* Email list */}
-      <div className="flex-1 overflow-hidden">
-        <EmailList
-          emails={emails}
-          title="Screener"
-          isLoading={isLoading}
-          error={error}
-        />
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">
+                Loading emails...
+              </p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+              <button
+                onClick={handleRefresh}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        ) : emails.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="text-6xl mb-4">✅</div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                All Caught Up!
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                No emails need screening right now
+              </p>
+            </div>
+          </div>
+        ) : currentEmail ? (
+          <div className="max-w-5xl mx-auto">
+            <div className="mb-4 text-center">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Email {currentEmailIndex + 1} of {emails.length}
+              </span>
+            </div>
+            <ScreenerCard
+              email={currentEmail}
+              userId={userId}
+              customFolders={customFolders}
+              onDecision={handleDecision}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   );
