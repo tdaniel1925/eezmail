@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Search } from 'lucide-react';
-import { TopBar } from '@/components/layout/TopBar';
 import { ExpandableEmailItem } from './ExpandableEmailItem';
 import type { Email } from '@/db/schema';
 
@@ -17,8 +16,6 @@ interface EmailListProps {
 
 export function EmailList({
   emails,
-  title = 'Inbox',
-  subtitle,
   isLoading = false,
   error,
 }: EmailListProps): JSX.Element {
@@ -33,9 +30,6 @@ export function EmailList({
         .includes(searchQuery.toLowerCase())
   );
 
-  const unreadCount = emails.filter((email) => email.unread).length;
-  const defaultSubtitle = subtitle || `${unreadCount} new emails from approved senders`;
-
   const handleEmailAction = (action: string, emailId: string): void => {
     console.log(`Action: ${action}, Email ID: ${emailId}`);
     // TODO: Implement email actions
@@ -43,9 +37,6 @@ export function EmailList({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Top Bar */}
-      <TopBar title={title} subtitle={defaultSubtitle} />
-
       {/* Search Bar */}
       <div
         className="px-8 py-4 border-b transition-colors duration-300"
@@ -83,10 +74,11 @@ export function EmailList({
             style={{ color: 'var(--text-secondary)' }}
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-4 rounded-full animate-spin"
+              <div
+                className="w-8 h-8 border-4 rounded-full animate-spin"
                 style={{
                   borderColor: 'var(--accent-blue)',
-                  borderTopColor: 'transparent'
+                  borderTopColor: 'transparent',
                 }}
               />
               <div>Loading emails...</div>

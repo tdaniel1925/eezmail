@@ -30,12 +30,10 @@ git checkout redesign-dark-slate
   - Light mode colors: white backgrounds, gray text, blue accents
   - Dark mode colors: slate backgrounds (#0f172a, #1e293b, #334155), white text, blue accents
   - All colors use CSS variables for instant theme switching
-  
 - **Theme Provider** using next-themes:
   - Defaults to dark mode
   - Smooth transitions between themes (300ms)
   - Persistent theme preference in localStorage
-  
 - **ThemeToggle Component**:
   - Located in top bar of every page
   - Shows current theme with icon
@@ -51,7 +49,6 @@ git checkout redesign-dark-slate
   - Two-column layout (Sidebar | Full-width Content)
   - Removed unnecessary complexity
   - Uses CSS variables throughout
-  
 - **Redesigned Sidebar**:
   - Dark gradient background (from #0f172a to #1e293b)
   - White text with semi-transparent backgrounds
@@ -62,7 +59,6 @@ git checkout redesign-dark-slate
   - Active state: white/25 background
   - Hover state: white/15 background with smooth transitions
   - Blue badges for unread counts
-  
 - **New TopBar Component**:
   - Page title and subtitle
   - Theme toggle button on the right
@@ -79,14 +75,12 @@ git checkout redesign-dark-slate
     - Tags (Important, AI Ready, etc.)
     - Unread indicator (blue dot)
     - Expand icon (chevron down)
-  
   - **Expanded state adds**:
     - Action buttons (Delete, Archive, Reply Later, Reply)
     - AI Summary box (when applicable)
     - Full email body with proper HTML rendering
     - Attachments section with file cards
     - Smooth expand/collapse animation
-  
   - **Interactive features**:
     - Click anywhere to expand/collapse
     - Auto-marks as read when expanded
@@ -103,7 +97,6 @@ git checkout redesign-dark-slate
     - Dark background with blue border
     - Hover: lighter background + translate up
     - Click: triggers reply action
-  
 - **Updated EmailList Component**:
   - Uses TopBar for title and subtitle
   - Search bar with themed styling
@@ -130,6 +123,7 @@ Because we updated the core components (EmailLayout, EmailList, Sidebar), **all 
 - ✅ Custom Folders
 
 **Other pages** (Contacts, Calendar, Settings) also use EmailLayout, so they:
+
 - Get the themed Sidebar
 - Get the dark/light mode switching
 - Work seamlessly with the new design
@@ -141,6 +135,7 @@ Because we updated the core components (EmailLayout, EmailList, Sidebar), **all 
 ### Color Scheme
 
 **Dark Mode (Default)**:
+
 - Primary BG: #0f172a (slate-900)
 - Secondary BG: #1e293b (slate-800)
 - Tertiary BG: #334155 (slate-700)
@@ -149,6 +144,7 @@ Because we updated the core components (EmailLayout, EmailList, Sidebar), **all 
 - Accent Blue: #3b82f6 (blue-500)
 
 **Light Mode**:
+
 - Primary BG: #ffffff (white)
 - Secondary BG: #f8fafc (gray-50)
 - Tertiary BG: #e2e8f0 (gray-200)
@@ -236,19 +232,19 @@ src/
 ## 🚀 Next Steps
 
 1. **Test the redesign**:
+
    ```bash
    npm run dev
    ```
+
    Visit http://localhost:3000 and navigate through all pages
 
 2. **If you like it**:
    - Merge redesign-dark-slate into main/master
    - Deploy to production
-   
 3. **If changes needed**:
    - Make adjustments on redesign-dark-slate branch
    - Commit and test again
-   
 4. **If you don't like it**:
    - Switch back to glassmorphic-redesign branch
    - The old design is completely preserved
@@ -313,6 +309,7 @@ Edit `src/app/globals.css` and change the CSS variables in `:root` and `.dark`
 Components use Tailwind's `transition-all` and `duration-XXX` classes
 
 **If you want to add more theme colors**:
+
 1. Add to CSS variables in globals.css
 2. Use `var(--your-color)` or `[var(--your-color)]` in Tailwind
 
@@ -326,8 +323,8 @@ It's ~330 lines but handles all email display logic. Could be split into sub-com
 **Branch**: `redesign-dark-slate`
 
 **Commits**:
+
 - `feat: dark slate redesign - theme system, sidebar, expandable emails`
 - `fix: update Sidebar compose button styling`
 
 **Ready for**: User testing and feedback
-
