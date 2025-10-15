@@ -77,13 +77,20 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
       if (result.success) {
         toast.success(`Email moved to ${decision}`);
         
-        // Move to next email
-        setCurrentEmailIndex((prev) => prev + 1);
+        // Remove the screened email from the list immediately
+        const updatedEmails = emails.filter(email => email.id !== emailId);
+        setEmails(updatedEmails);
         
-        // If we've screened all emails, refresh the list
-        if (currentEmailIndex >= emails.length - 1) {
+        // If no more emails, fetch fresh data
+        if (updatedEmails.length === 0) {
           await fetchScreenerData();
           setCurrentEmailIndex(0);
+        } else {
+          // Stay on current index (which now shows the next email)
+          // If we're at the end, go back one
+          if (currentEmailIndex >= updatedEmails.length) {
+            setCurrentEmailIndex(Math.max(0, updatedEmails.length - 1));
+          }
         }
       } else {
         toast.error(result.error || 'Failed to screen email');
