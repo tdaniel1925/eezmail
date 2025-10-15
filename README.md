@@ -1,11 +1,11 @@
-# Imbox - AI-Powered Email Client
+# eezMail - AI-Powered Email Client
 
 Transform inbox chaos into actionable intelligence with AI-first email management.
 
 ## 🚀 Features
 
 - **AI-Powered Email Screening** - Only see emails from approved senders
-- **Smart Classification** - AI automatically sorts emails into Imbox, Feed, and Paper Trail
+- **Smart Classification** - AI automatically sorts emails into eezMail, Feed, and Paper Trail
 - **Instant AI Insights** - Hover for AI summaries and quick replies
 - **Dual Payment Processing** - Accept payments via Stripe or Square
 - **Universal Compatibility** - Works with Gmail, Outlook, Yahoo, and any IMAP/SMTP provider
@@ -149,7 +149,7 @@ This is a proprietary project. Contact the maintainers for contribution guidelin
 
 ## 📄 License
 
-Copyright © 2025 Imbox. All rights reserved.
+Copyright © 2025 eezMail. All rights reserved.
 
 ## 🆘 Support
 

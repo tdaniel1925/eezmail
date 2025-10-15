@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 
 interface CheckoutFormProps {
   planId: string;
@@ -30,15 +31,18 @@ export function CheckoutForm({
       const data = await response.json();
 
       if (data.error) {
-        alert(data.error);
+        toast.error(data.error);
         return;
       }
 
+      toast.success('Subscription created! Redirecting...');
       // Redirect to success page or refresh
-      window.location.href = '/dashboard?success=true';
+      setTimeout(() => {
+        window.location.href = '/dashboard?success=true';
+      }, 1000);
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to create subscription');
+      toast.error('Failed to create subscription');
     } finally {
       setLoading(false);
     }

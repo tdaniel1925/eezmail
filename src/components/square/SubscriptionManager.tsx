@@ -1,12 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { toast, confirmDialog } from '@/lib/toast';
 
 export function SubscriptionManager() {
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel your subscription?')) {
+    const confirmed = await confirmDialog(
+      'Are you sure you want to cancel your subscription?'
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -20,15 +24,15 @@ export function SubscriptionManager() {
       const data = await response.json();
 
       if (data.error) {
-        alert(data.error);
+        toast.error(data.error);
         return;
       }
 
-      alert('Subscription canceled successfully');
-      window.location.reload();
+      toast.success('Subscription canceled successfully');
+      setTimeout(() => window.location.reload(), 1500);
     } catch (error) {
       console.error('Cancel error:', error);
-      alert('Failed to cancel subscription');
+      toast.error('Failed to cancel subscription');
     } finally {
       setLoading(false);
     }

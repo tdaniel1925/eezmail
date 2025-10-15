@@ -44,7 +44,7 @@ export type PlanTier = keyof typeof STRIPE_PLANS;
 
 export function getPlanByPriceId(priceId: string): PlanTier | null {
   const entry = Object.entries(STRIPE_PLANS).find(
-    ([_, plan]) => plan.priceId === priceId
+    ([, plan]) => plan.priceId === priceId
   );
   return entry ? (entry[0] as PlanTier) : null;
 }

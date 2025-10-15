@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { toast } from '@/lib/toast';
 
 export function CustomerPortal() {
   const [loading, setLoading] = useState(false);
@@ -16,11 +17,14 @@ export function CustomerPortal() {
       const { url } = await response.json();
 
       if (url) {
+        toast.loading('Opening customer portal...');
         window.location.href = url;
+      } else {
+        toast.error('Failed to open customer portal');
       }
     } catch (error) {
       console.error('Portal error:', error);
-      alert('Failed to open customer portal');
+      toast.error('Failed to open customer portal');
     } finally {
       setLoading(false);
     }

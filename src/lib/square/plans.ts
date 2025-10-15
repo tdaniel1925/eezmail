@@ -44,7 +44,7 @@ export type PlanTier = keyof typeof SQUARE_PLANS;
 
 export function getPlanByPlanId(planId: string): PlanTier | null {
   const entry = Object.entries(SQUARE_PLANS).find(
-    ([_, plan]) => plan.planId === planId
+    ([, plan]) => plan.planId === planId
   );
   return entry ? (entry[0] as PlanTier) : null;
 }

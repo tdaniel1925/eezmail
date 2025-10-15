@@ -52,8 +52,21 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          NEXT_PUBLIC_SQUARE_APPLICATION_ID: ${{ secrets.NEXT_PUBLIC_SQUARE_APPLICATION_ID }}
-          NEXT_PUBLIC_APP_URL: https://imbox.app
+          # Public variables - These are embedded in the client bundle at build time
+          # Configure these in GitHub repo: Settings > Secrets and variables > Actions > Variables
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder' }}
+          NEXT_PUBLIC_SQUARE_APPLICATION_ID: ${{ vars.NEXT_PUBLIC_SQUARE_APPLICATION_ID || 'sq0idp-placeholder' }}
+          NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL || 'https://imbox.app' }}
+
+          # Server secrets - These should NEVER be exposed to the client
+          # Configure these in GitHub repo: Settings > Secrets and variables > Actions > Secrets
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key' }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_placeholder' }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder' }}
+          SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_ACCESS_TOKEN || 'placeholder-square-token' }}
+          SQUARE_WEBHOOK_SIGNATURE_KEY: ${{ secrets.SQUARE_WEBHOOK_SIGNATURE_KEY || 'placeholder-signature' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'placeholder-openai-key' }}
+          NYLAS_CLIENT_ID: ${{ secrets.NYLAS_CLIENT_ID || 'placeholder-nylas-id' }}
+          NYLAS_API_KEY: ${{ secrets.NYLAS_API_KEY || 'placeholder-nylas-key' }}

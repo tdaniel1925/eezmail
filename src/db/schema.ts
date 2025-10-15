@@ -95,6 +95,22 @@ export const emailModeEnum = pgEnum('email_mode', [
   'hybrid',
 ]);
 
+// Email Category Enums
+export const emailCategoryEnum = pgEnum('email_category', [
+  'unscreened',
+  'inbox',
+  'newsfeed',
+  'receipts',
+  'spam',
+  'archived',
+]);
+
+export const senderTrustLevelEnum = pgEnum('sender_trust_level', [
+  'trusted',
+  'unknown',
+  'spam',
+]);
+
 // Sync Enums
 export const syncTypeEnum = pgEnum('sync_type', [
   'full',
@@ -108,6 +124,57 @@ export const syncStatusEnum = pgEnum('sync_status', [
   'in_progress',
   'completed',
   'failed',
+]);
+
+export const emailSyncStatusEnum = pgEnum('email_sync_status', [
+  'idle',
+  'syncing',
+  'paused',
+  'error',
+  'success',
+]);
+
+export const syncJobTypeEnum = pgEnum('sync_job_type', [
+  'full',
+  'incremental',
+  'selective',
+  'webhook_triggered',
+]);
+
+// Email Rules Enums
+export const ruleConditionFieldEnum = pgEnum('rule_condition_field', [
+  'from',
+  'to',
+  'cc',
+  'subject',
+  'body',
+  'has_attachment',
+  'is_starred',
+  'is_important',
+]);
+
+export const ruleConditionOperatorEnum = pgEnum('rule_condition_operator', [
+  'contains',
+  'not_contains',
+  'equals',
+  'not_equals',
+  'starts_with',
+  'ends_with',
+  'matches_regex',
+  'is_true',
+  'is_false',
+]);
+
+export const ruleActionTypeEnum = pgEnum('rule_action_type', [
+  'move_to_folder',
+  'add_label',
+  'star',
+  'mark_as_read',
+  'mark_as_important',
+  'delete',
+  'archive',
+  'forward_to',
+  'mark_as_spam',
 ]);
 
 // ============================================================================
@@ -227,6 +294,16 @@ export const emailAccounts = pgTable(
     lastSyncError: text('last_sync_error'),
     syncCursor: text('sync_cursor'),
 
+    // Enhanced sync tracking
+    syncStatus: emailSyncStatusEnum('sync_status').default('idle'),
+    syncProgress: integer('sync_progress').default(0),
+    syncTotal: integer('sync_total').default(0),
+    lastSuccessfulSyncAt: timestamp('last_successful_sync_at'),
+    nextScheduledSyncAt: timestamp('next_scheduled_sync_at'),
+    errorCount: integer('error_count').default(0),
+    consecutiveErrors: integer('consecutive_errors').default(0),
+    syncPriority: integer('sync_priority').default(2), // 0=immediate, 1=high, 2=normal, 3=low, 4=background
+
     // Settings
     signature: text('signature'),
     replyToEmail: varchar('reply_to_email', { length: 255 }),
@@ -278,6 +355,7 @@ export const emails = pgTable(
     // Email content
     bodyText: text('body_text'),
     bodyHtml: text('body_html'),
+    hasInlineImages: boolean('has_inline_images').default(false),
 
     // Metadata
     receivedAt: timestamp('received_at').notNull(),
@@ -286,7 +364,6 @@ export const emails = pgTable(
     // Flags
     isRead: boolean('is_read').default(false).notNull(),
     isStarred: boolean('is_starred').default(false).notNull(),
-    isImportant: boolean('is_important').default(false).notNull(),
     isDraft: boolean('is_draft').default(false).notNull(),
     hasDrafts: boolean('has_drafts').default(false).notNull(),
     hasAttachments: boolean('has_attachments').default(false).notNull(),
@@ -295,6 +372,11 @@ export const emails = pgTable(
     folderName: text('folder_name'),
     labelIds: text('label_ids').array(),
 
+    // Email categorization
+    emailCategory: emailCategoryEnum('email_category').default('unscreened'),
+    screenedAt: timestamp('screened_at'),
+    screenedBy: text('screened_by'), // 'user' or 'ai_rule'
+
     // Hey-inspired features
     screeningStatus: screeningStatusEnum('screening_status').default('pending'),
     heyView: heyViewEnum('hey_view'),
@@ -302,6 +384,19 @@ export const emails = pgTable(
     replyLaterUntil: timestamp('reply_later_until'),
     replyLaterNote: text('reply_later_note'),
     setAsideAt: timestamp('set_aside_at'),
+
+    // Additional flags for workflow
+    isImportant: boolean('is_important').default(false),
+    needsReply: boolean('needs_reply').default(false),
+    isSetAside: boolean('is_set_aside').default(false),
+
+    // Custom folder assignment
+    customFolderId: uuid('custom_folder_id').references(
+      () => customFolders.id,
+      {
+        onDelete: 'set null',
+      }
+    ),
 
     // Privacy
     trackersBlocked: integer('trackers_blocked').default(0),
@@ -331,8 +426,66 @@ export const emails = pgTable(
     ),
     heyViewIdx: index('emails_hey_view_idx').on(table.heyView),
     messageIdIdx: index('emails_message_id_idx').on(table.messageId),
+    emailCategoryIdx: index('emails_email_category_idx').on(
+      table.emailCategory
+    ),
+    isImportantIdx: index('emails_is_important_idx').on(table.isImportant),
+    needsReplyIdx: index('emails_needs_reply_idx').on(table.needsReply),
+    isSetAsideIdx: index('emails_is_set_aside_idx').on(table.isSetAside),
   })
 );
+
+// ============================================================================
+// EMAIL FOLDERS TABLE
+// ============================================================================
+
+export const emailFolders = pgTable('email_folders', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  accountId: uuid('account_id')
+    .notNull()
+    .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  externalId: text('external_id').notNull().unique(),
+  type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
+  parentId: uuid('parent_id'), // For nested folders
+  unreadCount: integer('unread_count').default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export type EmailFolder = typeof emailFolders.$inferSelect;
+export type NewEmailFolder = typeof emailFolders.$inferInsert;
+
+// ============================================================================
+// SENDER TRUST TABLE
+// ============================================================================
+
+export const senderTrust = pgTable(
+  'sender_trust',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    senderEmail: text('sender_email').notNull(),
+    trustLevel: senderTrustLevelEnum('trust_level').default('unknown'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('sender_trust_user_id_idx').on(table.userId),
+    senderEmailIdx: index('sender_trust_sender_email_idx').on(
+      table.senderEmail
+    ),
+    trustLevelIdx: index('sender_trust_trust_level_idx').on(table.trustLevel),
+  })
+);
+
+export type SenderTrust = typeof senderTrust.$inferSelect;
+export type NewSenderTrust = typeof senderTrust.$inferInsert;
 
 // ============================================================================
 // EMAIL THREADS TABLE
@@ -491,6 +644,11 @@ export const emailContacts = pgTable(
     screeningStatus: screeningStatusEnum('screening_status').default('pending'),
     screeningDecision: heyViewEnum('screening_decision'),
     screenedAt: timestamp('screened_at'),
+    contactStatus: contactStatusEnum('contact_status').default('unknown'),
+    heyView: heyViewEnum('hey_view'),
+    assignedFolder: uuid('assigned_folder').references(() => customFolders.id, {
+      onDelete: 'set null',
+    }),
 
     // Stats
     emailCount: integer('email_count').default(0).notNull(),
@@ -584,6 +742,471 @@ export const emailSettings = pgTable('email_settings', {
 });
 
 // ============================================================================
+// CUSTOM FOLDERS TABLE
+// ============================================================================
+
+export const customFolders = pgTable(
+  'custom_folders',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    icon: text('icon').default('📁'),
+    color: varchar('color', { length: 20 }).default('gray'),
+    sortOrder: integer('sort_order').default(0).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('custom_folders_user_id_idx').on(table.userId),
+    userNameIdx: index('custom_folders_user_name_idx').on(
+      table.userId,
+      table.name
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACTS SYSTEM ENUMS
+// ============================================================================
+
+export const contactSourceTypeEnum = pgEnum('contact_source_type', [
+  'manual',
+  'synced',
+]);
+
+export const contactEmailTypeEnum = pgEnum('contact_email_type', [
+  'work',
+  'personal',
+  'other',
+]);
+
+export const contactPhoneTypeEnum = pgEnum('contact_phone_type', [
+  'mobile',
+  'work',
+  'home',
+  'other',
+]);
+
+export const contactAddressTypeEnum = pgEnum('contact_address_type', [
+  'work',
+  'home',
+  'other',
+]);
+
+export const contactSocialPlatformEnum = pgEnum('contact_social_platform', [
+  'linkedin',
+  'twitter',
+  'facebook',
+  'instagram',
+  'github',
+  'other',
+]);
+
+export const contactFieldTypeEnum = pgEnum('contact_field_type', [
+  'text',
+  'number',
+  'date',
+  'url',
+]);
+
+// ============================================================================
+// CONTACTS TABLE
+// ============================================================================
+
+export const contacts = pgTable(
+  'contacts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Basic info
+    firstName: varchar('first_name', { length: 100 }),
+    lastName: varchar('last_name', { length: 100 }),
+    displayName: varchar('display_name', { length: 200 }),
+    nickname: varchar('nickname', { length: 100 }),
+
+    // Work info
+    company: varchar('company', { length: 200 }),
+    jobTitle: varchar('job_title', { length: 200 }),
+    department: varchar('department', { length: 100 }),
+
+    // Personal info
+    birthday: timestamp('birthday'),
+    notes: text('notes'),
+
+    // Avatar
+    avatarUrl: text('avatar_url'),
+    avatarProvider: varchar('avatar_provider', { length: 50 }), // google/microsoft/manual
+
+    // Source tracking
+    sourceType: contactSourceTypeEnum('source_type').default('manual'),
+    sourceProvider: varchar('source_provider', { length: 50 }), // gmail/microsoft
+    sourceId: text('source_id'), // provider's contact ID
+
+    // Status
+    isFavorite: boolean('is_favorite').default(false).notNull(),
+    isArchived: boolean('is_archived').default(false).notNull(),
+
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastContactedAt: timestamp('last_contacted_at'),
+  },
+  (table) => ({
+    userIdIdx: index('contacts_user_id_idx').on(table.userId),
+    firstNameIdx: index('contacts_first_name_idx').on(table.firstName),
+    lastNameIdx: index('contacts_last_name_idx').on(table.lastName),
+    companyIdx: index('contacts_company_idx').on(table.company),
+    isFavoriteIdx: index('contacts_is_favorite_idx').on(table.isFavorite),
+    isArchivedIdx: index('contacts_is_archived_idx').on(table.isArchived),
+    lastContactedAtIdx: index('contacts_last_contacted_at_idx').on(
+      table.lastContactedAt
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT EMAILS TABLE
+// ============================================================================
+
+export const contactEmails = pgTable(
+  'contact_emails',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    email: varchar('email', { length: 255 }).notNull(),
+    type: contactEmailTypeEnum('type').default('other'),
+    isPrimary: boolean('is_primary').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_emails_contact_id_idx').on(table.contactId),
+    emailIdx: index('contact_emails_email_idx').on(table.email),
+    isPrimaryIdx: index('contact_emails_is_primary_idx').on(table.isPrimary),
+  })
+);
+
+// ============================================================================
+// CONTACT PHONES TABLE
+// ============================================================================
+
+export const contactPhones = pgTable(
+  'contact_phones',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    phone: varchar('phone', { length: 50 }).notNull(),
+    type: contactPhoneTypeEnum('type').default('other'),
+    isPrimary: boolean('is_primary').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_phones_contact_id_idx').on(table.contactId),
+    phoneIdx: index('contact_phones_phone_idx').on(table.phone),
+  })
+);
+
+// ============================================================================
+// CONTACT ADDRESSES TABLE
+// ============================================================================
+
+export const contactAddresses = pgTable(
+  'contact_addresses',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    street: text('street'),
+    city: varchar('city', { length: 100 }),
+    state: varchar('state', { length: 100 }),
+    zipCode: varchar('zip_code', { length: 20 }),
+    country: varchar('country', { length: 100 }),
+    type: contactAddressTypeEnum('type').default('other'),
+    isPrimary: boolean('is_primary').default(false).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_addresses_contact_id_idx').on(table.contactId),
+  })
+);
+
+// ============================================================================
+// CONTACT SOCIAL LINKS TABLE
+// ============================================================================
+
+export const contactSocialLinks = pgTable(
+  'contact_social_links',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    platform: contactSocialPlatformEnum('platform').notNull(),
+    url: text('url').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_social_links_contact_id_idx').on(
+      table.contactId
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT TAGS TABLE
+// ============================================================================
+
+export const contactTags = pgTable(
+  'contact_tags',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 50 }).notNull(),
+    color: varchar('color', { length: 20 }).default('blue'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('contact_tags_user_id_idx').on(table.userId),
+    nameIdx: index('contact_tags_name_idx').on(table.name),
+  })
+);
+
+// ============================================================================
+// CONTACT TAG ASSIGNMENTS TABLE
+// ============================================================================
+
+export const contactTagAssignments = pgTable(
+  'contact_tag_assignments',
+  {
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    tagId: uuid('tag_id')
+      .notNull()
+      .references(() => contactTags.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_tag_assignments_contact_id_idx').on(
+      table.contactId
+    ),
+    tagIdIdx: index('contact_tag_assignments_tag_id_idx').on(table.tagId),
+    // Composite primary key
+    pk: {
+      name: 'contact_tag_assignments_pk',
+      columns: [table.contactId, table.tagId],
+    },
+  })
+);
+
+// ============================================================================
+// CONTACT CUSTOM FIELDS TABLE
+// ============================================================================
+
+export const contactCustomFields = pgTable(
+  'contact_custom_fields',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    fieldName: varchar('field_name', { length: 100 }).notNull(),
+    fieldValue: text('field_value'),
+    fieldType: contactFieldTypeEnum('field_type').default('text'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_custom_fields_contact_id_idx').on(
+      table.contactId
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT NOTES TABLE
+// ============================================================================
+
+export const contactNotes = pgTable(
+  'contact_notes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_notes_contact_id_idx').on(table.contactId),
+    userIdIdx: index('contact_notes_user_id_idx').on(table.userId),
+    createdAtIdx: index('contact_notes_created_at_idx').on(table.createdAt),
+  })
+);
+
+// ============================================================================
+// SYNC JOBS TABLE
+// ============================================================================
+
+export const syncJobs = pgTable(
+  'sync_jobs',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Job details
+    jobType: syncJobTypeEnum('job_type').notNull().default('incremental'),
+    status: syncStatusEnum('status').notNull().default('pending'),
+    priority: integer('priority').default(2).notNull(), // 0=immediate, 1=high, 2=normal, 3=low, 4=background
+
+    // Progress tracking
+    progress: integer('progress').default(0),
+    total: integer('total').default(0),
+
+    // Timing
+    scheduledFor: timestamp('scheduled_for'),
+    startedAt: timestamp('started_at'),
+    completedAt: timestamp('completed_at'),
+
+    // Error handling
+    errorMessage: text('error_message'),
+    retryCount: integer('retry_count').default(0),
+    maxRetries: integer('max_retries').default(5),
+
+    // Metadata
+    metadata: jsonb('metadata').$type<{
+      folders?: string[];
+      since?: string;
+      limit?: number;
+      cursor?: string;
+    }>(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    accountIdIdx: index('sync_jobs_account_id_idx').on(table.accountId),
+    userIdIdx: index('sync_jobs_user_id_idx').on(table.userId),
+    statusIdx: index('sync_jobs_status_idx').on(table.status),
+    priorityIdx: index('sync_jobs_priority_idx').on(table.priority),
+    scheduledForIdx: index('sync_jobs_scheduled_for_idx').on(
+      table.scheduledFor
+    ),
+  })
+);
+
+// Email Signatures Table
+export const emailSignatures = pgTable(
+  'email_signatures',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Signature details
+    name: text('name').notNull(),
+    htmlContent: text('html_content').notNull(),
+    textContent: text('text_content'),
+
+    // Settings
+    isDefault: boolean('is_default').default(false).notNull(),
+    isEnabled: boolean('is_enabled').default(true).notNull(),
+
+    // Account association (null = all accounts)
+    accountId: uuid('account_id').references(() => emailAccounts.id, {
+      onDelete: 'cascade',
+    }),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('email_signatures_user_id_idx').on(table.userId),
+    accountIdIdx: index('email_signatures_account_id_idx').on(table.accountId),
+  })
+);
+
+// Email Rules Table
+export const emailRules = pgTable(
+  'email_rules',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id').references(() => emailAccounts.id, {
+      onDelete: 'cascade',
+    }),
+
+    // Rule details
+    name: text('name').notNull(),
+    description: text('description'),
+
+    // Conditions (stored as JSON)
+    conditions: jsonb('conditions')
+      .$type<{
+        logic: 'AND' | 'OR';
+        rules: Array<{
+          field: string;
+          operator: string;
+          value: string | boolean | number;
+        }>;
+      }>()
+      .notNull(),
+
+    // Actions (stored as JSON)
+    actions: jsonb('actions')
+      .$type<
+        Array<{
+          type: string;
+          value?: string | boolean;
+        }>
+      >()
+      .notNull(),
+
+    // Settings
+    isEnabled: boolean('is_enabled').default(true).notNull(),
+    priority: integer('priority').default(0).notNull(), // Lower number = higher priority
+    stopProcessing: boolean('stop_processing').default(false).notNull(), // Stop processing rules after this one matches
+
+    // Stats
+    timesTriggered: integer('times_triggered').default(0).notNull(),
+    lastTriggered: timestamp('last_triggered'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('email_rules_user_id_idx').on(table.userId),
+    accountIdIdx: index('email_rules_account_id_idx').on(table.accountId),
+    priorityIdx: index('email_rules_priority_idx').on(table.priority),
+    isEnabledIdx: index('email_rules_is_enabled_idx').on(table.isEnabled),
+  })
+);
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -613,3 +1236,45 @@ export type NewEmailContact = typeof emailContacts.$inferInsert;
 
 export type EmailSetting = typeof emailSettings.$inferSelect;
 export type NewEmailSetting = typeof emailSettings.$inferInsert;
+
+export type CustomFolder = typeof customFolders.$inferSelect;
+export type NewCustomFolder = typeof customFolders.$inferInsert;
+
+export type Contact = typeof contacts.$inferSelect;
+export type NewContact = typeof contacts.$inferInsert;
+
+export type ContactEmail = typeof contactEmails.$inferSelect;
+export type NewContactEmail = typeof contactEmails.$inferInsert;
+
+export type ContactPhone = typeof contactPhones.$inferSelect;
+export type NewContactPhone = typeof contactPhones.$inferInsert;
+
+export type ContactAddress = typeof contactAddresses.$inferSelect;
+export type NewContactAddress = typeof contactAddresses.$inferInsert;
+
+export type ContactSocialLink = typeof contactSocialLinks.$inferSelect;
+export type NewContactSocialLink = typeof contactSocialLinks.$inferInsert;
+
+export type ContactTag = typeof contactTags.$inferSelect;
+export type NewContactTag = typeof contactTags.$inferInsert;
+
+export type ContactTagAssignment = typeof contactTagAssignments.$inferSelect;
+export type NewContactTagAssignment = typeof contactTagAssignments.$inferInsert;
+
+export type ContactCustomField = typeof contactCustomFields.$inferSelect;
+export type NewContactCustomField = typeof contactCustomFields.$inferInsert;
+
+export type ContactNote = typeof contactNotes.$inferSelect;
+export type NewContactNote = typeof contactNotes.$inferInsert;
+
+export type SyncJob = typeof syncJobs.$inferSelect;
+export type NewSyncJob = typeof syncJobs.$inferInsert;
+
+export type EmailSignature = typeof emailSignatures.$inferSelect;
+export type NewEmailSignature = typeof emailSignatures.$inferInsert;
+
+export type EmailRule = typeof emailRules.$inferSelect;
+export type NewEmailRule = typeof emailRules.$inferInsert;
+
+export type SenderTrust = typeof senderTrust.$inferSelect;
+export type NewSenderTrust = typeof senderTrust.$inferInsert;

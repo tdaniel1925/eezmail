@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
+import { toast } from '@/lib/toast';
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
@@ -37,15 +38,16 @@ export function CheckoutButton({
 
       if (!stripe) throw new Error('Stripe failed to load');
 
+      toast.loading('Redirecting to checkout...');
       const { error } = await stripe.redirectToCheckout({ sessionId });
 
       if (error) {
         console.error('Stripe checkout error:', error);
-        alert('Failed to redirect to checkout');
+        toast.error('Failed to redirect to checkout');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Failed to create checkout session');
+      toast.error('Failed to create checkout session');
     } finally {
       setLoading(false);
     }

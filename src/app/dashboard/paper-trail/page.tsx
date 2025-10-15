@@ -1,0 +1,186 @@
+'use client';
+
+import { EmailLayout } from '@/components/layout/EmailLayout';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { EmailList } from '@/components/email/EmailList';
+import type { Email } from '@/db/schema';
+// Mock Paper Trail email data - Receipts, confirmations, transactional emails
+const mockPaperTrailEmails: Email[] = [
+  {
+    id: 'paper-1',
+    messageId: 'msg-paper-1',
+    nylasMessageId: null,
+    providerMessageId: 'provider-paper-1',
+    accountId: 'account-1',
+    threadId: 'thread-paper-1',
+    subject: 'Your Amazon Order Confirmation',
+    fromAddress: {
+      name: 'Amazon',
+      email: 'auto-confirm@amazon.com',
+    },
+    toAddresses: [
+      {
+        name: 'You',
+        email: 'you@example.com',
+      },
+    ],
+    ccAddresses: null,
+    bccAddresses: null,
+    bodyText: 'Thank you for your order. Order #123-4567890...',
+    bodyHtml: '<p>Thank you for your order. Order #123-4567890...</p>',
+    snippet:
+      'Thank you for your order. Order #123-4567890 has been confirmed and will ship soon.',
+    receivedAt: new Date('2024-01-14T18:45:00'),
+    sentAt: new Date('2024-01-14T18:45:00'),
+    isRead: false,
+    isStarred: false,
+    hasAttachments: false,
+    labelIds: ['receipts', 'shopping'],
+    replyTo: null,
+    isImportant: false,
+    isDraft: false,
+    hasDrafts: false,
+    folderName: null,
+    screeningStatus: 'screened',
+    contactStatus: 'approved',
+    replyLaterNote: null,
+    heyView: 'paper_trail',
+    replyLaterUntil: null,
+    setAsideAt: null,
+    customFolderId: null,
+    aiSummary:
+      'Amazon order confirmation for $127.99. Expected delivery: Jan 18.',
+    aiCategory: 'receipts',
+    aiPriority: 'low',
+    aiSentiment: 'neutral',
+    aiQuickReplies: null,
+    aiSmartActions: null,
+    aiGeneratedAt: null,
+    trackersBlocked: 5,
+    searchVector: null,
+    createdAt: new Date('2024-01-14T18:45:00'),
+    updatedAt: new Date('2024-01-14T18:46:00'),
+  },
+  {
+    id: 'paper-2',
+    messageId: 'msg-paper-2',
+    nylasMessageId: null,
+    providerMessageId: 'provider-paper-2',
+    accountId: 'account-1',
+    threadId: 'thread-paper-2',
+    subject: 'Receipt from Starbucks',
+    fromAddress: {
+      name: 'Starbucks',
+      email: 'receipts@starbucks.com',
+    },
+    toAddresses: [
+      {
+        name: 'You',
+        email: 'you@example.com',
+      },
+    ],
+    ccAddresses: null,
+    bccAddresses: null,
+    bodyText: 'Thank you for your purchase at Starbucks...',
+    bodyHtml: '<p>Thank you for your purchase at Starbucks...</p>',
+    snippet: 'Thank you for your purchase at Starbucks. Total: $6.45',
+    receivedAt: new Date('2024-01-14T08:15:00'),
+    sentAt: new Date('2024-01-14T08:15:00'),
+    isRead: true,
+    isStarred: false,
+    hasAttachments: false,
+    labelIds: ['receipts'],
+    replyTo: null,
+    isImportant: false,
+    isDraft: false,
+    hasDrafts: false,
+    folderName: null,
+    screeningStatus: 'screened',
+    contactStatus: 'approved',
+    replyLaterNote: null,
+    heyView: 'paper_trail',
+    replyLaterUntil: null,
+    setAsideAt: null,
+    customFolderId: null,
+    aiSummary: 'Starbucks receipt for $6.45.',
+    aiCategory: 'receipts',
+    aiPriority: 'low',
+    aiSentiment: 'neutral',
+    aiQuickReplies: null,
+    aiSmartActions: null,
+    aiGeneratedAt: null,
+    trackersBlocked: 2,
+    searchVector: null,
+    createdAt: new Date('2024-01-14T08:15:00'),
+    updatedAt: new Date('2024-01-14T08:16:00'),
+  },
+  {
+    id: 'paper-3',
+    messageId: 'msg-paper-3',
+    nylasMessageId: null,
+    providerMessageId: 'provider-paper-3',
+    accountId: 'account-1',
+    threadId: 'thread-paper-3',
+    subject: 'Your Uber Trip Receipt',
+    fromAddress: {
+      name: 'Uber',
+      email: 'uber.us@uber.com',
+    },
+    toAddresses: [
+      {
+        name: 'You',
+        email: 'you@example.com',
+      },
+    ],
+    ccAddresses: null,
+    bccAddresses: null,
+    bodyText: 'Thanks for riding with Uber. Here is your receipt...',
+    bodyHtml: '<p>Thanks for riding with Uber. Here is your receipt...</p>',
+    snippet:
+      'Thanks for riding with Uber. Here is your receipt for your trip on Jan 13.',
+    receivedAt: new Date('2024-01-13T19:30:00'),
+    sentAt: new Date('2024-01-13T19:30:00'),
+    isRead: true,
+    isStarred: false,
+    hasAttachments: false,
+    labelIds: ['receipts', 'travel'],
+    replyTo: null,
+    isImportant: false,
+    isDraft: false,
+    hasDrafts: false,
+    folderName: null,
+    screeningStatus: 'screened',
+    contactStatus: 'approved',
+    replyLaterNote: null,
+    heyView: 'paper_trail',
+    replyLaterUntil: null,
+    setAsideAt: null,
+    customFolderId: null,
+    aiSummary: 'Uber trip receipt for $23.45.',
+    aiCategory: 'receipts',
+    aiPriority: 'low',
+    aiSentiment: 'neutral',
+    aiQuickReplies: null,
+    aiSmartActions: null,
+    aiGeneratedAt: null,
+    trackersBlocked: 3,
+    searchVector: null,
+    createdAt: new Date('2024-01-13T19:30:00'),
+    updatedAt: new Date('2024-01-13T19:31:00'),
+  },
+];
+
+export default function PaperTrailPage(): JSX.Element {
+  return (
+    <EmailLayout
+      sidebar={<Sidebar />}
+      emailList={
+        <EmailList
+          emails={mockPaperTrailEmails}
+          title="Paper Trail"
+          isLoading={false}
+        />
+      }
+    />
+  );
+}

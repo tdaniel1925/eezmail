@@ -1,124 +1,130 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Filter, RefreshCw } from 'lucide-react';
-import { EmailCard } from './EmailCard';
-import { cn } from '@/lib/utils';
+import { Search, Menu } from 'lucide-react';
+import { ExpandableEmailCard } from './ExpandableEmailCard';
+import { AIActionsModal } from './AIActionsModal';
 import type { Email } from '@/db/schema';
 
 interface EmailListProps {
   emails: Email[];
-  selectedEmailId?: string;
-  onEmailSelect: (emailId: string) => void;
   title?: string;
   isLoading?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export function EmailList({
   emails,
-  selectedEmailId,
-  onEmailSelect,
-  title = 'Imbox',
+  title = 'Inbox',
   isLoading = false,
+  onToggleSidebar,
 }: EmailListProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = async (): Promise<void> => {
-    setIsRefreshing(true);
-    // TODO: Implement email sync
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+  const [aiModalEmailId, setAiModalEmailId] = useState<string | null>(null);
 
   const filteredEmails = emails.filter(
     (email) =>
       email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      email.fromAddress.email.toLowerCase().includes(searchQuery.toLowerCase())
+      (email.fromAddress?.email || '')
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
+
+  const unreadCount = emails.filter((email) => !email.isRead).length;
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/5 backdrop-blur-md px-6 py-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">
+      {/* Combined Header */}
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        {/* Search Bar */}
+        <div className="px-4 py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1">
+              {onToggleSidebar && (
+                <button
+                  onClick={onToggleSidebar}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                  aria-label="Toggle sidebar"
+                >
+                  <Menu
+                    size={18}
+                    className="text-gray-600 dark:text-gray-400"
+                  />
+                </button>
+              )}
+              <div className="relative flex-1 max-w-xl">
+                <Search
+                  className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="Search emails..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Title Section */}
+        <div className="px-4 pb-3 flex items-baseline justify-between">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white">
             {title}
-          </h1>
-          <p className="text-sm text-white/60">
-            {filteredEmails.length} email
-            {filteredEmails.length !== 1 ? 's' : ''}
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {unreadCount} unread message{unreadCount !== 1 ? 's' : ''}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white disabled:opacity-50"
-            aria-label="Refresh emails"
-          >
-            <RefreshCw
-              className={cn('h-4 w-4', isRefreshing && 'animate-spin')}
-            />
-          </button>
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all duration-200 hover:bg-white/10 hover:text-white"
-            aria-label="Filter emails"
-          >
-            <Filter className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Search Bar */}
-      <div className="border-b border-white/10 bg-black/30 px-6 py-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
-          <input
-            type="text"
-            placeholder="Search emails..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-10 w-full rounded-lg border border-white/10 bg-white/5 backdrop-blur-md pl-10 pr-4 text-sm text-white placeholder-white/40 transition-all duration-200 focus:border-white/20 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/10"
-          />
-        </div>
-      </div>
+      </header>
 
       {/* Email List */}
-      <div className="flex-1 overflow-y-auto bg-black/50">
+      <div className="flex-1 bg-white dark:bg-gray-900 overflow-y-auto">
         {isLoading ? (
           <div className="flex h-64 items-center justify-center">
-            <div className="flex items-center gap-2 text-white/60">
-              <RefreshCw className="h-5 w-5 animate-spin" />
-              <span>Loading emails...</span>
+            <div className="text-gray-600 dark:text-gray-400">
+              Loading emails...
             </div>
           </div>
         ) : filteredEmails.length === 0 ? (
           <div className="flex h-64 flex-col items-center justify-center text-center">
             <div className="mb-2 text-4xl">📭</div>
-            <p className="text-lg font-medium text-white/80">
+            <p className="text-lg font-medium text-gray-800 dark:text-gray-200">
               No emails here
             </p>
-            <p className="text-sm text-white/50">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {searchQuery
                 ? 'No emails match your search'
                 : 'Your inbox is empty'}
             </p>
           </div>
         ) : (
-          <div className="space-y-px p-2">
-            {filteredEmails.map((email) => (
-              <EmailCard
-                key={email.id}
-                email={email}
-                isSelected={email.id === selectedEmailId}
-                onClick={() => onEmailSelect(email.id)}
-              />
-            ))}
-          </div>
+          filteredEmails.map((email) => (
+            <ExpandableEmailCard
+              key={email.id}
+              email={email}
+              isExpanded={expandedEmailId === email.id}
+              onToggle={() => {
+                setExpandedEmailId(
+                  expandedEmailId === email.id ? null : email.id
+                );
+                setAiModalEmailId(null);
+              }}
+              onOpenAIActions={() => setAiModalEmailId(email.id)}
+            />
+          ))
         )}
       </div>
+
+      {/* AI Actions Modal */}
+      <AIActionsModal
+        isOpen={aiModalEmailId !== null}
+        onClose={() => setAiModalEmailId(null)}
+        emailId={aiModalEmailId || ''}
+      />
     </div>
   );
 }

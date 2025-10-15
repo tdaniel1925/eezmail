@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { EmailLayout } from '@/components/layout/EmailLayout';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { EmailList } from '@/components/email/EmailList';
-import { EmailViewer } from '@/components/email/EmailViewer';
 import type { Email } from '@/db/schema';
 
 // Mock email data
@@ -52,6 +50,7 @@ const mockEmails: Email[] = [
     replyLaterUntil: null,
     replyLaterNote: null,
     setAsideAt: null,
+    customFolderId: null,
     trackersBlocked: 2,
     aiSummary:
       'John is requesting a meeting this Friday at 2 PM to discuss Q4 planning. He is asking for confirmation and any agenda items.',
@@ -117,6 +116,7 @@ const mockEmails: Email[] = [
     replyLaterUntil: null,
     replyLaterNote: null,
     setAsideAt: null,
+    customFolderId: null,
     trackersBlocked: 5,
     aiSummary:
       'Weekly newsletter with top tech stories covering AI, startups, and consumer technology.',
@@ -171,6 +171,7 @@ const mockEmails: Email[] = [
     replyLaterUntil: null,
     replyLaterNote: null,
     setAsideAt: null,
+    customFolderId: null,
     trackersBlocked: 3,
     aiSummary:
       'Shipping confirmation for Amazon order #123-4567890 with tracking information.',
@@ -187,23 +188,12 @@ const mockEmails: Email[] = [
 ];
 
 export default function DashboardPage(): JSX.Element {
-  const [selectedEmailId, setSelectedEmailId] = useState<string | undefined>();
-
-  const selectedEmail =
-    mockEmails.find((email) => email.id === selectedEmailId) || null;
-
   return (
     <EmailLayout
       sidebar={<Sidebar />}
       emailList={
-        <EmailList
-          emails={mockEmails}
-          selectedEmailId={selectedEmailId}
-          onEmailSelect={setSelectedEmailId}
-          title="Imbox"
-        />
+        <EmailList emails={mockEmails} title="Imbox" isLoading={false} />
       }
-      emailViewer={<EmailViewer email={selectedEmail} />}
     />
   );
 }
