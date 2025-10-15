@@ -5,18 +5,14 @@
 
 import Nylas from 'nylas';
 
-if (!process.env.NYLAS_API_KEY) {
-  throw new Error('Missing NYLAS_API_KEY environment variable');
-}
-
-if (!process.env.NYLAS_API_URI) {
-  throw new Error('Missing NYLAS_API_URI environment variable');
-}
+// Allow build without Nylas keys (will fail at runtime if actually used)
+const NYLAS_API_KEY = process.env.NYLAS_API_KEY || 'placeholder-key';
+const NYLAS_API_URI = process.env.NYLAS_API_URI || 'https://api.us.nylas.com';
 
 // Initialize Nylas client
 export const nylasClient = new Nylas({
-  apiKey: process.env.NYLAS_API_KEY,
-  apiUri: process.env.NYLAS_API_URI,
+  apiKey: NYLAS_API_KEY,
+  apiUri: NYLAS_API_URI,
 });
 
 /**
