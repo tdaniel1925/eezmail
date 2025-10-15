@@ -1,9 +1,6 @@
 'use client';
 
-// Force dynamic rendering (required for useSearchParams during build)
-export const dynamic = 'force-dynamic';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -123,7 +120,7 @@ const tabs: TabConfig[] = [
   },
 ];
 
-export default function SettingsPage(): JSX.Element {
+function SettingsPageContent(): JSX.Element {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
   const [isLoading, setIsLoading] = useState(true);
@@ -367,5 +364,20 @@ export default function SettingsPage(): JSX.Element {
         <div className="mx-auto max-w-4xl p-8">{renderTabContent()}</div>
       </main>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export default function SettingsPage(): JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      }
+    >
+      <SettingsPageContent />
+    </Suspense>
   );
 }

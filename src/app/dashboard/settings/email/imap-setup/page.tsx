@@ -1,9 +1,6 @@
 'use client';
 
-// Force dynamic rendering (required for useSearchParams during build)
-export const dynamic = 'force-dynamic';
-
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -20,7 +17,7 @@ import {
 import { toast } from '@/lib/toast';
 import { IMAP_PROVIDERS } from '@/lib/email/imap-providers';
 
-export default function IMAPSetupPage(): JSX.Element {
+function IMAPSetupPageContent(): JSX.Element {
   const searchParams = useSearchParams();
   const provider = searchParams.get('provider') || 'imap';
   const userId = searchParams.get('userId');
@@ -336,5 +333,20 @@ export default function IMAPSetupPage(): JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+// Wrapper component with Suspense boundary
+export default function IMAPSetupPage(): JSX.Element {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+        </div>
+      }
+    >
+      <IMAPSetupPageContent />
+    </Suspense>
   );
 }
