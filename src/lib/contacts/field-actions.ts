@@ -32,7 +32,7 @@ export async function addCustomField(
     }
 
     // Create custom field
-    const newField: NewContactCustomField = {
+    const newField = {
       contactId,
       fieldName: validated.fieldName,
       fieldValue: validated.fieldValue || null,
@@ -41,7 +41,7 @@ export async function addCustomField(
 
     const [createdField] = await db
       .insert(contactCustomFields)
-      .values(newField)
+      .values(newField as NewContactCustomField)
       .returning();
 
     revalidatePath('/dashboard/contacts');
@@ -88,7 +88,7 @@ export async function updateCustomField(
       .set({
         fieldValue,
         updatedAt: new Date(),
-      })
+      } as Partial<NewContactCustomField>)
       .where(eq(contactCustomFields.id, fieldId));
 
     revalidatePath('/dashboard/contacts');
@@ -137,4 +137,3 @@ export async function deleteCustomField(
     return { success: false, error: 'Failed to delete custom field' };
   }
 }
-

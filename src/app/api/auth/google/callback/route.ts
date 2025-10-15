@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emailAccounts } from '@/db/schema';
+import { emailAccounts, users } from '@/db/schema';
 import { GmailService } from '@/lib/email/gmail-api';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -90,16 +90,17 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Ensure user exists in database
     console.log('🔄 Step 3: Ensuring user exists in database...');
     await db
-      .insert({
+      .insert(users)
+      .values({
         id: user.id,
         email: user.email!,
-        fullName: user.user_metadata?.full_name || '',
-        avatarUrl: user.user_metadata?.avatar_url || '',
+        fullName: (user as any).user_metadata?.full_name || '',
+        avatarUrl: (user as any).user_metadata?.avatar_url || '',
         createdAt: new Date(),
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
-        target: { id: user.id },
+        target: users.id,
         set: {
           email: user.email!,
           updatedAt: new Date(),
@@ -110,6 +111,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Save email account
     console.log('🔄 Step 4: Saving Gmail account...');
     try {
+      const tokenExpiresAt = new Date(
+        Date.now() + (tokenResponse.expiresIn || 3600) * 1000
+      );
       const [inserted] = await db
         .insert(emailAccounts)
         .values({
@@ -120,12 +124,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           displayName: userProfile.displayName,
           accessToken: tokenResponse.accessToken,
           refreshToken: tokenResponse.refreshToken,
+          tokenExpiresAt,
           status: 'active',
         })
         .returning();
 
       console.log('✅ Gmail account saved successfully!', inserted);
-      console.log('📧 Account ID:', inserted[0]?.id);
+      console.log('📧 Account ID:', inserted?.id);
       console.log('👤 User ID:', user.id);
 
       // Redirect to settings with success message

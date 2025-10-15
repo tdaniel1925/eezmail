@@ -28,24 +28,19 @@ export function SyncButton({
     if (isSyncing) return;
 
     setIsSyncing(true);
-    toast.loading('Starting sync...', { id: `sync-${accountId}` });
+    const toastId = `sync-${accountId}`;
+    toast.loading('Starting sync...');
 
     try {
       const result = await startSync(accountId, 'incremental');
 
       if (result.success) {
-        toast.success(result.message || 'Sync completed', {
-          id: `sync-${accountId}`,
-        });
+        toast.success(result.message || 'Sync completed');
       } else {
-        toast.error(result.error || 'Sync failed', {
-          id: `sync-${accountId}`,
-        });
+        toast.error(result.error || 'Sync failed');
       }
     } catch (error) {
-      toast.error('An error occurred while syncing', {
-        id: `sync-${accountId}`,
-      });
+      toast.error('An error occurred while syncing');
     } finally {
       setIsSyncing(false);
     }

@@ -62,60 +62,95 @@ export class TokenManager {
     refreshToken: string;
     expiresIn: number;
   }> {
-    if (account.provider !== 'microsoft') {
+    try {
+      if (account.provider === 'microsoft') {
+        const msGraphConfig = {
+          clientId: process.env.MICROSOFT_CLIENT_ID!,
+          clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+          tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
+          redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/microsoft/callback`,
+        };
+
+        const msGraph = new MicrosoftGraphService(msGraphConfig);
+        const tokenResponse = await msGraph.refreshAccessToken(
+          account.refreshToken
+        );
+
+        const expiresAt = new Date(Date.now() + tokenResponse.expiresIn * 1000);
+        await db
+          .update(emailAccounts)
+          .set({
+            accessToken: tokenResponse.accessToken,
+            refreshToken: tokenResponse.refreshToken,
+            tokenExpiresAt: expiresAt,
+            lastSyncAt: new Date(),
+            lastSyncError: null,
+          } as Partial<typeof emailAccounts.$inferInsert>)
+          .where(eq(emailAccounts.id, account.id));
+
+        console.log('✅ Microsoft token refreshed');
+        return {
+          accessToken: tokenResponse.accessToken,
+          refreshToken: tokenResponse.refreshToken,
+          expiresIn: tokenResponse.expiresIn,
+        };
+      }
+
+      if (account.provider === 'gmail') {
+        // Google refresh token flow
+        const response = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: process.env.GOOGLE_CLIENT_ID || '',
+            client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
+            refresh_token: account.refreshToken,
+            grant_type: 'refresh_token',
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(
+            `Google token refresh failed: ${response.statusText} ${err.error || ''}`
+          );
+        }
+
+        const data = await response.json();
+        const accessToken: string = data.access_token;
+        const newRefreshToken: string =
+          data.refresh_token || account.refreshToken;
+        const expiresIn: number = data.expires_in || 3600;
+
+        const expiresAt = new Date(Date.now() + expiresIn * 1000);
+        await db
+          .update(emailAccounts)
+          .set({
+            accessToken,
+            refreshToken: newRefreshToken,
+            tokenExpiresAt: expiresAt,
+            lastSyncAt: new Date(),
+            lastSyncError: null,
+          } as Partial<typeof emailAccounts.$inferInsert>)
+          .where(eq(emailAccounts.id, account.id));
+
+        console.log('✅ Google token refreshed');
+        return { accessToken, refreshToken: newRefreshToken, expiresIn };
+      }
+
       throw new Error(
         `Token refresh not supported for provider: ${account.provider}`
       );
-    }
-
-    const msGraphConfig = {
-      clientId: process.env.MICROSOFT_CLIENT_ID!,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
-      redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/microsoft/callback`,
-    };
-
-    const msGraph = new MicrosoftGraphService(msGraphConfig);
-
-    try {
-      const tokenResponse = await msGraph.refreshAccessToken(
-        account.refreshToken
-      );
-
-      // Update the account with new tokens
-      const expiresAt = new Date(Date.now() + tokenResponse.expiresIn * 1000);
-
-      await db
-        .update(emailAccounts)
-        .set({
-          accessToken: tokenResponse.accessToken,
-          refreshToken: tokenResponse.refreshToken,
-          tokenExpiresAt: expiresAt,
-          lastSyncAt: new Date(),
-          lastSyncError: null,
-        })
-        .where(eq(emailAccounts.id, account.id));
-
-      console.log('✅ Token refreshed successfully');
-
-      return {
-        accessToken: tokenResponse.accessToken,
-        refreshToken: tokenResponse.refreshToken,
-        expiresIn: tokenResponse.expiresIn,
-      };
     } catch (error) {
       console.error('❌ Token refresh failed:', error);
-
-      // Mark account as needing reconnection
       await db
         .update(emailAccounts)
         .set({
           status: 'error',
           lastSyncError: 'Token refresh failed. Please reconnect your account.',
           consecutiveErrors: (account.consecutiveErrors || 0) + 1,
-        })
+        } as Partial<typeof emailAccounts.$inferInsert>)
         .where(eq(emailAccounts.id, account.id));
-
       throw new Error('Token refresh failed. Please reconnect your account.');
     }
   }

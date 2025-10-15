@@ -41,7 +41,7 @@ export async function createTag(
     }
 
     // Create tag
-    const newTag: NewContactTag = {
+    const newTag = {
       userId,
       name: validated.name,
       color: validated.color,
@@ -49,7 +49,7 @@ export async function createTag(
 
     const [createdTag] = await db
       .insert(contactTags)
-      .values(newTag)
+      .values(newTag as NewContactTag)
       .returning();
 
     revalidatePath('/dashboard/contacts');
@@ -297,4 +297,3 @@ export async function listTags(userId: string): Promise<TagWithCount[]> {
     return [];
   }
 }
-

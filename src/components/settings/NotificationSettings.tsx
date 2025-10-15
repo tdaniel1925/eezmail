@@ -44,7 +44,7 @@ export function NotificationSettings({
         text: 'Notification preferences updated!',
       });
     } else {
-      setMessage({ type: 'error', text: result.error });
+      setMessage({ type: 'error', text: result.error || 'Failed to update' });
     }
 
     setIsSubmitting(false);
@@ -182,7 +182,7 @@ export function NotificationSettings({
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="font-medium text-gray-900 dark:text-white">
-                  Imbox
+                  Inbox
                 </div>
                 <div className="text-xs text-gray-600 dark:text-white/60">
                   Important emails that need attention
@@ -274,5 +274,3 @@ export function NotificationSettings({
     </div>
   );
 }
-
-

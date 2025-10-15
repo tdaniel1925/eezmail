@@ -20,7 +20,7 @@ export async function screenEmail(
   try {
     // Map decision to folder name
     let folderName = decision;
-    
+
     // Normalize folder names
     if (decision === 'inbox') folderName = 'inbox';
     else if (decision === 'newsfeed') folderName = 'newsfeed';
@@ -35,7 +35,7 @@ export async function screenEmail(
         folderName: folderName,
         screenedAt: new Date(),
         screenedBy: 'user',
-      })
+      } as Partial<typeof emails.$inferInsert>)
       .where(eq(emails.id, emailId));
 
     // Revalidate relevant pages
@@ -63,7 +63,7 @@ export async function bulkScreenEmails(
 ): Promise<ScreenEmailResult> {
   try {
     let folderName = decision;
-    
+
     if (decision === 'inbox') folderName = 'inbox';
     else if (decision === 'newsfeed') folderName = 'newsfeed';
     else if (decision === 'receipts') folderName = 'receipts';
@@ -96,4 +96,3 @@ export async function bulkScreenEmails(
     };
   }
 }
-

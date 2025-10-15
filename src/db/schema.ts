@@ -9,6 +9,7 @@ import {
   varchar,
   integer,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 
 // ============================================================================
@@ -426,12 +427,18 @@ export const emails = pgTable(
     ),
     heyViewIdx: index('emails_hey_view_idx').on(table.heyView),
     messageIdIdx: index('emails_message_id_idx').on(table.messageId),
+    // Unique composite to avoid duplicates per account
+    // Note: Ensure a matching migration adds this unique index
     emailCategoryIdx: index('emails_email_category_idx').on(
       table.emailCategory
     ),
     isImportantIdx: index('emails_is_important_idx').on(table.isImportant),
     needsReplyIdx: index('emails_needs_reply_idx').on(table.needsReply),
     isSetAsideIdx: index('emails_is_set_aside_idx').on(table.isSetAside),
+    uniqueAccountMessage: uniqueIndex('emails_account_message_unique').on(
+      table.accountId,
+      table.messageId
+    ),
   })
 );
 
@@ -439,22 +446,30 @@ export const emails = pgTable(
 // EMAIL FOLDERS TABLE
 // ============================================================================
 
-export const emailFolders = pgTable('email_folders', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  accountId: uuid('account_id')
-    .notNull()
-    .references(() => emailAccounts.id, { onDelete: 'cascade' }),
-  userId: uuid('user_id')
-    .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  externalId: text('external_id').notNull().unique(),
-  type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
-  parentId: uuid('parent_id'), // For nested folders
-  unreadCount: integer('unread_count').default(0),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+export const emailFolders = pgTable(
+  'email_folders',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    externalId: text('external_id').notNull(),
+    type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
+    parentId: uuid('parent_id'), // For nested folders
+    unreadCount: integer('unread_count').default(0),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    accountExternalUnique: uniqueIndex(
+      'email_folders_account_external_unique'
+    ).on(table.accountId, table.externalId),
+  })
+);
 
 export type EmailFolder = typeof emailFolders.$inferSelect;
 export type NewEmailFolder = typeof emailFolders.$inferInsert;
@@ -484,8 +499,7 @@ export const senderTrust = pgTable(
   })
 );
 
-export type SenderTrust = typeof senderTrust.$inferSelect;
-export type NewSenderTrust = typeof senderTrust.$inferInsert;
+// (duplicates removed above)
 
 // ============================================================================
 // EMAIL THREADS TABLE

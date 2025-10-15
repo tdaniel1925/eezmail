@@ -97,7 +97,9 @@ export async function createSignature(data: SignatureData) {
     if (data.isDefault) {
       await db
         .update(emailSignatures)
-        .set({ isDefault: false })
+        .set({ isDefault: false } as Partial<
+          typeof emailSignatures.$inferInsert
+        >)
         .where(eq(emailSignatures.userId, user.id));
     }
 
@@ -167,7 +169,9 @@ export async function updateSignature(
     if (data.isDefault) {
       await db
         .update(emailSignatures)
-        .set({ isDefault: false })
+        .set({ isDefault: false } as Partial<
+          typeof emailSignatures.$inferInsert
+        >)
         .where(
           and(
             eq(emailSignatures.userId, user.id),
@@ -196,7 +200,7 @@ export async function updateSignature(
           ? data.htmlContent.replace(/<[^>]*>/g, '')
           : undefined,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailSignatures.$inferInsert>)
       .where(
         and(
           eq(emailSignatures.id, signatureId),
@@ -263,13 +267,15 @@ export async function setDefaultSignature(signatureId: string) {
     // Unset all defaults
     await db
       .update(emailSignatures)
-      .set({ isDefault: false })
+      .set({ isDefault: false } as Partial<typeof emailSignatures.$inferInsert>)
       .where(eq(emailSignatures.userId, user.id));
 
     // Set this one as default
     const [signature] = await db
       .update(emailSignatures)
-      .set({ isDefault: true, updatedAt: new Date() })
+      .set({ isDefault: true, updatedAt: new Date() } as Partial<
+        typeof emailSignatures.$inferInsert
+      >)
       .where(
         and(
           eq(emailSignatures.id, signatureId),
@@ -307,7 +313,9 @@ export async function toggleSignature(signatureId: string, isEnabled: boolean) {
 
     const [signature] = await db
       .update(emailSignatures)
-      .set({ isEnabled, updatedAt: new Date() })
+      .set({ isEnabled, updatedAt: new Date() } as Partial<
+        typeof emailSignatures.$inferInsert
+      >)
       .where(
         and(
           eq(emailSignatures.id, signatureId),

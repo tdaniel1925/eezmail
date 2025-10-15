@@ -52,8 +52,11 @@ export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
     if (result.success) {
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } else {
-      setMessage({ type: 'error', text: result.error });
-      if (result.errors) {
+      setMessage({
+        type: 'error',
+        text: result.error || 'Failed to update profile',
+      });
+      if ('errors' in result && result.errors) {
         const fieldErrors: Record<string, string> = {};
         Object.entries(result.errors).forEach(([key, value]) => {
           fieldErrors[key] = value[0];
@@ -81,8 +84,11 @@ export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
         confirmPassword: '',
       });
     } else {
-      setMessage({ type: 'error', text: result.error });
-      if (result.errors) {
+      setMessage({
+        type: 'error',
+        text: result.error || 'Failed to change password',
+      });
+      if ('errors' in result && result.errors) {
         const fieldErrors: Record<string, string> = {};
         Object.entries(result.errors).forEach(([key, value]) => {
           fieldErrors[key] = value[0];
@@ -101,7 +107,10 @@ export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
     if (result.success) {
       window.location.href = '/';
     } else {
-      setMessage({ type: 'error', text: result.error });
+      setMessage({
+        type: 'error',
+        text: result.error || 'Failed to delete account',
+      });
       setShowDeleteModal(false);
     }
 
@@ -347,5 +356,3 @@ export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
     </div>
   );
 }
-
-

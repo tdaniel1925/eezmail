@@ -48,7 +48,7 @@ export async function startSync(
         syncStatus: 'syncing',
         syncProgress: 0,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     // Start sync (in background)
@@ -88,7 +88,7 @@ export async function pauseSync(accountId: string): Promise<SyncActionResult> {
       .set({
         syncStatus: 'paused',
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -143,7 +143,7 @@ export async function cancelSync(accountId: string): Promise<SyncActionResult> {
         syncProgress: 0,
         syncTotal: 0,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -192,7 +192,7 @@ export async function scheduleSync(
       .set({
         nextScheduledSyncAt: scheduledFor,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     return {
@@ -221,7 +221,7 @@ export async function resetErrorCount(
         consecutiveErrors: 0,
         lastSyncError: null,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     return { success: true, message: 'Error count reset' };

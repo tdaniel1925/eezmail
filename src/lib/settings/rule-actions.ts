@@ -211,7 +211,7 @@ export async function updateRule(ruleId: string, data: Partial<RuleData>) {
       .set({
         ...data,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailRules.$inferInsert>)
       .where(and(eq(emailRules.id, ruleId), eq(emailRules.userId, user.id)))
       .returning();
 
@@ -267,7 +267,9 @@ export async function toggleRule(ruleId: string, isEnabled: boolean) {
 
     const [rule] = await db
       .update(emailRules)
-      .set({ isEnabled, updatedAt: new Date() })
+      .set({ isEnabled, updatedAt: new Date() } as Partial<
+        typeof emailRules.$inferInsert
+      >)
       .where(and(eq(emailRules.id, ruleId), eq(emailRules.userId, user.id)))
       .returning();
 
@@ -302,7 +304,9 @@ export async function updateRulePriorities(ruleIds: string[]) {
     for (let i = 0; i < ruleIds.length; i++) {
       await db
         .update(emailRules)
-        .set({ priority: i, updatedAt: new Date() })
+        .set({ priority: i, updatedAt: new Date() } as Partial<
+          typeof emailRules.$inferInsert
+        >)
         .where(
           and(eq(emailRules.id, ruleIds[i]), eq(emailRules.userId, user.id))
         );

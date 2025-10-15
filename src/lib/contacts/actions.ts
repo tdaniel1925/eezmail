@@ -42,7 +42,7 @@ export async function createContact(
     const validated = CreateContactSchema.parse(data);
 
     // Create main contact record
-    const newContact: NewContact = {
+    const newContact = {
       userId,
       firstName: validated.firstName || null,
       lastName: validated.lastName || null,
@@ -56,12 +56,12 @@ export async function createContact(
       avatarUrl: validated.avatarUrl || null,
       avatarProvider: validated.avatarProvider || null,
       isFavorite: validated.isFavorite,
-      sourceType: 'manual',
+      sourceType: 'manual' as const,
     };
 
     const [createdContact] = await db
       .insert(contacts)
-      .values(newContact)
+      .values(newContact as NewContact)
       .returning();
 
     // Add related data
@@ -173,7 +173,7 @@ export async function updateContact(
         ...validated,
         birthday: validated.birthday ? new Date(validated.birthday) : null,
         updatedAt: new Date(),
-      })
+      } as Partial<NewContact>)
       .where(eq(contacts.id, contactId));
 
     revalidatePath('/dashboard/contacts');
@@ -216,7 +216,7 @@ export async function deleteContact(
       // Soft delete - mark as archived
       await db
         .update(contacts)
-        .set({ isArchived: true, updatedAt: new Date() })
+        .set({ isArchived: true, updatedAt: new Date() } as Partial<NewContact>)
         .where(eq(contacts.id, contactId));
     }
 
@@ -252,7 +252,10 @@ export async function toggleFavorite(
 
     await db
       .update(contacts)
-      .set({ isFavorite: newFavoriteState, updatedAt: new Date() })
+      .set({
+        isFavorite: newFavoriteState,
+        updatedAt: new Date(),
+      } as Partial<NewContact>)
       .where(eq(contacts.id, contactId));
 
     revalidatePath('/dashboard/contacts');
@@ -305,7 +308,7 @@ export async function addContactEmail(
       email: validated.email.toLowerCase(),
       type: validated.type,
       isPrimary: validated.isPrimary,
-    });
+    } as NewContactEmail);
 
     revalidatePath('/dashboard/contacts');
     return { success: true };
@@ -360,7 +363,7 @@ export async function addContactPhone(
       phone: validated.phone,
       type: validated.type,
       isPrimary: validated.isPrimary,
-    });
+    } as NewContactPhone);
 
     revalidatePath('/dashboard/contacts');
     return { success: true };
@@ -483,7 +486,10 @@ export async function updateContactNote(
     // Update note
     await db
       .update(contactNotes)
-      .set({ content: content.trim(), updatedAt: new Date() })
+      .set({
+        content: content.trim(),
+        updatedAt: new Date(),
+      } as Partial<NewContactNote>)
       .where(eq(contactNotes.id, noteId));
 
     revalidatePath('/dashboard/contacts');

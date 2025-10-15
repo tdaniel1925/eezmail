@@ -64,7 +64,7 @@ export async function queueSyncJob(
         metadata: options.metadata || null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      } as any)
       .returning();
 
     return { success: true, jobId: newJob.id };
@@ -108,7 +108,7 @@ export async function startJob(jobId: string): Promise<void> {
       status: 'in_progress',
       startedAt: new Date(),
       updatedAt: new Date(),
-    })
+    } as any)
     .where(eq(syncJobs.id, jobId));
 }
 
@@ -122,7 +122,7 @@ export async function completeJob(jobId: string): Promise<void> {
       status: 'completed',
       completedAt: new Date(),
       updatedAt: new Date(),
-    })
+    } as any)
     .where(eq(syncJobs.id, jobId));
 }
 
@@ -153,7 +153,7 @@ export async function failJob(jobId: string, error: string): Promise<void> {
         errorMessage: error,
         scheduledFor: nextAttempt,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(syncJobs.id, jobId));
   } else {
     // Max retries reached, mark as failed
@@ -164,7 +164,7 @@ export async function failJob(jobId: string, error: string): Promise<void> {
         errorMessage: error,
         completedAt: new Date(),
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(syncJobs.id, jobId));
   }
 }
@@ -256,7 +256,7 @@ export async function cancelAccountJobs(accountId: string): Promise<number> {
       errorMessage: 'Cancelled by user',
       completedAt: new Date(),
       updatedAt: new Date(),
-    })
+    } as any)
     .where(
       and(eq(syncJobs.accountId, accountId), eq(syncJobs.status, 'pending'))
     )

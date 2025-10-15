@@ -75,7 +75,7 @@ export async function createCustomFolder(
     const sortOrder = Number(maxOrder[0]?.max ?? -1) + 1;
 
     // Create the folder
-    const newFolder: NewCustomFolder = {
+    const newFolder = {
       userId,
       name,
       icon: icon || '📁',
@@ -85,7 +85,7 @@ export async function createCustomFolder(
 
     const [created] = await db
       .insert(customFolders)
-      .values(newFolder)
+      .values(newFolder as NewCustomFolder)
       .returning();
 
     revalidatePath('/dashboard');
@@ -151,7 +151,7 @@ export async function updateCustomFolder(
       .set({
         ...updates,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof customFolders.$inferInsert>)
       .where(eq(customFolders.id, folderId));
 
     revalidatePath('/dashboard');
@@ -237,7 +237,9 @@ export async function reorderCustomFolders(
       folderIds.map((folderId, index) =>
         db
           .update(customFolders)
-          .set({ sortOrder: index, updatedAt: new Date() })
+          .set({ sortOrder: index, updatedAt: new Date() } as Partial<
+            typeof customFolders.$inferInsert
+          >)
           .where(
             and(
               eq(customFolders.id, folderId),
@@ -256,4 +258,3 @@ export async function reorderCustomFolders(
     return { success: false, error: 'Failed to reorder folders' };
   }
 }
-

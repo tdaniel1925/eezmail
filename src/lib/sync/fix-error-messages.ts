@@ -47,7 +47,7 @@ export async function fixOldErrorMessages() {
               'Permission denied. Please reconnect your email account to grant proper access.',
             errorMessage:
               'Permission denied. Please reconnect your email account to grant proper access.',
-          })
+          } as any)
           .where(eq(emailAccounts.id, account.id));
 
         updated++;

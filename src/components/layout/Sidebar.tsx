@@ -130,7 +130,7 @@ export function Sidebar({
             <Mail className="text-white" size={16} />
           </div>
           <h1 className="text-base font-bold text-gray-800 dark:text-white">
-            Imbox
+            eezMail
           </h1>
         </div>
         <ComposeButton variant="sidebar" />

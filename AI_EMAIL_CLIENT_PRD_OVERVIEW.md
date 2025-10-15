@@ -2,7 +2,7 @@
 
 ## 📋 Document Information
 
-**Product Name:** Imbox AI Email Client  
+**Product Name:** eezMail AI Email Client  
 **Version:** 1.0  
 **Date:** October 13, 2025  
 **Document Type:** Standalone SaaS Product Requirements  
@@ -15,7 +15,7 @@
 
 ### Product Vision
 
-Imbox is an **AI-first email client** that transforms inbox chaos into actionable intelligence. By combining the workflow innovations of Hey.com with advanced AI capabilities, Imbox eliminates email overwhelm and makes professionals 10x more productive.
+eezMail is an **AI-first email client** that transforms inbox chaos into actionable intelligence. By combining the workflow innovations of Hey.com with advanced AI capabilities, eezMail eliminates email overwhelm and makes professionals 10x more productive.
 
 ### The Problem
 
@@ -28,17 +28,17 @@ Modern professionals face email paralysis:
 
 ### Our Solution
 
-Imbox provides a revolutionary email experience through:
+eezMail provides a revolutionary email experience through:
 
 1. **AI-Powered Screening** - Only see emails from people you approve
-2. **Smart Classification** - AI automatically sorts emails into Imbox (important), Feed (newsletters), and Paper Trail (receipts)
+2. **Smart Classification** - AI automatically sorts emails into eezMail (important), Feed (newsletters), and Paper Trail (receipts)
 3. **Instant AI Insights** - Hover over any email for AI-generated summary, quick replies, and context
 4. **Focus-First Design** - Reply Later, Set Aside, and batch processing workflows
 5. **Universal Compatibility** - Works with Gmail, Outlook, Yahoo, AOL, and any IMAP/SMTP provider
 
 ### Key Differentiators
 
-| Feature | Imbox | Traditional Clients | Hey.com |
+| Feature | eezMail | Traditional Clients | Hey.com |
 |---------|-------|---------------------|----------|
 | AI Summaries | ✅ Instant (hover) | ❌ None | ❌ None |
 | AI Quick Replies | ✅ 3 suggestions | ❌ None | ❌ None |
@@ -293,7 +293,7 @@ Imbox provides a revolutionary email experience through:
 - ✅ Email account connection (Gmail, Outlook, IMAP/SMTP)
 - ✅ Real-time email sync
 - ✅ Email screening system
-- ✅ Imbox/Feed/Paper Trail views
+- ✅ eezMail/Feed/Paper Trail views
 - ✅ AI email summaries (hover)
 - ✅ AI quick replies
 - ✅ Email composer with AI assistance

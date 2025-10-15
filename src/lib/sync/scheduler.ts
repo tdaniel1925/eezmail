@@ -281,7 +281,7 @@ export async function autoScheduleSyncs(userId: string): Promise<{
           nextScheduledSyncAt: schedule.nextSyncAt,
           syncPriority: schedule.priority,
           updatedAt: new Date(),
-        })
+        } as any)
         .where(eq(emailAccounts.id, account.id));
     } catch (error) {
       console.error(
@@ -314,6 +314,6 @@ export async function adaptSyncFrequency(accountId: string): Promise<void> {
     .set({
       syncPriority: newPriority,
       updatedAt: new Date(),
-    })
+    } as any)
     .where(eq(emailAccounts.id, accountId));
 }

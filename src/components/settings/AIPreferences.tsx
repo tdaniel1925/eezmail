@@ -44,7 +44,7 @@ export function AIPreferences({
     if (result.success) {
       setMessage({ type: 'success', text: 'AI preferences updated!' });
     } else {
-      setMessage({ type: 'error', text: result.error });
+      setMessage({ type: 'error', text: result.error || 'Failed to update' });
     }
 
     setIsSubmitting(false);
@@ -85,22 +85,30 @@ export function AIPreferences({
             </h3>
           </div>
 
-          <Select
-            label="Email Workflow"
-            value={data.emailMode}
-            onChange={(e) =>
-              setData({
-                ...data,
-                emailMode: e.target.value as 'traditional' | 'hey' | 'hybrid',
-              })
-            }
-            options={[
-              { value: 'traditional', label: 'Traditional (Inbox + Folders)' },
-              { value: 'hey', label: 'Hey Mode (Imbox + Feed + Paper Trail)' },
-              { value: 'hybrid', label: 'Hybrid (Best of Both)' },
-            ]}
-            helperText="Choose how you want to organize your emails"
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email Workflow
+            </label>
+            <select
+              value={data.emailMode}
+              onChange={(e) =>
+                setData({
+                  ...data,
+                  emailMode: e.target.value as 'traditional' | 'hey' | 'hybrid',
+                })
+              }
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+            >
+              <option value="traditional">Traditional (Inbox + Folders)</option>
+              <option value="hey">
+                Hey Mode (Inbox + NewsFeed + Receipts)
+              </option>
+              <option value="hybrid">Hybrid (Best of Both)</option>
+            </select>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Choose how you want to organize your emails
+            </p>
+          </div>
 
           <div className="mt-4 p-4 bg-gray-50/50 dark:bg-white/5 rounded-lg">
             <p className="text-sm text-gray-700 dark:text-white/80 font-medium mb-2">
@@ -112,7 +120,7 @@ export function AIPreferences({
               {data.emailMode === 'traditional' &&
                 'Classic inbox with folders and labels. All emails go to inbox by default.'}
               {data.emailMode === 'hey' &&
-                'Screen new senders and route emails to Imbox (important), Feed (newsletters), or Paper Trail (receipts/notifications).'}
+                'Screen new senders and route emails to Inbox (approved), NewsFeed (newsletters), or Receipts (transactions).'}
               {data.emailMode === 'hybrid' &&
                 'Combines inbox with Hey-style screening for new senders.'}
             </p>
@@ -181,18 +189,27 @@ export function AIPreferences({
             </div>
 
             <div className="pt-2">
-              <Select
-                label="AI Tone"
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                AI Tone
+              </label>
+              <select
                 value={data.aiTone}
-                onChange={(e) => setData({ ...data, aiTone: e.target.value })}
-                options={[
-                  { value: 'professional', label: 'Professional' },
-                  { value: 'casual', label: 'Casual' },
-                  { value: 'friendly', label: 'Friendly' },
-                  { value: 'formal', label: 'Formal' },
-                ]}
-                helperText="Tone for AI-generated replies"
-              />
+                onChange={(e) =>
+                  setData({
+                    ...data,
+                    aiTone: e.target.value as typeof data.aiTone,
+                  })
+                }
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+              >
+                <option value="professional">Professional</option>
+                <option value="casual">Casual</option>
+                <option value="friendly">Friendly</option>
+                <option value="formal">Formal</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Tone for AI-generated replies
+              </p>
             </div>
           </div>
         </div>
@@ -253,5 +270,3 @@ export function AIPreferences({
     </div>
   );
 }
-
-

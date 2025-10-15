@@ -60,7 +60,7 @@ export async function updateAccountSettings(
         email: validated.email,
         avatarUrl: validated.avatarUrl || null,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof users.$inferInsert>)
       .where(eq(users.id, user.id));
 
     // Also update Supabase Auth email if changed
@@ -186,13 +186,13 @@ export async function updateEmailPreferences(
         .set({
           ...validated,
           updatedAt: new Date(),
-        })
+        } as Partial<typeof emailSettings.$inferInsert>)
         .where(eq(emailSettings.accountId, accountId));
     } else {
       await db.insert(emailSettings).values({
         accountId,
         ...validated,
-      });
+      } as typeof emailSettings.$inferInsert);
     }
 
     revalidatePath('/dashboard/settings');
@@ -252,7 +252,7 @@ export async function updateAIPreferences(
         bulkEmailDetection: validated.bulkEmailDetection,
         emailMode: validated.emailMode,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailSettings.$inferInsert>)
       .where(eq(emailSettings.accountId, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -308,7 +308,7 @@ export async function updateNotificationPreferences(
         soundEnabled: validated.soundEnabled,
         notifyOnImportantOnly: validated.notifyOnImportantOnly,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailSettings.$inferInsert>)
       .where(eq(emailSettings.accountId, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -364,7 +364,7 @@ export async function updatePrivacySettings(
         blockExternalImages: validated.blockExternalImages,
         stripUtmParameters: validated.stripUtmParameters,
         updatedAt: new Date(),
-      })
+      } as Partial<typeof emailSettings.$inferInsert>)
       .where(eq(emailSettings.accountId, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -411,5 +411,3 @@ export async function deleteAccount(): Promise<
     };
   }
 }
-
-

@@ -72,7 +72,7 @@ export async function syncEmailAccount(accountId: string) {
       .update(emailAccounts)
       .set({
         status: 'syncing',
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     console.log('✅ Status updated to syncing');
@@ -195,7 +195,7 @@ export async function syncInBackground(
         lastSyncAt: new Date(),
         lastSyncError: null,
         errorMessage: null,
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     console.log('✅ Background sync completed for account:', accountId);
@@ -215,7 +215,7 @@ export async function syncInBackground(
           status: 'error',
           lastSyncError: errorClassification.message,
           errorMessage: errorClassification.message,
-        })
+        } as Partial<typeof emailAccounts.$inferInsert>)
         .where(eq(emailAccounts.id, accountId));
     } else if (errorClassification.shouldRetry && retryCount < MAX_RETRIES) {
       // Retry for transient errors
@@ -229,7 +229,7 @@ export async function syncInBackground(
           status: 'error',
           lastSyncError: `${errorClassification.message} (Retrying...)`,
           errorMessage: `${errorClassification.message} (Retry ${retryCount + 1}/${MAX_RETRIES})`,
-        })
+        } as Partial<typeof emailAccounts.$inferInsert>)
         .where(eq(emailAccounts.id, accountId));
 
       // Schedule retry
@@ -251,7 +251,7 @@ export async function syncInBackground(
           status: 'error',
           lastSyncError: errorClassification.message,
           errorMessage: errorClassification.message,
-        })
+        } as Partial<typeof emailAccounts.$inferInsert>)
         .where(eq(emailAccounts.id, accountId));
     }
   }
@@ -377,20 +377,19 @@ async function syncEmailsWithGraph(
 
     const cursor = accountRecord?.syncCursor;
 
-    // Fetch messages from Microsoft Graph
-    let url =
+    // Fetch messages from Microsoft Graph using $skiptoken for pagination
+    const baseUrl =
       'https://graph.microsoft.com/v1.0/me/messages?$top=50&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId';
 
-    if (cursor) {
-      url += `&$skip=${cursor}`;
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(
+      cursor ? `${baseUrl}&$skiptoken=${encodeURIComponent(cursor)}` : baseUrl,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Microsoft Graph API error: ${response.statusText}`);
@@ -457,7 +456,7 @@ async function syncEmailsWithGraph(
               emailCategory: category,
               screenedBy: 'ai_rule',
               screenedAt: new Date(),
-            })
+            } as any)
             .where(eq(emails.id, insertedEmail.id));
         }
 
@@ -468,14 +467,20 @@ async function syncEmailsWithGraph(
       }
     }
 
-    // Update sync cursor (using message count as cursor)
-    const newCursor = (cursor || 0) + messages.length;
-    await db
-      .update(emailAccounts)
-      .set({
-        syncCursor: newCursor.toString(),
-      })
-      .where(eq(emailAccounts.id, accountId));
+    // Update sync cursor using @odata.nextLink if provided (extract $skiptoken)
+    const nextLink: string | undefined = data['@odata.nextLink'];
+    if (nextLink) {
+      const nextUrl = new URL(nextLink);
+      const skiptoken = nextUrl.searchParams.get('$skiptoken');
+      if (skiptoken) {
+        await db
+          .update(emailAccounts)
+          .set({
+            syncCursor: skiptoken,
+          } as any)
+          .where(eq(emailAccounts.id, accountId));
+      }
+    }
 
     console.log(`✅ Synced ${syncedCount} emails`);
   } catch (error) {
@@ -620,7 +625,7 @@ export async function cancelSync(accountId: string) {
       .update(emailAccounts)
       .set({
         status: 'active',
-      })
+      } as any)
       .where(eq(emailAccounts.id, accountId));
 
     return { success: true, message: 'Sync cancelled' };

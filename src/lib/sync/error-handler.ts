@@ -204,7 +204,7 @@ export async function handleSyncError(
       .set({
         nextScheduledSyncAt: nextAttempt,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(emailAccounts.id, accountId));
   }
 
@@ -244,7 +244,7 @@ export async function handlePartialSyncError(
       .set({
         lastSyncError: `${failedEmails} emails failed to sync`,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(emailAccounts.id, accountId));
   }
 }

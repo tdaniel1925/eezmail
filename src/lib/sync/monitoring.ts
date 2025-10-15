@@ -220,8 +220,8 @@ export async function getSystemMetrics(
     totalEmails,
     emailsLast24h,
     averageEmailsPerDay: Math.round(emailsLast24h), // Simplified
-    topActiveAccounts: topAccounts.rows as any[],
-    recentErrors: recentErrors.rows as any[],
+    topActiveAccounts: (topAccounts as any).rows || topAccounts,
+    recentErrors: (recentErrors as any).rows || recentErrors,
   };
 }
 

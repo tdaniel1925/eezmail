@@ -43,7 +43,7 @@ export function EmailPreferences({
     if (result.success) {
       setMessage({ type: 'success', text: 'Email preferences updated!' });
     } else {
-      setMessage({ type: 'error', text: result.error });
+      setMessage({ type: 'error', text: result.error || 'Failed to update' });
     }
 
     setIsSubmitting(false);

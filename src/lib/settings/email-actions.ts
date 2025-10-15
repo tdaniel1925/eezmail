@@ -158,13 +158,13 @@ export async function setDefaultEmailAccount(accountId: string) {
     // Remove default from all other accounts
     await db
       .update(emailAccounts)
-      .set({ isDefault: false })
+      .set({ isDefault: false } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.userId, user.id));
 
     // Set this account as default
     await db
       .update(emailAccounts)
-      .set({ isDefault: true })
+      .set({ isDefault: true } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     revalidatePath('/dashboard/settings');
@@ -260,7 +260,7 @@ export async function syncEmailAccount(accountId: string) {
       .set({
         status: 'syncing',
         lastSyncAt: new Date(),
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     // Import and trigger the actual sync service
@@ -290,7 +290,7 @@ export async function syncEmailAccount(accountId: string) {
       .set({
         status: 'active',
         lastSyncError: error instanceof Error ? error.message : 'Unknown error',
-      })
+      } as Partial<typeof emailAccounts.$inferInsert>)
       .where(eq(emailAccounts.id, accountId));
 
     return { success: false, error: 'Failed to sync account' };

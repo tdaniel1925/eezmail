@@ -23,7 +23,7 @@ export async function saveSyncCursor(
       syncCursor: cursor,
       lastSyncAt: timestamp,
       updatedAt: new Date(),
-    })
+    } as Partial<typeof emailAccounts.$inferInsert>)
     .where(eq(emailAccounts.id, accountId));
 }
 
@@ -49,7 +49,7 @@ export async function clearSyncCursor(accountId: string): Promise<void> {
     .set({
       syncCursor: null,
       updatedAt: new Date(),
-    })
+    } as Partial<typeof emailAccounts.$inferInsert>)
     .where(eq(emailAccounts.id, accountId));
 }
 
@@ -96,7 +96,7 @@ export async function markSyncSuccessful(
       consecutiveErrors: 0,
       lastSyncError: null,
       updatedAt: now,
-    })
+    } as Partial<typeof emailAccounts.$inferInsert>)
     .where(eq(emailAccounts.id, accountId));
 }
 
@@ -126,6 +126,6 @@ export async function markSyncFailed(
       errorCount: (account?.errorCount || 0) + 1,
       consecutiveErrors: (account?.consecutiveErrors || 0) + 1,
       updatedAt: new Date(),
-    })
+    } as Partial<typeof emailAccounts.$inferInsert>)
     .where(eq(emailAccounts.id, accountId));
 }

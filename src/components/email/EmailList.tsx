@@ -10,6 +10,7 @@ interface EmailListProps {
   emails: Email[];
   title?: string;
   isLoading?: boolean;
+  error?: string | null;
   onToggleSidebar?: () => void;
 }
 
@@ -17,6 +18,7 @@ export function EmailList({
   emails,
   title = 'Inbox',
   isLoading = false,
+  error,
   onToggleSidebar,
 }: EmailListProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');

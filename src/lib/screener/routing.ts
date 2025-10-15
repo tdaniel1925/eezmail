@@ -17,6 +17,17 @@ export async function processScreenerDecision(
   try {
     const { emailId, senderEmail, decision: dest, userId } = decision;
 
+    // Resolve accountId from the email
+    const [emailRecord] = await db
+      .select({ accountId: emails.accountId })
+      .from(emails)
+      .where(eq(emails.id, emailId))
+      .limit(1);
+    const accountId = emailRecord?.accountId;
+    if (!accountId) {
+      return { success: false, error: 'Email not found' };
+    }
+
     // Determine if this is a custom folder or a default destination
     const isCustomFolder = dest.length > 20; // UUIDs are longer than 20 chars
 
@@ -24,11 +35,11 @@ export async function processScreenerDecision(
     await db
       .insert(emailContacts)
       .values({
-        userId, // User ID
-        accountId: userId, // In production, get from email's accountId
+        userId,
+        accountId,
         emailAddress: senderEmail,
         screeningStatus: 'screened',
-        assignedFolder: isCustomFolder ? dest : null,
+        assignedFolder: isCustomFolder ? (dest as string) : null,
         heyView: isCustomFolder
           ? null
           : (dest as 'imbox' | 'feed' | 'paper_trail'),
@@ -38,13 +49,13 @@ export async function processScreenerDecision(
         target: [emailContacts.accountId, emailContacts.emailAddress],
         set: {
           screeningStatus: 'screened',
-          assignedFolder: isCustomFolder ? dest : null,
+          assignedFolder: isCustomFolder ? (dest as string) : null,
           heyView: isCustomFolder
             ? null
             : (dest as 'imbox' | 'feed' | 'paper_trail'),
           contactStatus: dest === 'block' ? 'blocked' : 'approved',
           updatedAt: new Date(),
-        },
+        } as Partial<typeof emailContacts.$inferInsert>,
       });
 
     // Update the current email based on the decision
@@ -56,7 +67,7 @@ export async function processScreenerDecision(
           folderName: 'trash',
           screeningStatus: 'screened',
           updatedAt: new Date(),
-        })
+        } as Partial<typeof emails.$inferInsert>)
         .where(eq(emails.id, emailId));
     } else if (isCustomFolder) {
       // Verify the custom folder exists and belongs to the user
@@ -76,10 +87,10 @@ export async function processScreenerDecision(
       await db
         .update(emails)
         .set({
-          customFolderId: dest,
+          customFolderId: dest as string,
           screeningStatus: 'screened',
           updatedAt: new Date(),
-        })
+        } as Partial<typeof emails.$inferInsert>)
         .where(eq(emails.id, emailId));
     } else {
       // Assign to Hey View (imbox, feed, or paper_trail)
@@ -89,7 +100,7 @@ export async function processScreenerDecision(
           heyView: dest as 'imbox' | 'feed' | 'paper_trail',
           screeningStatus: 'screened',
           updatedAt: new Date(),
-        })
+        } as Partial<typeof emails.$inferInsert>)
         .where(eq(emails.id, emailId));
     }
 

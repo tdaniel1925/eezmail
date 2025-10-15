@@ -73,7 +73,7 @@ export async function updateContactFromEmail(
       .set({
         lastContactedAt: email.receivedAt,
         updatedAt: new Date(),
-      })
+      } as Partial<NewContact>)
       .where(
         sql`${contacts.id} = ANY(${contactIds}) AND ${contacts.userId} = ${userId}`
       );

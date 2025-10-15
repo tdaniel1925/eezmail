@@ -39,7 +39,7 @@ export function PrivacySettings({
     if (result.success) {
       setMessage({ type: 'success', text: 'Privacy settings updated!' });
     } else {
-      setMessage({ type: 'error', text: result.error });
+      setMessage({ type: 'error', text: result.error || 'Failed to update' });
     }
 
     setIsSubmitting(false);
