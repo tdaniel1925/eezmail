@@ -411,7 +411,7 @@ async function syncEmailsWithGraph(
 
     const data = await response.json();
     const messages = data.value || [];
-    
+
     // Get the next link for pagination or delta link for next sync
     const nextLink = data['@odata.nextLink'];
     const newDeltaLink = data['@odata.deltaLink'];
@@ -496,7 +496,7 @@ async function syncEmailsWithGraph(
           updatedAt: new Date(),
         } as any)
         .where(eq(emailAccounts.id, accountId));
-      
+
       if (newDeltaLink) {
         console.log('✅ Delta link saved for next incremental sync');
       } else if (nextLink) {
@@ -739,7 +739,8 @@ async function syncGmailMessages(
     let pageToken = accountRecord?.syncCursor || undefined;
 
     // Fetch messages from Gmail API
-    let url = 'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50';
+    let url =
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50';
     if (pageToken) {
       url += `&pageToken=${encodeURIComponent(pageToken)}`;
     }
