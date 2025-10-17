@@ -35,11 +35,21 @@ export async function POST(req: Request): Promise<Response> {
       senderEmail,
       threadHistory,
       userSignature,
+      // New parameters for Reply Later feature
+      subject,
+      bodyText,
+      bodyHtml,
+      isDraft,
+      emailId,
     } = body;
 
-    if (!originalSubject || !originalBody) {
+    // Support both old and new parameter formats
+    const emailSubject = originalSubject || subject;
+    const emailBody = originalBody || bodyText || bodyHtml;
+
+    if (!emailSubject || !emailBody) {
       return NextResponse.json(
-        { error: 'Original email subject and body are required' },
+        { error: 'Email subject and body are required' },
         { status: 400 }
       );
     }
@@ -48,16 +58,16 @@ export async function POST(req: Request): Promise<Response> {
     let contextPrompt = `You are composing a reply to this email:
 
 From: ${senderName || senderEmail || 'Unknown'}
-Subject: ${originalSubject}
+Subject: ${emailSubject}
 
 Email body:
-${originalBody}`;
+${emailBody}`;
 
     if (threadHistory && threadHistory.length > 0) {
       contextPrompt += `\n\nPrevious messages in thread:\n${threadHistory.join('\n---\n')}`;
     }
 
-    contextPrompt += `\n\nGenerate a professional and contextual reply. Return as JSON with "subject" and "body" fields. The subject should be "Re: ${originalSubject}" unless the context requires something different.`;
+    contextPrompt += `\n\nGenerate a professional and contextual reply. Return as JSON with "subject" and "body" fields. The subject should be "Re: ${emailSubject}" unless the context requires something different.`;
 
     // Call OpenAI to generate reply
     const response = await openai.chat.completions.create({
@@ -113,7 +123,7 @@ Guidelines:
       } else {
         // Fallback: use entire content as body
         parsed = {
-          subject: `Re: ${originalSubject}`,
+          subject: `Re: ${emailSubject}`,
           body: content.trim(),
         };
       }
@@ -125,9 +135,20 @@ Guidelines:
       finalBody += `\n\n${userSignature}`;
     }
 
+    // If isDraft, return just the reply text for the Reply Later feature
+    if (isDraft) {
+      return NextResponse.json({
+        success: true,
+        reply: finalBody,
+        subject: parsed.subject || `Re: ${emailSubject}`,
+        emailId: emailId || null,
+      });
+    }
+
+    // Original format for backward compatibility
     return NextResponse.json({
       success: true,
-      subject: parsed.subject || `Re: ${originalSubject}`,
+      subject: parsed.subject || `Re: ${emailSubject}`,
       body: finalBody,
     });
   } catch (error) {

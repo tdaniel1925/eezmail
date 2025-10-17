@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   Archive,
@@ -16,11 +16,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Email } from '@/db/schema';
-import { format } from 'date-fns';
+import { format, addHours, addDays } from 'date-fns';
 import { EmailComposer } from './EmailComposer';
 import { useEmailBody } from '@/hooks/useEmailBody';
 import { toast } from 'sonner';
 import { useChatbotContext } from '@/components/ai/ChatbotContext';
+import { useReplyLater } from '@/contexts/ReplyLaterContext';
 
 interface EmailViewerProps {
   email: Email | null;
@@ -29,12 +30,15 @@ interface EmailViewerProps {
 
 export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const { setCurrentEmail } = useChatbotContext();
+  const { addEmail } = useReplyLater();
   const [isStarred, setIsStarred] = useState(email?.isStarred ?? false);
   const [composerMode, setComposerMode] = useState<'reply' | 'forward' | null>(
     null
   );
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
   const [aiReplyContent, setAiReplyContent] = useState<string>('');
+  const [showReplyLaterPicker, setShowReplyLaterPicker] = useState(false);
+  const replyLaterRef = useRef<HTMLDivElement>(null);
 
   // Set current email context when viewing
   useEffect(() => {
@@ -76,6 +80,35 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     setIsStarred(!isStarred);
     // TODO: Update star status
   };
+
+  const handleReplyLater = async (date: Date): Promise<void> => {
+    if (!email) return;
+
+    setShowReplyLaterPicker(false);
+    const success = await addEmail(email.id, date);
+    
+    if (success && onClose) {
+      onClose(); // Close viewer after adding to reply later
+    }
+  };
+
+  // Close picker when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        replyLaterRef.current &&
+        !replyLaterRef.current.contains(event.target as Node)
+      ) {
+        setShowReplyLaterPicker(false);
+      }
+    }
+
+    if (showReplyLaterPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showReplyLaterPicker]);
 
   const handleAIReply = async (): Promise<void> => {
     if (!email) return;
@@ -164,13 +197,58 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
         >
           <Trash2 className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-          aria-label="Reply later"
-        >
-          <Clock className="h-4 w-4" />
-        </button>
+        <div className="relative" ref={replyLaterRef}>
+          <button
+            type="button"
+            onClick={() => setShowReplyLaterPicker(!showReplyLaterPicker)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            aria-label="Reply later"
+            title="Reply Later"
+          >
+            <Clock className="h-4 w-4" />
+          </button>
+
+          {/* Reply Later Date Picker */}
+          {showReplyLaterPicker && (
+            <div className="absolute left-0 top-full z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+              <p className="mb-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                Reply Later
+              </p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => handleReplyLater(addHours(new Date(), 2))}
+                  className="w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 2 hours
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addHours(new Date(), 4))}
+                  className="w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 4 hours
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 1))}
+                  className="w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Tomorrow
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 2))}
+                  className="w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 2 days
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 7))}
+                  className="w-full rounded px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Next week
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"

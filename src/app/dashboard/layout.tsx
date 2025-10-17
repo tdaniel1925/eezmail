@@ -9,6 +9,8 @@ import { SidebarDataLoader } from '@/components/sidebar/SidebarDataLoader';
 import { KeyboardShortcutsProvider } from '@/components/layout/KeyboardShortcutsProvider';
 import { ChatbotContextProvider } from '@/components/ai/ChatbotContext';
 import { AIAssistantPanel } from '@/components/ai/AIAssistantPanel';
+import { ReplyLaterProvider } from '@/contexts/ReplyLaterContext';
+import { ReplyLaterStackWrapper } from '@/components/email/ReplyLaterStackWrapper';
 
 export default async function DashboardLayout({
   children,
@@ -45,21 +47,26 @@ export default async function DashboardLayout({
   return (
     <ChatbotContextProvider>
       <KeyboardShortcutsProvider>
-        <div className="flex h-screen overflow-hidden">
-          {/* Auto-start sync for all accounts */}
-          <AutoSyncStarter accounts={accounts} />
+        <ReplyLaterProvider>
+          <div className="flex h-screen overflow-hidden">
+            {/* Auto-start sync for all accounts */}
+            <AutoSyncStarter accounts={accounts} />
 
-          {/* Column 1: Modern Sidebar */}
-          <SidebarWrapper initialData={sidebarData} />
+            {/* Column 1: Modern Sidebar */}
+            <SidebarWrapper initialData={sidebarData} />
 
-          {/* Column 2: Main Content Area */}
-          <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
-            {children}
-          </main>
+            {/* Column 2: Main Content Area */}
+            <main className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-900">
+              {children}
+            </main>
 
-          {/* Column 3: AI Assistant Panel */}
-          <AIAssistantPanel />
-        </div>
+            {/* Column 3: AI Assistant Panel */}
+            <AIAssistantPanel />
+
+            {/* Reply Later Stack (floating at bottom-center) */}
+            <ReplyLaterStackWrapper />
+          </div>
+        </ReplyLaterProvider>
       </KeyboardShortcutsProvider>
     </ChatbotContextProvider>
   );
