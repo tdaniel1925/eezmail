@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, PenSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EmailComposer } from './EmailComposer';
@@ -10,11 +10,45 @@ interface ComposeButtonProps {
   className?: string;
 }
 
+interface InitialData {
+  to?: string;
+  subject?: string;
+  body?: string;
+}
+
 export function ComposeButton({
   variant = 'sidebar',
   className,
 }: ComposeButtonProps): JSX.Element {
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [initialData, setInitialData] = useState<InitialData | undefined>(
+    undefined
+  );
+
+  // Listen for AI compose events
+  useEffect(() => {
+    const handleAICompose = (event: CustomEvent) => {
+      setInitialData(event.detail);
+      setIsComposerOpen(true);
+    };
+
+    window.addEventListener(
+      'ai-compose-email',
+      handleAICompose as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        'ai-compose-email',
+        handleAICompose as EventListener
+      );
+    };
+  }, []);
+
+  const handleClose = (): void => {
+    setIsComposerOpen(false);
+    setInitialData(undefined);
+  };
 
   if (variant === 'fab') {
     return (
@@ -33,7 +67,8 @@ export function ComposeButton({
 
         <EmailComposer
           isOpen={isComposerOpen}
-          onClose={() => setIsComposerOpen(false)}
+          onClose={handleClose}
+          initialData={initialData}
         />
       </>
     );
@@ -55,7 +90,8 @@ export function ComposeButton({
 
       <EmailComposer
         isOpen={isComposerOpen}
-        onClose={() => setIsComposerOpen(false)}
+        onClose={handleClose}
+        initialData={initialData}
       />
     </>
   );

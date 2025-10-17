@@ -29,9 +29,11 @@ export function DangerZone(): JSX.Element {
       const result = await wipeAllUserData();
 
       if (result.success) {
-        toast.success('All data wiped successfully. Redirecting...');
+        toast.success(
+          'All data wiped successfully! You can now reconnect your accounts.'
+        );
         setTimeout(() => {
-          window.location.href = '/login';
+          window.location.href = '/dashboard';
         }, 2000);
       } else {
         toast.error(result.error || 'Failed to wipe data');
@@ -102,24 +104,25 @@ export function DangerZone(): JSX.Element {
               Danger Zone
             </h3>
             <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              This will permanently delete your account and all associated data
-              including:
+              This will permanently delete all your data including:
             </p>
             <ul className="text-sm text-red-700 dark:text-red-300 mb-4 space-y-1 list-disc list-inside">
               <li>All emails and email threads</li>
               <li>All contacts and calendar events</li>
               <li>All email accounts and connections</li>
               <li>All settings, rules, and signatures</li>
-              <li>Your user account and authentication</li>
             </ul>
+            <p className="text-sm text-green-700 dark:text-green-300 mb-4 font-semibold">
+              ✓ Your user account and login will be preserved
+            </p>
             <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
               <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">
                 ⚠️ This action cannot be undone!
               </p>
               <p className="text-xs text-red-700 dark:text-red-300">
                 All your data will be permanently deleted from our servers. You
-                will need to create a new account and reconnect all email
-                providers to use the service again.
+                will stay logged in and can reconnect your email accounts to
+                start fresh.
               </p>
             </div>
             <div className="space-y-3">
@@ -149,9 +152,7 @@ export function DangerZone(): JSX.Element {
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 <Trash2 size={16} />
-                {isWiping
-                  ? 'Wiping All Data...'
-                  : 'Wipe All Data and Delete Account'}
+                {isWiping ? 'Wiping All Data...' : 'Wipe All Data'}
               </button>
             </div>
           </div>

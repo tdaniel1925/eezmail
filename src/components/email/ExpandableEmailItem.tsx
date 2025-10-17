@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ChevronDown,
   Trash2,
@@ -13,6 +13,10 @@ import { cn } from '@/lib/utils';
 import { AISummaryBox } from './AISummaryBox';
 import { AIAnalysisModal } from './AIAnalysisModal';
 import { ContextualActions } from './ContextualActions';
+import { ThreadBadge } from './ThreadBadge';
+import { ThreadTimelineModal } from './ThreadTimelineModal';
+import { getThreadCount } from '@/lib/email/thread-actions';
+import { useChatbotContext } from '@/components/ai/ChatbotContext';
 import type { Email } from '@/db/schema';
 
 interface ExpandableEmailItemProps {
@@ -20,6 +24,7 @@ interface ExpandableEmailItemProps {
   isExpanded?: boolean;
   onToggle?: () => void;
   onAction?: (action: string, emailId: string) => void;
+  onNavigateToEmail?: (emailId: string) => void;
   className?: string;
 }
 
@@ -28,10 +33,34 @@ export function ExpandableEmailItem({
   isExpanded = false,
   onToggle,
   onAction,
+  onNavigateToEmail,
   className,
 }: ExpandableEmailItemProps): JSX.Element {
+  const { setCurrentEmail } = useChatbotContext();
   const [isRead, setIsRead] = useState(email.isRead ?? false);
   const [showAIModal, setShowAIModal] = useState(false);
+  const [showThreadModal, setShowThreadModal] = useState(false);
+  const [threadCount, setThreadCount] = useState<number>(0);
+
+  // Fetch thread count if email has a threadId
+  useEffect(() => {
+    if (email.threadId) {
+      getThreadCount(email.threadId).then((result) => {
+        if (result.success && result.count) {
+          setThreadCount(result.count);
+        }
+      });
+    }
+  }, [email.threadId]);
+
+  // Set current email context when expanded
+  useEffect(() => {
+    if (isExpanded) {
+      setCurrentEmail(email);
+    } else {
+      setCurrentEmail(null);
+    }
+  }, [isExpanded, email, setCurrentEmail]);
 
   const handleToggle = (): void => {
     if (!isRead) {
@@ -97,7 +126,7 @@ export function ExpandableEmailItem({
 
         {/* Email Info */}
         <div className="flex-1 min-w-0">
-          {/* Line 1: Sender + AI Icon + Time */}
+          {/* Line 1: Sender + AI Icon + Thread Badge + Time */}
           <div className="flex items-baseline gap-2 mb-0.5">
             <div className="flex items-center gap-1.5">
               <span
@@ -122,6 +151,15 @@ export function ExpandableEmailItem({
                   className="text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300"
                 />
               </button>
+              {threadCount > 1 && (
+                <ThreadBadge
+                  count={threadCount}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowThreadModal(true);
+                  }}
+                />
+              )}
             </div>
             <span
               className="text-xs flex-shrink-0 transition-colors"
@@ -338,6 +376,17 @@ export function ExpandableEmailItem({
         isOpen={showAIModal}
         onClose={() => setShowAIModal(false)}
       />
+
+      {/* Thread Timeline Modal */}
+      {email.threadId && (
+        <ThreadTimelineModal
+          isOpen={showThreadModal}
+          onClose={() => setShowThreadModal(false)}
+          threadId={email.threadId}
+          threadSubject={email.subject || 'Thread Timeline'}
+          onNavigateToEmail={onNavigateToEmail}
+        />
+      )}
     </div>
   );
 }

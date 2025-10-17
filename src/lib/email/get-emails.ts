@@ -159,3 +159,106 @@ export async function getReceiptsEmails(limit: number = 25) {
 export async function getSpamEmails(limit: number = 25) {
   return getEmailsByCategory('spam', limit);
 }
+
+/**
+ * Get reply queue emails (needsReply = true)
+ */
+export async function getReplyQueueEmails(limit: number = 50) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    console.log('📧 Fetching reply queue emails for user:', user.id);
+
+    // Get user's email accounts
+    const userAccounts = await db.query.emailAccounts.findMany({
+      where: (accounts, { eq }) => eq(accounts.userId, user.id),
+    });
+
+    if (userAccounts.length === 0) {
+      console.log('📧 No email accounts found for user');
+      return { success: true, emails: [] };
+    }
+
+    const accountIds = userAccounts.map((account) => account.id);
+    console.log('📧 Found accounts:', accountIds);
+
+    // Get emails marked for reply
+    const replyQueueEmails = await db
+      .select()
+      .from(emails)
+      .where(
+        and(
+          inArray(emails.accountId, accountIds),
+          eq(emails.needsReply, true),
+          eq(emails.isTrashed, false)
+        )
+      )
+      .orderBy(desc(emails.receivedAt))
+      .limit(limit);
+
+    console.log('📧 Found reply queue emails:', replyQueueEmails.length);
+
+    return { success: true, emails: replyQueueEmails };
+  } catch (error) {
+    console.error('❌ Error fetching reply queue emails:', error);
+    return { success: false, error: 'Failed to fetch reply queue emails' };
+  }
+}
+
+/**
+ * Get all mail from all accounts (unified inbox)
+ */
+export async function getAllMailEmails(limit: number = 100) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    console.log('📧 Fetching all mail for user:', user.id);
+
+    // Get user's email accounts
+    const userAccounts = await db.query.emailAccounts.findMany({
+      where: (accounts, { eq }) => eq(accounts.userId, user.id),
+    });
+
+    if (userAccounts.length === 0) {
+      console.log('📧 No email accounts found for user');
+      return { success: true, emails: [] };
+    }
+
+    const accountIds = userAccounts.map((account) => account.id);
+    console.log('📧 Found accounts:', accountIds);
+
+    // Get all emails from all accounts (not trashed)
+    const allEmails = await db
+      .select()
+      .from(emails)
+      .where(
+        and(
+          inArray(emails.accountId, accountIds),
+          eq(emails.isTrashed, false)
+        )
+      )
+      .orderBy(desc(emails.receivedAt))
+      .limit(limit);
+
+    console.log('📧 Found all mail emails:', allEmails.length);
+
+    return { success: true, emails: allEmails };
+  } catch (error) {
+    console.error('❌ Error fetching all mail:', error);
+    return { success: false, error: 'Failed to fetch all mail' };
+  }
+}

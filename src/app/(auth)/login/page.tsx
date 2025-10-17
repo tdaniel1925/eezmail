@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { AnimatedButton } from '@/components/ui/AnimatedButton';
 
 export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('');
@@ -129,23 +130,16 @@ export default function LoginPage(): JSX.Element {
             </div>
 
             {/* Sign In Button */}
-            <button
+            <AnimatedButton
+              variant="premium"
               type="submit"
               disabled={loading}
-              className="group relative flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-primary-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition-all duration-200 hover:shadow-xl hover:shadow-primary/40 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              loading={loading}
+              icon={<ArrowRight className="h-4 w-4" />}
+              className="w-full"
             >
-              {loading ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  <span>Signing in...</span>
-                </>
-              ) : (
-                <>
-                  <span>Sign in to your account</span>
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </>
-              )}
-            </button>
+              {loading ? 'Signing in...' : 'Sign in to your account'}
+            </AnimatedButton>
           </form>
 
           {/* Divider */}
@@ -155,7 +149,7 @@ export default function LoginPage(): JSX.Element {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="bg-white/60 dark:bg-white/5 px-4 text-gray-600 dark:text-white/60">
-                New to Imbox?
+                New to eezMail?
               </span>
             </div>
           </div>

@@ -1,8 +1,7 @@
 'use client';
 
-import { EmailLayout } from '@/components/layout/EmailLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { EmailList } from '@/components/email/EmailList';
+import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 // Mock Paper Trail email data - Receipts, confirmations, transactional emails
 const mockPaperTrailEmails: Email[] = [
@@ -172,15 +171,13 @@ const mockPaperTrailEmails: Email[] = [
 
 export default function PaperTrailPage(): JSX.Element {
   return (
-    <EmailLayout
-      sidebar={<Sidebar />}
-      emailList={
-        <EmailList
-          emails={mockPaperTrailEmails}
-          title="Paper Trail"
-          isLoading={false}
-        />
-      }
-    />
+    <>
+      <EmailList
+        emails={mockPaperTrailEmails}
+        title="Paper Trail"
+        isLoading={false}
+      />
+      <ChatBot />
+    </>
   );
 }

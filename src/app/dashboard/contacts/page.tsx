@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { EmailLayout } from '@/components/layout/EmailLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { ContactList } from '@/components/contacts/ContactList';
+import { ChatBot } from '@/components/ai/ChatBot';
 import { ContactDetailModal } from '@/components/contacts/ContactDetailModal';
 import {
   ContactFormModal,
@@ -156,18 +155,13 @@ export default function ContactsPage(): JSX.Element {
     ? getMockContactDetails(selectedContactId)
     : null;
 
-  const sidebar = <Sidebar />;
-  const contactList = (
-    <ContactList
-      contacts={mockContactsList}
-      onContactSelect={handleContactSelect}
-      onAddContact={handleOpenAddModal}
-    />
-  );
-
   return (
     <>
-      <EmailLayout sidebar={sidebar} emailList={contactList} />
+      <ContactList
+        contacts={mockContactsList}
+        onContactSelect={handleContactSelect}
+        onAddContact={handleOpenAddModal}
+      />
       <ContactDetailModal
         contact={selectedContact}
         isOpen={isDetailModalOpen}
@@ -181,6 +175,7 @@ export default function ContactsPage(): JSX.Element {
         onClose={handleCloseFormModal}
         onSave={handleSaveContact}
       />
+      <ChatBot />
     </>
   );
 }

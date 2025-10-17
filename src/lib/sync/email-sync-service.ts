@@ -417,6 +417,22 @@ async function syncFoldersWithGraph(
 }
 
 /**
+ * Update sync progress in database
+ */
+async function updateSyncProgress(
+  accountId: string,
+  syncedCount: number
+): Promise<void> {
+  await db
+    .update(emailAccounts)
+    .set({
+      syncProgress: syncedCount,
+      syncUpdatedAt: new Date(),
+    } as any)
+    .where(eq(emailAccounts.id, accountId));
+}
+
+/**
  * Sync emails using Microsoft Graph API with Delta Query support
  */
 async function syncEmailsWithGraph(
@@ -436,143 +452,160 @@ async function syncEmailsWithGraph(
     const deltaLink = accountRecord?.syncCursor;
 
     // Use delta query if we have a deltaLink, otherwise do initial sync
-    let url: string;
+    let currentUrl: string | null;
     if (deltaLink && deltaLink.includes('delta')) {
       // Use the stored deltaLink for incremental sync
-      url = deltaLink;
+      currentUrl = deltaLink;
       console.log('📊 Using delta sync for incremental updates');
     } else {
-      // Initial sync or fallback to full sync with delta token
-      url =
-        'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$top=50&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId';
+      // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
+      currentUrl =
+        'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$top=100&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId';
       console.log('🔄 Performing initial delta sync');
     }
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    let totalSynced = 0;
+    let finalDeltaLink: string | null = null;
 
-    if (!response.ok) {
-      throw new Error(`Microsoft Graph API error: ${response.statusText}`);
-    }
+    // Loop through all pages
+    while (currentUrl) {
+      const response = await fetch(currentUrl, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    const data = await response.json();
-    const messages = data.value || [];
+      if (!response.ok) {
+        throw new Error(`Microsoft Graph API error: ${response.statusText}`);
+      }
 
-    // Get the next link for pagination or delta link for next sync
-    const nextLink = data['@odata.nextLink'];
-    const newDeltaLink = data['@odata.deltaLink'];
+      const data = await response.json();
+      const messages = data.value || [];
 
-    console.log(`📧 Found ${messages.length} emails to sync`);
+      console.log(
+        `📧 Processing batch of ${messages.length} emails (total: ${totalSynced + messages.length})`
+      );
 
-    // Insert emails into database
-    let syncedCount = 0;
-    for (const message of messages) {
-      try {
-        const emailData = {
-          accountId,
-          messageId: message.id,
-          threadId: message.id, // Microsoft Graph doesn't have separate thread IDs
-          subject: message.subject || '(No Subject)',
-          snippet: message.bodyPreview || '',
-          fromAddress: message.from?.emailAddress || {
-            email: 'unknown@email.com',
-            name: 'Unknown',
-          },
-          toAddresses: [], // Will be populated separately if needed
-          receivedAt: message.receivedDateTime
-            ? new Date(message.receivedDateTime)
-            : new Date(),
-          isRead: message.isRead || false,
-          isStarred: false, // Microsoft Graph doesn't have starred field in basic query
-          hasAttachments: message.hasAttachments || false,
-          folderName: normalizeFolderName(
-            folderMapping[message.parentFolderId] || 'inbox'
-          ), // Use normalized folder mapping or default to inbox
-        };
+      // Insert emails into database
+      let syncedCount = 0;
+      for (const message of messages) {
+        try {
+          const emailData = {
+            accountId,
+            messageId: message.id,
+            threadId: message.id, // Microsoft Graph doesn't have separate thread IDs
+            subject: message.subject || '(No Subject)',
+            snippet: message.bodyPreview || '',
+            fromAddress: message.from?.emailAddress || {
+              email: 'unknown@email.com',
+              name: 'Unknown',
+            },
+            toAddresses: [], // Will be populated separately if needed
+            receivedAt: message.receivedDateTime
+              ? new Date(message.receivedDateTime)
+              : new Date(),
+            isRead: message.isRead || false,
+            isStarred: false, // Microsoft Graph doesn't have starred field in basic query
+            hasAttachments: message.hasAttachments || false,
+            folderName: normalizeFolderName(
+              folderMapping[message.parentFolderId] || 'inbox'
+            ), // Use normalized folder mapping or default to inbox
+          };
 
-        // Insert email first
-        const [insertedEmail] = await db
-          .insert(emails)
-          .values(emailData)
-          .returning()
-          .onConflictDoNothing(); // Skip duplicates
+          // Insert email first
+          const [insertedEmail] = await db
+            .insert(emails)
+            .values(emailData)
+            .returning()
+            .onConflictDoNothing(); // Skip duplicates
 
-        // If email was inserted (not duplicate), categorize it
-        if (insertedEmail) {
-          let emailCategory;
-          let screenedBy;
+          // If email was inserted (not duplicate), categorize it
+          if (insertedEmail) {
+            let emailCategory;
+            let screenedBy;
 
-          if (syncType === 'initial' || syncType === 'manual') {
-            // Skip AI categorization - use original folder
-            emailCategory = mapFolderToCategory(
-              emailData.folderName || 'inbox'
-            );
-            screenedBy = 'manual_sync';
-            console.log(
-              `📬 ${syncType} sync - Email going to: ${emailCategory}`
-            );
-          } else {
-            // Auto-sync: use AI categorization
-            const emailForCategorization = {
-              id: insertedEmail.id,
-              subject: emailData.subject,
-              bodyText: message.bodyPreview || '',
-              bodyHtml: '', // Will be fetched separately if needed
-              fromAddress: emailData.fromAddress,
-              receivedAt: emailData.receivedAt,
-            };
+            if (syncType === 'initial' || syncType === 'manual') {
+              // Skip AI categorization - use original folder
+              emailCategory = mapFolderToCategory(
+                emailData.folderName || 'inbox'
+              );
+              screenedBy = 'manual_sync';
+              console.log(
+                `📬 ${syncType} sync - Email going to: ${emailCategory}`
+              );
+            } else {
+              // Auto-sync: use AI categorization
+              const emailForCategorization = {
+                id: insertedEmail.id,
+                subject: emailData.subject,
+                bodyText: message.bodyPreview || '',
+                bodyHtml: '', // Will be fetched separately if needed
+                fromAddress: emailData.fromAddress,
+                receivedAt: emailData.receivedAt,
+              };
 
-            emailCategory = await categorizeIncomingEmail(
-              emailForCategorization,
-              userId
-            );
-            screenedBy = 'ai_rule';
-            console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+              emailCategory = await categorizeIncomingEmail(
+                emailForCategorization,
+                userId
+              );
+              screenedBy = 'ai_rule';
+              console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+            }
+
+            // Update email with category
+            await db
+              .update(emails)
+              .set({
+                emailCategory: emailCategory,
+                screenedBy: screenedBy,
+                screenedAt: new Date(),
+                screeningStatus: 'screened',
+              } as any)
+              .where(eq(emails.id, insertedEmail.id));
           }
 
-          // Update email with category
-          await db
-            .update(emails)
-            .set({
-              emailCategory: emailCategory,
-              screenedBy: screenedBy,
-              screenedAt: new Date(),
-              screeningStatus: 'screened',
-            } as any)
-            .where(eq(emails.id, insertedEmail.id));
-        }
+          syncedCount++;
+          totalSynced++;
 
-        syncedCount++;
-      } catch (error) {
-        console.error('Error syncing individual email:', error);
-        // Continue with next email
+          // Update progress in database every 10 emails
+          if (totalSynced % 10 === 0) {
+            await updateSyncProgress(accountId, totalSynced);
+          }
+        } catch (error) {
+          console.error('Error syncing individual email:', error);
+          // Continue with next email
+        }
+      }
+
+      // Get next page URL or delta link
+      const nextLink = data['@odata.nextLink'];
+      const newDeltaLink = data['@odata.deltaLink'];
+
+      // If we have both, prioritize nextLink to continue pagination
+      currentUrl = nextLink || null;
+      finalDeltaLink = newDeltaLink || finalDeltaLink;
+
+      // Rate limiting: small delay between batches
+      if (currentUrl) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     }
 
-    // Update sync cursor with deltaLink or nextLink
-    // deltaLink is used for next incremental sync, nextLink is for pagination
-    const cursorToSave = newDeltaLink || nextLink || null;
-    if (cursorToSave) {
+    // Update sync cursor with final deltaLink
+    if (finalDeltaLink) {
       await db
         .update(emailAccounts)
         .set({
-          syncCursor: cursorToSave,
+          syncCursor: finalDeltaLink,
           updatedAt: new Date(),
         } as any)
         .where(eq(emailAccounts.id, accountId));
 
-      if (newDeltaLink) {
-        console.log('✅ Delta link saved for next incremental sync');
-      } else if (nextLink) {
-        console.log('🔄 Next page link saved for pagination');
-      }
+      console.log('✅ Delta link saved for next incremental sync');
     }
 
-    console.log(`✅ Synced ${syncedCount} emails`);
+    console.log(`✅ Synced ${totalSynced} emails`);
   } catch (error) {
     console.error('Error syncing emails with Graph:', error);
     throw error;
@@ -813,164 +846,188 @@ async function syncGmailMessages(
       where: (accounts, { eq }) => eq(accounts.id, accountId),
     });
 
-    let pageToken = accountRecord?.syncCursor || undefined;
+    let pageToken: string | undefined = accountRecord?.syncCursor || undefined;
+    let totalSynced = 0;
 
-    // Fetch messages from Gmail API
-    let url =
-      'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=50';
-    if (pageToken) {
-      url += `&pageToken=${encodeURIComponent(pageToken)}`;
-    }
-
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Gmail API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const messages = data.messages || [];
-    const nextPageToken = data.nextPageToken;
-
-    console.log(`📧 Found ${messages.length} Gmail messages to sync`);
-
-    // Fetch full message details for each message
-    let syncedCount = 0;
-    for (const message of messages) {
-      try {
-        const detailsResponse = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-
-        if (!detailsResponse.ok) {
-          console.error(
-            `Failed to fetch message ${message.id}:`,
-            detailsResponse.statusText
-          );
-          continue;
-        }
-
-        const messageDetails = await detailsResponse.json();
-
-        // Parse Gmail message
-        const headers = messageDetails.payload?.headers || [];
-        const getHeader = (name: string) =>
-          headers.find((h: any) => h.name.toLowerCase() === name.toLowerCase())
-            ?.value || '';
-
-        const from = getHeader('from');
-        const subject = getHeader('subject');
-        const receivedDate = new Date(parseInt(messageDetails.internalDate));
-
-        // Extract email address from "Name <email@example.com>" format
-        const fromMatch = from.match(/<([^>]+)>/) || [null, from];
-        const fromEmail = fromMatch[1] || from;
-
-        // Get snippet as preview
-        const bodyPreview = messageDetails.snippet || '';
-
-        // Determine folder name from labels
-        const labelIds = messageDetails.labelIds || [];
-        const folderName = labelIds.includes('INBOX')
-          ? 'inbox'
-          : labelIds.includes('SENT')
-            ? 'sent'
-            : labelIds.includes('DRAFT')
-              ? 'drafts'
-              : labelIds.includes('TRASH')
-                ? 'trash'
-                : labelIds.includes('SPAM')
-                  ? 'spam'
-                  : 'inbox';
-
-        // Categorize email
-        let emailCategory;
-        let screenedBy;
-
-        if (syncType === 'initial' || syncType === 'manual') {
-          // Skip AI categorization - use original folder
-          emailCategory = mapFolderToCategory(folderName);
-          screenedBy = 'manual_sync';
-          console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
-        } else {
-          // Auto-sync: use AI categorization
-          emailCategory = await categorizeIncomingEmail(
-            {
-              subject,
-              fromAddress: { email: fromEmail, name: from },
-              bodyPreview,
-            } as any,
-            userId
-          );
-          screenedBy = 'ai_rule';
-          console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
-        }
-
-        const emailData = {
-          accountId,
-          messageId: messageDetails.id,
-          threadId: messageDetails.threadId,
-          subject,
-          fromAddress: { email: fromEmail, name: from },
-          toAddresses: [], // TODO: Parse To field
-          receivedAt: receivedDate,
-          isRead: !labelIds.includes('UNREAD'),
-          bodyPreview,
-          hasAttachments:
-            messageDetails.payload?.parts?.some(
-              (p: any) => p.filename && p.filename.length > 0
-            ) || false,
-          folderName,
-          labelIds,
-          emailCategory, // Set category
-          screenedBy,
-          screenedAt: new Date(),
-          screeningStatus: 'screened' as const,
-        };
-
-        // Insert or update email
-        await db
-          .insert(emails)
-          .values(emailData as any)
-          .onConflictDoUpdate({
-            target: [emails.accountId, emails.messageId],
-            set: {
-              isRead: emailData.isRead,
-              folderName: emailData.folderName,
-              labelIds: emailData.labelIds,
-              emailCategory: emailData.emailCategory as any,
-              screenedAt: emailData.screenedAt,
-              screenedBy: emailData.screenedBy,
-            },
-          });
-
-        syncedCount++;
-      } catch (emailError) {
-        console.error(`Error syncing Gmail message ${message.id}:`, emailError);
+    // Continue until no more pages
+    while (true) {
+      // Fetch messages from Gmail API - increased to 100 per batch
+      let url =
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=100';
+      if (pageToken) {
+        url += `&pageToken=${encodeURIComponent(pageToken)}`;
       }
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gmail API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const messages = data.messages || [];
+
+      if (messages.length === 0) break;
+
+      console.log(
+        `📧 Processing batch of ${messages.length} Gmail messages (total: ${totalSynced + messages.length})`
+      );
+
+      // Fetch full message details for each message
+      let syncedCount = 0;
+      for (const message of messages) {
+        try {
+          const detailsResponse = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          if (!detailsResponse.ok) {
+            console.error(
+              `Failed to fetch message ${message.id}:`,
+              detailsResponse.statusText
+            );
+            continue;
+          }
+
+          const messageDetails = await detailsResponse.json();
+
+          // Parse Gmail message
+          const headers = messageDetails.payload?.headers || [];
+          const getHeader = (name: string) =>
+            headers.find(
+              (h: any) => h.name.toLowerCase() === name.toLowerCase()
+            )?.value || '';
+
+          const from = getHeader('from');
+          const subject = getHeader('subject');
+          const receivedDate = new Date(parseInt(messageDetails.internalDate));
+
+          // Extract email address from "Name <email@example.com>" format
+          const fromMatch = from.match(/<([^>]+)>/) || [null, from];
+          const fromEmail = fromMatch[1] || from;
+
+          // Get snippet as preview
+          const bodyPreview = messageDetails.snippet || '';
+
+          // Determine folder name from labels
+          const labelIds = messageDetails.labelIds || [];
+          const folderName = labelIds.includes('INBOX')
+            ? 'inbox'
+            : labelIds.includes('SENT')
+              ? 'sent'
+              : labelIds.includes('DRAFT')
+                ? 'drafts'
+                : labelIds.includes('TRASH')
+                  ? 'trash'
+                  : labelIds.includes('SPAM')
+                    ? 'spam'
+                    : 'inbox';
+
+          // Categorize email
+          let emailCategory;
+          let screenedBy;
+
+          if (syncType === 'initial' || syncType === 'manual') {
+            // Skip AI categorization - use original folder
+            emailCategory = mapFolderToCategory(folderName);
+            screenedBy = 'manual_sync';
+            console.log(
+              `📬 ${syncType} sync - Email going to: ${emailCategory}`
+            );
+          } else {
+            // Auto-sync: use AI categorization
+            emailCategory = await categorizeIncomingEmail(
+              {
+                subject,
+                fromAddress: { email: fromEmail, name: from },
+                bodyPreview,
+              } as any,
+              userId
+            );
+            screenedBy = 'ai_rule';
+            console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+          }
+
+          const emailData = {
+            accountId,
+            messageId: messageDetails.id,
+            threadId: messageDetails.threadId,
+            subject,
+            fromAddress: { email: fromEmail, name: from },
+            toAddresses: [], // TODO: Parse To field
+            receivedAt: receivedDate,
+            isRead: !labelIds.includes('UNREAD'),
+            bodyPreview,
+            hasAttachments:
+              messageDetails.payload?.parts?.some(
+                (p: any) => p.filename && p.filename.length > 0
+              ) || false,
+            folderName,
+            labelIds,
+            emailCategory, // Set category
+            screenedBy,
+            screenedAt: new Date(),
+            screeningStatus: 'screened' as const,
+          };
+
+          // Insert or update email
+          await db
+            .insert(emails)
+            .values(emailData as any)
+            .onConflictDoUpdate({
+              target: [emails.accountId, emails.messageId],
+              set: {
+                isRead: emailData.isRead,
+                folderName: emailData.folderName,
+                labelIds: emailData.labelIds,
+                emailCategory: emailData.emailCategory as any,
+                screenedAt: emailData.screenedAt,
+                screenedBy: emailData.screenedBy,
+              },
+            });
+
+          syncedCount++;
+          totalSynced++;
+
+          // Update progress in database every 10 emails
+          if (totalSynced % 10 === 0) {
+            await updateSyncProgress(accountId, totalSynced);
+          }
+        } catch (emailError) {
+          console.error(
+            `Error syncing Gmail message ${message.id}:`,
+            emailError
+          );
+        }
+      }
+
+      // Check for next page
+      pageToken = data.nextPageToken;
+      if (!pageToken) break;
+
+      // Rate limiting: small delay between batches
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    console.log(`✅ Synced ${syncedCount} Gmail messages`);
+    console.log(`✅ Synced ${totalSynced} Gmail messages`);
 
-    // Update sync cursor with nextPageToken
-    if (nextPageToken) {
-      await db
-        .update(emailAccounts)
-        .set({
-          syncCursor: nextPageToken,
-          updatedAt: new Date(),
-        } as any)
-        .where(eq(emailAccounts.id, accountId));
-    }
+    // Clear sync cursor since we're done with pagination
+    await db
+      .update(emailAccounts)
+      .set({
+        syncCursor: null,
+        updatedAt: new Date(),
+      } as any)
+      .where(eq(emailAccounts.id, accountId));
   } catch (error) {
     console.error('Error syncing Gmail messages:', error);
     throw error;

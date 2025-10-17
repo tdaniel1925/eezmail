@@ -91,16 +91,9 @@ export async function wipeAllUserData(): Promise<{
     await db.delete(emailSignatures).where(eq(emailSignatures.userId, user.id));
     await db.delete(senderTrust).where(eq(senderTrust.userId, user.id));
 
-    // Delete user from Supabase auth
-    console.log('🗑️  Deleting user account...');
-    const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-
-    if (authError) {
-      console.error('Error deleting user from auth:', authError);
-      // Continue anyway - data is already deleted
-    }
-
-    console.log('✅ Complete data wipe successful');
+    // NOTE: User account and authentication are PRESERVED
+    // User stays logged in and can add new email accounts
+    console.log('✅ All data wiped successfully (user account preserved)');
     return { success: true };
   } catch (error) {
     console.error('❌ Error wiping user data:', error);

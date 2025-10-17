@@ -104,7 +104,9 @@ export const emailCategoryEnum = pgEnum('email_category', [
   'receipts',
   'spam',
   'archived',
+  'newsletter',
 ]);
+export type EmailCategory = (typeof emailCategoryEnum.enumValues)[number];
 
 export const senderTrustLevelEnum = pgEnum('sender_trust_level', [
   'trusted',
@@ -299,11 +301,12 @@ export const emailAccounts = pgTable(
     syncStatus: emailSyncStatusEnum('sync_status').default('idle'),
     syncProgress: integer('sync_progress').default(0),
     syncTotal: integer('sync_total').default(0),
+    syncUpdatedAt: timestamp('sync_updated_at'),
     lastSuccessfulSyncAt: timestamp('last_successful_sync_at'),
     nextScheduledSyncAt: timestamp('next_scheduled_sync_at'),
     errorCount: integer('error_count').default(0),
     consecutiveErrors: integer('consecutive_errors').default(0),
-    syncPriority: integer('sync_priority').default(2), // 0=immediate, 1=high, 2=normal, 3=low, 4=background
+    syncPriority: text('sync_priority').default('normal'), // high, normal, low
 
     // Settings
     signature: text('signature'),
@@ -365,6 +368,7 @@ export const emails = pgTable(
     // Flags
     isRead: boolean('is_read').default(false).notNull(),
     isStarred: boolean('is_starred').default(false).notNull(),
+    isTrashed: boolean('is_trashed').default(false).notNull(),
     isDraft: boolean('is_draft').default(false).notNull(),
     hasDrafts: boolean('has_drafts').default(false).notNull(),
     hasAttachments: boolean('has_attachments').default(false).notNull(),
@@ -410,6 +414,11 @@ export const emails = pgTable(
     aiCategory: text('ai_category'),
     aiPriority: priorityEnum('ai_priority'),
     aiSentiment: sentimentEnum('ai_sentiment'),
+
+    // Advanced AI features
+    summary: text('summary'), // Cached email summary
+    sentiment: text('sentiment'), // positive, neutral, negative, urgent, anxious
+    sentimentScore: integer('sentiment_score'), // -100 to +100
 
     // Search
     searchVector: text('search_vector'),
@@ -1230,6 +1239,41 @@ export const aiReplyStatusEnum = pgEnum('ai_reply_status', [
   'sent',
 ]);
 
+// Chatbot Action Type Enum (for undo system)
+export const chatbotActionTypeEnum = pgEnum('chatbot_action_type', [
+  'bulk_move',
+  'bulk_archive',
+  'bulk_delete',
+  'bulk_mark_read',
+  'bulk_star',
+  'create_folder',
+  'delete_folder',
+  'rename_folder',
+  'create_rule',
+  'delete_rule',
+  'update_rule',
+  'create_contact',
+  'update_contact',
+  'delete_contact',
+  'create_calendar_event',
+  'update_calendar_event',
+  'delete_calendar_event',
+  'update_settings',
+]);
+
+// Email Template Category Enum
+export const emailTemplateCategoryEnum = pgEnum('email_template_category', [
+  'meeting',
+  'thanks',
+  'intro',
+  'followup',
+  'apology',
+  'announcement',
+  'other',
+]);
+export type EmailTemplateCategory =
+  (typeof emailTemplateCategoryEnum.enumValues)[number];
+
 // AI Reply Drafts Table
 export const aiReplyDrafts = pgTable(
   'ai_reply_drafts',
@@ -1270,6 +1314,421 @@ export const aiReplyDrafts = pgTable(
     statusIdx: index('ai_reply_drafts_status_idx').on(table.status),
   })
 );
+
+// ============================================================================
+// CHATBOT ACTIONS TABLE (for undo system)
+// ============================================================================
+
+export const chatbotActions = pgTable(
+  'chatbot_actions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Action details
+    actionType: chatbotActionTypeEnum('action_type').notNull(),
+    description: text('description').notNull(),
+
+    // Undo data (stores what's needed to reverse the action)
+    undoData: jsonb('undo_data')
+      .$type<{
+        emailIds?: string[];
+        originalFolder?: string;
+        targetFolder?: string;
+        folderId?: string;
+        folderName?: string;
+        ruleId?: string;
+        contactId?: string;
+        eventId?: string;
+        originalValues?: Record<string, any>;
+      }>()
+      .notNull(),
+
+    // Status
+    isUndone: boolean('is_undone').default(false).notNull(),
+
+    // Expiry (actions expire after 24 hours)
+    expiresAt: timestamp('expires_at').notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('chatbot_actions_user_id_idx').on(table.userId),
+    actionTypeIdx: index('chatbot_actions_action_type_idx').on(
+      table.actionType
+    ),
+    expiresAtIdx: index('chatbot_actions_expires_at_idx').on(table.expiresAt),
+    isUndoneIdx: index('chatbot_actions_is_undone_idx').on(table.isUndone),
+  })
+);
+
+// ============================================================================
+// EXTRACTED ACTIONS TABLE (action items from emails)
+// ============================================================================
+
+export const extractedActions = pgTable(
+  'extracted_actions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Action item details
+    description: text('description').notNull(),
+    dueDate: timestamp('due_date'),
+    priority: priorityEnum('priority').default('medium'),
+    assignee: text('assignee'),
+
+    // Status
+    isCompleted: boolean('is_completed').default(false).notNull(),
+    completedAt: timestamp('completed_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdIdx: index('extracted_actions_email_id_idx').on(table.emailId),
+    userIdIdx: index('extracted_actions_user_id_idx').on(table.userId),
+    isCompletedIdx: index('extracted_actions_is_completed_idx').on(
+      table.isCompleted
+    ),
+    dueDateIdx: index('extracted_actions_due_date_idx').on(table.dueDate),
+  })
+);
+
+// ============================================================================
+// FOLLOW-UP REMINDERS TABLE
+// ============================================================================
+
+export const followUpReminders = pgTable(
+  'follow_up_reminders',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Reminder details
+    originalEmailDate: timestamp('original_email_date').notNull(),
+    suggestedFollowUpDate: timestamp('suggested_follow_up_date').notNull(),
+    reason: text('reason').notNull(),
+
+    // Status
+    isDismissed: boolean('is_dismissed').default(false).notNull(),
+    isSnoozed: boolean('is_snoozed').default(false).notNull(),
+    snoozeUntil: timestamp('snooze_until'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdIdx: index('follow_up_reminders_email_id_idx').on(table.emailId),
+    userIdIdx: index('follow_up_reminders_user_id_idx').on(table.userId),
+    suggestedDateIdx: index('follow_up_reminders_suggested_date_idx').on(
+      table.suggestedFollowUpDate
+    ),
+    isDismissedIdx: index('follow_up_reminders_is_dismissed_idx').on(
+      table.isDismissed
+    ),
+  })
+);
+
+// ============================================================================
+// EMAIL TEMPLATES TABLE
+// ============================================================================
+
+export const emailTemplates = pgTable(
+  'email_templates',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Template details
+    name: varchar('name', { length: 100 }).notNull(),
+    subject: text('subject').notNull(),
+    body: text('body').notNull(),
+
+    // Categorization
+    category: emailTemplateCategoryEnum('category').default('other'),
+
+    // Variables (array of variable names like ["name", "date", "topic"])
+    variables: jsonb('variables').$type<string[]>().default([]),
+
+    // Usage tracking
+    useCount: integer('use_count').default(0).notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('email_templates_user_id_idx').on(table.userId),
+    categoryIdx: index('email_templates_category_idx').on(table.category),
+  })
+);
+
+// ============================================================================
+// EMAIL DRAFTS TABLE
+// ============================================================================
+
+export const emailDrafts = pgTable(
+  'email_drafts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+
+    // Email fields
+    to: text('to'),
+    cc: text('cc'),
+    bcc: text('bcc'),
+    subject: text('subject'),
+    body: text('body'), // HTML content
+
+    // Attachments (stored as JSON array)
+    attachments: jsonb('attachments').$type<
+      Array<{
+        id: string;
+        name: string;
+        size: number;
+        type: string;
+        data: string; // Base64
+      }>
+    >(),
+
+    // Draft metadata
+    mode: text('mode', { enum: ['compose', 'reply', 'forward'] })
+      .default('compose')
+      .notNull(),
+    replyToId: uuid('reply_to_id').references(() => emails.id, {
+      onDelete: 'set null',
+    }),
+
+    lastSaved: timestamp('last_saved').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('email_drafts_user_id_idx').on(table.userId),
+    accountIdIdx: index('email_drafts_account_id_idx').on(table.accountId),
+    lastSavedIdx: index('email_drafts_last_saved_idx').on(table.lastSaved),
+  })
+);
+
+// ============================================================================
+// SCHEDULED EMAILS TABLE
+// ============================================================================
+
+export const scheduledEmailStatusEnum = pgEnum('scheduled_email_status', [
+  'pending',
+  'sent',
+  'failed',
+  'cancelled',
+]);
+
+export const scheduledEmails = pgTable(
+  'scheduled_emails',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+
+    // Email fields
+    to: text('to').notNull(),
+    cc: text('cc'),
+    bcc: text('bcc'),
+    subject: text('subject').notNull(),
+    body: text('body').notNull(), // HTML content
+
+    // Attachments (stored as JSON array)
+    attachments: jsonb('attachments').$type<
+      Array<{
+        id: string;
+        name: string;
+        size: number;
+        type: string;
+        data: string; // Base64
+      }>
+    >(),
+
+    // Scheduling
+    scheduledFor: timestamp('scheduled_for').notNull(),
+    timezone: text('timezone').default('UTC'),
+    status: scheduledEmailStatusEnum('status').default('pending').notNull(),
+
+    // Error tracking
+    errorMessage: text('error_message'),
+    attemptCount: integer('attempt_count').default(0).notNull(),
+
+    // Metadata
+    sentAt: timestamp('sent_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('scheduled_emails_user_id_idx').on(table.userId),
+    accountIdIdx: index('scheduled_emails_account_id_idx').on(table.accountId),
+    scheduledForIdx: index('scheduled_emails_scheduled_for_idx').on(
+      table.scheduledFor
+    ),
+    statusIdx: index('scheduled_emails_status_idx').on(table.status),
+  })
+);
+
+// ============================================================================
+// TASKS TABLE
+// ============================================================================
+
+export const taskPriorityEnum = pgEnum('task_priority', [
+  'low',
+  'medium',
+  'high',
+]);
+
+export const taskStatusEnum = pgEnum('task_status', [
+  'pending',
+  'in_progress',
+  'completed',
+  'cancelled',
+]);
+
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    title: text('title').notNull(),
+    description: text('description'),
+    completed: boolean('completed').default(false).notNull(),
+    status: taskStatusEnum('status').default('pending').notNull(),
+    priority: taskPriorityEnum('priority').default('medium'),
+
+    dueDate: timestamp('due_date'),
+    completedAt: timestamp('completed_at'),
+
+    // Optional email association
+    emailId: uuid('email_id').references(() => emails.id, {
+      onDelete: 'set null',
+    }),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('tasks_user_id_idx').on(table.userId),
+    statusIdx: index('tasks_status_idx').on(table.status),
+    completedIdx: index('tasks_completed_idx').on(table.completed),
+    dueDateIdx: index('tasks_due_date_idx').on(table.dueDate),
+  })
+);
+
+// ============================================================================
+// CUSTOM LABELS TABLE
+// ============================================================================
+
+export const customLabels = pgTable(
+  'custom_labels',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    name: varchar('name', { length: 100 }).notNull(),
+    color: varchar('color', { length: 20 }).notNull(), // hex color or color name
+    icon: varchar('icon', { length: 50 }), // icon name from Lucide
+    sortOrder: integer('sort_order').default(0).notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('custom_labels_user_id_idx').on(table.userId),
+    sortOrderIdx: index('custom_labels_sort_order_idx').on(table.sortOrder),
+  })
+);
+
+// ============================================================================
+// LABEL ASSIGNMENTS (Junction Table)
+// ============================================================================
+
+export const labelAssignments = pgTable(
+  'label_assignments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    labelId: uuid('label_id')
+      .notNull()
+      .references(() => customLabels.id, { onDelete: 'cascade' }),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    emailIdIdx: index('label_assignments_email_id_idx').on(table.emailId),
+    labelIdIdx: index('label_assignments_label_id_idx').on(table.labelId),
+    uniqueAssignment: uniqueIndex('label_assignments_unique_idx').on(
+      table.emailId,
+      table.labelId
+    ),
+  })
+);
+
+// ============================================================================
+// USER PREFERENCES TABLE
+// ============================================================================
+
+export const densityEnum = pgEnum('density', [
+  'comfortable',
+  'compact',
+  'default',
+]);
+
+export const userPreferences = pgTable('user_preferences', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // UI Preferences
+  density: densityEnum('density').default('default').notNull(),
+  language: varchar('language', { length: 10 }).default('en').notNull(),
+
+  // Notification Settings
+  desktopNotifications: boolean('desktop_notifications')
+    .default(true)
+    .notNull(),
+  soundEffects: boolean('sound_effects').default(true).notNull(),
+  emailNotifications: boolean('email_notifications').default(true).notNull(),
+
+  // Sidebar Preferences
+  sidebarCollapsed: boolean('sidebar_collapsed').default(false).notNull(),
+  sidebarWidth: integer('sidebar_width').default(260).notNull(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // ============================================================================
 // TYPE EXPORTS
@@ -1346,3 +1805,35 @@ export type NewSenderTrust = typeof senderTrust.$inferInsert;
 
 export type AIReplyDraft = typeof aiReplyDrafts.$inferSelect;
 export type NewAIReplyDraft = typeof aiReplyDrafts.$inferInsert;
+
+export type ChatbotAction = typeof chatbotActions.$inferSelect;
+export type NewChatbotAction = typeof chatbotActions.$inferInsert;
+
+export type ExtractedAction = typeof extractedActions.$inferSelect;
+export type NewExtractedAction = typeof extractedActions.$inferInsert;
+
+export type FollowUpReminder = typeof followUpReminders.$inferSelect;
+export type NewFollowUpReminder = typeof followUpReminders.$inferInsert;
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type NewEmailTemplate = typeof emailTemplates.$inferInsert;
+
+export type EmailDraft = typeof emailDrafts.$inferSelect;
+export type NewEmailDraft = typeof emailDrafts.$inferInsert;
+
+export type ScheduledEmail = typeof scheduledEmails.$inferSelect;
+export type NewScheduledEmail = typeof scheduledEmails.$inferInsert;
+export type ScheduledEmailStatus =
+  (typeof scheduledEmailStatusEnum.enumValues)[number];
+
+export type Task = typeof tasks.$inferSelect;
+export type NewTask = typeof tasks.$inferInsert;
+
+export type CustomLabel = typeof customLabels.$inferSelect;
+export type NewCustomLabel = typeof customLabels.$inferInsert;
+
+export type LabelAssignment = typeof labelAssignments.$inferSelect;
+export type NewLabelAssignment = typeof labelAssignments.$inferInsert;
+
+export type UserPreference = typeof userPreferences.$inferSelect;
+export type NewUserPreference = typeof userPreferences.$inferInsert;

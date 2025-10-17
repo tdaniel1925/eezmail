@@ -1,17 +1,46 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, X, GripVertical } from 'lucide-react';
+import { Send, Sparkles, X, GripVertical, Mic, MicOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+import { useChatbotContext } from './ChatbotContext';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  needsConfirmation?: boolean;
+  actionData?: any;
 }
 
-export function ChatBot(): JSX.Element {
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: any) => void;
+  onerror: (event: any) => void;
+  onend: () => void;
+}
+
+interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
+  }
+}
+
+export function ChatBot(): JSX.Element | null {
+  const { currentEmail, currentFolder, selectedEmails } = useChatbotContext();
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -24,6 +53,53 @@ export function ChatBot(): JSX.Element {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [pendingConfirmation, setPendingConfirmation] = useState<any>(null);
+  const [autoSubmitTrigger, setAutoSubmitTrigger] = useState(0);
+  const [currentOperation, setCurrentOperation] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Operation-specific loading messages
+  const OPERATION_MESSAGES: Record<string, string> = {
+    compose_email:
+      '✉️ Your eezMail Assistant is drafting your email. Just a moment, please...',
+    verify_email_address: '🔍 Verifying email address...',
+    search_emails: '📧 Searching through your emails...',
+    create_contact: '👤 Adding contact to your address book...',
+    update_contact: '✏️ Updating contact information...',
+    delete_contact: '🗑️ Removing contact...',
+    search_contacts: '📇 Looking up contacts...',
+    list_contacts: '📋 Retrieving your contact list...',
+    find_contact_by_email: '🔎 Searching for contact...',
+    create_contact_from_email: '👤 Adding new contact...',
+    get_contact_details: '📋 Retrieving contact details...',
+    create_folder: '📁 Creating new folder...',
+    bulk_move_by_sender: '📦 Moving emails...',
+    bulk_move_emails_to_folder: '📦 Organizing emails...',
+    create_folder_and_move: '📁 Creating folder and moving emails...',
+    bulk_archive: '📥 Archiving emails...',
+    bulk_delete: '🗑️ Deleting emails...',
+    bulk_mark_read: '✓ Marking emails as read...',
+    bulk_star: '⭐ Starring emails...',
+    create_email_rule: '⚙️ Creating email rule...',
+    create_calendar_event: '📅 Creating calendar event...',
+    update_calendar_event: '📅 Updating event...',
+    delete_calendar_event: '🗑️ Deleting event...',
+    reschedule_event: '📅 Rescheduling event...',
+    get_todays_events: "📅 Loading today's schedule...",
+    get_upcoming_events: '📅 Loading upcoming events...',
+    search_calendar: '🔍 Searching calendar...',
+    research_emails: '🔬 Analyzing your emails...',
+    summarize_thread: '📝 Summarizing conversation...',
+    analyze_attachment: '📎 Analyzing attachment...',
+    search_by_attachment: '🔎 Searching by attachment type...',
+    reply_to_email: '↩️ Preparing reply...',
+    forward_email: '➡️ Preparing forward...',
+    get_unread_emails: '📬 Loading unread emails...',
+    get_starred_emails: '⭐ Loading starred emails...',
+    get_emails_with_attachments: '📎 Finding emails with attachments...',
+    default: '⚙️ Processing your request...',
+  };
 
   // Dragging state - start on right side
   const [position, setPosition] = useState({ x: 20, y: 20 });
@@ -43,10 +119,107 @@ export function ChatBot(): JSX.Element {
     setPosition({ x: window.innerWidth - 400, y: 20 });
   }, []);
 
+  // Initialize speech recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognitionAPI =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (SpeechRecognitionAPI) {
+        const recognition = new SpeechRecognitionAPI();
+        recognition.continuous = false; // Stop after one utterance
+        recognition.interimResults = true; // Show real-time transcription
+        recognition.lang = 'en-US';
+
+        let finalTranscript = '';
+
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          // Update input with interim or final transcript
+          setInput(finalTranscript + interimTranscript);
+
+          // If this is the final result, auto-submit after a short delay
+          const isFinal = event.results[event.results.length - 1].isFinal;
+          if (isFinal && finalTranscript.trim()) {
+            setTimeout(() => {
+              setAutoSubmitTrigger(Date.now());
+            }, 500);
+          }
+        };
+
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+          toast.error('Voice input error. Please try again.');
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // Toggle voice input
+  const toggleVoiceInput = (): void => {
+    if (!recognitionRef.current) {
+      toast.error('Voice input not available');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+        toast.info('Listening...');
+      } catch (error) {
+        console.error('Error starting voice input:', error);
+        toast.error('Failed to start voice input.');
+      }
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-submit when voice input completes
+  useEffect(() => {
+    if (autoSubmitTrigger > 0 && input.trim()) {
+      handleSend();
+    }
+  }, [autoSubmitTrigger]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current && isListening) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [isListening]);
 
   // Handle dragging
   const handleMouseDown = (e: React.MouseEvent): void => {
@@ -118,6 +291,12 @@ export function ChatBot(): JSX.Element {
   const handleSend = async (): Promise<void> => {
     if (!input.trim()) return;
 
+    // Stop voice input if active
+    if (isListening && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -128,8 +307,24 @@ export function ChatBot(): JSX.Element {
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    setCurrentOperation('default'); // Set initial operation state
 
     try {
+      // Build context object for AI
+      const context = {
+        currentEmail: currentEmail
+          ? {
+              id: currentEmail.id,
+              subject: currentEmail.subject,
+              from: currentEmail.fromAddress as { name: string; email: string },
+              snippet: currentEmail.snippet,
+              receivedAt: currentEmail.receivedAt,
+            }
+          : undefined,
+        currentFolder: currentFolder || undefined,
+        selectedEmails: selectedEmails.length > 0 ? selectedEmails : undefined,
+      };
+
       // Call real AI API
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -141,6 +336,7 @@ export function ChatBot(): JSX.Element {
             role: m.role,
             content: m.content,
           })),
+          context,
         }),
       });
 
@@ -150,14 +346,56 @@ export function ChatBot(): JSX.Element {
 
       const data = await response.json();
 
+      // Update operation state if function name is provided
+      if (data.functionName) {
+        setCurrentOperation(data.functionName);
+      }
+
+      // Check if this is a compose_email result
+      if (
+        data.functionResult?.success &&
+        data.functionResult?.subject &&
+        data.functionResult?.body
+      ) {
+        // Trigger compose window with AI-generated content
+        const composeEvent = new CustomEvent('ai-compose-email', {
+          detail: {
+            to: data.functionResult.recipient || '',
+            subject: data.functionResult.subject,
+            body: data.functionResult.body,
+          },
+        });
+        window.dispatchEvent(composeEvent);
+
+        const aiResponse: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: `I've drafted an email for you${data.functionResult.recipient ? ` to ${data.functionResult.recipient}` : ''}! Check the compose window that just opened. You can review and edit it before sending.`,
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiResponse]);
+
+        return;
+      }
+
+      // Check if AI wants to perform an action that needs confirmation
+      const needsConfirmation = data.functionCall && !data.executed;
+
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.content || generateMockResponse(input),
         timestamp: new Date(),
+        needsConfirmation,
+        actionData: needsConfirmation ? data.functionCall : undefined,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
+
+      // Store pending confirmation
+      if (needsConfirmation) {
+        setPendingConfirmation(data.functionCall);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       // Fallback to mock response on error
@@ -168,6 +406,69 @@ export function ChatBot(): JSX.Element {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiResponse]);
+    } finally {
+      setIsTyping(false);
+      setCurrentOperation(null); // Clear operation state
+    }
+  };
+
+  // Handle confirmation (yes/no)
+  const handleConfirm = async (confirmed: boolean): Promise<void> => {
+    if (!pendingConfirmation) return;
+
+    if (!confirmed) {
+      const cancelMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: "Okay, I won't do that. What would you like me to do instead?",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, cancelMessage]);
+      setPendingConfirmation(null);
+      return;
+    }
+
+    // Execute the action
+    setIsTyping(true);
+    try {
+      const response = await fetch('/api/chat/execute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          functionCall: pendingConfirmation,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to execute action');
+      }
+
+      const data = await response.json();
+
+      const successMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content:
+          data.message || 'Done! Is there anything else you need help with?',
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, successMessage]);
+      setPendingConfirmation(null);
+      toast.success('Action completed successfully!');
+    } catch (error) {
+      console.error('Error executing action:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content:
+          'Sorry, I encountered an error while trying to do that. Please try again.',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      toast.error('Action failed. Please try again.');
     } finally {
       setIsTyping(false);
     }
@@ -202,6 +503,11 @@ export function ChatBot(): JSX.Element {
       handleSend();
     }
   };
+
+  // Don't render on mobile devices
+  if (isMobile) {
+    return null;
+  }
 
   // Floating button when closed
   if (!isOpen) {
@@ -240,18 +546,29 @@ export function ChatBot(): JSX.Element {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
               Ask me anything
             </h3>
-            <p className="text-xs text-gray-500 dark:text-white/50">
-              {isTyping ? 'Typing...' : 'About your emails'}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-gray-500 dark:text-white/50">
+                {isTyping ? 'Typing...' : 'About your emails'}
+              </p>
+            </div>
           </div>
         </div>
-        <button
-          onClick={() => setIsOpen(false)}
-          className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-colors text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white"
-          aria-label="Close"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-1">
+          {/* Close button */}
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              if (recognitionRef.current && isListening) {
+                recognitionRef.current.stop();
+                setIsListening(false);
+              }
+            }}
+            className="p-1.5 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-colors text-gray-500 dark:text-white/60 hover:text-gray-900 dark:hover:text-white"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Messages */}
@@ -292,7 +609,33 @@ export function ChatBot(): JSX.Element {
           </div>
         ))}
 
-        {isTyping && (
+        {/* Loading indicator with operation-specific message */}
+        {currentOperation && (
+          <div className="flex justify-start">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg px-4 py-3 border border-blue-200 dark:border-blue-800/50 max-w-[85%]">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  <div
+                    className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  ></div>
+                </div>
+                <span className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+                  {OPERATION_MESSAGES[currentOperation] ||
+                    OPERATION_MESSAGES.default}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Fallback typing indicator */}
+        {isTyping && !currentOperation && (
           <div className="flex justify-start">
             <div className="bg-white dark:bg-white/5 rounded-lg px-3 py-2 border border-gray-200 dark:border-white/10">
               <div className="flex gap-1">
@@ -315,6 +658,24 @@ export function ChatBot(): JSX.Element {
 
       {/* Input */}
       <div className="p-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-white/10">
+        {/* Confirmation buttons */}
+        {pendingConfirmation && (
+          <div className="mb-3 flex gap-2">
+            <button
+              onClick={() => handleConfirm(true)}
+              className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              ✓ Yes, do it
+            </button>
+            <button
+              onClick={() => handleConfirm(false)}
+              className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              ✗ Cancel
+            </button>
+          </div>
+        )}
+
         <div className="flex items-end gap-2">
           <textarea
             value={input}
@@ -323,7 +684,20 @@ export function ChatBot(): JSX.Element {
             placeholder="Ask me anything..."
             className="flex-1 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-white/5 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 resize-none text-sm"
             rows={2}
+            disabled={isListening}
           />
+          <button
+            onClick={toggleVoiceInput}
+            className={cn(
+              'p-2 rounded-lg transition-all duration-200 flex items-center justify-center',
+              isListening
+                ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse'
+                : 'bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 text-gray-700 dark:text-white'
+            )}
+            aria-label={isListening ? 'Stop listening' : 'Start voice input'}
+          >
+            {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+          </button>
           <button
             onClick={handleSend}
             disabled={!input.trim()}
@@ -334,7 +708,7 @@ export function ChatBot(): JSX.Element {
           </button>
         </div>
         <p className="text-xs text-gray-500 dark:text-white/50 mt-1.5">
-          Press Enter to send • Drag header to move
+          Press Enter to send • 🎤 for voice • Drag header to move
         </p>
       </div>
 

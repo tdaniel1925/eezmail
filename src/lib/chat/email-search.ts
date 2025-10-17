@@ -56,7 +56,8 @@ export async function searchEmails(
             or(
               like(emails.subject, `%${query}%`),
               like(emails.bodyText, `%${query}%`),
-              sql`${emails.fromAddress}::text LIKE ${`%${query}%`}`
+              sql`${emails.fromAddress}->>'name' ILIKE ${`%${query}%`}`,
+              sql`${emails.fromAddress}->>'email' ILIKE ${`%${query}%`}`
             )
           )
         )
@@ -115,7 +116,10 @@ export async function searchEmailsBySender(
       .where(
         and(
           sql`${emails.accountId} = ANY(${accountIds})`,
-          sql`${emails.fromAddress}::text ILIKE ${`%${senderQuery}%`}`
+          or(
+            sql`${emails.fromAddress}->>'name' ILIKE ${`%${senderQuery}%`}`,
+            sql`${emails.fromAddress}->>'email' ILIKE ${`%${senderQuery}%`}`
+          )
         )
       )
       .orderBy(desc(emails.receivedAt))
@@ -240,6 +244,173 @@ export async function getUnreadEmails(
     }));
   } catch (error) {
     console.error('Error getting unread emails:', error);
+    return [];
+  }
+}
+
+/**
+ * Advanced search with multiple filters
+ */
+export async function advancedEmailSearch(params: {
+  userId: string;
+  query?: string;
+  senderEmail?: string;
+  hasAttachments?: boolean;
+  isUnread?: boolean;
+  isStarred?: boolean;
+  priority?: string;
+  startDate?: Date;
+  endDate?: Date;
+  limit?: number;
+}): Promise<EmailSearchResult[]> {
+  try {
+    const userAccounts = await db.query.emailAccounts.findMany({
+      where: eq(emailAccounts.userId, params.userId),
+    });
+
+    if (userAccounts.length === 0) {
+      return [];
+    }
+
+    const accountIds = userAccounts.map((acc) => acc.id);
+
+    // Build conditions
+    const conditions: any[] = [sql`${emails.accountId} = ANY(${accountIds})`];
+
+    if (params.query) {
+      conditions.push(
+        or(
+          like(emails.subject, `%${params.query}%`),
+          like(emails.bodyText, `%${params.query}%`)
+        )
+      );
+    }
+
+    if (params.senderEmail) {
+      conditions.push(
+        or(
+          sql`${emails.fromAddress}->>'name' ILIKE ${`%${params.senderEmail}%`}`,
+          sql`${emails.fromAddress}->>'email' ILIKE ${`%${params.senderEmail}%`}`
+        )
+      );
+    }
+
+    if (params.hasAttachments !== undefined) {
+      conditions.push(eq(emails.hasAttachments, params.hasAttachments));
+    }
+
+    if (params.isUnread !== undefined) {
+      conditions.push(eq(emails.isRead, !params.isUnread));
+    }
+
+    if (params.isStarred !== undefined) {
+      conditions.push(eq(emails.isStarred, params.isStarred));
+    }
+
+    if (params.priority) {
+      conditions.push(eq(emails.aiPriority, params.priority as any));
+    }
+
+    if (params.startDate) {
+      conditions.push(sql`${emails.receivedAt} >= ${params.startDate}`);
+    }
+
+    if (params.endDate) {
+      conditions.push(sql`${emails.receivedAt} <= ${params.endDate}`);
+    }
+
+    const results = await db
+      .select({
+        id: emails.id,
+        subject: emails.subject,
+        fromAddress: emails.fromAddress,
+        snippet: emails.snippet,
+        receivedAt: emails.receivedAt,
+        isRead: emails.isRead,
+        emailCategory: emails.emailCategory,
+      })
+      .from(emails)
+      .where(and(...conditions))
+      .orderBy(desc(emails.receivedAt))
+      .limit(params.limit || 50);
+
+    return results.map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      fromAddress: r.fromAddress as { name: string; email: string },
+      snippet: r.snippet || '',
+      receivedAt: r.receivedAt,
+      isRead: r.isRead,
+      emailCategory: r.emailCategory || 'unscreened',
+    }));
+  } catch (error) {
+    console.error('Error in advanced email search:', error);
+    return [];
+  }
+}
+
+/**
+ * Get emails without reply (for follow-up suggestions)
+ */
+export async function getEmailsWithoutReply(
+  userId: string,
+  senderEmail?: string,
+  daysOld: number = 3
+): Promise<EmailSearchResult[]> {
+  try {
+    const userAccounts = await db.query.emailAccounts.findMany({
+      where: eq(emailAccounts.userId, userId),
+    });
+
+    if (userAccounts.length === 0) {
+      return [];
+    }
+
+    const accountIds = userAccounts.map((acc) => acc.id);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
+
+    const conditions: any[] = [
+      sql`${emails.accountId} = ANY(${accountIds})`,
+      eq(emails.needsReply, true),
+      sql`${emails.receivedAt} >= ${cutoffDate}`,
+    ];
+
+    if (senderEmail) {
+      conditions.push(
+        or(
+          sql`${emails.fromAddress}->>'name' ILIKE ${`%${senderEmail}%`}`,
+          sql`${emails.fromAddress}->>'email' ILIKE ${`%${senderEmail}%`}`
+        )
+      );
+    }
+
+    const results = await db
+      .select({
+        id: emails.id,
+        subject: emails.subject,
+        fromAddress: emails.fromAddress,
+        snippet: emails.snippet,
+        receivedAt: emails.receivedAt,
+        isRead: emails.isRead,
+        emailCategory: emails.emailCategory,
+      })
+      .from(emails)
+      .where(and(...conditions))
+      .orderBy(desc(emails.receivedAt))
+      .limit(20);
+
+    return results.map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      fromAddress: r.fromAddress as { name: string; email: string },
+      snippet: r.snippet || '',
+      receivedAt: r.receivedAt,
+      isRead: r.isRead,
+      emailCategory: r.emailCategory || 'unscreened',
+    }));
+  } catch (error) {
+    console.error('Error getting emails without reply:', error);
     return [];
   }
 }

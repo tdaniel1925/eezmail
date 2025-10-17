@@ -1,8 +1,7 @@
 'use client';
 
-import { EmailLayout } from '@/components/layout/EmailLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { EmailList } from '@/components/email/EmailList';
+import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 
 // Mock Reply Later emails
@@ -60,15 +59,13 @@ const mockReplyLaterEmails: Email[] = [
 
 export default function ReplyLaterPage(): JSX.Element {
   return (
-    <EmailLayout
-      sidebar={<Sidebar />}
-      emailList={
-        <EmailList
-          emails={mockReplyLaterEmails}
-          title="Reply Later"
-          isLoading={false}
-        />
-      }
-    />
+    <>
+      <EmailList
+        emails={mockReplyLaterEmails}
+        title="Reply Later"
+        isLoading={false}
+      />
+      <ChatBot />
+    </>
   );
 }

@@ -1,8 +1,7 @@
 'use client';
 
-import { EmailLayout } from '@/components/layout/EmailLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { EmailList } from '@/components/email/EmailList';
+import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 
 // Mock Set Aside emails
@@ -60,15 +59,13 @@ const mockSetAsideEmails: Email[] = [
 
 export default function SetAsidePage(): JSX.Element {
   return (
-    <EmailLayout
-      sidebar={<Sidebar />}
-      emailList={
-        <EmailList
-          emails={mockSetAsideEmails}
-          title="Set Aside"
-          isLoading={false}
-        />
-      }
-    />
+    <>
+      <EmailList
+        emails={mockSetAsideEmails}
+        title="Set Aside"
+        isLoading={false}
+      />
+      <ChatBot />
+    </>
   );
 }

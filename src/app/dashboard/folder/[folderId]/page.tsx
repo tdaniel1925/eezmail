@@ -1,9 +1,8 @@
 'use client';
 
 import { use, useEffect, useState } from 'react';
-import { EmailLayout } from '@/components/layout/EmailLayout';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { EmailList } from '@/components/email/EmailList';
+import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email, CustomFolder } from '@/db/schema';
 
 interface FolderPageProps {
@@ -43,16 +42,13 @@ export default function FolderPage({ params }: FolderPageProps): JSX.Element {
   }, [folderId]);
 
   return (
-    <EmailLayout
-      sidebar={<Sidebar />}
-      emailList={
-        <EmailList
-          emails={emails}
-          title={folder?.name || 'Custom Folder'}
-          isLoading={isLoading}
-        />
-      }
-    />
+    <>
+      <EmailList
+        emails={emails}
+        title={folder?.name || 'Custom Folder'}
+        isLoading={isLoading}
+      />
+      <ChatBot />
+    </>
   );
 }
-

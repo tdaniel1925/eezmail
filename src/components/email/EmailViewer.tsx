@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Archive,
@@ -12,12 +12,15 @@ import {
   Clock,
   Paperclip,
   Download,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Email } from '@/db/schema';
 import { format } from 'date-fns';
 import { EmailComposer } from './EmailComposer';
 import { useEmailBody } from '@/hooks/useEmailBody';
+import { toast } from 'sonner';
+import { useChatbotContext } from '@/components/ai/ChatbotContext';
 
 interface EmailViewerProps {
   email: Email | null;
@@ -25,10 +28,23 @@ interface EmailViewerProps {
 }
 
 export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
+  const { setCurrentEmail } = useChatbotContext();
   const [isStarred, setIsStarred] = useState(email?.isStarred ?? false);
   const [composerMode, setComposerMode] = useState<'reply' | 'forward' | null>(
     null
   );
+  const [isGeneratingReply, setIsGeneratingReply] = useState(false);
+  const [aiReplyContent, setAiReplyContent] = useState<string>('');
+
+  // Set current email context when viewing
+  useEffect(() => {
+    if (email) {
+      setCurrentEmail(email);
+    }
+    return () => {
+      setCurrentEmail(null);
+    };
+  }, [email, setCurrentEmail]);
 
   // Use sanitized email body with DOMPurify
   const { renderedHtml, isLoading } = useEmailBody({
@@ -59,6 +75,50 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const handleStarClick = (): void => {
     setIsStarred(!isStarred);
     // TODO: Update star status
+  };
+
+  const handleAIReply = async (): Promise<void> => {
+    if (!email) return;
+
+    setIsGeneratingReply(true);
+    toast.loading('Generating AI reply...', { id: 'ai-reply' });
+
+    try {
+      const response = await fetch('/api/ai/reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          subject: email.subject,
+          bodyText: email.bodyText,
+          bodyHtml: email.bodyHtml,
+          senderName: email.fromAddress.name || email.fromAddress.email,
+          senderEmail: email.fromAddress.email,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate reply');
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.body) {
+        setAiReplyContent(data.body);
+        setComposerMode('reply');
+        toast.success('AI reply generated! Review and send.', {
+          id: 'ai-reply',
+        });
+      }
+    } catch (error) {
+      console.error('Error generating AI reply:', error);
+      toast.error('Failed to generate AI reply. Please try again.', {
+        id: 'ai-reply',
+      });
+    } finally {
+      setIsGeneratingReply(false);
+    }
   };
 
   const senderName = email.fromAddress.name || email.fromAddress.email;
@@ -119,6 +179,18 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
           >
             <Reply className="h-4 w-4" />
             <span className="text-sm font-medium">Reply</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleAIReply}
+            disabled={isGeneratingReply}
+            className="flex h-8 px-3 items-center justify-center gap-2 rounded-lg bg-primary/10 dark:bg-primary/20 border border-primary/30 dark:border-primary/40 text-primary dark:text-primary-300 transition-all duration-200 hover:bg-primary/20 dark:hover:bg-primary/30 hover:border-primary/50 dark:hover:border-primary/60 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Generate AI-powered reply"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              {isGeneratingReply ? 'Generating...' : 'AI Reply'}
+            </span>
           </button>
           <button
             type="button"
@@ -270,7 +342,10 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
       {composerMode && (
         <EmailComposer
           isOpen={true}
-          onClose={() => setComposerMode(null)}
+          onClose={() => {
+            setComposerMode(null);
+            setAiReplyContent(''); // Clear AI content when closing
+          }}
           mode={composerMode}
           initialData={{
             to: composerMode === 'reply' ? email.fromAddress.email : '',
@@ -281,7 +356,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
             body:
               composerMode === 'forward'
                 ? `\n\n------- Forwarded message -------\nFrom: ${email.fromAddress.email}\nDate: ${format(new Date(email.receivedAt), 'MMM d, yyyy h:mm a')}\nSubject: ${email.subject}\n\n${email.bodyText}`
-                : '',
+                : aiReplyContent || '', // Use AI-generated content if available
           }}
         />
       )}
