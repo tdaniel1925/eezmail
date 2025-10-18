@@ -1,7 +1,6 @@
 import Script from 'next/script';
 import { MarketingNav } from '@/components/marketing/MarketingNav';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
-import { ParticlesBackground } from '@/components/marketing/ParticlesBackground';
 import { GradientBlur } from '@/components/marketing/GradientBlur';
 import '@/components/marketing/template-animations.css';
 
@@ -12,11 +11,6 @@ export default function MarketingLayout({
 }) {
   return (
     <>
-      {/* Particles Background */}
-      <div className="aura-background-component z-10 mix-blend-screen w-full h-screen absolute top-0 pointer-events-none">
-        <ParticlesBackground />
-      </div>
-
       {/* Marketing Content */}
       <div className="relative min-h-screen">
         <MarketingNav />
