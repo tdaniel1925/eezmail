@@ -37,7 +37,8 @@ export function AdvancedPrefs({ preferences }: AdvancedPrefsProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleResetSettings = async () => {
-    if (!confirm('⚠️ This will reset all settings to defaults. Continue?')) return;
+    if (!confirm('⚠️ This will reset all settings to defaults. Continue?'))
+      return;
 
     setIsLoading(true);
     try {
