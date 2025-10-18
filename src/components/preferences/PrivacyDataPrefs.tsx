@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, Eye, Trash2, Download } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface PrivacyDataPrefsProps {
   preferences?: any;
@@ -31,6 +32,7 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
   const [usageTracking, setUsageTracking] = useState(false);
   const [dataRetention, setDataRetention] = useState('1year');
   const [autoDelete, setAutoDelete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const retentionOptions = [
     { value: '30days', label: '30 days' },
@@ -40,19 +42,70 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
     { value: 'forever', label: 'Forever' },
   ];
 
-  const handleExportData = () => {
-    // TODO: Implement data export
-    console.log('Exporting user data...');
+  const handleExportData = async () => {
+    setIsLoading(true);
+    try {
+      const { exportUserData } = await import('@/lib/settings/data-management');
+      const result = await exportUserData();
+      if (result.success && result.data) {
+        const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `email-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success('Data exported successfully');
+      } else {
+        toast.error(result.error || 'Export failed');
+      }
+    } catch (error) {
+      toast.error('Failed to export data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteData = () => {
-    // TODO: Implement data deletion
-    console.log('Deleting user data...');
+  const handleDeleteData = async () => {
+    if (!confirm('⚠️ This will delete all your data. Are you sure?')) return;
+    if (!confirm('This action cannot be undone. Type DELETE in the prompt to confirm.')) return;
+    
+    setIsLoading(true);
+    try {
+      const { deleteUserData } = await import('@/lib/settings/data-management');
+      const result = await deleteUserData();
+      if (result.success) {
+        toast.success('Data deletion scheduled. You will be logged out.');
+        setTimeout(() => window.location.href = '/login', 2000);
+      } else {
+        toast.error(result.error || 'Deletion failed');
+      }
+    } catch (error) {
+      toast.error('Failed to delete data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDownloadData = () => {
-    // TODO: Implement data download
-    console.log('Downloading user data...');
+  const handleDownloadData = async () => {
+    setIsLoading(true);
+    try {
+      const { downloadUserData } = await import('@/lib/settings/data-management');
+      const result = await downloadUserData();
+      if (result.success && result.downloadUrl) {
+        const a = document.createElement('a');
+        a.href = result.downloadUrl;
+        a.download = `email-data-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        toast.success('Data downloaded successfully');
+      } else {
+        toast.error(result.error || 'Download failed');
+      }
+    } catch (error) {
+      toast.error('Failed to download data');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -193,15 +246,15 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
               </Alert>
 
               <div className="grid gap-3">
-                <Button variant="outline" onClick={handleExportData}>
+                <Button variant="outline" onClick={handleExportData} disabled={isLoading}>
                   <Download className="h-4 w-4 mr-2" />
                   Export My Data
                 </Button>
-                <Button variant="outline" onClick={handleDownloadData}>
+                <Button variant="outline" onClick={handleDownloadData} disabled={isLoading}>
                   <Download className="h-4 w-4 mr-2" />
                   Download Data Archive
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteData}>
+                <Button variant="destructive" onClick={handleDeleteData} disabled={isLoading}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete All My Data
                 </Button>
