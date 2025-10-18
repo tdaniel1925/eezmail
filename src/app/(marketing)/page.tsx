@@ -112,7 +112,7 @@ export default function LandingPage() {
       </div>
 
       {/* Solutions Section (Stats Cards) */}
-      <section className="overflow-hidden lg:py-20 pt-8 pb-8 relative" id="solutions">
+      <section className="overflow-hidden lg:py-20 pt-8 pb-8 relative bg-slate-950" id="solutions">
         {/* Decorative grid lines */}
         <div className="pointer-events-none z-0 absolute top-0 right-0 bottom-0 left-0">
           <div className="absolute inset-y-0 left-[15%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
