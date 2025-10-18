@@ -1,80 +1,170 @@
-import { Bot, Zap, Shield, Calendar, Search, MessageSquare, Users, BarChart3 } from 'lucide-react';
+import Link from 'next/link';
+import {
+  Sparkles,
+  Search,
+  Zap,
+  Brain,
+  Lock,
+  Users,
+  BarChart3,
+  Globe,
+  Mic,
+  FileText,
+  Clock,
+  CheckCircle,
+} from 'lucide-react';
 
 export const metadata = {
-  title: 'Features - easeMail AI-Powered Email Client',
-  description: 'Discover easeMail\'s powerful features: RAG semantic search, AI assistant, smart compose, enterprise admin tools, and more.',
+  title: 'Features - easeMail | AI-Powered Email Management',
+  description:
+    'Discover how easeMail\'s AI features save you 10+ hours per week. Semantic search, smart compose, thread analysis, and more.',
 };
 
 export default function FeaturesPage() {
+  const features = [
+    {
+      icon: Brain,
+      title: 'AI-Powered Semantic Search',
+      description:
+        'Find emails by meaning, not just keywords. Our RAG-powered search understands context and intent, returning relevant results in under 120ms.',
+      benefits: ['Natural language queries', 'Contextual understanding', 'Instant results (<120ms)', 'Search across all history'],
+    },
+    {
+      icon: Sparkles,
+      title: 'Smart Compose',
+      description:
+        'AI writes context-aware email drafts based on your conversation history, writing style, and recipient preferences.',
+      benefits: ['Context-aware suggestions', 'Learns your writing style', 'Multi-language support', 'Tone adjustment'],
+    },
+    {
+      icon: FileText,
+      title: 'Thread Summarization',
+      description:
+        'Get instant summaries of long email threads. See key decisions, action items, and important updates at a glance.',
+      benefits: ['One-click summaries', 'Action item extraction', 'Key decision highlights', 'Saves 70% reading time'],
+    },
+    {
+      icon: Zap,
+      title: 'Auto-Categorization',
+      description:
+        'Emails automatically organized by importance, topic, and sender. Never miss critical messages buried in your inbox.',
+      benefits: ['Priority inbox', 'Smart labels', 'Custom categories', 'Newsletter grouping'],
+    },
+    {
+      icon: Mic,
+      title: 'Voice Dictation',
+      description:
+        'Compose emails by speaking. Our voice-to-text is optimized for professional communication with 98% accuracy.',
+      benefits: ['98% accuracy', 'Punctuation auto-added', 'Multiple languages', 'Background noise filtering'],
+    },
+    {
+      icon: Search,
+      title: 'Advanced Filters',
+      description:
+        'Powerful filtering and search operators. Find exactly what you need with boolean logic, date ranges, and custom attributes.',
+      benefits: ['Boolean operators', 'Date range filters', 'Attachment search', 'Sender clustering'],
+    },
+    {
+      icon: Users,
+      title: 'Team Collaboration',
+      description:
+        'Share inboxes, delegate emails, and collaborate on responses. Perfect for support teams and shared accounts.',
+      benefits: ['Shared inboxes', 'Email delegation', 'Internal notes', 'Team analytics'],
+    },
+    {
+      icon: BarChart3,
+      title: 'Analytics & Insights',
+      description:
+        'Understand your email patterns. Track response times, identify bottlenecks, and optimize your workflow.',
+      benefits: ['Response time tracking', 'Volume analytics', 'Peak hour identification', 'Productivity scores'],
+    },
+    {
+      icon: Lock,
+      title: 'Enterprise Security',
+      description:
+        'SOC 2 Type II certified, GDPR compliant, with end-to-end encryption. Your data stays private and secure.',
+      benefits: ['AES-256 encryption', 'SOC 2 Type II', 'GDPR compliant', 'SSO/SAML support'],
+    },
+    {
+      icon: Globe,
+      title: 'Multi-Account Management',
+      description:
+        'Manage unlimited email accounts from Gmail, Outlook, IMAP, and more—all in one unified interface.',
+      benefits: ['Unlimited accounts', 'Unified inbox', 'Cross-account search', 'Account switching'],
+    },
+    {
+      icon: Clock,
+      title: 'Scheduled Sending',
+      description:
+        'Schedule emails to send later. Perfect for reaching recipients in different time zones or sending reminders.',
+      benefits: ['Flexible scheduling', 'Timezone aware', 'Recurring emails', 'Send cancellation'],
+    },
+    {
+      icon: CheckCircle,
+      title: 'Smart Templates',
+      description:
+        'Save and reuse common responses with dynamic variables. Templates learn and improve from your usage patterns.',
+      benefits: ['Dynamic variables', 'Auto-suggestions', 'Team templates', 'Version history'],
+    },
+  ];
+
   return (
-    <>
+    <div className="min-h-screen bg-slate-950">
       {/* Hero */}
-      <section className="z-10 relative pt-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both]">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-              Superhuman Speed Meets <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">Enterprise-Grade AI</span>
+      <section className="relative overflow-hidden py-20 md:py-32">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
+              <Sparkles className="w-4 h-4" />
+              Powered by Advanced AI
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+              Features That Save You{' '}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
+                10+ Hours Per Week
+              </span>
             </h1>
-            <p className="text-lg text-white/70">
-              Every feature designed to save time, boost productivity, and give you complete control over your inbox.
+            <p className="text-xl text-slate-300 leading-relaxed mb-8">
+              easeMail combines cutting-edge AI with powerful productivity tools to transform how you work with email.
             </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF4C5A] text-white px-8 py-4 text-lg font-medium hover:bg-[#FF4C5A]/90 transition"
+              >
+                Start Free Trial
+              </Link>
+              <Link
+                href="/#pricing"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-8 py-4 text-lg font-medium hover:bg-white/15 transition"
+              >
+                See Pricing
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* AI-Powered Productivity */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <span className="inline-block px-3 py-1 rounded-full bg-[#FF4C5A]/20 text-[#FF4C5A] text-sm font-semibold mb-4">
-              AI-Powered Productivity
-            </span>
-            <h2 className="text-4xl font-bold text-white mb-4">Intelligence That Works for You</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Advanced AI features that understand context, learn from your patterns, and make email management effortless.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                icon: <Search className="h-10 w-10" />,
-                title: 'RAG Semantic Search',
-                desc: 'Find emails by meaning, not just keywords. Our Retrieval-Augmented Generation search understands context and finds relevant messages instantly.',
-                features: ['Natural language queries', 'Context-aware results', 'Cross-email insights', 'Sub-100ms response time'],
-              },
-              {
-                icon: <Bot className="h-10 w-10" />,
-                title: 'AI Assistant Chat',
-                desc: 'Chat with your inbox. Ask questions, get summaries, draft responses, and extract insights from your email history.',
-                features: ['Thread summaries', 'Smart Q&A', 'Draft suggestions', 'Relationship analysis'],
-              },
-              {
-                icon: <MessageSquare className="h-10 w-10" />,
-                title: 'Smart Compose',
-                desc: 'Write emails 10x faster with AI-powered suggestions. Context-aware completions understand your writing style and intent.',
-                features: ['Real-time suggestions', 'Tone adjustment', 'Grammar correction', 'Template generation'],
-              },
-              {
-                icon: <BarChart3 className="h-10 w-10" />,
-                title: 'Auto-Categorization',
-                desc: 'Automatic email screening and prioritization. Important messages reach you first, noise gets filtered automatically.',
-                features: ['Smart folders', 'Priority scoring', 'VIP detection', 'Spam filtering'],
-              },
-            ].map((feature, idx) => (
+      {/* Features Grid */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
               <div
-                key={idx}
-                className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-8 backdrop-blur hover:bg-white/10 transition [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll"
-                style={{ animationDelay: `${0.2 + idx * 0.1}s` }}
+                key={index}
+                className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-8 hover:ring-white/20 transition"
               >
-                <div className="text-[#FF4C5A] mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/70 mb-4">{feature.desc}</p>
+                <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mb-6">
+                  <feature.icon className="w-6 h-6 text-[#FF4C5A]" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-slate-400 mb-6">{feature.description}</p>
                 <ul className="space-y-2">
-                  {feature.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-white/60">
-                      <div className="h-1.5 w-1.5 rounded-full bg-[#FF4C5A]" />
-                      {f}
+                  {feature.benefits.map((benefit, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm text-slate-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                      {benefit}
                     </li>
                   ))}
                 </ul>
@@ -84,134 +174,24 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Speed & Efficiency */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-sm font-semibold mb-4">
-              Speed & Efficiency
-            </span>
-            <h2 className="text-4xl font-bold text-white mb-4">Work at the Speed of Thought</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Keyboard shortcuts, bulk operations, and lightning-fast performance that keeps up with you.
+      {/* CTA Section */}
+      <section className="py-20">
+        <div className="max-w-4xl mx-auto px-6 md:px-8">
+          <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Email?</h2>
+            <p className="text-xl text-slate-300 mb-8">
+              Join thousands of professionals saving 10+ hours per week with easeMail
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Zap className="h-8 w-8" />,
-                title: 'Keyboard Shortcuts',
-                desc: 'Every action is one keystroke away. Navigate, compose, archive, and search without touching your mouse.',
-                stat: '50+',
-                statLabel: 'Shortcuts',
-              },
-              {
-                icon: <MessageSquare className="h-8 w-8" />,
-                title: 'Voice Dictation',
-                desc: 'Compose emails hands-free with accurate voice-to-text. Perfect for long emails or mobile use.',
-                stat: '95%',
-                statLabel: 'Accuracy',
-              },
-              {
-                icon: <Calendar className="h-8 w-8" />,
-                title: 'Scheduled Send',
-                desc: 'Write now, send later. Schedule emails for optimal delivery times or follow-ups.',
-                stat: 'Smart',
-                statLabel: 'Timing',
-              },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-6 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll"
-                style={{ animationDelay: `${0.2 + idx * 0.1}s` }}
-              >
-                <div className="text-emerald-400 mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-2">{feature.title}</h3>
-                <p className="text-sm text-white/60 mb-4">{feature.desc}</p>
-                <div className="pt-4 border-t border-white/10">
-                  <div className="text-3xl font-bold text-white">{feature.stat}</div>
-                  <div className="text-xs text-white/50">{feature.statLabel}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Enterprise Features */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <span className="inline-block px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-sm font-semibold mb-4">
-              Enterprise Features
-            </span>
-            <h2 className="text-4xl font-bold text-white mb-4">Built for Teams, Scales with You</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Complete admin control, usage analytics, and security features enterprises demand.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                icon: <Users className="h-10 w-10" />,
-                title: 'Team Management',
-                desc: 'Centralized admin dashboard to manage users, permissions, and billing. Add or remove team members in seconds.',
-              },
-              {
-                icon: <BarChart3 className="h-10 w-10" />,
-                title: 'Usage Analytics',
-                desc: 'Track email volume, response times, and productivity metrics. Understand team patterns and optimize workflows.',
-              },
-              {
-                icon: <Shield className="h-10 w-10" />,
-                title: 'Role-Based Access',
-                desc: 'Granular permissions and access controls. Define admin, manager, and user roles with custom permissions.',
-              },
-              {
-                icon: <Shield className="h-10 w-10" />,
-                title: 'SSO & SAML',
-                desc: 'Single sign-on integration with your identity provider. Enforce security policies across your organization.',
-              },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-8 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll"
-                style={{ animationDelay: `${0.2 + idx * 0.1}s` }}
-              >
-                <div className="text-blue-400 mb-4">{feature.icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/60">{feature.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-4xl px-6 lg:px-8">
-          <div className="border-gradient before:rounded-2xl bg-gradient-to-br from-[#FF4C5A]/20 to-white/5 rounded-2xl p-12 text-center backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Experience the Difference
-            </h2>
-            <p className="text-lg text-white/70 mb-8">
-              Try all features free for 14 days. No credit card required.
-            </p>
-            <a
+            <Link
               href="/signup"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-[#FF4C5A] hover:bg-[#FF4C5A]/90 text-white font-semibold rounded-full transition"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-slate-900 px-8 py-4 text-lg font-semibold hover:bg-slate-100 transition"
             >
               Start Free Trial
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </a>
+            </Link>
+            <p className="text-sm text-slate-400 mt-4">14-day free trial • No credit card required</p>
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
-
