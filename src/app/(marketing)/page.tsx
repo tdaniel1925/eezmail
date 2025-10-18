@@ -129,7 +129,7 @@ export default function LandingPage() {
           <div className="flex-1 flex items-center">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 w-full gap-x-6 gap-y-6">
               {/* Card 1: Real-time metrics */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.1s_both]">
+              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
                   <Activity className="w-3.5 h-3.5" />
                   Real-time metrics
@@ -178,7 +178,7 @@ export default function LandingPage() {
               </div>
 
               {/* Card 2: AI Email Analysis */}
-              <div className="overflow-hidden md:p-4 flex flex-col bg-gradient-to-b from-white/10 to-white/5 h-full ring-white/10 ring-1 rounded-3xl pt-3 pr-3 pb-3 pl-3 relative backdrop-blur-md animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.2s_both]">
+              <div className="overflow-hidden md:p-4 flex flex-col bg-gradient-to-b from-white/10 to-white/5 h-full ring-white/10 ring-1 rounded-3xl pt-3 pr-3 pb-3 pl-3 relative backdrop-blur-md">
                 <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 flex-1">
                   <img
                     src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/863c6d3d-359c-471a-8fd8-543677b59c4c_800w.webp"
@@ -204,7 +204,7 @@ export default function LandingPage() {
               </div>
 
               {/* Card 3: Success Rate */}
-              <div className="md:p-6 flex flex-col bg-slate-900/60 ring-white/10 ring-1 rounded-3xl pt-5 pr-5 pb-5 pl-5 backdrop-blur-md h-full animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.3s_both]">
+              <div className="md:p-6 flex flex-col bg-slate-900/60 ring-white/10 ring-1 rounded-3xl pt-5 pr-5 pb-5 pl-5 backdrop-blur-md h-full">
                 <div className="flex items-start justify-between gap-4">
                   <p className="md:text-lg leading-relaxed text-base text-slate-300">
                     With a <span className="text-orange-300 font-normal">75%</span> user satisfaction rate, we help teams
@@ -259,7 +259,7 @@ export default function LandingPage() {
               </div>
 
               {/* Card 4: Customer Satisfaction */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.35s_both]">
+              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
                   <Smile className="w-3.5 h-3.5" />
                   Customer satisfaction
@@ -297,7 +297,7 @@ export default function LandingPage() {
               </div>
 
               {/* Card 5: Processing Speed */}
-              <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.4s_both]">
+              <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
                   <Zap className="w-3.5 h-3.5" />
                   Processing speed
@@ -346,7 +346,7 @@ export default function LandingPage() {
               </div>
 
               {/* Card 6: Response Latency */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.45s_both]">
+              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
                   <Clock className="w-3.5 h-3.5" />
                   AI response time
