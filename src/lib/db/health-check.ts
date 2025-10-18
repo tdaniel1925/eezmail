@@ -251,5 +251,3 @@ export class DatabaseHealthChecker {
 
 // Export singleton instance
 export const dbHealthChecker = new DatabaseHealthChecker();
-
-

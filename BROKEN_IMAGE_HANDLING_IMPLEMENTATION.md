@@ -166,5 +166,3 @@ Implemented comprehensive broken image handling across all attachment components
 The broken image handling implementation provides a robust, user-friendly solution for managing failed image loads across all attachment components. The implementation is consistent, performant, and maintains the application's design standards while providing clear feedback to users when images cannot be displayed.
 
 All components now gracefully handle broken images with appropriate fallback UI, error messages, and alternative actions where possible.
-
-

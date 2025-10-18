@@ -195,5 +195,3 @@ export function SystemMetrics({ className }: SystemMetricsProps) {
     </div>
   );
 }
-
-

@@ -472,7 +472,6 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     )}
                   </button>
 
-
                   {/* AI Buttons Group */}
                   <AnimatedButton
                     variant="particles"

@@ -158,5 +158,3 @@ export function DisplayPrefs({ preferences }: DisplayPrefsProps) {
     </div>
   );
 }
-
-

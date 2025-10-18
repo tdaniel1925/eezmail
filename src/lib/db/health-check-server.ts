@@ -327,5 +327,3 @@ export class DatabaseHealthCheckerServer {
 }
 
 export const dbHealthCheckerServer = new DatabaseHealthCheckerServer();
-
-

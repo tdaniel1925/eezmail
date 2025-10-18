@@ -406,5 +406,3 @@ const { activeTab, currentEmail, selectedContactId } = useAIPanelStore();
 ---
 
 **Ready for Phase 4**: Contact Timeline & Notes Features Implementation
-
-

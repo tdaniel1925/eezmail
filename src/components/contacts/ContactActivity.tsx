@@ -11,7 +11,12 @@ interface ActivityStats {
   averageResponseTime: number; // in hours
   lastContactDate: Date | null;
   firstContactDate: Date | null;
-  monthlyActivity: { month: string; year: number; sent: number; received: number }[];
+  monthlyActivity: {
+    month: string;
+    year: number;
+    sent: number;
+    received: number;
+  }[];
 }
 
 interface ContactActivityProps {

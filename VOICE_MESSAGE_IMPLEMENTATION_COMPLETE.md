@@ -141,5 +141,3 @@ Users now have a seamless voice message experience that:
 - Auto-stops on silence for convenience
 
 The implementation successfully duplicates the Dictate feature's recording flow while saving audio instead of transcribing text! 🎤✨
-
-

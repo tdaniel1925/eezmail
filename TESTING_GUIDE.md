@@ -215,5 +215,3 @@ Individual health scores for:
 ---
 
 **Remember**: The testing system is designed to help you maintain a healthy, reliable email platform. Regular monitoring and quick response to issues will ensure optimal performance for your users.
-
-

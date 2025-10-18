@@ -253,5 +253,3 @@ export function AdvancedPrefs({ preferences }: AdvancedPrefsProps) {
     </div>
   );
 }
-
-

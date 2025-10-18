@@ -260,5 +260,3 @@ Some issues require manual intervention:
 ---
 
 **Remember**: A healthy database is essential for optimal email platform performance. Regular monitoring, proactive maintenance, and quick issue resolution will ensure your database remains reliable and performant.
-
-

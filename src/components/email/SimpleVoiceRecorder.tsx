@@ -354,5 +354,3 @@ export function SimpleVoiceRecorder({
     </div>
   );
 }
-
-

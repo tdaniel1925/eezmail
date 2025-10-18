@@ -196,5 +196,3 @@ export function LanguageRegionPrefs({ preferences }: LanguageRegionPrefsProps) {
     </div>
   );
 }
-
-

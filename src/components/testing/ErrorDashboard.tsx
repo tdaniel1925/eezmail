@@ -460,5 +460,3 @@ export function ErrorDashboard({ className }: ErrorDashboardProps) {
     </div>
   );
 }
-
-

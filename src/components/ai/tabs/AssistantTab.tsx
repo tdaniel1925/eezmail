@@ -39,5 +39,3 @@ export function AssistantTab({ currentEmail }: AssistantTabProps): JSX.Element {
     </div>
   );
 }
-
-

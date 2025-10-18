@@ -207,5 +207,3 @@ export function PerformancePrefs({ preferences }: PerformancePrefsProps) {
     </div>
   );
 }
-
-

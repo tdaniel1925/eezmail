@@ -338,5 +338,3 @@ export const logInfo = (infoData: Partial<ErrorLog>) =>
   errorTracker.logInfo(infoData);
 export const logCritical = (criticalData: Partial<ErrorLog>) =>
   errorTracker.logCritical(criticalData);
-
-

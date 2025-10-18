@@ -76,7 +76,10 @@ export function ContactTimeline({
   const loadTimeline = async () => {
     setIsLoading(true);
     try {
-      const result = await getContactTimelineEvents(contactId, selectedFilter || undefined);
+      const result = await getContactTimelineEvents(
+        contactId,
+        selectedFilter || undefined
+      );
       if (result.success && result.events) {
         setEvents(
           result.events.map((event) => ({

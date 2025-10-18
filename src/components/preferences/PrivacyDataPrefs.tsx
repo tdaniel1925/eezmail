@@ -235,5 +235,3 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
     </div>
   );
 }
-
-

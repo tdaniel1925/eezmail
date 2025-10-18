@@ -328,5 +328,3 @@ export class TestScheduler {
 
 // Export singleton instance
 export const testScheduler = new TestScheduler();
-
-

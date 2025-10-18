@@ -11,6 +11,7 @@ import { ImapService } from '@/lib/email/imap-service';
 import { logEmailReceived } from '@/lib/contacts/timeline-actions';
 import { findContactByEmail } from '@/lib/contacts/helpers';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
+import { embedEmail } from '@/lib/rag/embedding-pipeline';
 
 /**
  * Map folder name to email category
@@ -983,7 +984,7 @@ async function syncGmailMessages(
           };
 
           // Insert or update email
-          await db
+          const insertResult = await db
             .insert(emails)
             .values(emailData as any)
             .onConflictDoUpdate({
@@ -996,7 +997,10 @@ async function syncGmailMessages(
                 screenedAt: emailData.screenedAt,
                 screenedBy: emailData.screenedBy,
               },
-            });
+            })
+            .returning({ id: emails.id });
+
+          const emailId = insertResult[0]?.id;
 
           // Auto-log to contact timeline (don't block on errors)
           try {
@@ -1014,6 +1018,16 @@ async function syncGmailMessages(
           } catch (logError) {
             // Don't block sync on logging errors
             console.error(`Failed to log email to contact timeline:`, logError);
+          }
+
+          // Generate embedding for RAG (don't block on errors)
+          if (emailId) {
+            try {
+              await embedEmail(emailId);
+            } catch (embedError) {
+              // Don't block sync on embedding errors
+              console.error(`Failed to embed email:`, embedError);
+            }
           }
 
           syncedCount++;
@@ -1186,7 +1200,7 @@ async function syncWithImap(
         };
 
         // Insert or update email
-        await db
+        const insertResult = await db
           .insert(emails)
           .values(emailData as any)
           .onConflictDoUpdate({
@@ -1198,7 +1212,10 @@ async function syncWithImap(
               screenedAt: emailData.screenedAt,
               screenedBy: emailData.screenedBy,
             },
-          });
+          })
+          .returning({ id: emails.id });
+
+        const emailId = insertResult[0]?.id;
 
         // Auto-log to contact timeline (don't block on errors)
         try {
@@ -1215,6 +1232,16 @@ async function syncWithImap(
             `Failed to log IMAP email to contact timeline:`,
             logError
           );
+        }
+
+        // Generate embedding for RAG (don't block on errors)
+        if (emailId) {
+          try {
+            await embedEmail(emailId);
+          } catch (embedError) {
+            // Don't block sync on embedding errors
+            console.error(`Failed to embed IMAP email:`, embedError);
+          }
         }
 
         syncedCount++;

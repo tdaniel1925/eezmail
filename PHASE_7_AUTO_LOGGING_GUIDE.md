@@ -28,16 +28,12 @@ import { logEmailSent } from '@/lib/contacts/timeline-actions';
 
 const handleSend = async () => {
   // ... existing send logic
-  
+
   // After email is successfully sent
   if (sentEmail.success) {
     // Extract recipient email addresses
-    const recipients = [
-      ...toAddresses,
-      ...ccAddresses,
-      ...bccAddresses
-    ];
-    
+    const recipients = [...toAddresses, ...ccAddresses, ...bccAddresses];
+
     // Find contact IDs for recipients
     for (const recipient of recipients) {
       const contact = await findContactByEmail(recipient);
@@ -56,13 +52,16 @@ const handleSend = async () => {
 export async function findContactByEmail(email: string) {
   const result = await db.query.contacts.findFirst({
     where: exists(
-      db.select()
+      db
+        .select()
         .from(contactEmails)
-        .where(and(
-          eq(contactEmails.email, email),
-          eq(contactEmails.contactId, contacts.id)
-        ))
-    )
+        .where(
+          and(
+            eq(contactEmails.email, email),
+            eq(contactEmails.contactId, contacts.id)
+          )
+        )
+    ),
   });
   return result?.id;
 }
@@ -85,10 +84,10 @@ import { findContactByEmail } from '@/lib/contacts/helpers';
 
 async function processNewEmail(email: NylasEmail) {
   // ... existing email processing
-  
+
   // Save email to database
   const savedEmail = await db.insert(emails).values({...}).returning();
-  
+
   // Auto-log to contact timeline
   const contactId = await findContactByEmail(email.from.email);
   if (contactId) {
@@ -113,16 +112,16 @@ import { logVoiceMessageSent } from '@/lib/contacts/timeline-actions';
 
 const handleSend = async () => {
   // ... existing send logic
-  
+
   // After email with voice attachment is sent
   if (sentEmail.success && hasVoiceAttachment) {
     const recipients = [...toAddresses, ...ccAddresses];
-    
+
     for (const recipient of recipients) {
       const contact = await findContactByEmail(recipient);
       if (contact) {
         await logVoiceMessageSent(
-          contact.id, 
+          contact.id,
           voiceRecordingDuration // in seconds
         );
       }
@@ -145,14 +144,14 @@ The `createContactNote` server action should already log this. Verify:
 // In src/lib/contacts/notes-actions.ts
 export async function createContactNote(contactId: string, content: string) {
   // ... create note in database
-  
+
   // Auto-log to timeline
   await addTimelineEvent(contactId, {
     eventType: 'note_added',
     title: 'Added note',
-    description: content.substring(0, 100) + '...'
+    description: content.substring(0, 100) + '...',
   });
-  
+
   return { success: true, note: newNote };
 }
 ```
@@ -173,11 +172,11 @@ import { logDocumentShared } from '@/lib/contacts/timeline-actions';
 
 const handleSend = async () => {
   // ... existing send logic
-  
+
   // After email with attachments is sent
   if (sentEmail.success && attachments.length > 0) {
     const recipients = [...toAddresses, ...ccAddresses];
-    
+
     for (const recipient of recipients) {
       const contact = await findContactByEmail(recipient);
       if (contact) {
@@ -210,16 +209,12 @@ import { logMeetingScheduled } from '@/lib/contacts/timeline-actions';
 
 async function scheduleMeeting(meeting: Meeting) {
   // ... create meeting in calendar
-  
+
   // Log to all attendee timelines
   for (const attendee of meeting.attendees) {
     const contact = await findContactByEmail(attendee.email);
     if (contact) {
-      await logMeetingScheduled(
-        contact.id,
-        meeting.title,
-        meeting.startDate
-      );
+      await logMeetingScheduled(contact.id, meeting.title, meeting.startDate);
     }
   }
 }
@@ -230,7 +225,8 @@ async function scheduleMeeting(meeting: Meeting) {
 ### 7. Contact Created (Low Priority)
 
 **When**: New contact is created from email or manually  
-**Files**: 
+**Files**:
+
 - `src/app/api/contacts/route.ts` (manual creation)
 - Email sync (automatic from email)
 
@@ -242,16 +238,16 @@ import { createContactTimelineEvent } from '@/lib/contacts/timeline-actions';
 
 async function createContact(contactData: ContactData) {
   // ... create contact in database
-  
+
   // Auto-log creation event
   await createContactTimelineEvent({
     contactId: newContact.id,
     eventType: 'contact_created',
     title: 'Contact created',
     description: `Added from ${source}`, // e.g., "Added from email exchange"
-    metadata: { source }
+    metadata: { source },
   });
-  
+
   return newContact;
 }
 ```
@@ -328,9 +324,7 @@ export async function findContactsByEmails(
         )
       );
 
-    return Object.fromEntries(
-      results.map((r) => [r.email, r.contactId])
-    );
+    return Object.fromEntries(results.map((r) => [r.email, r.contactId]));
   } catch (error) {
     console.error('Error finding contacts by emails:', error);
     return {};
@@ -355,7 +349,7 @@ const handleSend = async () => {
   try {
     // ... existing send logic
     const result = await sendEmail(emailData);
-    
+
     if (result.success) {
       // Collect all recipient emails
       const recipientEmails = [
@@ -408,22 +402,21 @@ import { findContactByEmail } from '@/lib/contacts/helpers';
 // In email sync function
 async function syncNewEmails(userId: string) {
   // ... fetch new emails from Nylas
-  
+
   for (const nylasEmail of newEmails) {
     // Save email to database
-    const savedEmail = await db.insert(emails).values({
-      // ... email data
-    }).returning();
+    const savedEmail = await db
+      .insert(emails)
+      .values({
+        // ... email data
+      })
+      .returning();
 
     // Auto-log to contact timeline
     try {
       const contactId = await findContactByEmail(nylasEmail.from.email);
       if (contactId) {
-        await logEmailReceived(
-          contactId,
-          nylasEmail.subject,
-          savedEmail[0].id
-        );
+        await logEmailReceived(contactId, nylasEmail.subject, savedEmail[0].id);
       }
     } catch (error) {
       // Don't fail sync if logging fails
@@ -442,10 +435,13 @@ import { createContactTimelineEvent } from '@/lib/contacts/timeline-actions';
 
 export async function POST(request: Request) {
   // ... create contact
-  
-  const newContact = await db.insert(contacts).values({
-    // ... contact data
-  }).returning();
+
+  const newContact = await db
+    .insert(contacts)
+    .values({
+      // ... contact data
+    })
+    .returning();
 
   // Auto-log creation
   await createContactTimelineEvent({
@@ -453,7 +449,7 @@ export async function POST(request: Request) {
     eventType: 'contact_created',
     title: 'Contact created',
     description: 'Manually added to contacts',
-    metadata: { source: 'manual' }
+    metadata: { source: 'manual' },
   });
 
   return NextResponse.json({ success: true, contact: newContact[0] });
@@ -465,6 +461,7 @@ export async function POST(request: Request) {
 ## 🧪 Testing Checklist
 
 ### Email Sent Logging
+
 - [ ] Send email to single contact
 - [ ] Verify event appears in contact timeline
 - [ ] Send email to multiple contacts
@@ -473,17 +470,20 @@ export async function POST(request: Request) {
 - [ ] Verify voice message event logged
 
 ### Email Received Logging
+
 - [ ] Trigger email sync manually
 - [ ] Send email to test account from known contact
 - [ ] Verify received event appears in timeline
 - [ ] Check event includes correct subject and link
 
 ### Document Sharing Logging
+
 - [ ] Send email with attachment
 - [ ] Verify document shared event logged
 - [ ] Verify multiple attachments create multiple events
 
 ### Contact Creation Logging
+
 - [ ] Create new contact manually
 - [ ] Verify creation event appears immediately
 - [ ] Check event metadata contains source
@@ -550,9 +550,7 @@ for (const contactId of contactIds) {
 
 // Do:
 await Promise.all(
-  contactIds.map((contactId) => 
-    logEmailSent(contactId, subject, emailId)
-  )
+  contactIds.map((contactId) => logEmailSent(contactId, subject, emailId))
 );
 ```
 
@@ -565,7 +563,7 @@ For email sync, consider queue-based logging:
 await queue.add('logEmailReceived', {
   contactId,
   emailSubject,
-  emailId
+  emailId,
 });
 ```
 
@@ -593,7 +591,6 @@ After implementation, update:
 
 ---
 
-**Phase 7 Ready to Implement!** 
+**Phase 7 Ready to Implement!**
 
 This guide provides everything needed to add automatic timeline event logging throughout the application.
-
