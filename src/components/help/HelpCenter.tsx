@@ -34,7 +34,7 @@ export function HelpCenter(): JSX.Element {
         'Understanding Inbox vs Feed vs Paper Trail',
         'Connecting Gmail, Outlook, or IMAP',
         'Customizing your settings',
-        'First steps with eezMail',
+        'First steps with easeMail',
         'Importing your existing emails',
       ],
     },
@@ -206,7 +206,7 @@ export function HelpCenter(): JSX.Element {
     },
     {
       id: 'faq-3',
-      title: 'Can I use eezMail with multiple email accounts?',
+      title: 'Can I use easeMail with multiple email accounts?',
       content: (
         <div className="space-y-2">
           <p>
@@ -323,7 +323,7 @@ export function HelpCenter(): JSX.Element {
           Help Center
         </h2>
         <p className="mt-1 text-sm text-gray-600 dark:text-white/60">
-          Find answers to common questions and learn how to use eezMail
+          Find answers to common questions and learn how to use easeMail
         </p>
       </div>
 

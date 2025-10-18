@@ -62,7 +62,7 @@ export function ChatBot(): JSX.Element | null {
   // Operation-specific loading messages
   const OPERATION_MESSAGES: Record<string, string> = {
     compose_email:
-      '✉️ Your eezMail Assistant is drafting your email. Just a moment, please...',
+      '✉️ Your easeMail Assistant is drafting your email. Just a moment, please...',
     verify_email_address: '🔍 Verifying email address...',
     search_emails: '📧 Searching through your emails...',
     create_contact: '👤 Adding contact to your address book...',

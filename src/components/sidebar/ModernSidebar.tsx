@@ -107,7 +107,7 @@ export function ModernSidebar({
               className="flex flex-col items-center"
             >
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-                eezMail
+                easeMail
               </h1>
               <p className="text-[10px] font-medium text-white/60 dark:text-white/40 -mt-0.5">
                 by BotMakers

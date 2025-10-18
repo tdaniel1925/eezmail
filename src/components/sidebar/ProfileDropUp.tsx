@@ -294,7 +294,7 @@ export function ProfileDropUp({
 
               {/* Version */}
               <div className="px-4 py-2 text-center text-[10px] text-gray-400 dark:text-gray-500">
-                eezMail v1.0.0
+                easeMail v1.0.0
               </div>
             </motion.div>
           </>

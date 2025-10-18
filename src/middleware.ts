@@ -39,6 +39,13 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // Redirect authenticated users from landing to dashboard
+  if (user && request.nextUrl.pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
   // Protect dashboard routes
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
     const url = request.nextUrl.clone();
