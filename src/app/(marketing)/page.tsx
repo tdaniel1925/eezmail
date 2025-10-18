@@ -3,6 +3,10 @@ import { ArrowRight, Shield, Zap, Users, Clock, Check, ChevronDown } from 'lucid
 import { AnimatedButton } from '@/components/marketing/AnimatedButton';
 import { ComparisonTable } from '@/components/marketing/ComparisonTable';
 import { ROICalculator } from '@/components/marketing/ROICalculator';
+import { StatsGrid } from '@/components/marketing/StatsGrid';
+import { DashboardMockup } from '@/components/marketing/mockups/DashboardMockup';
+import { AIAssistantMockup } from '@/components/marketing/mockups/AIAssistantMockup';
+import { SmartComposeMockup } from '@/components/marketing/mockups/SmartComposeMockup';
 
 export const metadata = {
   title: 'easeMail - Save 10 Hours Per Week with AI-Powered Email',
@@ -66,7 +70,27 @@ export default function LandingPage() {
                 Trusted by 1000+ teams
               </span>
             </div>
+
+            {/* Hero Mockup */}
+            <div className="mt-16 [animation:fadeSlideIn_0.5s_ease-in-out_0.6s_both]">
+              <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-4 backdrop-blur">
+                <DashboardMockup />
+              </div>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Stat Cards Section */}
+      <section className="z-10 mt-24 py-12 relative">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
+          <StatsGrid
+            stats={[
+              { value: '10', suffix: '+', label: 'Hours Saved Per Week' },
+              { value: '5', suffix: 'x', label: 'Faster Than Gmail' },
+              { value: '50', suffix: '%', label: 'Less Cost vs Superhuman' },
+            ]}
+          />
         </div>
       </section>
 
@@ -149,6 +173,44 @@ export default function LandingPage() {
 
           <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-6 md:p-8 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll">
             <ComparisonTable />
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Video & Features Showcase */}
+      <section className="z-10 xl:py-24 mt-24 pt-12 pb-12 relative" id="demo">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="text-center mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+              See easeMail in Action
+            </h2>
+            <p className="text-lg text-white/70 max-w-2xl mx-auto">
+              Watch how AI transforms your email workflow in real-time
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* AI Assistant Demo */}
+            <div className="[animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll">
+              <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-6 backdrop-blur">
+                <AIAssistantMockup />
+              </div>
+              <div className="mt-4 text-center">
+                <h3 className="text-xl font-bold text-white mb-2">AI Assistant</h3>
+                <p className="text-sm text-white/60">Chat with your inbox, get instant answers</p>
+              </div>
+            </div>
+
+            {/* Smart Compose Demo */}
+            <div className="[animation:fadeSlideIn_0.5s_ease-in-out_0.3s_both] animate-on-scroll">
+              <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-6 backdrop-blur">
+                <SmartComposeMockup />
+              </div>
+              <div className="mt-4 text-center">
+                <h3 className="text-xl font-bold text-white mb-2">Smart Compose</h3>
+                <p className="text-sm text-white/60">Write emails 10x faster with AI</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
