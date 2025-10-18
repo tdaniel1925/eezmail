@@ -1,0 +1,61 @@
+/*
+Parallax Animation
+1) Insert this code in the <head>
+2) Add to Tailwind Classes: [animation:parallaxElement_linear_both] [animation-timeline:view()] [animation-range:entry_0%_entry_160%]
+*/
+@keyframes parallaxElement {
+  from {
+    transform: translateY(-12%);
+  }
+  to {
+    transform: translateY(12%);
+  }
+}
+
+/*
+Sequence animation intro. Usage:
+1) Insert this code in the <head>
+2) Add to Tailwind Classes: [animation:fadeSlideIn_1s_ease-out_0.1s_both]
+*/
+@keyframes fadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
+
+/* Default: paused */
+.animate-on-scroll {
+  animation-play-state: paused !important;
+}
+
+/* Activated by JS */
+.animate-on-scroll.animate {
+  animation-play-state: running !important;
+}
+
+/* Ticker animation */
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.ticker-track {
+  animation: ticker 40s linear infinite;
+  width: calc(200% + 16px);
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+

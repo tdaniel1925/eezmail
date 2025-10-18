@@ -1,7 +1,10 @@
 import { Inter } from 'next/font/google';
+import Script from 'next/script';
 import { MarketingNav } from '@/components/marketing/MarketingNav';
 import { MarketingFooter } from '@/components/marketing/MarketingFooter';
-import '@/components/marketing/animations.css';
+import { ParticlesBackground } from '@/components/marketing/ParticlesBackground';
+import { GradientBlur } from '@/components/marketing/GradientBlur';
+import '@/components/marketing/template-animations.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -11,63 +14,60 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${inter.className} min-h-screen bg-black text-white antialiased`}>
-      {/* Background image */}
-      <div 
-        className="absolute top-0 w-full -z-10 h-screen bg-cover bg-center opacity-50"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80")',
-        }}
-      />
+    <html lang="en" className="h-full">
+      <head>
+        {/* Geist font */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        className="h-full bg-slate-950 text-slate-100 antialiased"
+        style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial' }}
+      >
+        {/* Particles Background */}
+        <div className="aura-background-component z-10 mix-blend-screen w-full h-screen absolute top-0">
+          <ParticlesBackground />
+        </div>
 
-      {/* Gradient blur effect */}
-      <div className="gradient-blur">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
+        {/* Marketing Content */}
+        <div className="relative">
+          <MarketingNav />
+          <GradientBlur />
+          <main className="relative">{children}</main>
+          <MarketingFooter />
+        </div>
 
-      <div id="wrapper">
-        <MarketingNav />
-        <main className="overflow-hidden relative">{children}</main>
-        <MarketingFooter />
-      </div>
-
-      {/* Scroll animation init script */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
+        {/* Scroll animation init script */}
+        <Script id="scroll-animations" strategy="afterInteractive">
+          {`
             (function () {
+              const once = true;
               if (!window.__inViewIO) {
                 window.__inViewIO = new IntersectionObserver((entries) => {
                   entries.forEach((entry) => {
                     if (entry.isIntersecting) {
                       entry.target.classList.add("animate");
-                      window.__inViewIO.unobserve(entry.target);
+                      if (once) window.__inViewIO.unobserve(entry.target);
                     }
                   });
                 }, { threshold: 0.2, rootMargin: "0px 0px -10% 0px" });
               }
-
-              function initInViewAnimations() {
-                document.querySelectorAll(".animate-on-scroll").forEach((el) => {
+              
+              window.initInViewAnimations = function (selector = ".animate-on-scroll") {
+                document.querySelectorAll(selector).forEach((el) => {
                   window.__inViewIO.observe(el);
                 });
-              }
-
-              if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initInViewAnimations);
-              } else {
-                initInViewAnimations();
-              }
+              };
+              
+              document.addEventListener("DOMContentLoaded", () => initInViewAnimations());
             })();
-          `,
-        }}
-      />
-    </div>
+          `}
+        </Script>
+      </body>
+    </html>
   );
 }
-
