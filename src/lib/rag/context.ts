@@ -1,5 +1,3 @@
-'use server';
-
 import { searchEmails, SearchResult } from './search';
 
 export interface EmailContext {
@@ -12,6 +10,8 @@ export interface EmailContext {
 /**
  * Build context from relevant emails for AI chat
  * Retrieves semantically similar emails and formats them for AI consumption
+ * 
+ * @server-action This is a server action (async + can only be called from client)
  */
 export async function buildContextForQuery(
   query: string,
