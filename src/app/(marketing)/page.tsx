@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { Sparkles, Zap, Activity, Smile, Clock, Check, ArrowRight, Calendar, Shield } from 'lucide-react';
+import { ROICalculator } from '@/components/marketing/ROICalculator';
+import { ComparisonTable } from '@/components/marketing/ComparisonTable';
+import { FAQSection } from '@/components/marketing/FAQSection';
 
 export const metadata = {
   title: 'easeMail - AI-Powered Email for Enterprises | Save 10 Hours Per Week',
@@ -865,6 +868,35 @@ export default function LandingPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ROI Calculator Section */}
+      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-950">
+        <div className="z-10 md:px-8 max-w-5xl mr-auto ml-auto pr-6 pl-6 relative">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+              Calculate Your Savings
+            </h2>
+            <p className="text-slate-400">
+              See how much time and money your team can save with easeMail
+            </p>
+          </div>
+          <ROICalculator />
+        </div>
+      </section>
+
+      {/* Comparison Table Section */}
+      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-900/50">
+        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
+          <ComparisonTable />
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-950">
+        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
+          <FAQSection />
         </div>
       </section>
 
