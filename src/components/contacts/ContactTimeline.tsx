@@ -13,7 +13,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getContactTimelineEvents } from '@/lib/contacts/timeline-actions';
+import { getContactTimeline } from '@/lib/contacts/timeline-actions';
 import type { ContactEventType } from '@/lib/contacts/timeline-actions';
 import { toast } from 'sonner';
 
@@ -76,7 +76,7 @@ export function ContactTimeline({
   const loadTimeline = async () => {
     setIsLoading(true);
     try {
-      const result = await getContactTimelineEvents(
+      const result = await getContactTimeline(
         contactId,
         selectedFilter || undefined
       );
