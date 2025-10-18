@@ -46,11 +46,11 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-12 md:gap-6 lg:gap-10 gap-x-8 gap-y-8 items-center">
               {/* Column 1: Tag + Headline */}
               <div className="md:col-span-5 lg:col-span-5 relative">
-                <div className="inline-flex text-xs font-medium text-white/80 bg-white/5 ring-white/10 ring-1 rounded-full mb-5 pt-1.5 pr-3 pb-1.5 pl-3 backdrop-blur-sm gap-x-2 gap-y-2 items-center [animation:fadeSlideIn_1s_ease-out_0.1s_both]">
+                <div className="inline-flex text-xs font-medium text-white/80 bg-white/5 ring-white/10 ring-1 rounded-full mb-5 pt-1.5 pr-3 pb-1.5 pl-3 backdrop-blur-sm gap-x-2 gap-y-2 items-center">
                   <Sparkles className="h-3.5 w-3.5 text-white/80" />
                   Next-Gen Email Intelligence
                 </div>
-                <h1 className="leading-tight sm:text-5xl md:text-5xl lg:text-6xl [animation:fadeSlideIn_1s_ease-out_0.2s_both] text-4xl tracking-tighter">
+                <h1 className="leading-tight sm:text-5xl md:text-5xl lg:text-6xl text-4xl tracking-tighter">
                   Transform Your Email Workflow
                   <span className="block bg-clip-text text-transparent tracking-tighter bg-gradient-to-r from-white via-white to-white/70">
                     with AI-Powered Intelligence
@@ -64,7 +64,7 @@ export default function LandingPage() {
               </div>
 
               {/* Column 2: Description */}
-              <div className="md:col-span-4 lg:col-span-3 [animation:fadeSlideIn_1s_ease-out_0.3s_both] relative">
+              <div className="md:col-span-4 lg:col-span-3 relative">
                 <p className="leading-relaxed md:text-lg text-base text-white/70">
                   We partner with professionals to design, build, and deploy AI-powered email systems that drive
                   measurable productivity gains and save 10+ hours per week.
@@ -89,14 +89,14 @@ export default function LandingPage() {
                 <div className="flex flex-row lg:flex-col gap-x-3 gap-y-3">
                   <Link
                     href="/features"
-                    className="inline-flex items-center justify-center gap-2 transition hover:bg-white/15 hover:ring-white/25 whitespace-nowrap text-sm font-medium text-white/90 bg-white/10 ring-white/15 ring-1 rounded-full pt-2.5 pr-4 pb-2.5 pl-4 backdrop-blur-sm [animation:fadeSlideIn_1s_ease-out_0.3s_both]"
+                    className="inline-flex items-center justify-center gap-2 transition hover:bg-white/15 hover:ring-white/25 whitespace-nowrap text-sm font-medium text-white/90 bg-white/10 ring-white/15 ring-1 rounded-full pt-2.5 pr-4 pb-2.5 pl-4 backdrop-blur-sm"
                   >
                     Try easeMail
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
                     href="/signup"
-                    className="inline-flex items-center justify-center gap-2 ring-1 ring-white/20 transition hover:bg-neutral-100 whitespace-nowrap [animation:fadeSlideIn_1s_ease-out_0.5s_both] text-sm font-medium text-neutral-900 bg-white rounded-full pt-2.5 pr-4 pb-2.5 pl-4"
+                    className="inline-flex items-center justify-center gap-2 ring-1 ring-white/20 transition hover:bg-neutral-100 whitespace-nowrap text-sm font-medium text-neutral-900 bg-white rounded-full pt-2.5 pr-4 pb-2.5 pl-4"
                   >
                     Start Free Trial
                     <Calendar className="h-4 w-4" />
