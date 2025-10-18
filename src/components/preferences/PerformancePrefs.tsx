@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface PerformancePrefsProps {
   preferences?: any;
@@ -31,6 +32,7 @@ export function PerformancePrefs({ preferences }: PerformancePrefsProps) {
   const [enablePreloading, setEnablePreloading] = useState(true);
   const [enableCompression, setEnableCompression] = useState(true);
   const [maxConcurrentSyncs, setMaxConcurrentSyncs] = useState('3');
+  const [isLoading, setIsLoading] = useState(false);
 
   const syncIntervals = [
     { value: '1', label: '1 minute' },
@@ -41,14 +43,40 @@ export function PerformancePrefs({ preferences }: PerformancePrefsProps) {
     { value: '0', label: 'Manual only' },
   ];
 
-  const handleClearCache = () => {
-    // TODO: Implement cache clearing
-    console.log('Clearing cache...');
+  const handleClearCache = async () => {
+    setIsLoading(true);
+    try {
+      const { clearCache } = await import('@/lib/settings/data-management');
+      const result = await clearCache();
+      if (result.success) {
+        toast.success('Cache cleared successfully');
+      } else {
+        toast.error(result.error || 'Failed to clear cache');
+      }
+    } catch (error) {
+      toast.error('Failed to clear cache');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleOptimizeDatabase = () => {
-    // TODO: Implement database optimization
-    console.log('Optimizing database...');
+  const handleOptimizeDatabase = async () => {
+    setIsLoading(true);
+    try {
+      const { optimizeDatabase } = await import(
+        '@/lib/settings/data-management'
+      );
+      const result = await optimizeDatabase();
+      if (result.success) {
+        toast.success('Database optimized successfully');
+      } else {
+        toast.error(result.error || 'Failed to optimize database');
+      }
+    } catch (error) {
+      toast.error('Failed to optimize database');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -168,10 +196,18 @@ export function PerformancePrefs({ preferences }: PerformancePrefsProps) {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={handleClearCache}>
+                <Button
+                  variant="outline"
+                  onClick={handleClearCache}
+                  disabled={isLoading}
+                >
                   Clear Cache
                 </Button>
-                <Button variant="outline" onClick={handleOptimizeDatabase}>
+                <Button
+                  variant="outline"
+                  onClick={handleOptimizeDatabase}
+                  disabled={isLoading}
+                >
                   Optimize Database
                 </Button>
               </div>

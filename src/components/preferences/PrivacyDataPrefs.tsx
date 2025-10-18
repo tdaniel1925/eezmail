@@ -48,7 +48,9 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
       const { exportUserData } = await import('@/lib/settings/data-management');
       const result = await exportUserData();
       if (result.success && result.data) {
-        const blob = new Blob([JSON.stringify(result.data, null, 2)], { type: 'application/json' });
+        const blob = new Blob([JSON.stringify(result.data, null, 2)], {
+          type: 'application/json',
+        });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -68,15 +70,20 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
 
   const handleDeleteData = async () => {
     if (!confirm('⚠️ This will delete all your data. Are you sure?')) return;
-    if (!confirm('This action cannot be undone. Type DELETE in the prompt to confirm.')) return;
-    
+    if (
+      !confirm(
+        'This action cannot be undone. Type DELETE in the prompt to confirm.'
+      )
+    )
+      return;
+
     setIsLoading(true);
     try {
       const { deleteUserData } = await import('@/lib/settings/data-management');
       const result = await deleteUserData();
       if (result.success) {
         toast.success('Data deletion scheduled. You will be logged out.');
-        setTimeout(() => window.location.href = '/login', 2000);
+        setTimeout(() => (window.location.href = '/login'), 2000);
       } else {
         toast.error(result.error || 'Deletion failed');
       }
@@ -90,7 +97,9 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
   const handleDownloadData = async () => {
     setIsLoading(true);
     try {
-      const { downloadUserData } = await import('@/lib/settings/data-management');
+      const { downloadUserData } = await import(
+        '@/lib/settings/data-management'
+      );
       const result = await downloadUserData();
       if (result.success && result.downloadUrl) {
         const a = document.createElement('a');
@@ -246,15 +255,27 @@ export function PrivacyDataPrefs({ preferences }: PrivacyDataPrefsProps) {
               </Alert>
 
               <div className="grid gap-3">
-                <Button variant="outline" onClick={handleExportData} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  onClick={handleExportData}
+                  disabled={isLoading}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Export My Data
                 </Button>
-                <Button variant="outline" onClick={handleDownloadData} disabled={isLoading}>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadData}
+                  disabled={isLoading}
+                >
                   <Download className="h-4 w-4 mr-2" />
                   Download Data Archive
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteData} disabled={isLoading}>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteData}
+                  disabled={isLoading}
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete All My Data
                 </Button>

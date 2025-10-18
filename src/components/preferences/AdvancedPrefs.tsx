@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Code, Database, Settings, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface AdvancedPrefsProps {
   preferences?: any;
@@ -33,20 +34,59 @@ export function AdvancedPrefs({ preferences }: AdvancedPrefsProps) {
   const [apiEndpoint, setApiEndpoint] = useState('https://api.eezmail.com');
   const [syncTimeout, setSyncTimeout] = useState('30');
   const [maxRetries, setMaxRetries] = useState('3');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleResetSettings = () => {
-    // TODO: Implement settings reset
-    console.log('Resetting all settings...');
+  const handleResetSettings = async () => {
+    if (!confirm('⚠️ This will reset all settings to defaults. Continue?')) return;
+
+    setIsLoading(true);
+    try {
+      const { resetSettings } = await import('@/lib/settings/data-management');
+      const result = await resetSettings();
+      if (result.success) {
+        toast.success('Settings reset to defaults');
+      } else {
+        toast.error(result.error || 'Failed to reset settings');
+      }
+    } catch (error) {
+      toast.error('Failed to reset settings');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleClearLogs = () => {
-    // TODO: Implement log clearing
-    console.log('Clearing logs...');
+  const handleClearLogs = async () => {
+    setIsLoading(true);
+    try {
+      const { clearLogs } = await import('@/lib/settings/data-management');
+      const result = await clearLogs();
+      if (result.success) {
+        toast.success('Logs cleared successfully');
+      } else {
+        toast.error(result.error || 'Failed to clear logs');
+      }
+    } catch (error) {
+      toast.error('Failed to clear logs');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleTestConnection = () => {
-    // TODO: Implement connection test
-    console.log('Testing connection...');
+  const handleTestConnection = async () => {
+    setIsLoading(true);
+    try {
+      // Test API endpoint connection
+      const response = await fetch(apiEndpoint, { method: 'HEAD' });
+      if (response.ok) {
+        toast.success('Connection successful');
+      } else {
+        toast.error('Connection failed');
+      }
+    } catch (error) {
+      toast.error('Connection failed');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -150,7 +190,11 @@ export function AdvancedPrefs({ preferences }: AdvancedPrefsProps) {
                     placeholder="https://api.example.com"
                     className="flex-1"
                   />
-                  <Button variant="outline" onClick={handleTestConnection}>
+                  <Button
+                    variant="outline"
+                    onClick={handleTestConnection}
+                    disabled={isLoading}
+                  >
                     Test
                   </Button>
                 </div>
@@ -203,10 +247,18 @@ export function AdvancedPrefs({ preferences }: AdvancedPrefsProps) {
           <CardContent>
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Button variant="outline" onClick={handleClearLogs}>
+                <Button
+                  variant="outline"
+                  onClick={handleClearLogs}
+                  disabled={isLoading}
+                >
                   Clear Logs
                 </Button>
-                <Button variant="outline" onClick={handleResetSettings}>
+                <Button
+                  variant="outline"
+                  onClick={handleResetSettings}
+                  disabled={isLoading}
+                >
                   Reset All Settings
                 </Button>
               </div>
