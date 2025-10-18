@@ -47,29 +47,35 @@ export function ConnectedAccounts({
     const email = searchParams.get('email');
     const error = searchParams.get('error');
 
-    // Clean URL parameters immediately to prevent reload loops
-    if (success || error) {
-      console.log('🧹 Cleaning URL parameters to prevent reload loops');
+    // Show success message
+    if (success === 'true' && email) {
+      console.log('✅ Account connected successfully:', email);
+      toast.success(
+        `✅ Account ${decodeURIComponent(email)} connected successfully! Refreshing...`,
+        {
+          duration: 3000,
+        }
+      );
+
+      // Clean URL and force a hard reload to show the new account
+      setTimeout(() => {
+        window.history.replaceState(
+          {},
+          '',
+          '/dashboard/settings?tab=email-accounts'
+        );
+        // Use location.href for a true hard reload
+        window.location.href = '/dashboard/settings?tab=email-accounts';
+      }, 1500);
+    } else if (error) {
+      console.error('❌ Connection error:', error);
+      toast.error(`Failed to connect: ${decodeURIComponent(error)}`);
+      // Clean URL
       window.history.replaceState(
         {},
         '',
         '/dashboard/settings?tab=email-accounts'
       );
-    }
-
-    // Show success message
-    if (success === 'true' && email) {
-      toast.success(
-        `✅ Account ${decodeURIComponent(email)} connected successfully!`,
-        {
-          duration: 5000,
-        }
-      );
-
-      // Force reload ONCE to show the new account
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     }
 
     // TEMPORARILY DISABLE CLEANUP TO PREVENT REMOVING NEW ACCOUNTS

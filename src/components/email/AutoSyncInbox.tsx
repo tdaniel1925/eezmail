@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { EmailList } from './EmailList';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { getInboxEmails } from '@/lib/email/get-emails';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface AutoSyncInboxProps {
@@ -31,28 +30,43 @@ export function AutoSyncInbox({
   const fetchEmails = async () => {
     try {
       setIsLoading(true);
-      const result = await getInboxEmails();
 
-      if (result.success) {
-        const newEmails = result.emails;
-        const currentCount = newEmails.length;
+      // Fetch inbox emails via API
+      const response = await fetch('/api/email/inbox?limit=25');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📧 API Response:', data);
 
-        // Check for new emails
-        if (previousEmailCount > 0 && currentCount > previousEmailCount) {
-          const newCount = currentCount - previousEmailCount;
-          setNewEmailsCount(newCount);
+        if (data.success) {
+          const newEmails = data.emails;
+          const currentCount = newEmails.length;
 
-          // Clear the notification after 5 seconds
-          setTimeout(() => setNewEmailsCount(0), 5000);
+          // Log debug information
+          if (data.debug) {
+            console.log('📧 Debug Info:', data.debug);
+          }
+
+          // Check for new emails
+          if (previousEmailCount > 0 && currentCount > previousEmailCount) {
+            const newCount = currentCount - previousEmailCount;
+            setNewEmailsCount(newCount);
+
+            // Clear the notification after 5 seconds
+            setTimeout(() => setNewEmailsCount(0), 5000);
+          }
+
+          setEmails(newEmails);
+          setPreviousEmailCount(currentCount);
+          setError(null);
+        } else {
+          setError(data.error || 'Failed to fetch emails');
         }
-
-        setEmails(newEmails);
-        setPreviousEmailCount(currentCount);
-        setError(null);
       } else {
-        setError(result.error || 'Failed to fetch emails');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to fetch emails');
       }
     } catch (err) {
+      console.error('📧 Error fetching emails:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsLoading(false);

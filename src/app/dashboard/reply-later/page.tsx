@@ -1,7 +1,6 @@
 'use client';
 
 import { EmailList } from '@/components/email/EmailList';
-import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 
 // Mock Reply Later emails
@@ -64,8 +63,6 @@ export default function ReplyLaterPage(): JSX.Element {
         emails={mockReplyLaterEmails}
         title="Reply Later"
         isLoading={false}
-      />
-      <ChatBot />
-    </>
+      />    </>
   );
 }

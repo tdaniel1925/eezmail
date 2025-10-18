@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   Search,
   Pencil,
@@ -8,11 +8,21 @@ import {
   Settings,
   RefreshCw,
   Mail,
+  CheckSquare,
+  Square,
+  Archive,
+  Trash2,
+  Tag,
+  FolderInput,
+  MailOpen,
+  MailX,
+  X,
 } from 'lucide-react';
 import { ExpandableEmailItem } from './ExpandableEmailItem';
 import { EmailComposer } from './EmailComposer';
 import { AnimatedButton } from '@/components/ui/AnimatedButton';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import { toast } from 'sonner';
 import type { Email } from '@/db/schema';
 import {
@@ -22,6 +32,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  bulkMarkAsRead,
+  bulkArchiveEmails,
+  bulkDeleteEmails,
+  bulkMoveEmailsToFolder,
+} from '@/lib/chat/actions';
+import { applyLabelsToEmails } from '@/lib/labels/actions';
+import { FolderSelectorModal } from '@/components/modals/FolderSelectorModal';
+import { LabelSelectorModal } from '@/components/modals/LabelSelectorModal';
+import { createClient } from '@/lib/supabase/client';
 
 interface EmailListProps {
   emails: Email[];
@@ -51,7 +71,26 @@ export function EmailList({
   const [isSearching, setIsSearching] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Email[] | null>(null);
+  const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const emailRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Get user ID on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   // Use search results if available, otherwise use filtered local emails
   const displayEmails =
@@ -107,9 +146,214 @@ export function EmailList({
     setSearchResults(null);
   };
 
+  // Bulk action handlers
+  const toggleSelectAll = (): void => {
+    if (selectedEmails.size === displayEmails.length) {
+      setSelectedEmails(new Set());
+      setIsSelectionMode(false);
+    } else {
+      const allIds = new Set(displayEmails.map((email) => email.id));
+      setSelectedEmails(allIds);
+      setIsSelectionMode(true);
+    }
+  };
+
+  const toggleEmailSelection = (emailId: string): void => {
+    const newSelected = new Set(selectedEmails);
+    if (newSelected.has(emailId)) {
+      newSelected.delete(emailId);
+    } else {
+      newSelected.add(emailId);
+    }
+    setSelectedEmails(newSelected);
+    setIsSelectionMode(newSelected.size > 0);
+  };
+
+  const clearSelection = (): void => {
+    setSelectedEmails(new Set());
+    setIsSelectionMode(false);
+  };
+
+  const handleBulkMarkAsRead = async (): Promise<void> => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await bulkMarkAsRead({
+        userId,
+        emailIds,
+        isRead: true,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk mark as read error:', error);
+      toast.error('Failed to mark emails as read');
+    }
+  };
+
+  const handleBulkMarkAsUnread = async (): Promise<void> => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await bulkMarkAsRead({
+        userId,
+        emailIds,
+        isRead: false,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk mark as unread error:', error);
+      toast.error('Failed to mark emails as unread');
+    }
+  };
+
+  const handleBulkArchive = async (): Promise<void> => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await bulkArchiveEmails({
+        userId,
+        emailIds,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk archive error:', error);
+      toast.error('Failed to archive emails');
+    }
+  };
+
+  const handleBulkDelete = async (): Promise<void> => {
+    if (
+      !confirm(`Are you sure you want to delete ${selectedEmails.size} emails?`)
+    ) {
+      return;
+    }
+
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await bulkDeleteEmails({
+        userId,
+        emailIds,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk delete error:', error);
+      toast.error('Failed to delete emails');
+    }
+  };
+
+  const handleBulkMove = (): void => {
+    setIsFolderModalOpen(true);
+  };
+
+  const handleFolderSelect = async (folderId: string): Promise<void> => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await bulkMoveEmailsToFolder({
+        userId,
+        emailIds,
+        targetFolder: folderId,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk move error:', error);
+      toast.error('Failed to move emails');
+    }
+  };
+
+  const handleBulkLabel = (): void => {
+    setIsLabelModalOpen(true);
+  };
+
+  const handleLabelsSelect = async (labelIds: string[]): Promise<void> => {
+    try {
+      const emailIds = Array.from(selectedEmails);
+      const result = await applyLabelsToEmails({
+        emailIds,
+        labelIds,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        clearSelection();
+        // Dispatch refresh event
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        onRefresh?.();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Bulk label error:', error);
+      toast.error('Failed to apply labels');
+    }
+  };
+
   const handleEmailAction = (action: string, emailId: string): void => {
+    // Will be implemented with individual email actions
     console.log(`Action: ${action}, Email ID: ${emailId}`);
-    // TODO: Implement email actions
   };
 
   const handleNavigateToEmail = useCallback((emailId: string) => {
@@ -133,122 +377,113 @@ export function EmailList({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Unified Header Bar - 64px height */}
-      <div className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
-        {/* Left: Title + Status */}
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-3">
-            <Mail className="h-5 w-5 text-primary" />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">
-                {title}
-              </h1>
-              <div className="flex items-center space-x-2 text-sm">
-                {/* Sync Status Dot + Unread Count */}
-                <div className="flex items-center space-x-1.5 text-gray-500 dark:text-gray-400">
-                  <div
-                    className={`h-2 w-2 rounded-full ${
-                      isSyncing ? 'animate-pulse bg-blue-500' : 'bg-green-500'
-                    }`}
-                    title={
-                      isSyncing
-                        ? 'Syncing...'
-                        : `Auto-sync active${lastSyncAt ? ` • Last synced ${lastSyncAt.toLocaleTimeString()}` : ''}`
-                    }
-                  />
-                  <span className="text-xs">{unreadCount} unread</span>
-                </div>
-
-                {/* New Emails Badge */}
-                {newEmailsCount > 0 && (
-                  <span className="animate-pulse rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                    +{newEmailsCount} new
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right: Search Bar + Compose + Settings */}
-        <div className="flex flex-1 items-center gap-2 ml-12">
-          {/* Search Bar (Standalone) - 20% smaller */}
-          <div className="flex flex-1 max-w-lg items-center rounded-lg border border-gray-200 bg-gray-50 focus-within:ring-2 focus-within:ring-primary/20 dark:border-gray-700 dark:bg-gray-900">
-            <input
-              type="text"
-              placeholder="Search emails..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                if (!e.target.value.trim()) {
-                  handleClearSearch();
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-              className="flex-1 bg-transparent px-3 py-1 text-sm text-gray-900 placeholder-gray-500 focus:outline-none dark:text-white dark:placeholder-gray-400"
-            />
+      {/* Unified Header */}
+      <UnifiedHeader
+        title={title}
+        subtitle={`${unreadCount} unread${newEmailsCount > 0 ? ` • +${newEmailsCount} new` : ''}`}
+        onRefresh={onRefresh}
+        isRefreshing={isSyncing}
+        customActions={
+          <>
+            {/* Select All Checkbox */}
             <button
-              onClick={handleSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="px-2 py-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-gray-400 dark:hover:text-gray-300"
-              title="Search"
+              onClick={toggleSelectAll}
+              className="flex items-center justify-center rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+              title={
+                selectedEmails.size === displayEmails.length &&
+                displayEmails.length > 0
+                  ? 'Deselect all'
+                  : 'Select all'
+              }
             >
-              {isSearching ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+              {selectedEmails.size === displayEmails.length &&
+              displayEmails.length > 0 ? (
+                <CheckSquare className="h-5 w-5 text-blue-600" />
               ) : (
-                <Search className="h-4 w-4" />
+                <Square className="h-5 w-5 text-gray-400" />
               )}
             </button>
+
+            {/* Compose Button */}
+            <AnimatedButton
+              variant="particles"
+              onClick={() => setIsComposerOpen(true)}
+              icon={<Pencil className="h-3.5 w-3.5" />}
+            >
+              Compose
+            </AnimatedButton>
+          </>
+        }
+      />
+
+      {/* Bulk Actions Toolbar */}
+      {isSelectionMode && selectedEmails.size > 0 && (
+        <div className="flex items-center justify-between border-b border-gray-200 bg-blue-50 px-6 py-3 dark:border-gray-700 dark:bg-blue-900/20">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={clearSelection}
+              className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              title="Clear selection"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {selectedEmails.size} selected
+            </span>
           </div>
-
-          {/* Compose Button (Standalone) */}
-          <AnimatedButton
-            variant="particles"
-            onClick={() => setIsComposerOpen(true)}
-            icon={<Pencil className="h-3.5 w-3.5" />}
-          >
-            Compose
-          </AnimatedButton>
-
-          {/* Settings Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                title="More options"
-              >
-                <Settings className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onRefresh} disabled={isSyncing}>
-                <RefreshCw
-                  className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`}
-                />
-                {isSyncing ? 'Syncing...' : 'Refresh'}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <div className="flex items-center justify-between">
-                  <span className="mr-2">Dark Mode</span>
-                  <ThemeToggle />
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => (window.location.href = '/dashboard/settings')}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                Settings
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBulkMarkAsRead}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Mark as read"
+            >
+              <MailOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Mark read</span>
+            </button>
+            <button
+              onClick={handleBulkMarkAsUnread}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Mark as unread"
+            >
+              <MailX className="h-4 w-4" />
+              <span className="hidden sm:inline">Mark unread</span>
+            </button>
+            <button
+              onClick={handleBulkArchive}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Archive"
+            >
+              <Archive className="h-4 w-4" />
+              <span className="hidden sm:inline">Archive</span>
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50 dark:bg-gray-800 dark:hover:bg-red-900/20"
+              title="Delete"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Delete</span>
+            </button>
+            <div className="mx-2 h-6 w-px bg-gray-300 dark:bg-gray-600" />
+            <button
+              onClick={handleBulkMove}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Move to folder"
+            >
+              <FolderInput className="h-4 w-4" />
+              <span className="hidden sm:inline">Move</span>
+            </button>
+            <button
+              onClick={handleBulkLabel}
+              className="flex items-center gap-2 rounded-lg bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              title="Apply label"
+            >
+              <Tag className="h-4 w-4" />
+              <span className="hidden sm:inline">Label</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Search Results Indicator */}
       {searchResults !== null && (
@@ -324,11 +559,13 @@ export function EmailList({
               <ExpandableEmailItem
                 email={email}
                 isExpanded={expandedEmailId === email.id}
+                isSelected={selectedEmails.has(email.id)}
                 onToggle={() => {
                   setExpandedEmailId(
                     expandedEmailId === email.id ? null : email.id
                   );
                 }}
+                onSelect={() => toggleEmailSelection(email.id)}
                 onAction={handleEmailAction}
                 onNavigateToEmail={handleNavigateToEmail}
               />
@@ -342,6 +579,20 @@ export function EmailList({
         isOpen={isComposerOpen}
         onClose={() => setIsComposerOpen(false)}
         mode="compose"
+      />
+
+      {/* Folder Selector Modal */}
+      <FolderSelectorModal
+        isOpen={isFolderModalOpen}
+        onClose={() => setIsFolderModalOpen(false)}
+        onSelectFolder={handleFolderSelect}
+      />
+
+      {/* Label Selector Modal */}
+      <LabelSelectorModal
+        isOpen={isLabelModalOpen}
+        onClose={() => setIsLabelModalOpen(false)}
+        onSelectLabels={handleLabelsSelect}
       />
     </div>
   );

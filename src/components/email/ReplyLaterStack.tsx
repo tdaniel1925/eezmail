@@ -4,23 +4,19 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, X } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { ReplyLaterPreview } from './ReplyLaterPreview';
 import type { Email } from '@/db/schema';
 
 interface ReplyLaterStackProps {
   emails: Email[];
   onRemove: (emailId: string) => void;
-  onSendReply: (emailId: string, replyContent: string) => Promise<void>;
-  onOpenFull: (email: Email) => void;
+  onOpenFull: (email: Email) => Promise<void>;
 }
 
 export function ReplyLaterStack({
   emails,
   onRemove,
-  onSendReply,
   onOpenFull,
 }: ReplyLaterStackProps): JSX.Element | null {
-  const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
 
@@ -35,7 +31,12 @@ export function ReplyLaterStack({
 
   const visibleEmails = emails.slice(0, 6);
   const hiddenCount = emails.length - 6;
-  const expandedEmail = emails.find((e) => e.id === expandedEmailId);
+
+  // Check if any emails are overdue
+  const hasOverdue = emails.some((email) => {
+    if (!email.replyLaterUntil) return false;
+    return new Date(email.replyLaterUntil) < new Date();
+  });
 
   // Generate color from email/name
   const getAvatarColor = (email: string): string => {
@@ -75,15 +76,37 @@ export function ReplyLaterStack({
 
   return (
     <>
+      {/* Floating Badge */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-end gap-0"
+        className="fixed bottom-20 left-1/4 z-40 flex -translate-x-1/2 justify-center"
       >
-        <div className="flex items-end">
+        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-1.5 shadow-lg">
+          <Clock className="h-3.5 w-3.5 text-white" />
+          <span className="text-xs font-semibold text-white">
+            {emails.length} Reply Later
+          </span>
+          {hasOverdue && (
+            <span className="flex h-1.5 w-1.5">
+              <span className="inline-flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
+            </span>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Bubble Stack */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        className="fixed bottom-6 left-1/4 z-40 flex -translate-x-1/2 justify-center items-end gap-0"
+      >
+        <div className="flex items-end justify-center">
           {visibleEmails.map((email, index) => {
-            const senderName = email.fromAddress.name || email.fromAddress.email;
+            const senderName =
+              email.fromAddress.name || email.fromAddress.email;
             const senderEmail = email.fromAddress.email;
             const initials = getInitials(senderName, senderEmail);
             const colorClass = getAvatarColor(senderEmail);
@@ -100,12 +123,12 @@ export function ReplyLaterStack({
                 style={{ marginLeft: index > 0 ? '-8px' : '0', zIndex: index }}
               >
                 <button
-                  onClick={() => setExpandedEmailId(email.id)}
-                  className={`group relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-white shadow-lg transition-all hover:scale-110 hover:shadow-xl ${colorClass} ${
-                    expandedEmailId === email.id
-                      ? 'ring-4 ring-primary/50'
-                      : ''
-                  }`}
+                  onClick={() => {
+                    onOpenFull(email).catch((err) =>
+                      console.error('Error opening composer:', err)
+                    );
+                  }}
+                  className={`group relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-white shadow-lg transition-all hover:scale-110 hover:shadow-xl ${colorClass}`}
                   title={`Reply to ${senderName}`}
                 >
                   <span className="text-sm font-bold text-white">
@@ -148,25 +171,6 @@ export function ReplyLaterStack({
           )}
         </div>
       </motion.div>
-
-      {/* Expanded Preview Modal */}
-      <AnimatePresence>
-        {expandedEmail && (
-          <ReplyLaterPreview
-            email={expandedEmail}
-            onClose={() => setExpandedEmailId(null)}
-            onSend={async (replyContent) => {
-              await onSendReply(expandedEmail.id, replyContent);
-              setExpandedEmailId(null);
-            }}
-            onOpenFull={() => {
-              onOpenFull(expandedEmail);
-              setExpandedEmailId(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
     </>
   );
 }
-

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { EmailList } from './EmailList';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { getNewsFeedEmails } from '@/lib/email/get-emails';
 
 interface AutoSyncNewsFeedProps {
   accountId: string;
@@ -26,25 +25,32 @@ export function AutoSyncNewsFeed({ accountId }: AutoSyncNewsFeedProps) {
   const fetchNewsFeedEmails = async () => {
     try {
       setIsLoading(true);
-      const result = await getNewsFeedEmails();
 
-      if (result.success) {
-        const currentCount = result.emails.length;
+      // Fetch newsfeed emails via API
+      const response = await fetch('/api/email/newsfeed?limit=25');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const currentCount = data.emails.length;
 
-        // Check for new emails
-        if (previousEmailCount > 0 && currentCount > previousEmailCount) {
-          const newCount = currentCount - previousEmailCount;
-          setNewEmailsCount(newCount);
+          // Check for new emails
+          if (previousEmailCount > 0 && currentCount > previousEmailCount) {
+            const newCount = currentCount - previousEmailCount;
+            setNewEmailsCount(newCount);
 
-          // Clear the notification after 5 seconds
-          setTimeout(() => setNewEmailsCount(0), 5000);
+            // Clear the notification after 5 seconds
+            setTimeout(() => setNewEmailsCount(0), 5000);
+          }
+
+          setEmails(data.emails);
+          setPreviousEmailCount(currentCount);
+          setError(null);
+        } else {
+          setError(data.error || 'Failed to fetch emails');
         }
-
-        setEmails(result.emails);
-        setPreviousEmailCount(currentCount);
-        setError(null);
       } else {
-        setError(result.error || 'Failed to fetch emails');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to fetch emails');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');

@@ -1,6 +1,5 @@
 import { AutoSyncSent } from '@/components/email/AutoSyncSent';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function SentPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -21,16 +20,12 @@ export default async function SentPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncSent accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncSent accountId={activeAccount.id} />    </>
   );
 }

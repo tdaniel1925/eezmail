@@ -9,6 +9,7 @@ import {
   FileVideo,
   FileAudio,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -62,6 +63,7 @@ const getFileColor = (type: string): string => {
 
 export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
   const [showPreview, setShowPreview] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const FileIcon = getFileIcon(attachment.type);
   const fileColor = getFileColor(attachment.type);
   const isImage = attachment.type.startsWith('image/');
@@ -72,7 +74,7 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
     <div className="group relative flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 transition-all hover:border-primary/50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
       {/* File Icon or Image Preview */}
       <div className="relative">
-        {isImage && attachment.data ? (
+        {isImage && attachment.data && !imageError ? (
           <div
             className="relative h-12 w-12 cursor-pointer overflow-hidden rounded"
             onClick={() => setShowPreview(!showPreview)}
@@ -81,11 +83,16 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
               src={`data:${attachment.type};base64,${attachment.data}`}
               alt={attachment.name}
               className="h-full w-full object-cover"
+              onError={() => setImageError(true)}
             />
           </div>
         ) : (
           <div className="flex h-12 w-12 items-center justify-center rounded bg-gray-100 dark:bg-gray-700">
-            <FileIcon className={`h-6 w-6 ${fileColor}`} />
+            {isImage && imageError ? (
+              <AlertCircle className="h-6 w-6 text-red-400 dark:text-red-500" />
+            ) : (
+              <FileIcon className={`h-6 w-6 ${fileColor}`} />
+            )}
           </div>
         )}
 
@@ -140,7 +147,7 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
       </button>
 
       {/* Image Preview Modal */}
-      {showPreview && isImage && attachment.data && (
+      {showPreview && isImage && attachment.data && !imageError && (
         <div
           className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 p-4"
           onClick={() => setShowPreview(false)}
@@ -150,6 +157,7 @@ export function AttachmentItem({ attachment, onRemove }: AttachmentItemProps) {
               src={`data:${attachment.type};base64,${attachment.data}`}
               alt={attachment.name}
               className="max-h-[90vh] max-w-full rounded-lg"
+              onError={() => setImageError(true)}
             />
             <button
               type="button"

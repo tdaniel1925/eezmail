@@ -2,22 +2,26 @@
 
 import {
   Reply,
-  Archive,
+  Users,
   Clock,
   Trash2,
   MoreHorizontal,
   Star,
   Tag,
   Forward,
+  Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { addHours, addDays } from 'date-fns';
+import { useReplyLater } from '@/contexts/ReplyLaterContext';
+import { ContextualActions } from '@/components/email/ContextualActions';
 import type { Email } from '@/db/schema';
 
 interface QuickActionsProps {
   email: Email | null;
   onReply?: () => void;
-  onArchive?: () => void;
+  onReplyAll?: () => void;
   onDelete?: () => void;
   onSnooze?: () => void;
 }
@@ -25,11 +29,36 @@ interface QuickActionsProps {
 export function QuickActions({
   email,
   onReply,
-  onArchive,
+  onReplyAll,
   onDelete,
   onSnooze,
 }: QuickActionsProps): JSX.Element {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showReplyLaterPicker, setShowReplyLaterPicker] = useState(false);
+  const [showAIActions, setShowAIActions] = useState(false);
+  const [showCustomDateTime, setShowCustomDateTime] = useState(false);
+  const [customDate, setCustomDate] = useState('');
+  const [customTime, setCustomTime] = useState('');
+  const replyLaterRef = useRef<HTMLDivElement>(null);
+  const { addEmail } = useReplyLater();
+
+  // Close picker when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        replyLaterRef.current &&
+        !replyLaterRef.current.contains(event.target as Node)
+      ) {
+        setShowReplyLaterPicker(false);
+      }
+    }
+
+    if (showReplyLaterPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showReplyLaterPicker]);
 
   if (!email) {
     return (
@@ -47,12 +76,39 @@ export function QuickActions({
     }
   };
 
-  const handleArchive = () => {
-    if (onArchive) {
-      onArchive();
+  const handleReplyAll = () => {
+    if (onReplyAll) {
+      onReplyAll();
     } else {
-      toast.success('Email archived');
+      toast.info('Reply All action triggered');
     }
+  };
+
+  const handleReplyLater = async (date: Date) => {
+    setShowReplyLaterPicker(false);
+    setShowCustomDateTime(false);
+    if (email) {
+      await addEmail(email.id, date);
+    }
+  };
+
+  const handleCustomDateTime = () => {
+    if (!customDate || !customTime) {
+      toast.error('Please select both date and time');
+      return;
+    }
+
+    const selectedDateTime = new Date(`${customDate}T${customTime}`);
+    const now = new Date();
+
+    if (selectedDateTime <= now) {
+      toast.error('Please select a future date and time');
+      return;
+    }
+
+    handleReplyLater(selectedDateTime);
+    setCustomDate('');
+    setCustomTime('');
   };
 
   const handleSnooze = () => {
@@ -84,15 +140,100 @@ export function QuickActions({
           onClick={handleReply}
         />
         <ActionButton
-          icon={<Archive className="h-4 w-4" />}
-          label="Archive"
-          onClick={handleArchive}
+          icon={<Users className="h-4 w-4" />}
+          label="Reply All"
+          onClick={handleReplyAll}
         />
-        <ActionButton
-          icon={<Clock className="h-4 w-4" />}
-          label="Snooze"
-          onClick={handleSnooze}
-        />
+        <div className="relative w-full h-full" ref={replyLaterRef}>
+          <ActionButton
+            icon={<Clock className="h-4 w-4" />}
+            label="Reply Later"
+            onClick={() => setShowReplyLaterPicker(!showReplyLaterPicker)}
+          />
+
+          {/* Reply Later Date Picker */}
+          {showReplyLaterPicker && (
+            <div className="absolute left-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+              <p className="mb-2 px-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+                Reply Later
+              </p>
+              <div className="space-y-1">
+                <button
+                  onClick={() => handleReplyLater(addHours(new Date(), 2))}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 2 hours
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addHours(new Date(), 4))}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 4 hours
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 1))}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Tomorrow
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 2))}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  In 2 days
+                </button>
+                <button
+                  onClick={() => handleReplyLater(addDays(new Date(), 7))}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Next week
+                </button>
+                <div className="my-1.5 border-t border-gray-200 dark:border-gray-700" />
+                <button
+                  onClick={() => setShowCustomDateTime(!showCustomDateTime)}
+                  className="w-full rounded px-2 py-1.5 text-left text-xs font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                >
+                  Custom date & time...
+                </button>
+
+                {/* Custom Date/Time Inputs */}
+                {showCustomDateTime && (
+                  <div className="mt-1.5 space-y-1.5 rounded-md bg-gray-50 p-2 dark:bg-gray-900">
+                    <div>
+                      <label className="mb-0.5 block text-xs text-gray-600 dark:text-gray-400">
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-0.5 block text-xs text-gray-600 dark:text-gray-400">
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        value={customTime}
+                        onChange={(e) => setCustomTime(e.target.value)}
+                        className="w-full rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCustomDateTime}
+                      className="w-full rounded bg-blue-600 px-2 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Set Reply Later
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
         <ActionButton
           icon={<Trash2 className="h-4 w-4" />}
           label="Delete"
@@ -100,6 +241,21 @@ export function QuickActions({
           variant="danger"
         />
       </div>
+
+      {/* AI Contextual Actions */}
+      <button
+        onClick={() => setShowAIActions(!showAIActions)}
+        className="flex w-full items-center justify-center space-x-2 rounded-md border border-blue-200 bg-blue-50 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/30"
+      >
+        <Sparkles className="h-4 w-4" />
+        <span>AI Actions</span>
+      </button>
+
+      {showAIActions && email && (
+        <div className="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+          <ContextualActions email={email} />
+        </div>
+      )}
 
       {/* More Actions */}
       <div className="relative">
@@ -167,7 +323,7 @@ function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center space-y-1 rounded-md border py-3 transition-colors ${variantClasses}`}
+      className={`flex w-full h-full flex-col items-center space-y-1 rounded-md border py-3 transition-colors ${variantClasses}`}
     >
       {icon}
       <span className="text-xs font-medium">{label}</span>

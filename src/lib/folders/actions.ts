@@ -1,260 +1,117 @@
 'use server';
 
+import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { customFolders } from '@/db/schema';
-import { eq, and, sql, asc } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
-import type { NewCustomFolder } from '@/db/schema';
+import { emails } from '@/db/schema';
+import { eq, and, inArray } from 'drizzle-orm';
 
-interface CreateFolderInput {
+/**
+ * Mark all emails in a folder as read
+ */
+export async function markFolderAsRead(params: {
   userId: string;
-  name: string;
-  icon?: string;
-  color?: string;
-}
-
-interface UpdateFolderInput {
-  name?: string;
-  icon?: string;
-  color?: string;
-}
-
-export async function createCustomFolder(
-  input: CreateFolderInput
-): Promise<{ success: boolean; folderId?: string; error?: string }> {
+  folder: string;
+}): Promise<{ success: boolean; count: number; message: string }> {
   try {
-    const { userId, name, icon, color } = input;
-
-    // Validate name length
-    if (name.length < 1 || name.length > 50) {
-      return {
-        success: false,
-        error: 'Folder name must be between 1 and 50 characters',
-      };
-    }
-
-    // Check if user already has 20 folders (max limit)
-    const existingFolders = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(customFolders)
-      .where(eq(customFolders.userId, userId));
-
-    const folderCount = Number(existingFolders[0]?.count ?? 0);
-    if (folderCount >= 20) {
-      return {
-        success: false,
-        error: 'Maximum of 20 custom folders allowed',
-      };
-    }
-
-    // Check for duplicate name (case-insensitive)
-    const duplicate = await db
-      .select()
-      .from(customFolders)
-      .where(
-        and(
-          eq(customFolders.userId, userId),
-          sql`LOWER(${customFolders.name}) = LOWER(${name})`
-        )
-      )
-      .limit(1);
-
-    if (duplicate.length > 0) {
-      return {
-        success: false,
-        error: 'A folder with this name already exists',
-      };
-    }
-
-    // Get the next sort order
-    const maxOrder = await db
-      .select({ max: sql<number>`MAX(${customFolders.sortOrder})` })
-      .from(customFolders)
-      .where(eq(customFolders.userId, userId));
-
-    const sortOrder = Number(maxOrder[0]?.max ?? -1) + 1;
-
-    // Create the folder
-    const newFolder = {
-      userId,
-      name,
-      icon: icon || '📁',
-      color: color || 'gray',
-      sortOrder,
-    };
-
-    const [created] = await db
-      .insert(customFolders)
-      .values(newFolder as NewCustomFolder)
-      .returning();
-
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/settings');
-
-    return { success: true, folderId: created.id };
-  } catch (error) {
-    console.error('Error creating custom folder:', error);
-    return { success: false, error: 'Failed to create folder' };
-  }
-}
-
-export async function updateCustomFolder(
-  folderId: string,
-  userId: string,
-  updates: UpdateFolderInput
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Verify ownership
-    const existing = await db
-      .select()
-      .from(customFolders)
-      .where(
-        and(eq(customFolders.id, folderId), eq(customFolders.userId, userId))
-      )
-      .limit(1);
-
-    if (existing.length === 0) {
-      return { success: false, error: 'Folder not found' };
-    }
-
-    // Check for duplicate name if name is being updated
-    if (updates.name) {
-      if (updates.name.length < 1 || updates.name.length > 50) {
-        return {
-          success: false,
-          error: 'Folder name must be between 1 and 50 characters',
-        };
-      }
-
-      const duplicate = await db
-        .select()
-        .from(customFolders)
-        .where(
-          and(
-            eq(customFolders.userId, userId),
-            sql`LOWER(${customFolders.name}) = LOWER(${updates.name})`,
-            sql`${customFolders.id} != ${folderId}`
-          )
-        )
-        .limit(1);
-
-      if (duplicate.length > 0) {
-        return {
-          success: false,
-          error: 'A folder with this name already exists',
-        };
-      }
-    }
-
-    await db
-      .update(customFolders)
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      } as Partial<typeof customFolders.$inferInsert>)
-      .where(eq(customFolders.id, folderId));
-
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/settings');
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error updating custom folder:', error);
-    return { success: false, error: 'Failed to update folder' };
-  }
-}
-
-export async function deleteCustomFolder(
-  folderId: string,
-  userId: string
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Verify ownership
-    const existing = await db
-      .select()
-      .from(customFolders)
-      .where(
-        and(eq(customFolders.id, folderId), eq(customFolders.userId, userId))
-      )
-      .limit(1);
-
-    if (existing.length === 0) {
-      return { success: false, error: 'Folder not found' };
-    }
-
-    // Check if folder has emails
-    // Note: This will be handled by database cascade (set null)
-    // But we could add a check here if we want to prevent deletion
-
-    await db.delete(customFolders).where(eq(customFolders.id, folderId));
-
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/settings');
-
-    return { success: true };
-  } catch (error) {
-    console.error('Error deleting custom folder:', error);
-    return { success: false, error: 'Failed to delete folder' };
-  }
-}
-
-export async function getCustomFolders(): Promise<{
-  success: boolean;
-  folders: any[];
-  error?: string;
-}> {
-  try {
-    const { createClient } = await import('@/lib/supabase/server');
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-      return { success: false, folders: [], error: 'Not authenticated' };
+    if (!user || user.id !== params.userId) {
+      return { success: false, count: 0, message: 'Unauthorized' };
     }
 
-    const folders = await db
-      .select()
-      .from(customFolders)
-      .where(eq(customFolders.userId, user.id))
-      .orderBy(asc(customFolders.sortOrder));
+    // Get all unread emails in the folder
+    const folderEmails = await db.query.emails.findMany({
+      where: and(
+        eq(emails.accountId, params.userId),
+        eq(emails.emailCategory, params.folder as any),
+        eq(emails.isRead, false)
+      ),
+    });
 
-    return { success: true, folders };
+    if (folderEmails.length === 0) {
+      return {
+        success: true,
+        count: 0,
+        message: 'All emails already read',
+      };
+    }
+
+    const emailIds = folderEmails.map((e) => e.id);
+
+    // Update all to read
+    await db
+      .update(emails)
+      .set({ isRead: true, updatedAt: new Date() } as any)
+      .where(inArray(emails.id, emailIds));
+
+    return {
+      success: true,
+      count: emailIds.length,
+      message: `Marked ${emailIds.length} emails as read`,
+    };
   } catch (error) {
-    console.error('Error fetching custom folders:', error);
-    return { success: false, folders: [], error: 'Failed to fetch folders' };
+    console.error('Error in markFolderAsRead:', error);
+    return { success: false, count: 0, message: 'Failed to mark as read' };
   }
 }
 
-export async function reorderCustomFolders(
-  userId: string,
-  folderIds: string[]
-): Promise<{ success: boolean; error?: string }> {
+/**
+ * Empty a folder (permanently delete all emails in trash or spam)
+ */
+export async function emptyFolder(params: {
+  userId: string;
+  folder: string;
+}): Promise<{ success: boolean; count: number; message: string }> {
   try {
-    // Update sort order for each folder
-    await Promise.all(
-      folderIds.map((folderId, index) =>
-        db
-          .update(customFolders)
-          .set({ sortOrder: index, updatedAt: new Date() } as Partial<
-            typeof customFolders.$inferInsert
-          >)
-          .where(
-            and(
-              eq(customFolders.id, folderId),
-              eq(customFolders.userId, userId)
-            )
-          )
-      )
-    );
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    revalidatePath('/dashboard');
-    revalidatePath('/dashboard/settings');
+    if (!user || user.id !== params.userId) {
+      return { success: false, count: 0, message: 'Unauthorized' };
+    }
 
-    return { success: true };
+    // Only allow emptying trash or spam
+    if (params.folder !== 'trash' && params.folder !== 'spam') {
+      return {
+        success: false,
+        count: 0,
+        message: 'Only Trash and Spam folders can be emptied',
+      };
+    }
+
+    // Get all emails in the folder
+    const folderEmails = await db.query.emails.findMany({
+      where: and(
+        eq(emails.accountId, params.userId),
+        eq(emails.emailCategory, params.folder as any)
+      ),
+    });
+
+    if (folderEmails.length === 0) {
+      return {
+        success: true,
+        count: 0,
+        message: `${params.folder} is already empty`,
+      };
+    }
+
+    const emailIds = folderEmails.map((e) => e.id);
+
+    // Permanently delete
+    await db.delete(emails).where(inArray(emails.id, emailIds));
+
+    return {
+      success: true,
+      count: emailIds.length,
+      message: `Permanently deleted ${emailIds.length} emails from ${params.folder}`,
+    };
   } catch (error) {
-    console.error('Error reordering custom folders:', error);
-    return { success: false, error: 'Failed to reorder folders' };
+    console.error('Error in emptyFolder:', error);
+    return { success: false, count: 0, message: 'Failed to empty folder' };
   }
 }

@@ -1,6 +1,5 @@
 import { AutoSyncStarred } from '@/components/email/AutoSyncStarred';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function StarredPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -21,16 +20,12 @@ export default async function StarredPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncStarred accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncStarred accountId={activeAccount.id} />    </>
   );
 }

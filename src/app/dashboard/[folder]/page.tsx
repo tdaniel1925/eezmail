@@ -30,7 +30,7 @@ export default async function FolderPage({ params }: FolderPageProps) {
     sent: 'Sent',
     drafts: 'Drafts',
     scheduled: 'Scheduled',
-    all: 'All Mail',
+    all: 'Unified Inbox',
     spam: 'Spam',
     trash: 'Trash',
     archived: 'Archive',
@@ -41,13 +41,15 @@ export default async function FolderPage({ params }: FolderPageProps) {
   return (
     <div className="flex-1 flex flex-col h-full">
       {/* Folder Header */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-4">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          {folderDisplayName}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          View all emails in {folderDisplayName.toLowerCase()}
-        </p>
+      <div className="flex items-center justify-between px-6 py-3 h-16 border-b border-gray-200/80 dark:border-white/10 bg-white dark:bg-gray-900">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            {folderDisplayName}
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            View all emails in {folderDisplayName.toLowerCase()}
+          </p>
+        </div>
       </div>
 
       {/* Email List Placeholder */}

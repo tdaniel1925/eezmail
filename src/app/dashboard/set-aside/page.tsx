@@ -1,7 +1,6 @@
 'use client';
 
 import { EmailList } from '@/components/email/EmailList';
-import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 
 // Mock Set Aside emails
@@ -64,8 +63,6 @@ export default function SetAsidePage(): JSX.Element {
         emails={mockSetAsideEmails}
         title="Set Aside"
         isLoading={false}
-      />
-      <ChatBot />
-    </>
+      />    </>
   );
 }

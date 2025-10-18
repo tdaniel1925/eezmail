@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventModal } from './EventModal';
+import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import type { CalendarEvent } from './types';
 
 interface CalendarViewProps {
@@ -209,24 +210,11 @@ export function CalendarView({
 
   return (
     <div className="flex h-full flex-col bg-white dark:bg-gray-900">
-      {/* Header */}
-      <header className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {onToggleSidebar && (
-              <button
-                onClick={onToggleSidebar}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Toggle sidebar"
-              >
-                <Menu size={20} className="text-gray-600 dark:text-gray-400" />
-              </button>
-            )}
-            <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-              Calendar
-            </h1>
-          </div>
-
+      {/* Unified Header */}
+      <UnifiedHeader
+        title="Calendar"
+        onToggleSidebar={onToggleSidebar}
+        customActions={
           <button
             onClick={handleCreateEvent}
             className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:shadow-lg transition-all duration-200"
@@ -234,8 +222,8 @@ export function CalendarView({
             <Plus size={20} />
             New Event
           </button>
-        </div>
-      </header>
+        }
+      />
 
       {/* Controls */}
       <div className="border-b border-gray-200 dark:border-gray-800 px-6 py-4">

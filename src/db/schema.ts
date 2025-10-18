@@ -231,6 +231,15 @@ export const users = pgTable('users', {
   paymentProcessor: paymentProcessorEnum('payment_processor'),
   stripeCustomerId: text('stripe_customer_id'),
   squareCustomerId: text('square_customer_id'),
+  voiceSettings: jsonb('voice_settings').$type<{
+    recordingQuality: 'high' | 'medium' | 'low';
+    maxDuration: number;
+    autoPlay: boolean;
+    defaultPlaybackSpeed: number;
+    saveLocally: boolean;
+    enablePause: boolean;
+    enablePlayback: boolean;
+  }>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -422,6 +431,13 @@ export const emails = pgTable(
 
     // Search
     searchVector: text('search_vector'),
+
+    // Voice message support
+    voiceMessageUrl: text('voice_message_url'),
+    voiceMessageDuration: integer('voice_message_duration'), // seconds
+    hasVoiceMessage: boolean('has_voice_message').default(false).notNull(),
+    voiceMessageFormat: text('voice_message_format'), // e.g., 'audio/webm;codecs=opus'
+    voiceMessageSize: integer('voice_message_size'), // bytes
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -806,6 +822,20 @@ export const contactEmailTypeEnum = pgEnum('contact_email_type', [
   'other',
 ]);
 
+// Contact Timeline Events Enum
+export const contactEventTypeEnum = pgEnum('contact_event_type', [
+  'email_sent',
+  'email_received',
+  'voice_message_sent',
+  'voice_message_received',
+  'note_added',
+  'call_made',
+  'meeting_scheduled',
+  'document_shared',
+  'contact_created',
+  'contact_updated',
+]);
+
 export const contactPhoneTypeEnum = pgEnum('contact_phone_type', [
   'mobile',
   'work',
@@ -1080,6 +1110,34 @@ export const contactNotes = pgTable(
     contactIdIdx: index('contact_notes_contact_id_idx').on(table.contactId),
     userIdIdx: index('contact_notes_user_id_idx').on(table.userId),
     createdAtIdx: index('contact_notes_created_at_idx').on(table.createdAt),
+  })
+);
+
+// ============================================================================
+// CONTACT TIMELINE TABLE
+// ============================================================================
+
+export const contactTimeline = pgTable(
+  'contact_timeline',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    eventType: contactEventTypeEnum('event_type').notNull(),
+    title: varchar('title', { length: 200 }).notNull(),
+    description: text('description'),
+    metadata: jsonb('metadata'), // Store related IDs, email subjects, etc.
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('contact_timeline_contact_id_idx').on(table.contactId),
+    userIdIdx: index('contact_timeline_user_id_idx').on(table.userId),
+    eventTypeIdx: index('contact_timeline_event_type_idx').on(table.eventType),
+    createdAtIdx: index('contact_timeline_created_at_idx').on(table.createdAt),
   })
 );
 

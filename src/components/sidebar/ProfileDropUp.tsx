@@ -16,6 +16,7 @@ import {
   Bell,
   Volume2,
   Database,
+  Phone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePreferencesStore } from '@/stores/preferencesStore';
@@ -204,6 +205,17 @@ export function ProfileDropUp({
                   label="Help & Support"
                   onClick={() => {
                     onNavigate?.('/dashboard/help');
+                    setIsOpen(false);
+                  }}
+                />
+                <MenuItem
+                  icon={Phone}
+                  label="24/7 Phone Support"
+                  onClick={() => {
+                    // Copy phone number to clipboard
+                    navigator.clipboard.writeText(
+                      'TBD - Phone number to be provided'
+                    );
                     setIsOpen(false);
                   }}
                 />

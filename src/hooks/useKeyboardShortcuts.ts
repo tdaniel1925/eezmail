@@ -27,7 +27,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('inbox');
       router.push('/dashboard/inbox');
-      toast.info('Inbox');
     },
     { enableOnFormTags: false }
   );
@@ -38,7 +37,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('sent');
       router.push('/dashboard/sent');
-      toast.info('Sent');
     },
     { enableOnFormTags: false }
   );
@@ -49,7 +47,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('drafts');
       router.push('/dashboard/drafts');
-      toast.info('Drafts');
     },
     { enableOnFormTags: false }
   );
@@ -60,7 +57,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('all');
       router.push('/dashboard/all');
-      toast.info('All Mail');
     },
     { enableOnFormTags: false }
   );
@@ -71,7 +67,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('trash');
       router.push('/dashboard/trash');
-      toast.info('Trash');
     },
     { enableOnFormTags: false }
   );
@@ -82,7 +77,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('reply-queue');
       router.push('/dashboard/reply-queue');
-      toast.info('Reply Queue');
     },
     { enableOnFormTags: false }
   );
@@ -93,7 +87,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('screener');
       router.push('/dashboard/screener');
-      toast.info('Screener');
     },
     { enableOnFormTags: false }
   );
@@ -104,7 +97,6 @@ export function useKeyboardShortcuts(
     () => {
       setActiveFolder('newsfeed');
       router.push('/dashboard/newsfeed');
-      toast.info('News Feed');
     },
     { enableOnFormTags: false }
   );
@@ -119,7 +111,6 @@ export function useKeyboardShortcuts(
         options.onCompose();
       } else {
         router.push('/dashboard/compose');
-        toast.info('Compose');
       }
     },
     { enableOnFormTags: false }
@@ -140,7 +131,6 @@ export function useKeyboardShortcuts(
         if (searchInput) {
           searchInput.focus();
         }
-        toast.info('Search');
       }
     },
     { enableOnFormTags: false }
@@ -164,11 +154,6 @@ export function useKeyboardShortcuts(
     (e) => {
       e.preventDefault();
       useSidebarStore.getState().toggleCollapse();
-      toast.info(
-        useSidebarStore.getState().isCollapsed
-          ? 'Sidebar collapsed'
-          : 'Sidebar expanded'
-      );
     },
     { enableOnFormTags: true }
   );

@@ -1,6 +1,5 @@
 import { AutoSyncReceipts } from '@/components/email/AutoSyncReceipts';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function ReceiptsPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -20,16 +19,12 @@ export default async function ReceiptsPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncReceipts accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncReceipts accountId={activeAccount.id} />    </>
   );
 }

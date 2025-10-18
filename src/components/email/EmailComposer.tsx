@@ -7,6 +7,15 @@ import { EmailComposerModal } from './EmailComposerModal';
 import { saveDraft, deleteDraft } from '@/lib/email/draft-actions';
 import { scheduleEmail } from '@/lib/email/scheduler-actions';
 import { EmojiClickData } from 'emoji-picker-react';
+import { SimpleVoiceRecorder } from './SimpleVoiceRecorder';
+import { VoiceMessagePlayer } from './VoiceMessagePlayer';
+import {
+  logEmailSent,
+  logVoiceMessageSent,
+  logDocumentShared,
+} from '@/lib/contacts/timeline-actions';
+import { findContactsByEmails } from '@/lib/contacts/helpers';
+import { extractEmailAddresses } from '@/lib/contacts/email-utils';
 
 // Define Attachment type locally
 interface Attachment {
@@ -73,19 +82,25 @@ type SpeechRecognitionConstructor = new () => CustomSpeechRecognition;
 interface EmailComposerProps {
   isOpen: boolean;
   onClose: () => void;
+  onSent?: () => void | Promise<void>;
   mode?: 'compose' | 'reply' | 'forward';
   initialData?: {
     to?: string;
     subject?: string;
     body?: string;
   };
+  isAIDraft?: boolean;
+  replyLaterEmailId?: string;
 }
 
 export function EmailComposer({
   isOpen,
   onClose,
+  onSent,
   mode = 'compose',
   initialData,
+  isAIDraft = false,
+  replyLaterEmailId,
 }: EmailComposerProps): JSX.Element | null {
   const [to, setTo] = useState(initialData?.to || '');
   const [cc, setCc] = useState('');
@@ -102,7 +117,6 @@ export function EmailComposer({
   const [mounted, setMounted] = useState(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -112,9 +126,28 @@ export function EmailComposer({
   );
   const [showSendMenu, setShowSendMenu] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState<string>(''); // Show real-time transcript
+
+  // Voice message state
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState<{
+    url: string;
+    duration: number;
+    size: number;
+    format: string;
+  } | null>(null);
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
+  const [isRecordingVoiceMessage, setIsRecordingVoiceMessage] = useState(false);
+  const [voiceRecordingDuration, setVoiceRecordingDuration] = useState(0);
+  const [isPlayingVoiceMessage, setIsPlayingVoiceMessage] = useState(false);
+
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const dictationRecognitionRef = useRef<CustomSpeechRecognition | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const voiceMediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceStreamRef = useRef<MediaStream | null>(null);
+  const voiceAudioChunksRef = useRef<Blob[]>([]);
+  const voiceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const voiceAudioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const dictationTextRef = useRef<string>(''); // Store dictated text separately
   const dictationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -176,6 +209,72 @@ export function EmailComposer({
       });
 
       if (result.success) {
+        // Auto-log to contact timelines (don't block on errors)
+        try {
+          // Collect all recipient emails
+          const toEmails = to
+            .split(',')
+            .map((e) => e.trim())
+            .filter(Boolean);
+          const ccEmails = cc
+            ? cc
+                .split(',')
+                .map((e) => e.trim())
+                .filter(Boolean)
+            : [];
+          const bccEmails = bcc
+            ? bcc
+                .split(',')
+                .map((e) => e.trim())
+                .filter(Boolean)
+            : [];
+          const allRecipients = [...toEmails, ...ccEmails, ...bccEmails];
+
+          // Find contacts for all recipients
+          const contactMap = await findContactsByEmails(allRecipients);
+          const emailId = result.emailId || 'unknown';
+
+          // Log email sent to each contact
+          const logPromises = Object.entries(contactMap).map(
+            async ([email, contactId]) => {
+              try {
+                await logEmailSent(contactId, subject, emailId);
+
+                // If has voice message, log that too
+                if (voiceMessage) {
+                  await logVoiceMessageSent(
+                    contactId,
+                    Math.round(voiceMessage.duration)
+                  );
+                }
+
+                // If has file attachments, log document shares
+                if (attachments.length > 0) {
+                  for (const attachment of attachments) {
+                    await logDocumentShared(
+                      contactId,
+                      attachment.name,
+                      attachment.id
+                    );
+                  }
+                }
+              } catch (logError) {
+                // Don't block send on logging errors
+                console.error(
+                  `Failed to log email to contact ${email}:`,
+                  logError
+                );
+              }
+            }
+          );
+
+          // Wait for all logging operations (but don't block on failure)
+          await Promise.allSettled(logPromises);
+        } catch (autoLogError) {
+          // Don't block send on auto-logging errors
+          console.error('Auto-logging error:', autoLogError);
+        }
+
         // Delete draft if it exists
         if (draftId) {
           await deleteDraft(draftId);
@@ -188,13 +287,20 @@ export function EmailComposer({
         setSubject('');
         setBody('');
         setAttachments([]);
+        setVoiceMessage(null);
         setDraftId(null);
         setSaveStatus('idle');
-        onClose();
 
         toast.success(
           `Email ${mode === 'reply' ? 'reply' : 'sent'} successfully!`
         );
+
+        // Call onSent callback if provided (for Reply Later removal)
+        if (onSent) {
+          await onSent();
+        }
+
+        onClose();
       } else {
         toast.error(result.error || 'Failed to send email');
       }
@@ -204,7 +310,19 @@ export function EmailComposer({
     } finally {
       setIsSending(false);
     }
-  }, [to, subject, body, cc, bcc, attachments, mode, draftId, onClose]);
+  }, [
+    to,
+    subject,
+    body,
+    cc,
+    bcc,
+    attachments,
+    voiceMessage,
+    mode,
+    draftId,
+    onClose,
+    onSent,
+  ]);
 
   const handleClose = useCallback(async (): Promise<void> => {
     // Always clear all fields when closing
@@ -246,12 +364,7 @@ export function EmailComposer({
       }
 
       // Escape: Close composer (with confirmation if has content)
-      if (
-        e.key === 'Escape' &&
-        !showEmojiPicker &&
-        !showTemplateModal &&
-        !showSchedulePicker
-      ) {
+      if (e.key === 'Escape' && !showTemplateModal && !showSchedulePicker) {
         e.preventDefault();
         handleClose();
       }
@@ -262,7 +375,6 @@ export function EmailComposer({
   }, [
     isOpen,
     isMinimized,
-    showEmojiPicker,
     showTemplateModal,
     showSchedulePicker,
     handleSend,
@@ -631,6 +743,203 @@ export function EmailComposer({
     handleStopDictation();
   };
 
+  // Voice message handlers
+  const handleVoiceRecordingComplete = useCallback(
+    async (result: {
+      blob: Blob;
+      duration: number;
+      size: number;
+      format: string;
+      url: string;
+    }) => {
+      setIsUploadingVoice(true);
+      try {
+        const formData = new FormData();
+        formData.append('audio', result.blob);
+        formData.append('duration', result.duration.toString());
+        formData.append('quality', 'medium'); // Use user's settings
+
+        const response = await fetch('/api/voice-message/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload voice message');
+        }
+
+        const data = await response.json();
+        setVoiceMessage({
+          url: data.url,
+          duration: data.duration,
+          size: data.size,
+          format: data.format,
+        });
+
+        toast.success('Voice message recorded!');
+      } catch (error) {
+        console.error('Error uploading voice message:', error);
+        toast.error('Failed to upload voice message');
+      } finally {
+        setIsUploadingVoice(false);
+      }
+    },
+    []
+  );
+
+  const handleVoiceModeToggle = useCallback(async () => {
+    if (isRecordingVoiceMessage) {
+      // Stop recording
+      if (
+        voiceMediaRecorderRef.current &&
+        voiceMediaRecorderRef.current.state !== 'inactive'
+      ) {
+        voiceMediaRecorderRef.current.stop();
+      }
+      if (voiceTimerRef.current) {
+        clearInterval(voiceTimerRef.current);
+      }
+    } else {
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+
+        voiceStreamRef.current = stream;
+        voiceAudioChunksRef.current = [];
+        setVoiceRecordingDuration(0);
+
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus',
+        });
+
+        voiceMediaRecorderRef.current = mediaRecorder;
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            voiceAudioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(voiceAudioChunksRef.current, {
+            type: 'audio/webm',
+          });
+          const url = URL.createObjectURL(blob);
+
+          setVoiceMessage({
+            url,
+            duration: voiceRecordingDuration,
+            size: blob.size,
+            format: blob.type,
+          });
+
+          setIsRecordingVoiceMessage(false);
+
+          // Clean up stream
+          if (voiceStreamRef.current) {
+            voiceStreamRef.current.getTracks().forEach((track) => track.stop());
+          }
+
+          toast.success('Voice message recorded!');
+        };
+
+        mediaRecorder.start(100);
+        setIsRecordingVoiceMessage(true);
+
+        // Start timer
+        voiceTimerRef.current = setInterval(() => {
+          setVoiceRecordingDuration((prev) => {
+            const newDuration = prev + 1;
+            if (newDuration >= 600) {
+              // 10 minutes max
+              handleVoiceModeToggle();
+              return 600;
+            }
+            return newDuration;
+          });
+        }, 1000);
+
+        toast.success('🎤 Recording voice message...');
+      } catch (error) {
+        console.error('Error starting voice recording:', error);
+        toast.error('Failed to access microphone. Please check permissions.');
+      }
+    }
+  }, [isRecordingVoiceMessage, voiceRecordingDuration]);
+
+  const handleRemoveVoiceMessage = useCallback(() => {
+    setVoiceMessage(null);
+    if (voiceAudioPlayerRef.current) {
+      voiceAudioPlayerRef.current.pause();
+      voiceAudioPlayerRef.current = null;
+    }
+  }, []);
+
+  const handleVoiceMessageSilenceDetected = useCallback(() => {
+    console.log('🔇 Silence detected in voice message, stopping recording...');
+    if (isRecordingVoiceMessage) {
+      handleVoiceModeToggle();
+    }
+  }, [isRecordingVoiceMessage, handleVoiceModeToggle]);
+
+  const handlePlayVoiceMessage = useCallback(() => {
+    if (!voiceMessage?.url) return;
+
+    if (isPlayingVoiceMessage) {
+      voiceAudioPlayerRef.current?.pause();
+      setIsPlayingVoiceMessage(false);
+    } else {
+      if (!voiceAudioPlayerRef.current) {
+        voiceAudioPlayerRef.current = new Audio(voiceMessage.url);
+        voiceAudioPlayerRef.current.onended = () =>
+          setIsPlayingVoiceMessage(false);
+      }
+      voiceAudioPlayerRef.current.play();
+      setIsPlayingVoiceMessage(true);
+    }
+  }, [voiceMessage, isPlayingVoiceMessage]);
+
+  // Listen for custom event to auto-start voice recording
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleStartVoiceRecording = () => {
+      // Only start if not already recording
+      if (!isRecordingVoiceMessage && !voiceMessage) {
+        handleVoiceModeToggle();
+      }
+    };
+
+    window.addEventListener('start-voice-recording', handleStartVoiceRecording);
+    return () =>
+      window.removeEventListener(
+        'start-voice-recording',
+        handleStartVoiceRecording
+      );
+  }, [isOpen, isRecordingVoiceMessage, voiceMessage, handleVoiceModeToggle]);
+
+  // Listen for custom event to auto-start dictation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleStartDictation = () => {
+      // Only start if not already dictating
+      if (!isDictating) {
+        handleDictationToggle();
+      }
+    };
+
+    window.addEventListener('start-dictation', handleStartDictation);
+    return () =>
+      window.removeEventListener('start-dictation', handleStartDictation);
+  }, [isOpen, isDictating]);
+
   // Stop dictation and process with AI
   const handleStopDictation = async () => {
     // Prevent multiple calls (from AudioVisualizer AND speech recognition onend)
@@ -910,12 +1219,6 @@ export function EmailComposer({
     setIsDragging(false);
   };
 
-  const handleEmojiClick = (emojiData: EmojiClickData): void => {
-    // Append emoji to body
-    setBody((prev) => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
   const handleSelectTemplate = (
     templateSubject: string,
     templateBody: string
@@ -956,9 +1259,6 @@ export function EmailComposer({
       handleDrop={handleDrop}
       handleDragOver={handleDragOver}
       handleDragLeave={handleDragLeave}
-      showEmojiPicker={showEmojiPicker}
-      setShowEmojiPicker={setShowEmojiPicker}
-      handleEmojiClick={handleEmojiClick}
       showTemplateModal={showTemplateModal}
       setShowTemplateModal={setShowTemplateModal}
       handleSelectTemplate={handleSelectTemplate}
@@ -979,6 +1279,19 @@ export function EmailComposer({
       liveTranscript={liveTranscript}
       handleSilenceDetected={handleSilenceDetected}
       onEditorReady={(editor) => (editorRef.current = editor)}
+      // Voice message props
+      isVoiceMode={isVoiceMode}
+      voiceMessage={voiceMessage}
+      isUploadingVoice={isUploadingVoice}
+      onVoiceModeToggle={handleVoiceModeToggle}
+      onVoiceRecordingComplete={handleVoiceRecordingComplete}
+      onRemoveVoiceMessage={handleRemoveVoiceMessage}
+      isRecordingVoiceMessage={isRecordingVoiceMessage}
+      voiceRecordingDuration={voiceRecordingDuration}
+      maxVoiceRecordingDuration={600}
+      isPlayingVoiceMessage={isPlayingVoiceMessage}
+      onPlayVoiceMessage={handlePlayVoiceMessage}
+      handleVoiceMessageSilenceDetected={handleVoiceMessageSilenceDetected}
     />
   );
 }

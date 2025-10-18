@@ -1,12 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Tab types for the right sidebar
+export type TabType = 'assistant' | 'thread' | 'actions' | 'contacts';
+
+// Email interface for context
+export interface Email {
+  id: string;
+  subject: string;
+  from: string;
+  to?: string;
+  body?: string;
+  timestamp?: Date;
+  threadId?: string;
+}
+
 interface AIPanelSections {
-  insights: boolean;
+  emailInsights: boolean;
   quickActions: boolean;
-  chat: boolean;
   analytics: boolean;
   research: boolean;
+  chat: boolean;
 }
 
 interface AIPanelState {
@@ -16,6 +30,11 @@ interface AIPanelState {
   sections: AIPanelSections;
   autoExpandOnEmail: boolean;
 
+  // New state for tabs and context
+  activeTab: TabType;
+  currentEmail: Email | null;
+  selectedContactId: string | null;
+
   // Actions
   setExpanded: (expanded: boolean) => void;
   setVisible: (visible: boolean) => void;
@@ -23,14 +42,19 @@ interface AIPanelState {
   toggleSection: (section: keyof AIPanelSections) => void;
   setAutoExpand: (enabled: boolean) => void;
   resetToDefaults: () => void;
+
+  // New actions for tabs and context
+  setActiveTab: (tab: TabType) => void;
+  setCurrentEmail: (email: Email | null) => void;
+  setSelectedContact: (contactId: string | null) => void;
 }
 
 const DEFAULT_SECTIONS: AIPanelSections = {
-  insights: true,
+  emailInsights: true,
   quickActions: true,
-  chat: true,
   analytics: true,
   research: true,
+  chat: true,
 };
 
 const DEFAULT_WIDTH = 380;
@@ -41,11 +65,16 @@ export const useAIPanelStore = create<AIPanelState>()(
   persist(
     (set) => ({
       // Initial state
-      isExpanded: false, // Start collapsed, auto-expand on email view
+      isExpanded: true, // Start expanded by default
       isVisible: true,
       width: DEFAULT_WIDTH,
       sections: DEFAULT_SECTIONS,
       autoExpandOnEmail: true,
+
+      // New state
+      activeTab: 'assistant',
+      currentEmail: null,
+      selectedContactId: null,
 
       // Actions
       setExpanded: (expanded) => set({ isExpanded: expanded }),
@@ -69,12 +98,27 @@ export const useAIPanelStore = create<AIPanelState>()(
 
       resetToDefaults: () =>
         set({
-          isExpanded: false,
+          isExpanded: true,
           isVisible: true,
           width: DEFAULT_WIDTH,
           sections: DEFAULT_SECTIONS,
           autoExpandOnEmail: true,
+          activeTab: 'assistant',
+          currentEmail: null,
+          selectedContactId: null,
         }),
+
+      // New actions
+      setActiveTab: (tab) => set({ activeTab: tab }),
+
+      // When setting a new email, always reset to assistant tab
+      setCurrentEmail: (email) =>
+        set({
+          currentEmail: email,
+          activeTab: 'assistant',
+        }),
+
+      setSelectedContact: (contactId) => set({ selectedContactId: contactId }),
     }),
     {
       name: 'ai-panel-storage',

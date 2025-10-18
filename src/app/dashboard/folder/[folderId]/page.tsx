@@ -2,7 +2,6 @@
 
 import { use, useEffect, useState } from 'react';
 import { EmailList } from '@/components/email/EmailList';
-import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email, CustomFolder } from '@/db/schema';
 
 interface FolderPageProps {
@@ -42,13 +41,10 @@ export default function FolderPage({ params }: FolderPageProps): JSX.Element {
   }, [folderId]);
 
   return (
-    <>
-      <EmailList
-        emails={emails}
-        title={folder?.name || 'Custom Folder'}
-        isLoading={isLoading}
-      />
-      <ChatBot />
-    </>
+    <EmailList
+      emails={emails}
+      title={folder?.name || 'Custom Folder'}
+      isLoading={isLoading}
+    />
   );
 }

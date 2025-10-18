@@ -13,6 +13,7 @@ import {
   Menu,
 } from 'lucide-react';
 import { ContactAvatar } from './ContactAvatar';
+import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import { cn } from '@/lib/utils';
 import { getContactAvatarData } from '@/lib/contacts/avatar';
 import type { ContactListItem } from '@/lib/contacts/data';
@@ -49,62 +50,42 @@ export function ContactList({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-        {/* Search Bar */}
-        <div className="px-4 py-2">
-          <div className="flex items-center justify-between gap-3">
-            {onToggleSidebar && (
+      {/* Unified Header */}
+      <UnifiedHeader
+        title="Contacts"
+        subtitle={`${filteredContacts.length} contact${filteredContacts.length !== 1 ? 's' : ''}`}
+        onToggleSidebar={onToggleSidebar}
+        customActions={
+          <>
+            {/* View Toggle */}
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
               <button
-                onClick={onToggleSidebar}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Toggle sidebar"
+                onClick={() => setViewMode('list')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                )}
+                title="List view"
               >
-                <Menu size={18} className="text-gray-600 dark:text-gray-400" />
+                <List size={16} />
               </button>
-            )}
-            <div className="relative flex-1 max-w-xl">
-              <Search
-                className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={16}
-              />
-              <input
-                type="text"
-                placeholder="Search contacts..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              <button
+                onClick={() => setViewMode('grid')}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                )}
+                title="Grid view"
+              >
+                <Grid3x3 size={16} />
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-1.5 rounded transition-colors',
-                    viewMode === 'list'
-                      ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  )}
-                  title="List view"
-                >
-                  <List size={16} />
-                </button>
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    'p-1.5 rounded transition-colors',
-                    viewMode === 'grid'
-                      ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  )}
-                  title="Grid view"
-                >
-                  <Grid3x3 size={16} />
-                </button>
-              </div>
-              {/* Add Contact Button */}
+            {/* Add Contact Button */}
+            {onAddContact && (
               <button
                 onClick={onAddContact}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -112,21 +93,27 @@ export function ContactList({
                 <Plus size={16} />
                 Add Contact
               </button>
-            </div>
-          </div>
-        </div>
+            )}
+          </>
+        }
+      />
 
-        {/* Title Section */}
-        <div className="px-4 pb-3 flex items-baseline justify-between">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-            Contacts
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {filteredContacts.length} contact
-            {filteredContacts.length !== 1 ? 's' : ''}
-          </p>
+      {/* Search Bar */}
+      <div className="px-4 py-2 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+        <div className="relative">
+          <Search
+            className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={16}
+          />
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
-      </header>
+      </div>
 
       {/* Contact List/Grid */}
       <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">

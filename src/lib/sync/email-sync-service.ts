@@ -8,6 +8,9 @@ import { categorizeIncomingEmail } from '@/lib/screener/email-categorizer';
 import { TokenManager } from '@/lib/email/token-manager';
 import { GmailService } from '@/lib/email/gmail-api';
 import { ImapService } from '@/lib/email/imap-service';
+import { logEmailReceived } from '@/lib/contacts/timeline-actions';
+import { findContactByEmail } from '@/lib/contacts/helpers';
+import { extractEmailAddress } from '@/lib/contacts/email-utils';
 
 /**
  * Map folder name to email category
@@ -995,6 +998,24 @@ async function syncGmailMessages(
               },
             });
 
+          // Auto-log to contact timeline (don't block on errors)
+          try {
+            const senderEmail = extractEmailAddress(emailData.fromAddress);
+            if (senderEmail) {
+              const contactId = await findContactByEmail(senderEmail);
+              if (contactId) {
+                await logEmailReceived(
+                  contactId,
+                  emailData.subject,
+                  messageDetails.id
+                );
+              }
+            }
+          } catch (logError) {
+            // Don't block sync on logging errors
+            console.error(`Failed to log email to contact timeline:`, logError);
+          }
+
           syncedCount++;
           totalSynced++;
 
@@ -1178,6 +1199,23 @@ async function syncWithImap(
               screenedBy: emailData.screenedBy,
             },
           });
+
+        // Auto-log to contact timeline (don't block on errors)
+        try {
+          const senderEmail = extractEmailAddress(emailData.fromAddress);
+          if (senderEmail) {
+            const contactId = await findContactByEmail(senderEmail);
+            if (contactId) {
+              await logEmailReceived(contactId, emailData.subject, message.id);
+            }
+          }
+        } catch (logError) {
+          // Don't block sync on logging errors
+          console.error(
+            `Failed to log IMAP email to contact timeline:`,
+            logError
+          );
+        }
 
         syncedCount++;
       } catch (emailError) {

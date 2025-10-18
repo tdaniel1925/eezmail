@@ -40,68 +40,73 @@ export async function POST(req: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Email not found' }, { status: 404 });
     }
 
-    // Parallel fetch all insights
-    const [summaryRes, actionsRes, sentimentRes, meetingRes] =
-      await Promise.allSettled([
-        fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/summarize`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailId }),
-          }
-        ),
-        fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/extract-actions`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailId }),
-          }
-        ),
-        fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/analyze-sentiment`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailId }),
-          }
-        ),
-        fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/detect-meeting`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailId }),
-          }
-        ),
-      ]);
+    // For now, return simplified insights based on email content
+    // In production, this would call actual AI services
+    const insights: any = {
+      threadCount: 1,
+    };
 
-    // Process results
-    const insights: any = {};
-
-    if (summaryRes.status === 'fulfilled' && summaryRes.value.ok) {
-      const data = await summaryRes.value.json();
-      insights.summary = data.summary;
+    // Generate basic summary from email content
+    if (email.bodyText || email.bodyHtml) {
+      const text = email.bodyText || email.bodyHtml || '';
+      const preview = text.substring(0, 200);
+      insights.summary =
+        preview.length < text.length ? preview + '...' : preview;
     }
 
-    if (actionsRes.status === 'fulfilled' && actionsRes.value.ok) {
-      const data = await actionsRes.value.json();
-      insights.actionItems = data.actions;
+    // Simple sentiment analysis based on content
+    const content = (email.bodyText || email.bodyHtml || '').toLowerCase();
+    if (
+      content.includes('urgent') ||
+      content.includes('asap') ||
+      content.includes('important')
+    ) {
+      insights.sentiment = 'urgent';
+    } else if (content.includes('thanks') || content.includes('appreciate')) {
+      insights.sentiment = 'positive';
+    } else {
+      insights.sentiment = 'neutral';
     }
 
-    if (sentimentRes.status === 'fulfilled' && sentimentRes.value.ok) {
-      const data = await sentimentRes.value.json();
-      insights.sentiment = data.sentiment;
+    // Detect potential action items
+    const actionKeywords = [
+      'please',
+      'could you',
+      'can you',
+      'would you',
+      'need to',
+      'should',
+    ];
+    const hasActionItems = actionKeywords.some((keyword) =>
+      content.includes(keyword)
+    );
+    if (hasActionItems) {
+      insights.actionItems = ['Review and respond to this email'];
     }
 
-    if (meetingRes.status === 'fulfilled' && meetingRes.value.ok) {
-      const data = await meetingRes.value.json();
-      insights.meeting = data.meeting;
+    // Simple meeting detection
+    const meetingKeywords = [
+      'meeting',
+      'call',
+      'zoom',
+      'teams',
+      'schedule',
+      'calendar',
+    ];
+    const hasMeeting = meetingKeywords.some((keyword) =>
+      content.includes(keyword)
+    );
+    if (hasMeeting) {
+      insights.meeting = {
+        detected: true,
+      };
     }
 
-    // Add thread count (simplified - can be enhanced)
-    insights.threadCount = 1;
+    // Response expectation
+    if (email.subject?.includes('?') || content.includes('?')) {
+      insights.responseExpected = true;
+      insights.estimatedResponseTime = 'within 24 hours';
+    }
 
     return NextResponse.json(insights);
   } catch (error) {

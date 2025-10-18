@@ -18,6 +18,7 @@ import {
   FileSignature,
   Filter,
   AlertTriangle,
+  Mic,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AccountSettings } from '@/components/settings/AccountSettings';
@@ -32,6 +33,7 @@ import { SignaturesSettings } from '@/components/settings/SignaturesSettings';
 import { RulesSettings } from '@/components/settings/RulesSettings';
 import { HelpCenter } from '@/components/help/HelpCenter';
 import { DangerZone } from '@/components/settings/DangerZone';
+import { VoiceSettings } from '@/components/settings/VoiceSettings';
 
 type SettingsTab =
   | 'account'
@@ -40,6 +42,7 @@ type SettingsTab =
   | 'signatures'
   | 'rules'
   | 'ai-preferences'
+  | 'voice-messages'
   | 'notifications'
   | 'appearance'
   | 'billing'
@@ -90,6 +93,12 @@ const tabs: TabConfig[] = [
     label: 'AI Preferences',
     icon: Sparkles,
     description: 'Configure AI screening and smart features',
+  },
+  {
+    id: 'voice-messages',
+    label: 'Voice Messages',
+    icon: Mic,
+    description: 'Configure voice recording and playback settings',
   },
   {
     id: 'notifications',
@@ -173,6 +182,10 @@ function SettingsPageContent(): JSX.Element {
         setIsLoading(true);
         setError(null);
 
+        // Add cache busting parameter to force fresh data
+        const timestamp = Date.now();
+        console.log(`📊 Loading settings data (cache-bust: ${timestamp})`);
+
         // Fetch real data from server action
         const { getUserSettingsData } = await import('@/lib/settings/data');
         const response = await getUserSettingsData();
@@ -208,6 +221,7 @@ function SettingsPageContent(): JSX.Element {
           user: transformedData.user,
           emailAccounts: transformedData.emailAccounts,
           accountsCount: transformedData.emailAccounts.length,
+          timestamp,
         });
       } catch (err) {
         console.error('Error loading settings data:', err);
@@ -284,6 +298,8 @@ function SettingsPageContent(): JSX.Element {
             accountId={userData.defaultAccountId || ''}
           />
         );
+      case 'voice-messages':
+        return <VoiceSettings />;
       case 'notifications':
         return (
           <NotificationSettings

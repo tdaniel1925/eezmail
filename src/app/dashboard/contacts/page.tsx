@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { ContactList } from '@/components/contacts/ContactList';
-import { ChatBot } from '@/components/ai/ChatBot';
 import { ContactDetailModal } from '@/components/contacts/ContactDetailModal';
 import {
   ContactFormModal,
@@ -175,7 +174,6 @@ export default function ContactsPage(): JSX.Element {
         onClose={handleCloseFormModal}
         onSave={handleSaveContact}
       />
-      <ChatBot />
     </>
   );
 }

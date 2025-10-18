@@ -2,8 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emailAccounts } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { emailAccounts, emailFolders } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { ModernSidebar } from './ModernSidebar';
 import { getLabels } from '@/lib/labels/actions';
 import { getPendingTasksCount } from '@/lib/tasks/actions';

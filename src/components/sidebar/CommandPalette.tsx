@@ -9,7 +9,6 @@ import {
   Inbox,
   Send,
   FileText,
-  Star,
   Archive,
   Trash2,
   Users,
@@ -23,6 +22,7 @@ import {
   Clock,
   Bell,
   Command,
+  Paperclip,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebarStore } from '@/stores/sidebarStore';
@@ -114,20 +114,6 @@ export function CommandPalette({
       },
     },
     {
-      id: 'nav-starred',
-      label: 'Starred',
-      description: 'Starred emails',
-      icon: Star,
-      category: 'navigation',
-      keywords: ['starred', 'favorite', 'important'],
-      action: () => {
-        setActiveFolder('starred');
-        router.push('/dashboard/starred');
-        addToRecent('nav-starred');
-        onClose();
-      },
-    },
-    {
       id: 'nav-sent',
       label: 'Sent',
       description: 'Sent emails',
@@ -185,7 +171,7 @@ export function CommandPalette({
     },
     {
       id: 'nav-all',
-      label: 'All Mail',
+      label: 'Unified Inbox',
       description: 'All emails',
       icon: Mail,
       category: 'navigation',
@@ -194,6 +180,20 @@ export function CommandPalette({
         setActiveFolder('all');
         router.push('/dashboard/all');
         addToRecent('nav-all');
+        onClose();
+      },
+    },
+    {
+      id: 'nav-attachments',
+      label: 'Attachments',
+      description: 'All email attachments',
+      icon: Paperclip,
+      category: 'navigation',
+      keywords: ['attachments', 'files', 'documents'],
+      action: () => {
+        setActiveFolder('attachments');
+        router.push('/dashboard/attachments');
+        addToRecent('nav-attachments');
         onClose();
       },
     },

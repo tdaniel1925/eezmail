@@ -21,7 +21,11 @@ interface ReplyLaterContextType {
   isLoading: boolean;
   error: string | null;
   refreshEmails: () => Promise<void>;
-  addEmail: (emailId: string, replyLaterUntil: Date, note?: string) => Promise<boolean>;
+  addEmail: (
+    emailId: string,
+    replyLaterUntil: Date,
+    note?: string
+  ) => Promise<boolean>;
   removeEmail: (emailId: string) => Promise<boolean>;
   sendReply: (emailId: string, replyContent: string) => Promise<void>;
 }
@@ -78,7 +82,6 @@ export function ReplyLaterProvider({
         if (result.success) {
           // Refresh the list
           await refreshEmails();
-          toast.success('Added to Reply Later. AI is drafting your reply...');
           return true;
         } else {
           toast.error(result.error || 'Failed to add to Reply Later');
@@ -94,28 +97,25 @@ export function ReplyLaterProvider({
   );
 
   // Remove email from reply later
-  const removeEmail = useCallback(
-    async (emailId: string): Promise<boolean> => {
-      try {
-        const result = await removeFromReplyLater(emailId);
+  const removeEmail = useCallback(async (emailId: string): Promise<boolean> => {
+    try {
+      const result = await removeFromReplyLater(emailId);
 
-        if (result.success) {
-          // Optimistically remove from UI
-          setEmails((prev) => prev.filter((e) => e.id !== emailId));
-          toast.success('Removed from Reply Later');
-          return true;
-        } else {
-          toast.error(result.error || 'Failed to remove from Reply Later');
-          return false;
-        }
-      } catch (err) {
-        console.error('Error removing from reply later:', err);
-        toast.error('Failed to remove from Reply Later');
+      if (result.success) {
+        // Optimistically remove from UI
+        setEmails((prev) => prev.filter((e) => e.id !== emailId));
+        toast.success('Removed from Reply Later');
+        return true;
+      } else {
+        toast.error(result.error || 'Failed to remove from Reply Later');
         return false;
       }
-    },
-    []
-  );
+    } catch (err) {
+      console.error('Error removing from reply later:', err);
+      toast.error('Failed to remove from Reply Later');
+      return false;
+    }
+  }, []);
 
   // Send reply and remove from queue
   const sendReply = useCallback(
@@ -182,4 +182,3 @@ export function useReplyLater(): ReplyLaterContextType {
   }
   return context;
 }
-

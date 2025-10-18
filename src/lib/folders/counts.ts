@@ -200,7 +200,6 @@ export async function getScheduledCount(): Promise<number> {
   }
 }
 
-
 /**
  * Get spam count
  */
@@ -250,6 +249,85 @@ export async function getTrashCount(): Promise<number> {
 }
 
 /**
+ * Get unified inbox count (all unread emails across all folders)
+ */
+export async function getUnifiedInboxCount(): Promise<number> {
+  try {
+    const accountIds = await getUserAccountIds();
+    if (accountIds.length === 0) return 0;
+
+    const result = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(emails)
+      .where(
+        and(
+          inArray(emails.accountId, accountIds),
+          eq(emails.isRead, false),
+          eq(emails.isTrashed, false),
+          eq(emails.isDraft, false)
+        )
+      );
+
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error('Error getting unified inbox count:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get archive count (total archived emails)
+ */
+export async function getArchiveCount(): Promise<number> {
+  try {
+    const accountIds = await getUserAccountIds();
+    if (accountIds.length === 0) return 0;
+
+    const result = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(emails)
+      .where(
+        and(
+          inArray(emails.accountId, accountIds),
+          eq(emails.isArchived, true),
+          eq(emails.isTrashed, false)
+        )
+      );
+
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error('Error getting archive count:', error);
+    return 0;
+  }
+}
+
+/**
+ * Get sent count (total sent emails)
+ */
+export async function getSentCount(): Promise<number> {
+  try {
+    const accountIds = await getUserAccountIds();
+    if (accountIds.length === 0) return 0;
+
+    const result = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(emails)
+      .where(
+        and(
+          inArray(emails.accountId, accountIds),
+          eq(emails.folderName, 'sent'),
+          eq(emails.isTrashed, false)
+        )
+      );
+
+    return result[0]?.count || 0;
+  } catch (error) {
+    console.error('Error getting sent count:', error);
+    return 0;
+  }
+}
+
+/**
  * Get all folder counts at once (optimized)
  */
 export async function getFolderCounts(): Promise<{
@@ -262,6 +340,9 @@ export async function getFolderCounts(): Promise<{
   scheduled: number;
   spam: number;
   trash: number;
+  unifiedInbox: number;
+  archive: number;
+  sent: number;
 }> {
   try {
     const [
@@ -274,6 +355,9 @@ export async function getFolderCounts(): Promise<{
       scheduled,
       spam,
       trash,
+      unifiedInbox,
+      archive,
+      sent,
     ] = await Promise.all([
       getInboxUnreadCount(),
       getDraftsCount(),
@@ -284,6 +368,9 @@ export async function getFolderCounts(): Promise<{
       getScheduledCount(),
       getSpamCount(),
       getTrashCount(),
+      getUnifiedInboxCount(),
+      getArchiveCount(),
+      getSentCount(),
     ]);
 
     return {
@@ -296,6 +383,9 @@ export async function getFolderCounts(): Promise<{
       scheduled,
       spam,
       trash,
+      unifiedInbox,
+      archive,
+      sent,
     };
   } catch (error) {
     console.error('Error getting folder counts:', error);
@@ -309,6 +399,9 @@ export async function getFolderCounts(): Promise<{
       scheduled: 0,
       spam: 0,
       trash: 0,
+      unifiedInbox: 0,
+      archive: 0,
+      sent: 0,
     };
   }
 }

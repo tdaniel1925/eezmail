@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { customLabels, labelAssignments } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -247,6 +247,71 @@ export async function addLabelToEmail(
   } catch (error) {
     console.error('Error adding label to email:', error);
     return { success: false, error: 'Failed to add label' };
+  }
+}
+
+/**
+ * Apply labels to multiple emails
+ */
+export async function applyLabelsToEmails(params: {
+  emailIds: string[];
+  labelIds: string[];
+}): Promise<{ success: boolean; count: number; message: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, count: 0, message: 'Unauthorized' };
+    }
+
+    if (params.emailIds.length === 0) {
+      return { success: false, count: 0, message: 'No emails specified' };
+    }
+
+    if (params.labelIds.length === 0) {
+      return { success: false, count: 0, message: 'No labels specified' };
+    }
+
+    // Verify label ownership
+    const labels = await db.query.customLabels.findMany({
+      where: and(
+        eq(customLabels.userId, user.id),
+        inArray(customLabels.id, params.labelIds)
+      ),
+    });
+
+    if (labels.length !== params.labelIds.length) {
+      return { success: false, count: 0, message: 'Invalid labels' };
+    }
+
+    // Create label assignments for all combinations
+    const assignments = [];
+    for (const emailId of params.emailIds) {
+      for (const labelId of params.labelIds) {
+        assignments.push({ emailId, labelId });
+      }
+    }
+
+    // Bulk insert (ignore conflicts)
+    if (assignments.length > 0) {
+      await db
+        .insert(labelAssignments)
+        .values(assignments)
+        .onConflictDoNothing();
+    }
+
+    revalidatePath('/dashboard');
+    return {
+      success: true,
+      count: params.emailIds.length,
+      message: `Applied ${params.labelIds.length} label(s) to ${params.emailIds.length} email(s)`,
+    };
+  } catch (error) {
+    console.error('Error applying labels to emails:', error);
+    return { success: false, count: 0, message: 'Failed to apply labels' };
   }
 }
 

@@ -76,7 +76,7 @@ export function ContextualActions({
 
   return (
     <div
-      className="flex flex-wrap gap-2 mt-3 pt-3 border-t"
+      className="flex flex-wrap gap-2 mt-6 pt-3 border-t"
       style={{ borderColor: 'var(--border-color)' }}
     >
       <div

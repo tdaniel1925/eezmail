@@ -5,7 +5,6 @@ import {
   X,
   Send,
   Paperclip,
-  Smile,
   AtSign,
   Minimize2,
   Maximize2,
@@ -14,6 +13,8 @@ import {
   MicOff,
   FileText,
   Clock,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { AttachmentList } from './AttachmentList';
@@ -21,7 +22,7 @@ import { TemplateModal } from './TemplateModal';
 import { SchedulePicker } from './SchedulePicker';
 import { AnimatedButton } from '@/components/ui/AnimatedButton';
 import { AudioVisualizer } from './AudioVisualizer';
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+import { VoiceMessagePlayer } from './VoiceMessagePlayer';
 
 // Define Attachment type locally
 interface Attachment {
@@ -64,9 +65,6 @@ interface EmailComposerModalProps {
   handleDrop: (event: React.DragEvent) => void;
   handleDragOver: (event: React.DragEvent) => void;
   handleDragLeave: () => void;
-  showEmojiPicker: boolean;
-  setShowEmojiPicker: (value: boolean) => void;
-  handleEmojiClick: (emojiData: EmojiClickData) => void;
   showTemplateModal: boolean;
   setShowTemplateModal: (value: boolean) => void;
   handleSelectTemplate: (subject: string, body: string) => void;
@@ -86,6 +84,30 @@ interface EmailComposerModalProps {
   isAIWriting: boolean;
   liveTranscript: string;
   handleSilenceDetected: () => void;
+  // Voice message props
+  isVoiceMode: boolean;
+  voiceMessage: {
+    url: string;
+    duration: number;
+    size: number;
+    format: string;
+  } | null;
+  isUploadingVoice: boolean;
+  onVoiceModeToggle: () => void;
+  onVoiceRecordingComplete: (result: {
+    blob: Blob;
+    duration: number;
+    size: number;
+    format: string;
+    url: string;
+  }) => void;
+  onRemoveVoiceMessage: () => void;
+  isRecordingVoiceMessage: boolean;
+  voiceRecordingDuration: number;
+  maxVoiceRecordingDuration: number;
+  isPlayingVoiceMessage: boolean;
+  onPlayVoiceMessage: () => void;
+  handleVoiceMessageSilenceDetected: () => void;
 }
 
 export function EmailComposerModal(props: EmailComposerModalProps) {
@@ -274,6 +296,71 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
               </div>
             )}
 
+            {/* Voice Message Recording (when recording voice message) */}
+            {props.isRecordingVoiceMessage && (
+              <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Recording Voice Message...
+                  </span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {Math.floor(props.voiceRecordingDuration / 60)}:
+                    {String(props.voiceRecordingDuration % 60).padStart(2, '0')}{' '}
+                    / {Math.floor(props.maxVoiceRecordingDuration / 60)}:
+                    {String(props.maxVoiceRecordingDuration % 60).padStart(
+                      2,
+                      '0'
+                    )}
+                  </span>
+                </div>
+                <AudioVisualizer
+                  isActive={props.isRecordingVoiceMessage}
+                  onSilenceDetected={props.handleVoiceMessageSilenceDetected}
+                  silenceThreshold={3500}
+                  volumeThreshold={20}
+                />
+              </div>
+            )}
+
+            {/* Voice Message Playback (after recording) */}
+            {props.voiceMessage && !props.isRecordingVoiceMessage && (
+              <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={props.onPlayVoiceMessage}
+                      className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                    >
+                      {props.isPlayingVoiceMessage ? (
+                        <Pause className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                      ) : (
+                        <Play className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+                      )}
+                    </button>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        Voice Message
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {Math.floor(props.voiceMessage.duration / 60)}:
+                        {String(props.voiceMessage.duration % 60).padStart(
+                          2,
+                          '0'
+                        )}{' '}
+                        • {(props.voiceMessage.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={props.onRemoveVoiceMessage}
+                    className="text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Footer */}
             <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
               <div className="flex items-center justify-between">
@@ -356,7 +443,7 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
 
                   <button
                     onClick={() => props.setShowTemplateModal(true)}
-                    className="flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
+                    className="flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm font-semibold text-white bg-[#FF4C5A] hover:bg-[#FF3545] transition-colors"
                   >
                     <FileText className="h-4 w-4" />
                     <span>Template</span>
@@ -385,22 +472,6 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     )}
                   </button>
 
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        props.setShowEmojiPicker(!props.showEmojiPicker)
-                      }
-                      className="flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700"
-                    >
-                      <Smile className="h-4 w-4" />
-                      <span>Emoji</span>
-                    </button>
-                    {props.showEmojiPicker && (
-                      <div className="absolute bottom-full mb-2 right-0">
-                        <EmojiPicker onEmojiClick={props.handleEmojiClick} />
-                      </div>
-                    )}
-                  </div>
 
                   {/* AI Buttons Group */}
                   <AnimatedButton
@@ -425,6 +496,35 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     title="Fix spelling, grammar, and context"
                   >
                     {props.isRemixing ? 'Polishing...' : 'AI Remix'}
+                  </AnimatedButton>
+
+                  {/* Voice Message Button */}
+                  <AnimatedButton
+                    variant={
+                      props.isRecordingVoiceMessage ? 'ripple' : 'particles'
+                    }
+                    onClick={props.onVoiceModeToggle}
+                    disabled={props.isUploadingVoice}
+                    loading={props.isUploadingVoice}
+                    icon={
+                      props.isRecordingVoiceMessage ? (
+                        <MicOff className="h-4 w-4 animate-pulse" />
+                      ) : (
+                        <Mic className="h-4 w-4" />
+                      )
+                    }
+                    className={`text-sm ${props.isRecordingVoiceMessage ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
+                    title={
+                      props.isRecordingVoiceMessage
+                        ? 'Stop recording voice message'
+                        : 'Record a voice message'
+                    }
+                  >
+                    {props.isUploadingVoice
+                      ? 'Uploading...'
+                      : props.isRecordingVoiceMessage
+                        ? 'Stop'
+                        : 'Voice Msg'}
                   </AnimatedButton>
                 </div>
 

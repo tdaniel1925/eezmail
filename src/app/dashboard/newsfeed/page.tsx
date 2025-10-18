@@ -1,6 +1,5 @@
 import { AutoSyncNewsFeed } from '@/components/email/AutoSyncNewsFeed';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function NewsFeedPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -21,16 +20,12 @@ export default async function NewsFeedPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncNewsFeed accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncNewsFeed accountId={activeAccount.id} />    </>
   );
 }

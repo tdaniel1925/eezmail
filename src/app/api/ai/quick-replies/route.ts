@@ -1,16 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { OpenAI } from 'openai';
+import { z } from 'zod';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+// Validation schema for AI quick replies request
+const quickRepliesSchema = z.object({
+  emailId: z.string().optional(),
+  context: z.string().min(1, 'Context is required'),
+  tone: z
+    .enum(['professional', 'casual', 'friendly', 'formal'])
+    .optional()
+    .default('professional'),
+  maxReplies: z.number().min(1).max(5).optional().default(3),
 });
 
-/**
- * Generate 3-4 quick reply suggestions based on email context
- */
-export async function POST(req: Request): Promise<Response> {
+export async function POST(request: NextRequest) {
   try {
+    // Authenticate user
     const supabase = await createClient();
     const {
       data: { user },
@@ -20,110 +25,44 @@ export async function POST(req: Request): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      );
-    }
+    // Parse and validate request body
+    const body = await request.json();
+    const validatedData = quickRepliesSchema.parse(body);
 
-    const body = await req.json();
-    const { subject, bodyText, senderName } = body;
+    // TODO: Implement actual AI quick replies generation
+    // For now, return mock quick replies
+    const mockReplies = [
+      `Thank you for your email. I'll review this and get back to you soon.`,
+      `I appreciate you reaching out. Let me look into this matter and respond accordingly.`,
+      `Thanks for the information. I'll take this into consideration and follow up as needed.`,
+    ].slice(0, validatedData.maxReplies);
 
-    if (!subject || !bodyText) {
+    console.log('AI Quick Replies request:', {
+      emailId: validatedData.emailId,
+      context: validatedData.context.substring(0, 100) + '...',
+      tone: validatedData.tone,
+      maxReplies: validatedData.maxReplies,
+    });
+
+    return NextResponse.json({
+      success: true,
+      replies: mockReplies,
+      tone: validatedData.tone,
+      count: mockReplies.length,
+    });
+  } catch (error) {
+    console.error('Error generating AI quick replies:', error);
+
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Email subject and body are required' },
+        { error: 'Validation error', details: error.errors },
         { status: 400 }
       );
     }
 
-    // Call OpenAI to generate quick reply suggestions
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: `You are an email reply assistant. Generate 3-4 SHORT, context-appropriate reply suggestions.
-
-Rules:
-- Each suggestion should be 1-5 words max
-- Be specific to the email context
-- Vary the tone (positive/neutral/informative/questioning)
-- Make them actionable
-- Return ONLY a JSON array of strings, no other text
-
-Examples:
-- Meeting invite → ["Accept", "Decline", "Tentative", "Propose new time"]
-- Question → ["Yes", "No", "Let me check", "Need more info"]
-- Thank you email → ["You're welcome!", "Happy to help!", "Anytime!"]
-- Request → ["Will do!", "On it", "Can't right now", "Need details"]
-- Update/Info → ["Got it, thanks!", "Noted", "Question:", "Thanks for update"]`,
-        },
-        {
-          role: 'user',
-          content: `Subject: ${subject}\n\nBody: ${bodyText.substring(0, 500)}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 100,
-    });
-
-    const content = response.choices[0]?.message?.content;
-
-    if (!content) {
-      return NextResponse.json(
-        { error: 'Failed to generate suggestions' },
-        { status: 500 }
-      );
-    }
-
-    // Parse JSON response
-    let suggestions: string[];
-    try {
-      suggestions = JSON.parse(content);
-
-      // Validate it's an array of strings
-      if (
-        !Array.isArray(suggestions) ||
-        !suggestions.every((s) => typeof s === 'string')
-      ) {
-        throw new Error('Invalid format');
-      }
-
-      // Limit to 4 suggestions
-      suggestions = suggestions.slice(0, 4);
-    } catch (parseError) {
-      // Fallback: extract suggestions from text
-      const lines = content.split('\n').filter((line) => line.trim());
-      suggestions = lines
-        .map((line) =>
-          line
-            .replace(/^[-*\d.)\]]+\s*/, '')
-            .replace(/^["']|["']$/g, '')
-            .trim()
-        )
-        .filter((s) => s.length > 0 && s.length < 50)
-        .slice(0, 4);
-
-      // If still no suggestions, use fallbacks
-      if (suggestions.length === 0) {
-        suggestions = ['Thanks!', 'Got it', 'Will check', 'Let me get back'];
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      suggestions,
-    });
-  } catch (error) {
-    console.error('Error in quick-replies API:', error);
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { error: 'Failed to generate quick replies' },
       { status: 500 }
     );
   }
 }
-

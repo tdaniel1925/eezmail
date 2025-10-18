@@ -1,6 +1,5 @@
 import { AutoSyncTrash } from '@/components/email/AutoSyncTrash';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function TrashPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -21,16 +20,12 @@ export default async function TrashPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncTrash accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncTrash accountId={activeAccount.id} />    </>
   );
 }

@@ -38,6 +38,9 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const [isGeneratingReply, setIsGeneratingReply] = useState(false);
   const [aiReplyContent, setAiReplyContent] = useState<string>('');
   const [showReplyLaterPicker, setShowReplyLaterPicker] = useState(false);
+  const [showCustomDateTime, setShowCustomDateTime] = useState(false);
+  const [customDate, setCustomDate] = useState('');
+  const [customTime, setCustomTime] = useState('');
   const replyLaterRef = useRef<HTMLDivElement>(null);
 
   // Set current email context when viewing
@@ -81,15 +84,55 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     // TODO: Update star status
   };
 
+  const handleArchive = (): void => {
+    toast.success('Email archived');
+    // TODO: Implement archive functionality
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleForward = (): void => {
+    setComposerMode('forward');
+  };
+
+  const handleDelete = (): void => {
+    toast.success('Email deleted');
+    // TODO: Implement delete functionality
+    if (onClose) {
+      onClose();
+    }
+  };
+
   const handleReplyLater = async (date: Date): Promise<void> => {
     if (!email) return;
 
     setShowReplyLaterPicker(false);
+    setShowCustomDateTime(false);
     const success = await addEmail(email.id, date);
     
     if (success && onClose) {
       onClose(); // Close viewer after adding to reply later
     }
+  };
+
+  const handleCustomDateTime = (): void => {
+    if (!customDate || !customTime) {
+      toast.error('Please select both date and time');
+      return;
+    }
+
+    const selectedDateTime = new Date(`${customDate}T${customTime}`);
+    const now = new Date();
+
+    if (selectedDateTime <= now) {
+      toast.error('Please select a future date and time');
+      return;
+    }
+
+    handleReplyLater(selectedDateTime);
+    setCustomDate('');
+    setCustomTime('');
   };
 
   // Close picker when clicking outside
@@ -185,15 +228,19 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
         </button>
         <button
           type="button"
+          onClick={handleArchive}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
           aria-label="Archive"
+          title="Archive"
         >
           <Archive className="h-4 w-4" />
         </button>
         <button
           type="button"
+          onClick={handleDelete}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
           aria-label="Delete"
+          title="Delete"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -245,10 +292,61 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
                 >
                   Next week
                 </button>
+                <div className="my-2 border-t border-gray-200 dark:border-gray-700" />
+                <button
+                  onClick={() => setShowCustomDateTime(!showCustomDateTime)}
+                  className="w-full rounded px-3 py-2 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                >
+                  Custom date & time...
+                </button>
+                
+                {/* Custom Date/Time Inputs */}
+                {showCustomDateTime && (
+                  <div className="mt-2 space-y-2 rounded-md bg-gray-50 p-3 dark:bg-gray-900">
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        value={customTime}
+                        onChange={(e) => setCustomTime(e.target.value)}
+                        className="w-full rounded border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCustomDateTime}
+                      className="w-full rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Set Reply Later
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={handleForward}
+          className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          aria-label="Forward"
+          title="Forward"
+        >
+          <Forward className="h-4 w-4" />
+        </button>
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"

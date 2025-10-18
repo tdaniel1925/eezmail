@@ -66,9 +66,11 @@ export function SidebarWrapper({ initialData }: SidebarWrapperProps) {
           newsFeed: 0,
           starred: 0,
           scheduled: 0,
-          snoozed: 0,
           spam: 0,
           trash: 0,
+          unifiedInbox: 0,
+          archive: 0,
+          sent: 0,
         });
       }
     }

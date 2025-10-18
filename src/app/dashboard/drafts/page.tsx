@@ -1,6 +1,5 @@
 import { AutoSyncDrafts } from '@/components/email/AutoSyncDrafts';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function DraftsPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -21,16 +20,12 @@ export default async function DraftsPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <AutoSyncDrafts accountId={activeAccount.id} />
-      <ChatBot />
-    </>
+      <AutoSyncDrafts accountId={activeAccount.id} />    </>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -9,14 +9,12 @@ interface PanelHeaderProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onClose: () => void;
-  onOpenSettings: () => void;
 }
 
 export function PanelHeader({
   isExpanded,
   onToggleExpand,
   onClose,
-  onOpenSettings,
 }: PanelHeaderProps): JSX.Element {
   return (
     <div className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
@@ -38,13 +36,6 @@ export function PanelHeader({
           </div>
 
           <div className="flex items-center space-x-1">
-            <button
-              onClick={onOpenSettings}
-              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-              title="Settings"
-            >
-              <Settings className="h-5 w-5" />
-            </button>
             <button
               onClick={onToggleExpand}
               className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"

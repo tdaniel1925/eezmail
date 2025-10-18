@@ -1,6 +1,5 @@
 import { UnifiedInboxView } from '@/components/email/UnifiedInboxView';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function UnifiedInboxPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -22,16 +21,12 @@ export default async function UnifiedInboxPage() {
               Connect an email account to start receiving emails
             </p>
           </div>
-        </div>
-        <ChatBot />
-      </>
+        </div>      </>
     );
   }
 
   return (
     <>
-      <UnifiedInboxView accounts={activeAccounts} />
-      <ChatBot />
-    </>
+      <UnifiedInboxView accounts={activeAccounts} />    </>
   );
 }

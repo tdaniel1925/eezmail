@@ -1,7 +1,6 @@
 'use client';
 
 import { EmailList } from '@/components/email/EmailList';
-import { ChatBot } from '@/components/ai/ChatBot';
 import type { Email } from '@/db/schema';
 // Mock Paper Trail email data - Receipts, confirmations, transactional emails
 const mockPaperTrailEmails: Email[] = [
@@ -176,8 +175,6 @@ export default function PaperTrailPage(): JSX.Element {
         emails={mockPaperTrailEmails}
         title="Paper Trail"
         isLoading={false}
-      />
-      <ChatBot />
-    </>
+      />    </>
   );
 }

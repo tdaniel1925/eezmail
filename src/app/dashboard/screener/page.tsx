@@ -1,6 +1,5 @@
 import { AutoSyncScreener } from '@/components/email/AutoSyncScreener';
 import { getUserEmailAccounts } from '@/lib/settings/account-actions';
-import { ChatBot } from '@/components/ai/ChatBot';
 
 export default async function ScreenerPage() {
   const accountsResult = await getUserEmailAccounts();
@@ -11,26 +10,18 @@ export default async function ScreenerPage() {
 
   if (!activeAccount) {
     return (
-      <>
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
-              No Email Accounts
-            </h2>
-            <p className="text-gray-500 dark:text-gray-500">
-              Connect an email account to start receiving emails
-            </p>
-          </div>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
+            No Email Accounts
+          </h2>
+          <p className="text-gray-500 dark:text-gray-500">
+            Connect an email account to start receiving emails
+          </p>
         </div>
-        <ChatBot />
-      </>
+      </div>
     );
   }
 
-  return (
-    <>
-      <AutoSyncScreener accountId={activeAccount.id} />
-      <ChatBot />
-    </>
-  );
+  return <AutoSyncScreener accountId={activeAccount.id} />;
 }

@@ -32,16 +32,23 @@ export function ComposeButton({
       setIsComposerOpen(true);
     };
 
+    const handleOpenComposer = () => {
+      setInitialData(undefined);
+      setIsComposerOpen(true);
+    };
+
     window.addEventListener(
       'ai-compose-email',
       handleAICompose as EventListener
     );
+    window.addEventListener('open-composer', handleOpenComposer);
 
     return () => {
       window.removeEventListener(
         'ai-compose-email',
         handleAICompose as EventListener
       );
+      window.removeEventListener('open-composer', handleOpenComposer);
     };
   }, []);
 

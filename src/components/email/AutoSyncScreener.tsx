@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { ScreenerCard } from '@/components/screener/ScreenerCard';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { getUnscreenedEmails } from '@/lib/email/get-emails';
 import { getCustomFolders } from '@/lib/folders/actions';
 import { screenEmail } from '@/lib/screener/actions';
 import { toast } from '@/lib/toast';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import type { Email, CustomFolder } from '@/db/schema';
 
 interface AutoSyncScreenerProps {
@@ -33,13 +33,19 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
     try {
       setIsLoading(true);
 
-      // Fetch unscreened emails
-      const emailsResult = await getUnscreenedEmails();
-      if (emailsResult.success) {
-        setEmails(emailsResult.emails);
-        setError(null);
+      // Fetch unscreened emails via API
+      const response = await fetch('/api/email/unscreened?limit=25');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setEmails(data.emails);
+          setError(null);
+        } else {
+          setError(data.error || 'Failed to fetch emails');
+        }
       } else {
-        setError(emailsResult.error || 'Failed to fetch emails');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to fetch emails');
       }
 
       // Fetch custom folders
@@ -114,49 +120,35 @@ export function AutoSyncScreener({ accountId }: AutoSyncScreenerProps) {
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50 dark:bg-black/50">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800 bg-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white text-2xl">
-            🔍
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-white">Screener</h2>
-            <p className="text-sm text-gray-300">
-              {emails.length} email{emails.length !== 1 ? 's' : ''} to screen
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Sync status */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-700">
-            {isSyncing ? (
-              <>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-300">Syncing...</span>
-              </>
-            ) : (
-              <>
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <span className="text-sm text-gray-300">Up to date</span>
-              </>
-            )}
-          </div>
-
-          {/* Refresh button */}
-          <button
-            onClick={handleRefresh}
-            disabled={isSyncing}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSyncing ? 'Syncing...' : 'Refresh'}
-          </button>
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
-        </div>
-      </div>
+      {/* Unified Header */}
+      <UnifiedHeader
+        title="Screener"
+        subtitle={`${emails.length} email${emails.length !== 1 ? 's' : ''} to screen`}
+        onRefresh={handleRefresh}
+        isRefreshing={isSyncing}
+        customActions={
+          <>
+            {/* Sync status */}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+              {isSyncing ? (
+                <>
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Syncing...
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Up to date
+                  </span>
+                </>
+              )}
+            </div>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6">

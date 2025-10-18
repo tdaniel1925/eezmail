@@ -50,7 +50,15 @@ export function DangerZone(): JSX.Element {
     setIsGenerating(true);
 
     try {
-      const result = await generateTestEmailData();
+      // Use the simpler API route
+      const response = await fetch('/api/simple-seed-emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
 
       if (result.success) {
         toast.success(`Successfully generated ${result.count} test emails!`);
@@ -65,7 +73,7 @@ export function DangerZone(): JSX.Element {
       console.error('Error generating test emails:', error);
       toast.error('An unexpected error occurred');
     } finally {
-      setIsWiping(false);
+      setIsGenerating(false);
     }
   };
 

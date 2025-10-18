@@ -12,6 +12,9 @@ interface UnreadCounts {
   scheduled: number;
   spam: number;
   trash: number;
+  unifiedInbox: number;
+  archive: number;
+  sent: number;
 }
 
 interface SidebarStore {
@@ -52,6 +55,9 @@ export const useSidebarStore = create<SidebarStore>()(
         scheduled: 0,
         spam: 0,
         trash: 0,
+        unifiedInbox: 0,
+        archive: 0,
+        sent: 0,
       },
       customLabels: [],
 

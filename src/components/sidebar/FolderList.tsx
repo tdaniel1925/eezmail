@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Inbox,
   Reply,
   ShieldQuestion,
   Newspaper,
-  Star,
   Send,
   FileText,
   Clock,
@@ -18,11 +17,18 @@ import {
   Check,
   Settings,
   Filter,
+  Paperclip,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSidebarStore } from '@/stores/sidebarStore';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import {
+  markFolderAsRead,
+  emptyFolder as emptyFolderAction,
+} from '@/lib/folders/actions';
+import { createClient } from '@/lib/supabase/client';
 
 interface FolderListProps {
   isCollapsed?: boolean;
@@ -30,6 +36,7 @@ interface FolderListProps {
 
 export function FolderList({ isCollapsed = false }: FolderListProps) {
   const { activeFolder, setActiveFolder, unreadCounts } = useSidebarStore();
+  const router = useRouter();
   const [contextMenuFolder, setContextMenuFolder] = useState<string | null>(
     null
   );
@@ -37,15 +44,24 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
     x: 0,
     y: 0,
   });
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Get user ID on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
 
   const primaryFolders = [
     { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCounts.inbox },
-    {
-      id: 'reply-queue',
-      label: 'Reply Queue',
-      icon: Reply,
-      count: unreadCounts.replyQueue,
-    },
     {
       id: 'screener',
       label: 'Screener',
@@ -58,13 +74,7 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
       icon: Newspaper,
       count: unreadCounts.newsFeed,
     },
-    {
-      id: 'starred',
-      label: 'Starred',
-      icon: Star,
-      count: unreadCounts.starred,
-    },
-    { id: 'sent', label: 'Sent', icon: Send, count: 0 },
+    { id: 'sent', label: 'Sent', icon: Send, count: unreadCounts.sent },
     {
       id: 'drafts',
       label: 'Drafts',
@@ -72,18 +82,28 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
       count: unreadCounts.drafts,
     },
     {
-      id: 'scheduled',
-      label: 'Scheduled',
-      icon: Clock,
-      count: unreadCounts.scheduled,
+      id: 'attachments',
+      label: 'Attachments',
+      icon: Paperclip,
+      count: 0,
     },
   ];
 
   const standardFolders = [
-    { id: 'all', label: 'All Mail', icon: Mail, count: 0 },
+    {
+      id: 'all',
+      label: 'Unified Inbox',
+      icon: Mail,
+      count: unreadCounts.unifiedInbox,
+    },
     { id: 'spam', label: 'Spam', icon: AlertOctagon, count: unreadCounts.spam },
     { id: 'trash', label: 'Trash', icon: Trash2, count: unreadCounts.trash },
-    { id: 'archived', label: 'Archive', icon: Archive, count: 0 },
+    {
+      id: 'archived',
+      label: 'Archive',
+      icon: Archive,
+      count: unreadCounts.archive,
+    },
   ];
 
   const handleFolderClick = (folderId: string) => {
@@ -100,31 +120,82 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
   };
 
-  const handleMarkAllRead = (folderId: string) => {
-    // TODO: Implement mark all as read
-    toast.success(`Marked all emails in ${folderId} as read`);
-    setContextMenuFolder(null);
+  const handleMarkAllRead = async (folderId: string) => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      const result = await markFolderAsRead({
+        userId,
+        folder: folderId,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        // Trigger refresh
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Mark all read error:', error);
+      toast.error('Failed to mark all as read');
+    } finally {
+      setContextMenuFolder(null);
+    }
   };
 
-  const handleEmptyFolder = (folderId: string) => {
-    // TODO: Implement empty folder
-    if (folderId === 'trash' || folderId === 'spam') {
-      toast.success(`Emptied ${folderId} folder`);
-    } else {
+  const handleEmptyFolder = async (folderId: string) => {
+    if (folderId !== 'trash' && folderId !== 'spam') {
       toast.error('Only Trash and Spam can be emptied');
+      setContextMenuFolder(null);
+      return;
     }
-    setContextMenuFolder(null);
+
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete all emails in ${folderId}?`
+      )
+    ) {
+      setContextMenuFolder(null);
+      return;
+    }
+
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    try {
+      const result = await emptyFolderAction({
+        userId,
+        folder: folderId,
+      });
+
+      if (result.success) {
+        toast.success(result.message);
+        // Trigger refresh
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      console.error('Empty folder error:', error);
+      toast.error('Failed to empty folder');
+    } finally {
+      setContextMenuFolder(null);
+    }
   };
 
   const handleFolderSettings = (folderId: string) => {
-    // TODO: Navigate to folder settings
-    toast.info(`Opening settings for ${folderId}`);
+    router.push(`/dashboard/settings?tab=folders&folder=${folderId}`);
     setContextMenuFolder(null);
   };
 
   const handleCreateRule = (folderId: string) => {
-    // TODO: Navigate to create rule page
-    toast.info(`Creating rule for ${folderId}`);
+    router.push(`/dashboard/settings?tab=rules&folder=${folderId}`);
     setContextMenuFolder(null);
   };
 

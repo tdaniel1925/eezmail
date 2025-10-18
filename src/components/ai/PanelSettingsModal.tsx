@@ -8,11 +8,11 @@ interface PanelSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   sections: {
-    insights: boolean;
+    emailInsights: boolean;
     quickActions: boolean;
-    chat: boolean;
     analytics: boolean;
     research: boolean;
+    chat: boolean;
   };
   autoExpandOnEmail: boolean;
   onToggleSection: (section: string) => void;
@@ -71,9 +71,9 @@ export function PanelSettingsModal({
                   <div className="space-y-2">
                     <ToggleItem
                       label="Email Insights"
-                      description="AI-powered analysis and summary"
-                      checked={sections.insights}
-                      onChange={() => onToggleSection('insights')}
+                      description="AI-powered email analysis and summary"
+                      checked={sections.emailInsights}
+                      onChange={() => onToggleSection('emailInsights')}
                     />
                     <ToggleItem
                       label="Quick Actions"
@@ -89,7 +89,7 @@ export function PanelSettingsModal({
                     />
                     <ToggleItem
                       label="Research"
-                      description="Related emails and context"
+                      description="Related context and intelligence"
                       checked={sections.research}
                       onChange={() => onToggleSection('research')}
                     />
