@@ -13,13 +13,13 @@ export default function AboutPage() {
     {
       name: 'Trent T. Daniel',
       title: 'Founder of BotMakers, Inc.',
-      image: '/images/trent-daniel.jpg',
+      image: '/images/trent-daniel.png',
       bio: 'Trent is a visionary entrepreneur with a passion for AI and automation. As the founder of BotMakers, Inc., he has led the development of cutting-edge AI solutions that transform how businesses operate. With easeMail, Trent is bringing enterprise-grade AI to email management.',
     },
     {
       name: 'Sella Hall',
       title: 'Chief Experience Officer',
-      image: '/images/sella-hall.jpg',
+      image: '/images/sella-hall.png',
       bio: 'Sella is a UX expert and product strategist with over a decade of experience designing intuitive software for Fortune 500 companies. She ensures that easeMail\'s powerful AI features are accessible and delightful to use, making productivity effortless.',
     },
   ];
