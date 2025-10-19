@@ -13,6 +13,7 @@ import {
   Search,
   Zap,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function SimpleAIAssistantPanel(): JSX.Element {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -60,8 +61,12 @@ export function SimpleAIAssistantPanel(): JSX.Element {
             </div>
             <div className="flex items-center space-x-1">
               <button
-                onClick={() => {}}
+                onClick={() => {
+                  // TODO: Implement settings panel
+                  toast.info('Settings panel coming soon!');
+                }}
                 className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="AI Assistant Settings"
               >
                 <Settings className="h-4 w-4" />
               </button>

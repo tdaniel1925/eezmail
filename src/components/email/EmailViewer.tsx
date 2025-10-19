@@ -82,19 +82,19 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const handleStarClick = async (): Promise<void> => {
     const newStarredState = !isStarred;
     setIsStarred(newStarredState);
-    
+
     try {
       const response = await fetch('/api/email/star', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          emailId: email.id, 
-          isStarred: newStarredState 
+        body: JSON.stringify({
+          emailId: email.id,
+          isStarred: newStarredState,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to update star status');
-      
+
       toast.success(newStarredState ? 'Email starred' : 'Email unstarred');
     } catch (error) {
       console.error('Error updating star:', error);
@@ -105,7 +105,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
 
   const handleArchive = async (): Promise<void> => {
     toast.loading('Archiving email...', { id: 'archive' });
-    
+
     try {
       const response = await fetch('/api/email/archive', {
         method: 'POST',
@@ -114,9 +114,12 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
       });
 
       if (!response.ok) throw new Error('Failed to archive email');
-      
+
       toast.success('Email archived', { id: 'archive' });
-      
+
+      // Clear AI panel
+      setCurrentEmail(null);
+
       // Close viewer and refresh list
       if (onClose) onClose();
       window.dispatchEvent(new CustomEvent('refresh-email-list'));
@@ -132,7 +135,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
 
   const handleDelete = async (): Promise<void> => {
     toast.loading('Deleting email...', { id: 'delete' });
-    
+
     try {
       const response = await fetch('/api/email/delete', {
         method: 'POST',
@@ -141,9 +144,12 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
       });
 
       if (!response.ok) throw new Error('Failed to delete email');
-      
+
       toast.success('Email deleted', { id: 'delete' });
-      
+
+      // Clear AI panel
+      setCurrentEmail(null);
+
       // Close viewer and refresh list
       if (onClose) onClose();
       window.dispatchEvent(new CustomEvent('refresh-email-list'));
@@ -158,13 +164,16 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
 
     setShowReplyLaterPicker(false);
     setShowCustomDateTime(false);
-    
+
     toast.loading('Adding to Reply Later...', { id: 'reply-later' });
-    
+
     const success = await addEmail(email.id, date);
-    
+
     if (success) {
-      toast.success('Added to Reply Later! Check the bottom of your screen for the bubble.', { id: 'reply-later' });
+      toast.success(
+        'Added to Reply Later! Check the bottom of your screen for the bubble.',
+        { id: 'reply-later' }
+      );
       if (onClose) {
         onClose(); // Close viewer after adding to reply later
       }
@@ -356,7 +365,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
                 >
                   Custom date & time...
                 </button>
-                
+
                 {/* Custom Date/Time Inputs */}
                 {showCustomDateTime && (
                   <div className="mt-2 space-y-2 rounded-md bg-gray-50 p-3 dark:bg-gray-900">
@@ -427,8 +436,13 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
           </button>
           <button
             type="button"
+            onClick={() => {
+              // TODO: Implement more options menu (labels, folders, print, etc.)
+              toast.info('More options coming soon!');
+            }}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 dark:text-white/70 transition-all duration-200 hover:bg-gray-100/80 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
             aria-label="More options"
+            title="More options"
           >
             <MoreVertical className="h-4 w-4" />
           </button>

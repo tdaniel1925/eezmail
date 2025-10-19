@@ -187,6 +187,43 @@ export async function deleteCustomFolder(params: {
 }
 
 /**
+ * Get all custom folders for the current user
+ */
+export async function getCustomFolders(): Promise<{
+  success: boolean;
+  folders: any[];
+  message?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, folders: [], message: 'Unauthorized' };
+    }
+
+    // Get all custom folders for the user, sorted by sortOrder
+    const folders = await db.query.customFolders.findMany({
+      where: eq(customFolders.userId, user.id),
+      orderBy: (folders, { asc }) => [
+        asc(folders.sortOrder),
+        asc(folders.name),
+      ],
+    });
+
+    return {
+      success: true,
+      folders,
+    };
+  } catch (error) {
+    console.error('Error in getCustomFolders:', error);
+    return { success: false, folders: [], message: 'Failed to fetch folders' };
+  }
+}
+
+/**
  * Reorder custom folders
  */
 export async function reorderCustomFolders(params: {

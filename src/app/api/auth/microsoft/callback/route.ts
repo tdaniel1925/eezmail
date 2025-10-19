@@ -9,6 +9,7 @@ import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { MicrosoftGraphService } from '@/lib/email/microsoft-graph';
+import { subscribeToWebhook } from '@/lib/webhooks/webhook-actions';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   console.log('🚀 MICROSOFT GRAPH CALLBACK TRIGGERED');
@@ -119,6 +120,28 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .returning();
 
       console.log('✅ Email account saved successfully:', newAccount[0]?.id);
+
+      // Subscribe to webhook notifications for real-time email updates
+      if (newAccount[0]?.id) {
+        console.log('🔄 Step 4: Subscribing to webhook notifications...');
+        try {
+          const webhookResult = await subscribeToWebhook({
+            accountId: newAccount[0].id,
+            accessToken: tokenResponse.accessToken,
+          });
+
+          if (webhookResult.success) {
+            console.log('✅ Webhook subscription created:', webhookResult.subscriptionId);
+            console.log('📅 Expires at:', webhookResult.expiresAt);
+          } else {
+            console.error('⚠️ Webhook subscription failed:', webhookResult.error);
+            // Don't fail the entire flow if webhook fails
+          }
+        } catch (webhookError) {
+          console.error('⚠️ Webhook subscription error:', webhookError);
+          // Don't fail the entire flow if webhook fails
+        }
+      }
     } catch (dbError) {
       console.error('❌ Database error:', dbError);
       throw dbError;
@@ -126,7 +149,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Redirect to email accounts page with success message
     console.log(
-      '🔄 Step 4: Redirecting to email accounts page with success...'
+      '🔄 Step 5: Redirecting to email accounts page with success...'
     );
     return NextResponse.redirect(
       new URL(

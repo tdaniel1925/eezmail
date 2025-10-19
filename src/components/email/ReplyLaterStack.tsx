@@ -39,7 +39,7 @@ export function ReplyLaterStack({
   });
 
   // Generate color from email/name
-  const getAvatarColor = (email: string): string => {
+  const getAvatarColor = (email: string | undefined): string => {
     const colors = [
       'bg-blue-500',
       'bg-purple-500',
@@ -52,13 +52,23 @@ export function ReplyLaterStack({
       'bg-cyan-500',
       'bg-indigo-500',
     ];
+
+    if (!email) return colors[0]; // Default to first color if email is undefined
+
     const index =
       email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) %
       colors.length;
     return colors[index];
   };
 
-  const getInitials = (name: string, email: string): string => {
+  const getInitials = (
+    name: string | undefined,
+    email: string | undefined
+  ): string => {
+    // Handle undefined cases
+    if (!email && !name) return '??';
+    if (!email) return (name || '??').substring(0, 2).toUpperCase();
+
     if (name && name !== email) {
       const parts = name.split(' ');
       if (parts.length >= 2) {
@@ -105,9 +115,12 @@ export function ReplyLaterStack({
       >
         <div className="flex items-end justify-center">
           {visibleEmails.map((email, index) => {
+            // Safely extract sender info with null checks
             const senderName =
-              email.fromAddress.name || email.fromAddress.email;
-            const senderEmail = email.fromAddress.email;
+              email.fromAddress?.name ||
+              email.fromAddress?.address ||
+              undefined;
+            const senderEmail = email.fromAddress?.address || undefined;
             const initials = getInitials(senderName, senderEmail);
             const colorClass = getAvatarColor(senderEmail);
             const overdue = isOverdue(email.replyLaterUntil);

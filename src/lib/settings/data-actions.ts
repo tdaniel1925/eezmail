@@ -74,76 +74,211 @@ export async function verifyDataWipe(): Promise<{
 
     // Check user-level data
     counts.emailAccounts = userAccounts.length;
-    
+
     try {
-      counts.contacts = (await db.query.contacts.findMany({ where: eq(contacts.userId, user.id) })).length;
-    } catch (e) { counts.contacts = 0; missingTables.push('contacts'); }
-    
+      counts.contacts = (
+        await db.query.contacts.findMany({
+          where: eq(contacts.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.contacts = 0;
+      missingTables.push('contacts');
+    }
+
     try {
-      counts.contactNotes = (await db.query.contactNotes.findMany({ where: eq(contactNotes.userId, user.id) })).length;
-    } catch (e) { counts.contactNotes = 0; missingTables.push('contact_notes'); }
-    
+      counts.contactNotes = (
+        await db.query.contactNotes.findMany({
+          where: eq(contactNotes.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.contactNotes = 0;
+      missingTables.push('contact_notes');
+    }
+
     try {
-      counts.contactTimeline = (await db.query.contactTimeline.findMany({ where: eq(contactTimeline.userId, user.id) })).length;
-    } catch (e) { counts.contactTimeline = 0; missingTables.push('contact_timeline'); }
-    
+      counts.contactTimeline = (
+        await db.query.contactTimeline.findMany({
+          where: eq(contactTimeline.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.contactTimeline = 0;
+      missingTables.push('contact_timeline');
+    }
+
     try {
-      counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
-    } catch (e) { counts.emailRules = 0; missingTables.push('email_rules'); }
-    
+      counts.contactTags = (
+        await db.query.contactTags.findMany({
+          where: eq(contactTags.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.contactTags = 0;
+      missingTables.push('contact_tags');
+    }
+
     try {
-      counts.emailSignatures = (await db.query.emailSignatures.findMany({ where: eq(emailSignatures.userId, user.id) })).length;
-    } catch (e) { counts.emailSignatures = 0; missingTables.push('email_signatures'); }
-    
+      counts.contactCustomFields = (
+        await db.query.contactCustomFields.findMany({
+          where: eq(contactCustomFields.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.contactCustomFields = 0;
+      missingTables.push('contact_custom_fields');
+    }
+
     try {
-      counts.senderTrust = (await db.query.senderTrust.findMany({ where: eq(senderTrust.userId, user.id) })).length;
-    } catch (e) { counts.senderTrust = 0; missingTables.push('sender_trust'); }
-    
+      counts.emailRules = (
+        await db.query.emailRules.findMany({
+          where: eq(emailRules.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.emailRules = 0;
+      missingTables.push('email_rules');
+    }
+
     try {
-      counts.aiReplyDrafts = (await db.query.aiReplyDrafts.findMany({ where: eq(aiReplyDrafts.userId, user.id) })).length;
-    } catch (e) { counts.aiReplyDrafts = 0; missingTables.push('ai_reply_drafts'); }
-    
+      counts.emailSignatures = (
+        await db.query.emailSignatures.findMany({
+          where: eq(emailSignatures.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.emailSignatures = 0;
+      missingTables.push('email_signatures');
+    }
+
     try {
-      counts.chatbotActions = (await db.query.chatbotActions.findMany({ where: eq(chatbotActions.userId, user.id) })).length;
-    } catch (e) { counts.chatbotActions = 0; missingTables.push('chatbot_actions'); }
-    
+      counts.senderTrust = (
+        await db.query.senderTrust.findMany({
+          where: eq(senderTrust.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.senderTrust = 0;
+      missingTables.push('sender_trust');
+    }
+
     try {
-      counts.extractedActions = (await db.query.extractedActions.findMany({ where: eq(extractedActions.userId, user.id) })).length;
-    } catch (e) { counts.extractedActions = 0; missingTables.push('extracted_actions'); }
-    
+      counts.aiReplyDrafts = (
+        await db.query.aiReplyDrafts.findMany({
+          where: eq(aiReplyDrafts.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.aiReplyDrafts = 0;
+      missingTables.push('ai_reply_drafts');
+    }
+
     try {
-      counts.followUpReminders = (await db.query.followUpReminders.findMany({ where: eq(followUpReminders.userId, user.id) })).length;
-    } catch (e) { counts.followUpReminders = 0; missingTables.push('follow_up_reminders'); }
-    
+      counts.chatbotActions = (
+        await db.query.chatbotActions.findMany({
+          where: eq(chatbotActions.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.chatbotActions = 0;
+      missingTables.push('chatbot_actions');
+    }
+
     try {
-      counts.tasks = (await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })).length;
-    } catch (e) { counts.tasks = 0; missingTables.push('tasks'); }
-    
+      counts.extractedActions = (
+        await db.query.extractedActions.findMany({
+          where: eq(extractedActions.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.extractedActions = 0;
+      missingTables.push('extracted_actions');
+    }
+
     try {
-      counts.customLabels = (await db.query.customLabels.findMany({ where: eq(customLabels.userId, user.id) })).length;
-    } catch (e) { counts.customLabels = 0; missingTables.push('custom_labels'); }
+      counts.followUpReminders = (
+        await db.query.followUpReminders.findMany({
+          where: eq(followUpReminders.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.followUpReminders = 0;
+      missingTables.push('follow_up_reminders');
+    }
+
+    try {
+      counts.tasks = (
+        await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })
+      ).length;
+    } catch (e) {
+      counts.tasks = 0;
+      missingTables.push('tasks');
+    }
+
+    try {
+      counts.customLabels = (
+        await db.query.customLabels.findMany({
+          where: eq(customLabels.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.customLabels = 0;
+      missingTables.push('custom_labels');
+    }
 
     // Check account-level data if accounts exist
     if (accountIds.length > 0) {
       try {
-        counts.emails = (await db.query.emails.findMany({ where: inArray(emails.accountId, accountIds) })).length;
-      } catch (e) { counts.emails = 0; }
-      
+        counts.emails = (
+          await db.query.emails.findMany({
+            where: inArray(emails.accountId, accountIds),
+          })
+        ).length;
+      } catch (e) {
+        counts.emails = 0;
+      }
+
       try {
-        counts.emailThreads = (await db.query.emailThreads.findMany({ where: inArray(emailThreads.accountId, accountIds) })).length;
-      } catch (e) { counts.emailThreads = 0; }
-      
+        counts.emailThreads = (
+          await db.query.emailThreads.findMany({
+            where: inArray(emailThreads.accountId, accountIds),
+          })
+        ).length;
+      } catch (e) {
+        counts.emailThreads = 0;
+      }
+
       try {
-        counts.emailDrafts = (await db.query.emailDrafts.findMany({ where: inArray(emailDrafts.accountId, accountIds) })).length;
-      } catch (e) { counts.emailDrafts = 0; }
-      
+        counts.emailDrafts = (
+          await db.query.emailDrafts.findMany({
+            where: inArray(emailDrafts.accountId, accountIds),
+          })
+        ).length;
+      } catch (e) {
+        counts.emailDrafts = 0;
+      }
+
       try {
-        counts.scheduledEmails = (await db.query.scheduledEmails.findMany({ where: inArray(scheduledEmails.accountId, accountIds) })).length;
-      } catch (e) { counts.scheduledEmails = 0; }
-      
+        counts.scheduledEmails = (
+          await db.query.scheduledEmails.findMany({
+            where: inArray(scheduledEmails.accountId, accountIds),
+          })
+        ).length;
+      } catch (e) {
+        counts.scheduledEmails = 0;
+      }
+
       try {
-        counts.emailSettings = (await db.query.emailSettings.findMany({ where: inArray(emailSettings.accountId, accountIds) })).length;
-      } catch (e) { counts.emailSettings = 0; missingTables.push('email_settings'); }
+        counts.emailSettings = (
+          await db.query.emailSettings.findMany({
+            where: inArray(emailSettings.accountId, accountIds),
+          })
+        ).length;
+      } catch (e) {
+        counts.emailSettings = 0;
+        missingTables.push('email_settings');
+      }
     } else {
       counts.emails = 0;
       counts.emailThreads = 0;
@@ -151,18 +286,32 @@ export async function verifyDataWipe(): Promise<{
       counts.scheduledEmails = 0;
       counts.emailSettings = 0;
     }
-    
+
     try {
-      counts.customFolders = (await db.query.customFolders.findMany({ where: eq(customFolders.userId, user.id) })).length;
-    } catch (e) { counts.customFolders = 0; missingTables.push('custom_folders'); }
+      counts.customFolders = (
+        await db.query.customFolders.findMany({
+          where: eq(customFolders.userId, user.id),
+        })
+      ).length;
+    } catch (e) {
+      counts.customFolders = 0;
+      missingTables.push('custom_folders');
+    }
 
     // Calculate total
-    const totalRemaining = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const totalRemaining = Object.values(counts).reduce(
+      (sum, count) => sum + count,
+      0
+    );
     const isClean = totalRemaining === 0;
 
     console.log('📊 Verification Results:', counts);
-    console.log(isClean ? '✅ All data wiped!' : '⚠️  Some data remains:', totalRemaining, 'records');
-    
+    console.log(
+      isClean ? '✅ All data wiped!' : '⚠️  Some data remains:',
+      totalRemaining,
+      'records'
+    );
+
     if (missingTables.length > 0) {
       console.warn('⚠️  Missing database tables:', missingTables.join(', '));
     }
@@ -218,7 +367,7 @@ export async function wipeAllUserData(): Promise<{
       } catch (error) {
         console.error('Error deleting emails:', error);
       }
-      
+
       try {
         await db
           .delete(emailThreads)
@@ -245,6 +394,7 @@ export async function wipeAllUserData(): Promise<{
     const contactIds = userContacts.map((c) => c.id);
 
     if (contactIds.length > 0) {
+      // Delete contact-related data in the correct order (children first)
       try {
         await db
           .delete(contactEmails)
@@ -252,7 +402,7 @@ export async function wipeAllUserData(): Promise<{
       } catch (error) {
         console.error('Error deleting contact emails:', error);
       }
-      
+
       try {
         await db
           .delete(contactPhones)
@@ -260,7 +410,7 @@ export async function wipeAllUserData(): Promise<{
       } catch (error) {
         console.error('Error deleting contact phones:', error);
       }
-      
+
       try {
         await db
           .delete(contactAddresses)
@@ -268,12 +418,42 @@ export async function wipeAllUserData(): Promise<{
       } catch (error) {
         console.error('Error deleting contact addresses:', error);
       }
-      
+
+      try {
+        await db
+          .delete(contactSocialLinks)
+          .where(inArray(contactSocialLinks.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact social links:', error);
+      }
+
+      try {
+        await db
+          .delete(contactTagAssignments)
+          .where(inArray(contactTagAssignments.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact tag assignments:', error);
+      }
+
+      try {
+        await db
+          .delete(contactCustomFields)
+          .where(inArray(contactCustomFields.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact custom fields:', error);
+      }
+
+      // Now delete the contacts themselves
       try {
         await db.delete(contacts).where(eq(contacts.userId, user.id));
+        console.log(
+          `✅ Deleted ${contactIds.length} contacts and related data`
+        );
       } catch (error) {
         console.error('Error deleting contacts:', error);
       }
+    } else {
+      console.log('ℹ️  No contacts to delete');
     }
 
     // Delete email accounts
@@ -291,19 +471,21 @@ export async function wipeAllUserData(): Promise<{
     } catch (error) {
       console.error('Error deleting email settings:', error);
     }
-    
+
     try {
       await db.delete(emailRules).where(eq(emailRules.userId, user.id));
     } catch (error) {
       console.error('Error deleting email rules:', error);
     }
-    
+
     try {
-      await db.delete(emailSignatures).where(eq(emailSignatures.userId, user.id));
+      await db
+        .delete(emailSignatures)
+        .where(eq(emailSignatures.userId, user.id));
     } catch (error) {
       console.error('Error deleting email signatures:', error);
     }
-    
+
     try {
       await db.delete(senderTrust).where(eq(senderTrust.userId, user.id));
     } catch (error) {
@@ -312,69 +494,71 @@ export async function wipeAllUserData(): Promise<{
 
     // Delete ALL user-related data (comprehensive cleanup)
     console.log('🗑️  Deleting additional user data...');
-    
+
     try {
       await db.delete(contactNotes).where(eq(contactNotes.userId, user.id));
     } catch (error) {
       console.error('Error deleting contact notes:', error);
     }
-    
+
     try {
-      await db.delete(contactTimeline).where(eq(contactTimeline.userId, user.id));
+      await db
+        .delete(contactTimeline)
+        .where(eq(contactTimeline.userId, user.id));
     } catch (error) {
       console.error('Error deleting contact timeline:', error);
     }
-    
-    try {
-      await db.delete(contactCustomFields).where(eq(contactCustomFields.userId, user.id));
-    } catch (error) {
-      console.error('Error deleting contact custom fields:', error);
-    }
-    
+
     try {
       await db.delete(contactTags).where(eq(contactTags.userId, user.id));
     } catch (error) {
       console.error('Error deleting contact tags:', error);
     }
-    
+
     try {
       await db.delete(aiReplyDrafts).where(eq(aiReplyDrafts.userId, user.id));
     } catch (error) {
       console.error('Error deleting AI reply drafts:', error);
     }
-    
+
     try {
       await db.delete(chatbotActions).where(eq(chatbotActions.userId, user.id));
     } catch (error) {
       console.error('Error deleting chatbot actions:', error);
     }
-    
+
     try {
-      await db.delete(extractedActions).where(eq(extractedActions.userId, user.id));
+      await db
+        .delete(extractedActions)
+        .where(eq(extractedActions.userId, user.id));
     } catch (error) {
       console.error('Error deleting extracted actions:', error);
     }
-    
+
     try {
-      await db.delete(followUpReminders).where(eq(followUpReminders.userId, user.id));
+      await db
+        .delete(followUpReminders)
+        .where(eq(followUpReminders.userId, user.id));
     } catch (error) {
       console.error('Error deleting follow-up reminders:', error);
     }
-    
+
     try {
       await db.delete(tasks).where(eq(tasks.userId, user.id));
     } catch (error) {
       console.error('Error deleting tasks:', error);
     }
-    
+
     try {
       await db.delete(customLabels).where(eq(customLabels.userId, user.id));
     } catch (error) {
       console.error('Error deleting custom labels:', error);
     }
-    
+
     try {
-      await db.delete(userPreferences).where(eq(userPreferences.userId, user.id));
+      await db
+        .delete(userPreferences)
+        .where(eq(userPreferences.userId, user.id));
     } catch (error) {
       console.error('Error deleting user preferences:', error);
     }
@@ -382,37 +566,49 @@ export async function wipeAllUserData(): Promise<{
     if (accountIds.length > 0) {
       // Delete account-specific data
       try {
-        await db.delete(emailDrafts).where(inArray(emailDrafts.accountId, accountIds));
+        await db
+          .delete(emailDrafts)
+          .where(inArray(emailDrafts.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting email drafts:', error);
       }
-      
+
       try {
-        await db.delete(scheduledEmails).where(inArray(scheduledEmails.accountId, accountIds));
+        await db
+          .delete(scheduledEmails)
+          .where(inArray(scheduledEmails.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting scheduled emails:', error);
       }
-      
+
       try {
-        await db.delete(emailLabels).where(inArray(emailLabels.accountId, accountIds));
+        await db
+          .delete(emailLabels)
+          .where(inArray(emailLabels.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting email labels:', error);
       }
-      
+
       try {
-        await db.delete(labelAssignments).where(inArray(labelAssignments.accountId, accountIds));
+        await db
+          .delete(labelAssignments)
+          .where(inArray(labelAssignments.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting label assignments:', error);
       }
-      
+
       try {
-        await db.delete(emailAttachments).where(inArray(emailAttachments.accountId, accountIds));
+        await db
+          .delete(emailAttachments)
+          .where(inArray(emailAttachments.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting email attachments:', error);
       }
-      
+
       try {
-        await db.delete(syncJobs).where(inArray(syncJobs.accountId, accountIds));
+        await db
+          .delete(syncJobs)
+          .where(inArray(syncJobs.accountId, accountIds));
       } catch (error) {
         console.error('Error deleting sync jobs:', error);
       }
@@ -421,13 +617,16 @@ export async function wipeAllUserData(): Promise<{
     // NOTE: User account and authentication are PRESERVED
     // User stays logged in and can add new email accounts
     console.log('✅ All data wiped successfully (user account preserved)');
-    
+
     // Verify the wipe
     const verification = await verifyDataWipe();
     if (!verification.isClean) {
-      console.warn('⚠️  Warning: Some data may still remain:', verification.remainingData);
+      console.warn(
+        '⚠️  Warning: Some data may still remain:',
+        verification.remainingData
+      );
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error('❌ Error wiping user data:', error);

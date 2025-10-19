@@ -50,64 +50,43 @@ export function ContactActionsTab(): JSX.Element {
     | undefined
   >(undefined);
   const { setSelectedContact } = useAIPanelStore();
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedContact, setselectedContact] = useState<string | null>(null);
 
-  // Mock search results
-  const mockContacts: Contact[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      company: 'Acme Corp',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      company: 'Tech Inc',
-    },
-    {
-      id: '3',
-      name: 'Bob Johnson',
-      email: 'bob@example.com',
-      company: 'StartupXYZ',
-    },
-  ];
+  // Real timeline events - will be fetched from database when contacts are selected
+  const recentTimeline: TimelineEvent[] = [];
+  // TODO: Fetch real timeline events from database based on selectedContacts
 
-  // Mock timeline events
-  const recentTimeline: TimelineEvent[] = [
-    {
-      id: '1',
-      type: 'email_sent',
-      title: 'Sent project proposal',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-    },
-    {
-      id: '2',
-      type: 'note_added',
-      title: 'Added note about Q4 planning',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-    },
-    {
-      id: '3',
-      type: 'email_received',
-      title: 'Received budget update',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72),
-    },
-  ];
-
-  const handleSearch = (query: string) => {
+  const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.trim()) {
       setIsSearching(true);
-      // Mock search - filter contacts
-      const filtered = mockContacts.filter(
-        (c) =>
-          c.name.toLowerCase().includes(query.toLowerCase()) ||
-          c.email.toLowerCase().includes(query.toLowerCase()) ||
-          c.company?.toLowerCase().includes(query.toLowerCase())
-      );
-      setSearchResults(filtered);
-      setIsSearching(false);
+      try {
+        // Use real contact search API
+        const response = await fetch(
+          `/api/contacts/search?query=${encodeURIComponent(query)}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const formatted = data.contacts.map((c: any) => ({
+            id: c.id,
+            name:
+              c.displayName ||
+              `${c.firstName || ''} ${c.lastName || ''}`.trim() ||
+              'Unknown',
+            email: c.primaryEmail || '',
+            company: c.company || undefined,
+          }));
+          setSearchResults(formatted);
+        } else {
+          setSearchResults([]);
+        }
+      } catch (error) {
+        console.error('Error searching contacts:', error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
     } else {
       setSearchResults([]);
     }

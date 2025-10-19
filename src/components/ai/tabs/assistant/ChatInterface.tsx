@@ -41,7 +41,7 @@ export function ChatInterface({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Update initial message when email changes
+  // Update initial message when email changes or is cleared
   useEffect(() => {
     if (currentEmail) {
       setMessages([
@@ -52,8 +52,19 @@ export function ChatInterface({
           timestamp: new Date(),
         },
       ]);
+    } else {
+      // Clear messages when no email is selected
+      setMessages([
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content:
+            "Hi! I'm your AI assistant. I can help you with your emails, draft replies, and answer questions. What would you like to know?",
+          timestamp: new Date(),
+        },
+      ]);
     }
-  }, [currentEmail?.id]);
+  }, [currentEmail?.id, currentEmail]);
 
   const handleSend = async () => {
     if (!input.trim() || isTyping) return;

@@ -165,7 +165,7 @@ export function ProfileDropUp({
                 </div>
                 <button
                   onClick={() => {
-                    onNavigate?.('/dashboard/settings/storage');
+                    onNavigate?.('/dashboard/settings?tab=billing');
                     setIsOpen(false);
                   }}
                   className="mt-2 text-xs text-primary hover:underline"
@@ -188,7 +188,7 @@ export function ProfileDropUp({
                   icon={Sliders}
                   label="Preferences"
                   onClick={() => {
-                    onNavigate?.('/dashboard/settings/preferences');
+                    onNavigate?.('/dashboard/settings?tab=ai-preferences');
                     setIsOpen(false);
                   }}
                 />
@@ -196,7 +196,7 @@ export function ProfileDropUp({
                   icon={Keyboard}
                   label="Keyboard Shortcuts"
                   onClick={() => {
-                    onNavigate?.('/dashboard/settings/shortcuts');
+                    onNavigate?.('/dashboard/settings?tab=help');
                     setIsOpen(false);
                   }}
                 />
@@ -204,7 +204,7 @@ export function ProfileDropUp({
                   icon={HelpCircle}
                   label="Help & Support"
                   onClick={() => {
-                    onNavigate?.('/dashboard/help');
+                    onNavigate?.('/dashboard/settings?tab=help');
                     setIsOpen(false);
                   }}
                 />

@@ -9,14 +9,19 @@ import {
   Calendar,
   Star,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Contact } from './ContactDetailModal';
 
 interface ContactOverviewProps {
   contact: Contact;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export function ContactOverview({
   contact,
+  onEdit,
+  onDelete,
 }: ContactOverviewProps): JSX.Element {
   // Mock data - replace with real data from API
   const contactDetails = {
@@ -204,15 +209,68 @@ export function ContactOverview({
       {/* Action Buttons */}
       <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap gap-2">
-          <button className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors">
+          <button
+            onClick={() => {
+              // Get the primary email from the contact details
+              const primaryEmail = contactDetails.emails.find(
+                (e) => e.isPrimary
+              )?.email;
+              if (primaryEmail) {
+                // Dispatch event to open email composer
+                window.dispatchEvent(
+                  new CustomEvent('open-email-composer', {
+                    detail: {
+                      to: primaryEmail,
+                      mode: 'compose',
+                    },
+                  })
+                );
+                toast.success(`Opening email composer to ${primaryEmail}`);
+              } else {
+                toast.error('No email address found for this contact');
+              }
+            }}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+          >
             Send Email
           </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+          <button
+            onClick={() => {
+              // TODO: Implement calendar integration
+              toast.info('Calendar integration coming soon!');
+            }}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+          >
             Schedule Meeting
           </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+          <button
+            onClick={() => {
+              if (onEdit) {
+                onEdit();
+              } else {
+                toast.error('Edit functionality not available');
+              }
+            }}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+          >
             Edit Contact
           </button>
+          {onDelete && (
+            <button
+              onClick={() => {
+                if (
+                  confirm(
+                    'Are you sure you want to delete this contact? This action cannot be undone.'
+                  )
+                ) {
+                  onDelete();
+                }
+              }}
+              className="px-4 py-2 border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+            >
+              Delete Contact
+            </button>
+          )}
         </div>
       </div>
     </div>

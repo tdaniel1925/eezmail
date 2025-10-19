@@ -29,41 +29,13 @@ import type { EmailAttachment } from '@/db/schema';
 
 type ViewMode = 'grid' | 'table';
 type SortOption = 'date' | 'name' | 'size' | 'type';
-type FilterType = 'all' | 'images' | 'documents' | 'spreadsheets' | 'pdfs' | 'archives';
-
-// Mock data for development
-const mockAttachments: EmailAttachment[] = [
-  {
-    id: '1',
-    emailId: 'email-1',
-    filename: 'Q4_Marketing_Strategy.pdf',
-    contentType: 'application/pdf',
-    size: 2048576,
-    storageUrl: '/attachments/q4-strategy.pdf',
-    storageKey: 'attachments/q4-strategy.pdf',
-    isInline: false,
-    downloadCount: 5,
-    providerAttachmentId: null,
-    contentId: null,
-    lastDownloadedAt: new Date('2025-10-15'),
-    createdAt: new Date('2025-10-10'),
-  },
-  {
-    id: '2',
-    emailId: 'email-2',
-    filename: 'Product_Mockups.png',
-    contentType: 'image/png',
-    size: 1024000,
-    storageUrl: '/attachments/mockups.png',
-    storageKey: 'attachments/mockups.png',
-    isInline: false,
-    downloadCount: 12,
-    providerAttachmentId: null,
-    contentId: null,
-    lastDownloadedAt: new Date('2025-10-16'),
-    createdAt: new Date('2025-10-12'),
-  },
-];
+type FilterType =
+  | 'all'
+  | 'images'
+  | 'documents'
+  | 'spreadsheets'
+  | 'pdfs'
+  | 'archives';
 
 export default function AttachmentsPage(): JSX.Element {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -71,43 +43,71 @@ export default function AttachmentsPage(): JSX.Element {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [sortDesc, setSortDesc] = useState(true);
   const [filterType, setFilterType] = useState<FilterType>('all');
-  const [attachments, setAttachments] = useState<EmailAttachment[]>(mockAttachments);
-  const [selectedAttachment, setSelectedAttachment] = useState<EmailAttachment | null>(null);
+  const [attachments, setAttachments] = useState<EmailAttachment[]>([]);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<EmailAttachment | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch attachments from server
-    loadAttachments();
-  }, []);
+    // Fetch real attachments from server
+    const fetchAttachments = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/attachments');
+        if (response.ok) {
+          const data = await response.json();
+          setAttachments(data.attachments || []);
+        } else {
+          console.error('Failed to fetch attachments');
+          setAttachments([]);
+        }
+      } catch (error) {
+        console.error('Error fetching attachments:', error);
+        setAttachments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const loadAttachments = async () => {
-    setIsLoading(true);
-    try {
-      // TODO: Call server action to fetch attachments
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } catch (error) {
-      toast.error('Failed to load attachments');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchAttachments();
+  }, []);
 
   // Filter and sort attachments
   const filteredAttachments = attachments
     .filter((att) => {
       // Search filter
-      if (searchQuery && !att.filename.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (
+        searchQuery &&
+        !att.filename.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
         return false;
       }
 
       // Type filter
       if (filterType !== 'all') {
-        if (filterType === 'images' && !att.contentType.startsWith('image/')) return false;
-        if (filterType === 'documents' && !att.contentType.includes('word') && !att.contentType.includes('document')) return false;
-        if (filterType === 'spreadsheets' && !att.contentType.includes('spreadsheet') && !att.contentType.includes('excel')) return false;
-        if (filterType === 'pdfs' && att.contentType !== 'application/pdf') return false;
-        if (filterType === 'archives' && !att.contentType.includes('zip') && !att.contentType.includes('rar')) return false;
+        if (filterType === 'images' && !att.contentType.startsWith('image/'))
+          return false;
+        if (
+          filterType === 'documents' &&
+          !att.contentType.includes('word') &&
+          !att.contentType.includes('document')
+        )
+          return false;
+        if (
+          filterType === 'spreadsheets' &&
+          !att.contentType.includes('spreadsheet') &&
+          !att.contentType.includes('excel')
+        )
+          return false;
+        if (filterType === 'pdfs' && att.contentType !== 'application/pdf')
+          return false;
+        if (
+          filterType === 'archives' &&
+          !att.contentType.includes('zip') &&
+          !att.contentType.includes('rar')
+        )
+          return false;
       }
 
       return true;
@@ -307,7 +307,9 @@ export default function AttachmentsPage(): JSX.Element {
           setIsPreviewOpen(false);
           setSelectedAttachment(null);
         }}
-        onDownload={() => selectedAttachment && handleDownload(selectedAttachment)}
+        onDownload={() =>
+          selectedAttachment && handleDownload(selectedAttachment)
+        }
         onDelete={() => {
           if (selectedAttachment) {
             handleDelete(selectedAttachment);
@@ -319,4 +321,3 @@ export default function AttachmentsPage(): JSX.Element {
     </div>
   );
 }
-

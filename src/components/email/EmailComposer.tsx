@@ -91,6 +91,8 @@ interface EmailComposerProps {
   };
   isAIDraft?: boolean;
   replyLaterEmailId?: string;
+  replyToEmailId?: string | null;
+  forwardEmailId?: string | null;
 }
 
 export function EmailComposer({
@@ -101,12 +103,15 @@ export function EmailComposer({
   initialData,
   isAIDraft = false,
   replyLaterEmailId,
+  replyToEmailId,
+  forwardEmailId,
 }: EmailComposerProps): JSX.Element | null {
   const [to, setTo] = useState(initialData?.to || '');
   const [cc, setCc] = useState('');
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState(initialData?.subject || '');
   const [body, setBody] = useState(initialData?.body || '');
+  const [isLoadingEmailData, setIsLoadingEmailData] = useState(false);
   const [showCc, setShowCc] = useState(false);
   const [showBcc, setShowBcc] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -180,6 +185,64 @@ export function EmailComposer({
       }
     }
   }, [isOpen, initialData]);
+
+  // Fetch email data for reply/forward
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchEmailData = async () => {
+      if (replyToEmailId) {
+        setIsLoadingEmailData(true);
+        try {
+          const { getEmailForReply } = await import(
+            '@/lib/email/email-actions'
+          );
+          const result = await getEmailForReply(replyToEmailId);
+
+          if (result.success && result.data) {
+            setTo(result.data.to);
+            setSubject(result.data.subject);
+            setBody(result.data.body);
+            if (editorRef.current) {
+              editorRef.current.commands.setContent(result.data.body);
+            }
+          } else {
+            toast.error(result.error || 'Failed to load email');
+          }
+        } catch (error) {
+          console.error('Error loading email for reply:', error);
+          toast.error('Failed to load email');
+        } finally {
+          setIsLoadingEmailData(false);
+        }
+      } else if (forwardEmailId) {
+        setIsLoadingEmailData(true);
+        try {
+          const { getEmailForForward } = await import(
+            '@/lib/email/email-actions'
+          );
+          const result = await getEmailForForward(forwardEmailId);
+
+          if (result.success && result.data) {
+            setSubject(result.data.subject);
+            setBody(result.data.body);
+            if (editorRef.current) {
+              editorRef.current.commands.setContent(result.data.body);
+            }
+          } else {
+            toast.error(result.error || 'Failed to load email');
+          }
+        } catch (error) {
+          console.error('Error loading email for forward:', error);
+          toast.error('Failed to load email');
+        } finally {
+          setIsLoadingEmailData(false);
+        }
+      }
+    };
+
+    fetchEmailData();
+  }, [isOpen, replyToEmailId, forwardEmailId]);
 
   // Handler functions (defined before useEffects that use them)
   const handleSend = useCallback(async (): Promise<void> => {

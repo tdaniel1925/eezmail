@@ -71,7 +71,7 @@ export const useAIPanelStore = create<AIPanelState>()(
       sections: DEFAULT_SECTIONS,
       autoExpandOnEmail: true,
 
-      // New state
+      // New state (NOT persisted)
       activeTab: 'assistant',
       currentEmail: null,
       selectedContactId: null,
@@ -122,6 +122,17 @@ export const useAIPanelStore = create<AIPanelState>()(
     }),
     {
       name: 'ai-panel-storage',
+      // Only persist UI preferences, NOT contextual data
+      partialize: (state) => ({
+        isExpanded: state.isExpanded,
+        isVisible: state.isVisible,
+        width: state.width,
+        sections: state.sections,
+        autoExpandOnEmail: state.autoExpandOnEmail,
+        // currentEmail: NOT persisted (contextual)
+        // selectedContactId: NOT persisted (contextual)
+        // activeTab: NOT persisted (always starts at 'assistant')
+      }),
     }
   )
 );

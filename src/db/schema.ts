@@ -1789,6 +1789,41 @@ export const userPreferences = pgTable('user_preferences', {
 });
 
 // ============================================================================
+// WEBHOOK SUBSCRIPTIONS TABLE
+// ============================================================================
+
+export const webhookSubscriptions = pgTable(
+  'webhook_subscriptions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+    
+    // Microsoft Graph subscription details
+    subscriptionId: varchar('subscription_id', { length: 255 }).notNull().unique(),
+    resource: text('resource').notNull(), // e.g., /me/mailFolders/inbox/messages
+    changeType: varchar('change_type', { length: 100 }).notNull(), // created,updated,deleted
+    notificationUrl: text('notification_url').notNull(),
+    clientState: varchar('client_state', { length: 255 }).notNull(),
+    
+    // Expiration management
+    expirationDateTime: timestamp('expiration_date_time').notNull(),
+    isActive: boolean('is_active').default(true).notNull(),
+    
+    // Metadata
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+    lastRenewedAt: timestamp('last_renewed_at'),
+  },
+  (table) => ({
+    accountIdIdx: index('webhook_subscriptions_account_id_idx').on(table.accountId),
+    subscriptionIdIdx: uniqueIndex('webhook_subscriptions_subscription_id_idx').on(table.subscriptionId),
+    expirationIdx: index('webhook_subscriptions_expiration_idx').on(table.expirationDateTime),
+  })
+);
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -1895,3 +1930,6 @@ export type NewLabelAssignment = typeof labelAssignments.$inferInsert;
 
 export type UserPreference = typeof userPreferences.$inferSelect;
 export type NewUserPreference = typeof userPreferences.$inferInsert;
+
+export type WebhookSubscription = typeof webhookSubscriptions.$inferSelect;
+export type NewWebhookSubscription = typeof webhookSubscriptions.$inferInsert;

@@ -70,6 +70,10 @@ export function EmailList({
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
+  const [composerMode, setComposerMode] = useState<
+    'compose' | 'reply' | 'forward'
+  >('compose');
+  const [composerEmailId, setComposerEmailId] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<Email[] | null>(null);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -351,9 +355,86 @@ export function EmailList({
     }
   };
 
-  const handleEmailAction = (action: string, emailId: string): void => {
-    // Will be implemented with individual email actions
-    console.log(`Action: ${action}, Email ID: ${emailId}`);
+  const handleEmailAction = async (
+    action: string,
+    emailId: string
+  ): Promise<void> => {
+    if (!userId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    switch (action) {
+      case 'reply':
+        // Open composer in reply mode
+        setComposerMode('reply');
+        setComposerEmailId(emailId);
+        setIsComposerOpen(true);
+        break;
+
+      case 'forward':
+        // Open composer in forward mode
+        setComposerMode('forward');
+        setComposerEmailId(emailId);
+        setIsComposerOpen(true);
+        break;
+
+      case 'archive':
+        try {
+          const result = await bulkArchiveEmails({
+            userId,
+            emailIds: [emailId],
+          });
+          if (result.success) {
+            toast.success('Email archived');
+            // Clear AI panel if this email was selected
+            const { currentEmail, setCurrentEmail } =
+              useAIPanelStore.getState();
+            if (currentEmail?.id === emailId) {
+              setCurrentEmail(null);
+            }
+            onRefresh?.();
+            window.dispatchEvent(new CustomEvent('refresh-email-list'));
+          } else {
+            toast.error(result.message);
+          }
+        } catch (error) {
+          console.error('Archive error:', error);
+          toast.error('Failed to archive email');
+        }
+        break;
+
+      case 'delete':
+        if (!confirm('Are you sure you want to delete this email?')) {
+          return;
+        }
+        try {
+          const result = await bulkDeleteEmails({
+            userId,
+            emailIds: [emailId],
+          });
+          if (result.success) {
+            toast.success('Email deleted');
+            // Clear AI panel if this email was selected
+            const { currentEmail, setCurrentEmail } =
+              useAIPanelStore.getState();
+            if (currentEmail?.id === emailId) {
+              setCurrentEmail(null);
+            }
+            onRefresh?.();
+            window.dispatchEvent(new CustomEvent('refresh-email-list'));
+          } else {
+            toast.error(result.message);
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          toast.error('Failed to delete email');
+        }
+        break;
+
+      default:
+        console.log(`Action: ${action}, Email ID: ${emailId}`);
+    }
   };
 
   const handleNavigateToEmail = useCallback((emailId: string) => {
@@ -407,7 +488,11 @@ export function EmailList({
             {/* Compose Button */}
             <AnimatedButton
               variant="particles"
-              onClick={() => setIsComposerOpen(true)}
+              onClick={() => {
+                setComposerMode('compose');
+                setComposerEmailId(null);
+                setIsComposerOpen(true);
+              }}
               icon={<Pencil className="h-3.5 w-3.5" />}
             >
               Compose
@@ -577,8 +662,16 @@ export function EmailList({
       {/* Email Composer Modal */}
       <EmailComposer
         isOpen={isComposerOpen}
-        onClose={() => setIsComposerOpen(false)}
-        mode="compose"
+        onClose={() => {
+          setIsComposerOpen(false);
+          setComposerMode('compose');
+          setComposerEmailId(null);
+        }}
+        mode={composerMode}
+        replyToEmailId={composerMode === 'reply' ? composerEmailId : undefined}
+        forwardEmailId={
+          composerMode === 'forward' ? composerEmailId : undefined
+        }
       />
 
       {/* Folder Selector Modal */}

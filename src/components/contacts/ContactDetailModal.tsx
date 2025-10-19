@@ -26,6 +26,8 @@ interface ContactDetailModalProps {
   contact: Contact;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 type TabType = 'overview' | 'timeline' | 'notes' | 'documents' | 'activity';
@@ -39,6 +41,8 @@ export function ContactDetailModal({
   contact,
   isOpen,
   onClose,
+  onEdit,
+  onDelete,
 }: ContactDetailModalProps): JSX.Element | null {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
 
@@ -55,7 +59,13 @@ export function ContactDetailModal({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ContactOverview contact={contact} />;
+        return (
+          <ContactOverview
+            contact={contact}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        );
       case 'timeline':
         return <ContactTimeline contactId={contact.id} />;
       case 'notes':
