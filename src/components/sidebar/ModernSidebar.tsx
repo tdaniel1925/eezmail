@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { PanelLeftClose, PanelLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -106,10 +107,15 @@ export function ModernSidebar({
               exit={{ opacity: 0 }}
               className="flex flex-col items-center"
             >
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-                easeMail
-              </h1>
-              <p className="text-[10px] font-medium text-white/60 dark:text-white/40 -mt-0.5">
+              <Image
+                src="/images/easemail-logo.png"
+                alt="easeMail"
+                width={140}
+                height={32}
+                className="h-8 w-auto"
+                priority
+              />
+              <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 -mt-0.5">
                 by BotMakers
               </p>
             </motion.div>
