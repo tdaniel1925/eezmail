@@ -22,7 +22,7 @@ const activeSyncIntervals = new Map<
  */
 export async function startRealtimeSync(
   accountId: string
-): Promise<NodeJS.Timeout | null> {
+): Promise<{ success: boolean; message: string }> {
   // Clear any existing realtime interval
   const existing = activeSyncIntervals.get(accountId);
   if (existing?.realtime) {
@@ -44,7 +44,7 @@ export async function startRealtimeSync(
   activeSyncIntervals.set(accountId, intervals);
 
   console.log(`✅ Real-time sync started for account: ${accountId}`);
-  return interval;
+  return { success: true, message: 'Real-time sync started' };
 }
 
 /**
@@ -52,7 +52,7 @@ export async function startRealtimeSync(
  */
 export async function startHistoricalSync(
   accountId: string
-): Promise<NodeJS.Timeout | null> {
+): Promise<{ success: boolean; message: string }> {
   // Check if historical sync is complete
   const account = await db.query.emailAccounts.findFirst({
     where: eq(emailAccounts.id, accountId),
@@ -67,7 +67,7 @@ export async function startHistoricalSync(
     console.log(
       `✅ Historical sync already complete for account: ${accountId}`
     );
-    return null;
+    return { success: true, message: 'Already complete' };
   }
 
   // Clear any existing historical interval
@@ -109,24 +109,26 @@ export async function startHistoricalSync(
   activeSyncIntervals.set(accountId, intervals);
 
   console.log(`✅ Historical sync started for account: ${accountId}`);
-  return interval;
+  return { success: true, message: 'Historical sync started' };
 }
 
 /**
  * Start dual-mode sync: both real-time and historical
  */
 export async function startDualModeSync(accountId: string): Promise<{
-  realtimeInterval: NodeJS.Timeout | null;
-  historicalInterval: NodeJS.Timeout | null;
+  success: boolean;
+  realtime: { success: boolean; message: string };
+  historical: { success: boolean; message: string };
 }> {
   console.log(`🚀 Starting dual-mode sync for account: ${accountId}`);
 
-  const realtimeInterval = await startRealtimeSync(accountId);
-  const historicalInterval = await startHistoricalSync(accountId);
+  const realtimeResult = await startRealtimeSync(accountId);
+  const historicalResult = await startHistoricalSync(accountId);
 
   return {
-    realtimeInterval,
-    historicalInterval,
+    success: true,
+    realtime: realtimeResult,
+    historical: historicalResult,
   };
 }
 
