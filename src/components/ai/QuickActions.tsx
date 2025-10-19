@@ -72,7 +72,11 @@ export function QuickActions({
     if (onReply) {
       onReply();
     } else {
-      toast.info('Reply action triggered');
+      // Dispatch event to open email composer in reply mode
+      window.dispatchEvent(new CustomEvent('open-composer', {
+        detail: { mode: 'reply', email }
+      }));
+      toast.success('Opening reply composer...');
     }
   };
 
@@ -80,7 +84,11 @@ export function QuickActions({
     if (onReplyAll) {
       onReplyAll();
     } else {
-      toast.info('Reply All action triggered');
+      // Dispatch event to open email composer in reply-all mode
+      window.dispatchEvent(new CustomEvent('open-composer', {
+        detail: { mode: 'reply-all', email }
+      }));
+      toast.success('Opening reply-all composer...');
     }
   };
 
@@ -119,11 +127,32 @@ export function QuickActions({
     }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (onDelete) {
       onDelete();
     } else {
-      toast.success('Email deleted');
+      if (!email) return;
+      
+      toast.loading('Deleting email...', { id: 'delete' });
+      
+      try {
+        const response = await fetch('/api/email/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emailId: email.id }),
+        });
+
+        if (!response.ok) throw new Error('Failed to delete email');
+        
+        toast.success('Email deleted', { id: 'delete' });
+        
+        // Refresh email list and close viewer
+        window.dispatchEvent(new CustomEvent('refresh-email-list'));
+        window.dispatchEvent(new CustomEvent('close-email-viewer'));
+      } catch (error) {
+        console.error('Error deleting email:', error);
+        toast.error('Failed to delete email', { id: 'delete' });
+      }
     }
   };
 

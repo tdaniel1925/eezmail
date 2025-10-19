@@ -79,16 +79,50 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     );
   }
 
-  const handleStarClick = (): void => {
-    setIsStarred(!isStarred);
-    // TODO: Update star status
+  const handleStarClick = async (): Promise<void> => {
+    const newStarredState = !isStarred;
+    setIsStarred(newStarredState);
+    
+    try {
+      const response = await fetch('/api/email/star', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          emailId: email.id, 
+          isStarred: newStarredState 
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update star status');
+      
+      toast.success(newStarredState ? 'Email starred' : 'Email unstarred');
+    } catch (error) {
+      console.error('Error updating star:', error);
+      setIsStarred(!newStarredState); // Revert on error
+      toast.error('Failed to update star status');
+    }
   };
 
-  const handleArchive = (): void => {
-    toast.success('Email archived');
-    // TODO: Implement archive functionality
-    if (onClose) {
-      onClose();
+  const handleArchive = async (): Promise<void> => {
+    toast.loading('Archiving email...', { id: 'archive' });
+    
+    try {
+      const response = await fetch('/api/email/archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailId: email.id }),
+      });
+
+      if (!response.ok) throw new Error('Failed to archive email');
+      
+      toast.success('Email archived', { id: 'archive' });
+      
+      // Close viewer and refresh list
+      if (onClose) onClose();
+      window.dispatchEvent(new CustomEvent('refresh-email-list'));
+    } catch (error) {
+      console.error('Error archiving email:', error);
+      toast.error('Failed to archive email', { id: 'archive' });
     }
   };
 
@@ -96,11 +130,26 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     setComposerMode('forward');
   };
 
-  const handleDelete = (): void => {
-    toast.success('Email deleted');
-    // TODO: Implement delete functionality
-    if (onClose) {
-      onClose();
+  const handleDelete = async (): Promise<void> => {
+    toast.loading('Deleting email...', { id: 'delete' });
+    
+    try {
+      const response = await fetch('/api/email/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailId: email.id }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete email');
+      
+      toast.success('Email deleted', { id: 'delete' });
+      
+      // Close viewer and refresh list
+      if (onClose) onClose();
+      window.dispatchEvent(new CustomEvent('refresh-email-list'));
+    } catch (error) {
+      console.error('Error deleting email:', error);
+      toast.error('Failed to delete email', { id: 'delete' });
     }
   };
 

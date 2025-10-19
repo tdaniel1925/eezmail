@@ -339,7 +339,16 @@ export function ThreadSummary({ email }: ThreadSummaryProps): JSX.Element {
               {insights.meeting.time && ` at ${insights.meeting.time}`}
             </p>
           )}
-          <button className="mt-2 w-full rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors">
+          <button 
+            onClick={() => {
+              // Navigate to calendar with pre-filled event
+              const eventTitle = email.subject || 'Meeting';
+              const eventDate = insights.meeting.date || '';
+              const eventTime = insights.meeting.time || '';
+              window.location.href = `/dashboard/calendar?event=${encodeURIComponent(eventTitle)}&date=${encodeURIComponent(eventDate)}&time=${encodeURIComponent(eventTime)}`;
+            }}
+            className="mt-2 w-full rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 transition-colors"
+          >
             Add to Calendar
           </button>
         </div>
