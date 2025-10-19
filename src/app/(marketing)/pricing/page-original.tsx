@@ -7,151 +7,115 @@ export const metadata = {
     'Start free, upgrade when ready. easeMail offers flexible pricing for individuals and teams. 50% less than Superhuman with more features.',
 };
 
-const plans = [
-  {
-    name: 'Starter',
-    price: '$0',
-    period: '/month',
-    description: 'Perfect for trying out easeMail',
-    features: [
-      { text: 'Up to 10 emails processed per day', included: true },
-      { text: 'Basic AI features', included: true },
-      { text: 'Standard templates', included: true },
-      { text: 'Email support', included: true },
-      { text: 'Single email account', included: true },
-      { text: 'Mobile app access', included: true },
-      { text: 'Advanced AI (RAG, semantic search)', included: false },
-      { text: 'Unlimited processing', included: false },
-      { text: 'Priority support', included: false },
-      { text: 'Team features', included: false },
-    ],
-    cta: 'Start Free',
-    ctaLink: '/signup',
-    popular: false,
-  },
-  {
-    name: 'Professional',
-    price: '$49',
-    period: '/month',
-    description: 'For professionals who need power and speed',
-    features: [
-      { text: 'Unlimited email processing', included: true },
-      { text: 'Advanced AI (RAG, semantic search)', included: true },
-      { text: 'Smart compose with context', included: true },
-      { text: 'Thread summarization', included: true },
-      { text: 'Voice dictation', included: true },
-      { text: 'Custom templates', included: true },
-      { text: 'Priority support (24/7)', included: true },
-      { text: 'Unlimited email accounts', included: true },
-      { text: 'Advanced analytics', included: true },
-      { text: 'Scheduled sending', included: true },
-    ],
-    cta: 'Start Free Trial',
-    ctaLink: '/signup',
-    popular: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    period: '',
-    description: 'For teams and organizations',
-    features: [
-      { text: 'Everything in Professional', included: true },
-      { text: 'Dedicated account manager', included: true },
-      { text: 'SSO/SAML authentication', included: true },
-      { text: 'Custom integrations', included: true },
-      { text: 'On-premise deployment option', included: true },
-      { text: 'Custom data retention', included: true },
-      { text: 'SLA guarantee (99.9% uptime)', included: true },
-      { text: 'Advanced security controls', included: true },
-      { text: 'Team training & onboarding', included: true },
-      { text: 'Volume discounts', included: true },
-    ],
-    cta: 'Contact Sales',
-    ctaLink: '/contact',
-    popular: false,
-  },
-];
+export default function PricingPage() {
+  const renderCell = (value: boolean | string) => {
+    if (typeof value === 'boolean') {
+      return value ? (
+        <Check className="w-5 h-5 text-green-400 mx-auto" />
+      ) : (
+        <X className="w-5 h-5 text-slate-600 mx-auto" />
+      );
+    }
+    return <span className="text-sm text-slate-300">{value}</span>;
+  };
+  const plans = [
+    {
+      name: 'Starter',
+      price: '$0',
+      period: '/month',
+      description: 'Perfect for trying out easeMail',
+      features: [
+        { text: 'Up to 10 emails processed per day', included: true },
+        { text: 'Basic AI features', included: true },
+        { text: 'Standard templates', included: true },
+        { text: 'Email support', included: true },
+        { text: 'Single email account', included: true },
+        { text: 'Mobile app access', included: true },
+        { text: 'Advanced AI (RAG, semantic search)', included: false },
+        { text: 'Unlimited processing', included: false },
+        { text: 'Priority support', included: false },
+        { text: 'Team features', included: false },
+      ],
+      cta: 'Start Free',
+      ctaLink: '/signup',
+      popular: false,
+    },
+    {
+      name: 'Professional',
+      price: '$49',
+      period: '/month',
+      description: 'For professionals who need power and speed',
+      features: [
+        { text: 'Unlimited email processing', included: true },
+        { text: 'Advanced AI (RAG, semantic search)', included: true },
+        { text: 'Smart compose with context', included: true },
+        { text: 'Thread summarization', included: true },
+        { text: 'Voice dictation', included: true },
+        { text: 'Custom templates', included: true },
+        { text: 'Priority support (24/7)', included: true },
+        { text: 'Unlimited email accounts', included: true },
+        { text: 'Advanced analytics', included: true },
+        { text: 'Scheduled sending', included: true },
+      ],
+      cta: 'Start Free Trial',
+      ctaLink: '/signup',
+      popular: true,
+    },
+    {
+      name: 'Enterprise',
+      price: 'Custom',
+      period: '',
+      description: 'For teams and organizations',
+      features: [
+        { text: 'Everything in Professional', included: true },
+        { text: 'Dedicated account manager', included: true },
+        { text: 'SSO/SAML authentication', included: true },
+        { text: 'Custom integrations', included: true },
+        { text: 'On-premise deployment option', included: true },
+        { text: 'Custom data retention', included: true },
+        { text: 'SLA guarantee (99.9% uptime)', included: true },
+        { text: 'Advanced security controls', included: true },
+        { text: 'Team training & onboarding', included: true },
+        { text: 'Volume discounts', included: true },
+      ],
+      cta: 'Contact Sales',
+      ctaLink: '/contact',
+      popular: false,
+    },
+  ];
 
-const comparisonFeatures = [
-  {
-    category: 'Core Features',
-    items: [
+  const comparisonFeatures = [
+    { category: 'Core Features', items: [
       { name: 'Email accounts', starter: '1', pro: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'Emails processed per day', starter: '10', pro: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'AI semantic search', starter: false, pro: true, enterprise: true },
       { name: 'Smart compose', starter: 'Basic', pro: 'Advanced', enterprise: 'Advanced' },
       { name: 'Thread summarization', starter: false, pro: true, enterprise: true },
       { name: 'Voice dictation', starter: false, pro: true, enterprise: true },
-    ],
-  },
-  {
-    category: 'Productivity',
-    items: [
+    ]},
+    { category: 'Productivity', items: [
       { name: 'Templates', starter: 'Standard', pro: 'Custom', enterprise: 'Team templates' },
       { name: 'Scheduled sending', starter: false, pro: true, enterprise: true },
       { name: 'Bulk operations', starter: false, pro: true, enterprise: true },
       { name: 'Keyboard shortcuts', starter: true, pro: true, enterprise: true },
       { name: 'Offline mode', starter: false, pro: true, enterprise: true },
-    ],
-  },
-  {
-    category: 'Team & Enterprise',
-    items: [
+    ]},
+    { category: 'Team & Enterprise', items: [
       { name: 'Team collaboration', starter: false, pro: false, enterprise: true },
       { name: 'Shared inboxes', starter: false, pro: false, enterprise: true },
       { name: 'SSO/SAML', starter: false, pro: false, enterprise: true },
       { name: 'Custom data retention', starter: false, pro: false, enterprise: true },
       { name: 'Dedicated support', starter: false, pro: false, enterprise: true },
       { name: 'SLA guarantee', starter: false, pro: false, enterprise: '99.9%' },
-    ],
-  },
-  {
-    category: 'Support',
-    items: [
+    ]},
+    { category: 'Support', items: [
       { name: 'Email support', starter: true, pro: true, enterprise: true },
       { name: 'Priority support', starter: false, pro: '24/7', enterprise: '24/7' },
       { name: 'Account manager', starter: false, pro: false, enterprise: 'Dedicated' },
       { name: 'Training & onboarding', starter: false, pro: false, enterprise: true },
-    ],
-  },
-];
+    ]},
+  ];
 
-const faqs = [
-  {
-    q: 'Can I switch plans anytime?',
-    a: 'Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any charges.',
-  },
-  {
-    q: 'What payment methods do you accept?',
-    a: 'We accept all major credit cards (Visa, Mastercard, Amex) and can invoice enterprise customers via ACH or wire transfer.',
-  },
-  {
-    q: 'Is there a free trial?',
-    a: 'Yes! All paid plans come with a 14-day free trial with full access to all features. No credit card required to start.',
-  },
-  {
-    q: 'Do you offer discounts for annual billing?',
-    a: 'Yes! Save 20% when you pay annually. Annual plans are billed as $470/year (vs $588 monthly) for Professional.',
-  },
-  {
-    q: 'What happens when I cancel?',
-    a: 'You can cancel anytime. You'll have access until the end of your billing period, and we'll export all your data if needed.',
-  },
-];
-
-function FeatureCell({ value }: { value: boolean | string }) {
-  if (typeof value === 'boolean') {
-    return value ? (
-      <Check className="w-5 h-5 text-green-400 mx-auto" />
-    ) : (
-      <X className="w-5 h-5 text-slate-600 mx-auto" />
-    );
-  }
-  return <span className="text-sm text-slate-300">{value}</span>;
-}
-
-export default function PricingPage() {
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Hero */}
@@ -170,7 +134,7 @@ export default function PricingPage() {
               </span>
             </h1>
             <p className="text-xl text-slate-300 leading-relaxed mb-8">
-              Start free, upgrade when you&apos;re ready. All plans include a 14-day free trial—no credit card required.
+              Start free, upgrade when you're ready. All plans include a 14-day free trial—no credit card required.
             </p>
           </div>
         </div>
@@ -196,7 +160,7 @@ export default function PricingPage() {
                     </span>
                   </div>
                 )}
-
+                
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                   <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
@@ -243,7 +207,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Detailed Feature Comparison</h2>
-            <p className="text-slate-400">See exactly what&apos;s included in each plan</p>
+            <p className="text-slate-400">See exactly what's included in each plan</p>
           </div>
 
           <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md overflow-hidden">
@@ -260,28 +224,22 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {comparisonFeatures.map((section, sectionIdx) => (
-                    <tbody key={sectionIdx}>
-                      <tr className="border-t border-white/10 bg-white/5">
+                  {comparisonFeatures.map((section) => (
+                    <>
+                      <tr key={section.category} className="border-t border-white/10 bg-white/5">
                         <td colSpan={4} className="p-4 text-sm font-semibold text-white">
                           {section.category}
                         </td>
                       </tr>
                       {section.items.map((item, idx) => (
-                        <tr key={idx} className="border-t border-white/5">
+                        <tr key={`${section.category}-${idx}`} className="border-t border-white/5">
                           <td className="p-4 text-sm text-slate-300">{item.name}</td>
-                          <td className="p-4 text-center">
-                            <FeatureCell value={item.starter} />
-                          </td>
-                          <td className="p-4 text-center bg-[#FF4C5A]/5">
-                            <FeatureCell value={item.pro} />
-                          </td>
-                          <td className="p-4 text-center">
-                            <FeatureCell value={item.enterprise} />
-                          </td>
+                          <td className="p-4 text-center">{renderCell(item.starter)}</td>
+                          <td className="p-4 text-center bg-[#FF4C5A]/5">{renderCell(item.pro)}</td>
+                          <td className="p-4 text-center">{renderCell(item.enterprise)}</td>
                         </tr>
                       ))}
-                    </tbody>
+                    </>
                   ))}
                 </tbody>
               </table>
@@ -295,7 +253,28 @@ export default function PricingPage() {
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Pricing FAQs</h2>
           <div className="space-y-6">
-            {faqs.map((faq, idx) => (
+            {[
+              {
+                q: 'Can I switch plans anytime?',
+                a: 'Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any charges.',
+              },
+              {
+                q: 'What payment methods do you accept?',
+                a: 'We accept all major credit cards (Visa, Mastercard, Amex) and can invoice enterprise customers via ACH or wire transfer.',
+              },
+              {
+                q: 'Is there a free trial?',
+                a: 'Yes! All paid plans come with a 14-day free trial with full access to all features. No credit card required to start.',
+              },
+              {
+                q: 'Do you offer discounts for annual billing?',
+                a: 'Yes! Save 20% when you pay annually. Annual plans are billed as $470/year (vs $588 monthly) for Professional.',
+              },
+              {
+                q: 'What happens when I cancel?',
+                a: 'You can cancel anytime. You'll have access until the end of your billing period, and we'll export all your data if needed.',
+              },
+            ].map((faq, idx) => (
               <div key={idx} className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
                 <h3 className="text-lg font-semibold mb-2">{faq.q}</h3>
                 <p className="text-slate-400">{faq.a}</p>
@@ -325,3 +304,4 @@ export default function PricingPage() {
     </div>
   );
 }
+
