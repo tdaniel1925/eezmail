@@ -59,3 +59,22 @@ Sequence animation intro. Usage:
   animation-play-state: paused;
 }
 
+/* Shine animation for hover effects */
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(30deg);
+  }
+}
+
+/* Pulse glow animation */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(30, 64, 175, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(30, 64, 175, 0.6);
+  }
+}

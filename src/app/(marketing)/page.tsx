@@ -6,6 +6,7 @@ import { MarqueeText } from '@/components/landing/MarqueeText';
 import { TicketCard } from '@/components/landing/TicketCard';
 import { Accordion } from '@/components/landing/Accordion';
 import { AnimatedSection } from '@/components/landing/AnimatedSection';
+import { ParallaxSection } from '@/components/landing/ParallaxSection';
 import { MarketingInteractions } from '@/components/marketing/MarketingInteractions';
 import { AnimatedCounter } from '@/components/marketing/AnimatedCounter';
 import { NewsletterSignup } from '@/components/marketing/NewsletterSignup';

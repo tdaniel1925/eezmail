@@ -1,33 +1,45 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { useRef } from 'react';
+import { useEffect, useRef, ReactNode } from 'react';
 
 interface ParallaxSectionProps {
-  children: React.ReactNode;
+  children: ReactNode;
   speed?: number;
   className?: string;
 }
 
-export function ParallaxSection({
-  children,
-  speed = 0.5,
-  className = '',
-}: ParallaxSectionProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
+export function ParallaxSection({ children, speed = 0.5, className = '' }: ParallaxSectionProps) {
+  const sectionRef = useRef<HTMLDivElement>(null);
 
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', `${speed * 100}%`]);
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!sectionRef.current) return;
+
+      const scrolled = window.scrollY;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const sectionTop = rect.top + scrolled;
+      const sectionHeight = rect.height;
+      const windowHeight = window.innerHeight;
+
+      // Only apply parallax when section is in view
+      if (
+        scrolled + windowHeight > sectionTop &&
+        scrolled < sectionTop + sectionHeight
+      ) {
+        const yPos = -(scrolled - sectionTop) * speed;
+        sectionRef.current.style.transform = `translate3d(0, ${yPos}px, 0)`;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // Initial check
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [speed]);
 
   return (
-    <div ref={ref} className={`relative overflow-hidden ${className}`}>
-      <motion.div style={{ y }}>
-        {children}
-      </motion.div>
+    <div ref={sectionRef} className={`transition-transform duration-100 ${className}`}>
+      {children}
     </div>
   );
 }
-
