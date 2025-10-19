@@ -34,6 +34,12 @@ export function DangerZone(): JSX.Element {
       } else {
         toast.error('Failed to verify data wipe');
       }
+      
+      // Show missing tables warning
+      if (result.missingTables && result.missingTables.length > 0) {
+        toast.warning(`⚠️ ${result.missingTables.length} database tables are missing. Check console for details.`);
+        console.warn('Missing tables:', result.missingTables);
+      }
     } catch (error) {
       console.error('Error verifying data:', error);
       toast.error('An unexpected error occurred during verification');

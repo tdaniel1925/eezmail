@@ -46,6 +46,7 @@ export async function verifyDataWipe(): Promise<{
   success: boolean;
   remainingData: Record<string, number>;
   isClean: boolean;
+  missingTables?: string[];
 }> {
   try {
     const supabase = await createClient();
@@ -58,6 +59,9 @@ export async function verifyDataWipe(): Promise<{
     }
 
     console.log('🔍 Verifying data wipe for user:', user.id);
+
+    // Track which tables don't exist
+    const missingTables: string[] = [];
 
     // Get account IDs first
     const userAccounts = await db.query.emailAccounts.findMany({
@@ -73,55 +77,55 @@ export async function verifyDataWipe(): Promise<{
     
     try {
       counts.contacts = (await db.query.contacts.findMany({ where: eq(contacts.userId, user.id) })).length;
-    } catch (e) { counts.contacts = 0; }
+    } catch (e) { counts.contacts = 0; missingTables.push('contacts'); }
     
     try {
       counts.contactNotes = (await db.query.contactNotes.findMany({ where: eq(contactNotes.userId, user.id) })).length;
-    } catch (e) { counts.contactNotes = 0; }
+    } catch (e) { counts.contactNotes = 0; missingTables.push('contact_notes'); }
     
     try {
       counts.contactTimeline = (await db.query.contactTimeline.findMany({ where: eq(contactTimeline.userId, user.id) })).length;
-    } catch (e) { counts.contactTimeline = 0; }
+    } catch (e) { counts.contactTimeline = 0; missingTables.push('contact_timeline'); }
     
     try {
       counts.emailSettings = (await db.query.emailSettings.findMany({ where: eq(emailSettings.userId, user.id) })).length;
-    } catch (e) { counts.emailSettings = 0; }
+    } catch (e) { counts.emailSettings = 0; missingTables.push('email_settings'); }
     
     try {
       counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
-    } catch (e) { counts.emailRules = 0; }
+    } catch (e) { counts.emailRules = 0; missingTables.push('email_rules'); }
     
     try {
       counts.emailSignatures = (await db.query.emailSignatures.findMany({ where: eq(emailSignatures.userId, user.id) })).length;
-    } catch (e) { counts.emailSignatures = 0; }
+    } catch (e) { counts.emailSignatures = 0; missingTables.push('email_signatures'); }
     
     try {
       counts.senderTrust = (await db.query.senderTrust.findMany({ where: eq(senderTrust.userId, user.id) })).length;
-    } catch (e) { counts.senderTrust = 0; }
+    } catch (e) { counts.senderTrust = 0; missingTables.push('sender_trust'); }
     
     try {
       counts.aiReplyDrafts = (await db.query.aiReplyDrafts.findMany({ where: eq(aiReplyDrafts.userId, user.id) })).length;
-    } catch (e) { counts.aiReplyDrafts = 0; }
+    } catch (e) { counts.aiReplyDrafts = 0; missingTables.push('ai_reply_drafts'); }
     
     try {
       counts.chatbotActions = (await db.query.chatbotActions.findMany({ where: eq(chatbotActions.userId, user.id) })).length;
-    } catch (e) { counts.chatbotActions = 0; }
+    } catch (e) { counts.chatbotActions = 0; missingTables.push('chatbot_actions'); }
     
     try {
       counts.extractedActions = (await db.query.extractedActions.findMany({ where: eq(extractedActions.userId, user.id) })).length;
-    } catch (e) { counts.extractedActions = 0; }
+    } catch (e) { counts.extractedActions = 0; missingTables.push('extracted_actions'); }
     
     try {
       counts.followUpReminders = (await db.query.followUpReminders.findMany({ where: eq(followUpReminders.userId, user.id) })).length;
-    } catch (e) { counts.followUpReminders = 0; }
+    } catch (e) { counts.followUpReminders = 0; missingTables.push('follow_up_reminders'); }
     
     try {
       counts.tasks = (await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })).length;
-    } catch (e) { counts.tasks = 0; }
+    } catch (e) { counts.tasks = 0; missingTables.push('tasks'); }
     
     try {
       counts.customLabels = (await db.query.customLabels.findMany({ where: eq(customLabels.userId, user.id) })).length;
-    } catch (e) { counts.customLabels = 0; }
+    } catch (e) { counts.customLabels = 0; missingTables.push('custom_labels'); }
 
     // Check account-level data if accounts exist
     if (accountIds.length > 0) {
@@ -158,11 +162,16 @@ export async function verifyDataWipe(): Promise<{
 
     console.log('📊 Verification Results:', counts);
     console.log(isClean ? '✅ All data wiped!' : '⚠️  Some data remains:', totalRemaining, 'records');
+    
+    if (missingTables.length > 0) {
+      console.warn('⚠️  Missing database tables:', missingTables.join(', '));
+    }
 
     return {
       success: true,
       remainingData: counts,
       isClean,
+      missingTables, // Add this to return value
     };
   } catch (error) {
     console.error('❌ Error verifying data wipe:', error);
