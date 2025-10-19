@@ -42,73 +42,37 @@ export default function LandingPage() {
         />
 
         {/* Hero Content */}
-        <main className="z-10 flex h-[calc(100vh-80px)] relative items-end">
-          <section className="md:px-8 md:pb-16 lg:pb-20 w-full max-w-7xl mr-auto ml-auto pr-6 pb-12 pl-6">
-            {/* Top divider */}
-            <div className="mb-12 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
-
-            <div className="grid grid-cols-1 md:grid-cols-12 md:gap-6 lg:gap-10 gap-x-8 gap-y-8 items-center">
-              {/* Column 1: Tag + Headline */}
-              <div className="md:col-span-5 lg:col-span-5 relative">
-                <div className="inline-flex text-xs font-medium text-white/80 bg-white/5 ring-white/10 ring-1 rounded-full mb-5 pt-1.5 pr-3 pb-1.5 pl-3 backdrop-blur-sm gap-x-2 gap-y-2 items-center">
-                  <Sparkles className="h-3.5 w-3.5 text-white/80" />
-                  Next-Gen Email Intelligence
-                </div>
-                <h1 className="leading-tight sm:text-5xl md:text-5xl lg:text-6xl text-4xl tracking-tighter">
-                  Transform Your Email Workflow
-                  <span className="block bg-clip-text text-transparent tracking-tighter bg-gradient-to-r from-white via-white to-white/70">
-                    with AI-Powered Intelligence
-                  </span>
-                </h1>
-              </div>
-
-              {/* Vertical divider */}
-              <div className="hidden md:block md:col-span-1 lg:col-span-1 relative">
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-white/20 via-white/10 to-white/5 -translate-x-1/2"></div>
-              </div>
-
-              {/* Column 2: Description */}
-              <div className="md:col-span-4 lg:col-span-3 relative">
-                <p className="leading-relaxed md:text-lg text-base text-white/70">
-                  We partner with professionals to design, build, and deploy AI-powered email systems that drive
-                  measurable productivity gains and save 10+ hours per week.
-                </p>
-                <div className="border-white/10 border-t mt-6 pt-6">
-                  <div className="flex gap-4 text-sm text-white/50 gap-x-4 gap-y-4 items-center">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-slate-400" />
-                      <span>Instant semantic search</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vertical divider */}
-              <div className="hidden lg:block lg:col-span-1 relative">
-                <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-white/20 via-white/10 to-white/5 -translate-x-1/2"></div>
-              </div>
-
-              {/* Column 3: Buttons */}
-              <div className="md:col-span-12 lg:col-span-2 relative">
-                <div className="flex flex-row lg:flex-col gap-x-3 gap-y-3">
-                  <Link
-                    href="/features"
-                    className="inline-flex items-center justify-center gap-2 transition hover:bg-white/15 hover:ring-white/25 whitespace-nowrap text-sm font-medium text-white/90 bg-white/10 ring-white/15 ring-1 rounded-full pt-2.5 pr-4 pb-2.5 pl-4 backdrop-blur-sm"
-                  >
-                    Try easeMail
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center gap-2 ring-1 ring-white/20 transition hover:bg-neutral-100 whitespace-nowrap text-sm font-medium text-neutral-900 bg-white rounded-full pt-2.5 pr-4 pb-2.5 pl-4"
-                  >
-                    Start Free Trial
-                    <Calendar className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
+        <main className="z-10 flex h-[calc(100vh-80px)] relative items-center justify-center">
+          <div className="text-center">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
+                Refresh your skin,
+              </span>
+              <img
+                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/ead6a95d-ae67-4b24-9f26-ae02bf27cb1e_3840w.jpg"
+                alt="Model applying serum"
+                className="inline-block sm:h-12 sm:w-12 md:h-14 md:w-14 bg-white w-10 h-10 object-cover ring-white ring-4 rounded-2xl shadow-xl -rotate-6"
+              />
+              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
+                love yourself,
+              </span>
+              <img
+                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/cab73078-80bd-4f30-8d0d-775e21f09e27_3840w.jpg"
+                alt="Spa mask moment"
+                className="inline-block sm:h-12 sm:w-12 md:h-14 md:w-14 ring-white ring-4 bg-white w-10 h-10 object-cover rounded-2xl shadow-xl rotate-6"
+              />
             </div>
-          </section>
+            <div className="flex flex-wrap gap-3 sm:gap-4 mt-2 items-center justify-center">
+              <img
+                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/16c0110c-f333-4a45-a83a-d83ff9487661_3840w.jpg"
+                alt="Leaf detail"
+                className="inline-block sm:h-12 sm:w-20 md:h-14 md:w-24 ring-white ring-4 w-16 h-12 object-cover rounded-2xl shadow-xl -rotate-3"
+              />
+              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
+                renew your glow.
+              </span>
+            </div>
+          </div>
         </main>
 
         {/* Subtle vignette */}

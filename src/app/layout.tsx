@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import './globals.css';
 import { BackgroundEffects } from '@/components/layout/BackgroundEffects';
 import { ThemeProvider } from 'next-themes';
@@ -7,6 +7,11 @@ import { DatabaseHealthProvider } from '@/components/providers/DatabaseHealthPro
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
+const playfair = Playfair_Display({ 
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'easeMail - AI-Powered Email for Enterprises | Save 10 Hours Per Week',
@@ -21,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${playfair.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <BackgroundEffects />
           {children}
