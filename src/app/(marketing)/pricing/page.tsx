@@ -8,6 +8,17 @@ export const metadata = {
     'Start free, upgrade when ready. easeMail offers flexible pricing for individuals and teams. 50% less than Superhuman with more features.',
 };
 
+function renderCell(value: boolean | string) {
+  if (typeof value === 'boolean') {
+    return value ? (
+      <Check className="w-5 h-5 text-green-400 mx-auto" />
+    ) : (
+      <X className="w-5 h-5 text-slate-600 mx-auto" />
+    );
+  }
+  return <span className="text-sm text-slate-300">{value}</span>;
+}
+
 export default function PricingPage() {
   const plans = [
     {
@@ -106,17 +117,6 @@ export default function PricingPage() {
       { name: 'Training & onboarding', starter: false, pro: false, enterprise: true },
     ]},
   ];
-
-  const renderCell = (value: boolean | string) => {
-    if (typeof value === 'boolean') {
-      return value ? (
-        <Check className="w-5 h-5 text-green-400 mx-auto" />
-      ) : (
-        <X className="w-5 h-5 text-slate-600 mx-auto" />
-      );
-    }
-    return <span className="text-sm text-slate-300">{value}</span>;
-  };
 
   return (
     <div className="min-h-screen bg-slate-950">
