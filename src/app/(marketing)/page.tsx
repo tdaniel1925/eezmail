@@ -1,957 +1,462 @@
 import Link from 'next/link';
-import { Sparkles, Zap, Activity, Smile, Clock, Check, ArrowRight, Calendar, Shield } from 'lucide-react';
-import { ROICalculator } from '@/components/marketing/ROICalculator';
-import { ComparisonTable } from '@/components/marketing/ComparisonTable';
-import { FAQSection } from '@/components/marketing/FAQSection';
-import { DemoVideo } from '@/components/marketing/DemoVideo';
+import { Sparkles, Zap, Calendar, MapPin, ArrowRight, Check, Users, Target, Rocket } from 'lucide-react';
+import { VideoBackground } from '@/components/landing/VideoBackground';
+import { AnimatedCard } from '@/components/landing/AnimatedCard';
+import { MarqueeText } from '@/components/landing/MarqueeText';
+import { TicketCard } from '@/components/landing/TicketCard';
+import { Accordion } from '@/components/landing/Accordion';
+import Image from 'next/image';
 
 export const metadata = {
   title: 'easeMail - AI-Powered Email for Enterprises | Save 10 Hours Per Week',
   description:
-    'The fastest, most intelligent email client for teams. AI-powered productivity, enterprise security, and 50% less cost than Superhuman. Start your free trial today.',
+    'Transform your email workflow with AI-powered intelligence. The future of email productivity starts here.',
 };
 
 export default function LandingPage() {
+  const faqItems = [
+    {
+      id: '1',
+      title: 'What is easeMail?',
+      content: 'easeMail is an AI-powered email client designed for professionals and teams. It combines intelligent automation, semantic search, and productivity features to help you process email 10x faster.',
+    },
+    {
+      id: '2',
+      title: 'How does AI email processing work?',
+      content: 'Our AI automatically categorizes, prioritizes, and summarizes your emails using advanced machine learning. It learns from your behavior to provide increasingly accurate suggestions and automations.',
+    },
+    {
+      id: '3',
+      title: 'Is my data secure?',
+      content: 'Absolutely. We use enterprise-grade encryption, comply with SOC 2 Type II and GDPR standards, and never sell your data. Your email content is processed securely and never shared with third parties.',
+    },
+    {
+      id: '4',
+      title: 'What email providers do you support?',
+      content: 'easeMail works with Gmail, Outlook, Office 365, and any IMAP-compatible email provider. We support multiple accounts and unified inbox views.',
+    },
+    {
+      id: '5',
+      title: 'Can I cancel anytime?',
+      content: 'Yes! There are no long-term contracts. You can upgrade, downgrade, or cancel your subscription at any time. Your data remains accessible during your billing period.',
+    },
+    {
+      id: '6',
+      title: 'Do you offer a free trial?',
+      content: 'Yes! We offer a 14-day free trial with full access to all Professional features. No credit card required to start.',
+    },
+  ];
+
   return (
     <>
       {/* Hero Section */}
-      <div className="relative h-screen overflow-hidden" id="hero">
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none absolute inset-0 z-0">
-          {/* Vertical lines */}
-          <div className="absolute inset-y-0 left-[12.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[25%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[37.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[50%] w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[62.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[75%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[87.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
+      <VideoBackground
+        videoSrc="/landing/video/2.mp4"
+        className="min-h-screen section-dark text-light relative"
+        overlayOpacity={0.8}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1E40AF]/10 to-transparent opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
+        
+        <div className="relative z-20 min-h-screen flex items-center justify-center">
+          <div className="container mx-auto px-6">
+            <div className="text-center max-w-5xl mx-auto">
+              <div className="inline-flex items-center gap-2 text-xs font-medium text-white/80 bg-white/5 ring-white/10 ring-1 rounded-full mb-8 pt-1.5 pr-3 pb-1.5 pl-3 backdrop-blur-sm">
+                <Sparkles className="h-3.5 w-3.5" />
+                The Future of Intelligence
+              </div>
 
-          {/* Horizontal lines */}
-          <div className="absolute inset-x-0 top-[20%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[40%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[60%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[80%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-        </div>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6">
+                AI Email Summit 2025
+              </h1>
 
-        {/* Background image */}
-        <img
-          src="/images/hero-bg.jpg"
-          alt=""
-          className="pointer-events-none w-full h-full object-cover absolute top-0 right-0 bottom-0 left-0"
-        />
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8 text-lg">
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-6 w-6 text-[#1E40AF]" />
+                  <span className="text-white font-semibold">October 1–5, 2025</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-6 w-6 text-[#1E40AF]" />
+                  <span className="text-white font-semibold">San Francisco, CA</span>
+                </div>
+              </div>
 
-        {/* Hero Content */}
-        <main className="z-10 flex h-[calc(100vh-80px)] relative items-center justify-center">
-          <div className="text-center">
-            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
-                Refresh your skin,
-              </span>
-              <img
-                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/ead6a95d-ae67-4b24-9f26-ae02bf27cb1e_3840w.jpg"
-                alt="Model applying serum"
-                className="inline-block sm:h-12 sm:w-12 md:h-14 md:w-14 bg-white w-10 h-10 object-cover ring-white ring-4 rounded-2xl shadow-xl -rotate-6"
-              />
-              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
-                love yourself,
-              </span>
-              <img
-                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/cab73078-80bd-4f30-8d0d-775e21f09e27_3840w.jpg"
-                alt="Spa mask moment"
-                className="inline-block sm:h-12 sm:w-12 md:h-14 md:w-14 ring-white ring-4 bg-white w-10 h-10 object-cover rounded-2xl shadow-xl rotate-6"
-              />
-            </div>
-            <div className="flex flex-wrap gap-3 sm:gap-4 mt-2 items-center justify-center">
-              <img
-                src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/16c0110c-f333-4a45-a83a-d83ff9487661_3840w.jpg"
-                alt="Leaf detail"
-                className="inline-block sm:h-12 sm:w-20 md:h-14 md:w-24 ring-white ring-4 w-16 h-12 object-cover rounded-2xl shadow-xl -rotate-3"
-              />
-              <span className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-semibold italic font-playfair text-neutral-900 dark:text-white">
-                renew your glow.
-              </span>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+                >
+                  <span>Get Tickets</span>
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+                <Link
+                  href="#section-schedule"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-full ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15 transition-all duration-300"
+                >
+                  <span>View Schedule</span>
+                </Link>
+              </div>
             </div>
           </div>
-        </main>
+        </div>
 
-        {/* Subtle vignette */}
-        <div className="pointer-events-none absolute top-0 right-0 bottom-0 left-0"></div>
-      </div>
-
-      {/* Demo Video Section */}
-      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-900/50">
-        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
-              <Sparkles className="w-4 h-4" />
-              See It In Action
+        {/* Bottom Card */}
+        <div className="absolute bottom-0 left-0 right-0 z-30 pb-8 hidden md:block">
+          <div className="container mx-auto px-6">
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex items-center justify-between gap-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">Hurry Up!</h2>
+                <p className="text-white/70">Book Your Seat Now</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="h-12 w-12 text-[#1E40AF]" />
+                <div>
+                  <p className="text-white font-semibold">121 AI Blvd</p>
+                  <p className="text-white/70 text-sm">San Francisco BCA 94107</p>
+                </div>
+              </div>
             </div>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4 text-white">
-              Watch How AI Transforms Your Email
+          </div>
+        </div>
+      </VideoBackground>
+
+      {/* About Section */}
+      <section id="section-about" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+                About the Event
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                A Global Gathering of AI Innovators
+              </h2>
+              <p className="text-white/70 text-lg mb-8">
+                Join thought leaders, developers, researchers, and founders as we explore how artificial intelligence 
+                is reshaping industries, creativity, and the future of work.
+              </p>
+
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
+                  <span className="text-white/80">5 days of keynotes, workshops, and networking</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
+                  <span className="text-white/80">50 world-class speakers</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
+                  <span className="text-white/80">Startup showcase and live demos</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="relative">
+              <div className="relative w-full aspect-square">
+                <Image
+                  src="/landing/images/misc/c1.webp"
+                  alt="AI Innovation"
+                  fill
+                  className="object-cover rounded-2xl"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Marquee Section */}
+      <section className="bg-slate-950 py-8">
+        <div className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] py-6 transform rotate-2">
+          <MarqueeText
+            items={[
+              'Next Intelligence',
+              'Future Now',
+              'Empowering Innovation',
+              'Smarter Tomorrow',
+              'Think Forward',
+              'Cognitive Shift',
+            ]}
+            className="text-white text-4xl md:text-6xl font-bold"
+          />
+        </div>
+        <div className="bg-gradient-to-r from-[#3B82F6] to-[#1E40AF] py-6 transform -rotate-1 -mt-8">
+          <MarqueeText
+            items={[
+              'Next Intelligence',
+              'Future Now',
+              'Empowering Innovation',
+              'Smarter Tomorrow',
+              'Think Forward',
+              'Cognitive Shift',
+            ]}
+            direction="right"
+            className="text-white text-4xl md:text-6xl font-bold"
+          />
+        </div>
+      </section>
+
+      {/* Why Attend Section */}
+      <section id="section-why-attend" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+              Why Attend
+            </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              What You'll Gain
             </h2>
-            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-              See easeMail's powerful features in action—from semantic search to smart compose—all in under 2 minutes
+            <p className="text-white/70 text-lg">
+              Hear from global AI pioneers, industry disruptors, and bold thinkers shaping the future across every domain.
             </p>
           </div>
-          <DemoVideo />
-        </div>
-      </section>
 
-      {/* Solutions Section (Stats Cards) */}
-      <section className="overflow-hidden lg:py-20 pt-8 pb-8 relative bg-slate-950" id="solutions">
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none z-0 absolute top-0 right-0 bottom-0 left-0">
-          <div className="absolute inset-y-0 left-[15%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[35%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[65%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[85%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[25%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[50%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-[75%] h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-        </div>
-
-        <div className="z-10 md:px-8 flex flex-col h-full max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          <div className="flex-1 flex items-center">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 w-full gap-x-6 gap-y-6">
-              {/* Card 1: Real-time metrics */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
-                  <Activity className="w-3.5 h-3.5" />
-                  Real-time metrics
-                </div>
-
-                <div className="mt-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <p className="md:text-lg leading-relaxed text-base text-slate-300">
-                      AI-powered email market projected to grow by
-                      <span className="text-orange-300 font-normal"> 59%</span> by 2025
-                    </p>
-
-                    {/* Inline trend */}
-                    <div className="mt-4 rounded-xl bg-black/20 ring-1 ring-white/10 p-3">
-                      <div className="flex gap-2 h-24 gap-x-2 gap-y-2 items-end">
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '28px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '46px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '46px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '54px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '64px' }}></div>
-                        <div className="bg-orange-400/70 w-4 rounded" style={{ height: '88px' }}></div>
-                        <div className="bg-orange-400/80 w-4 rounded" style={{ height: '96px' }}></div>
-                        <div className="bg-orange-400/80 w-4 rounded" style={{ height: '96px' }}></div>
-                        <div className="bg-orange-400/70 w-4 rounded" style={{ height: '88px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '64px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '54px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '28px' }}></div>
-                        <div className="bg-white/10 w-4 rounded" style={{ height: '28px' }}></div>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                        <span>2021</span>
-                        <span>2025</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-white/5">
-                    <div className="text-4xl md:text-5xl font-normal tracking-tighter">$40B</div>
-                    <p className="text-slate-400 text-sm mt-1">Expected valuation</p>
-                    <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                      <Check className="w-3.5 h-3.5 text-orange-300" />
-                      <span>Forecasted growth trajectory</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: AI Email Analysis */}
-              <div className="overflow-hidden md:p-4 flex flex-col bg-gradient-to-b from-white/10 to-white/5 h-full ring-white/10 ring-1 rounded-3xl pt-3 pr-3 pb-3 pl-3 relative backdrop-blur-md">
-                <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 flex-1">
-                  <img
-                    src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/863c6d3d-359c-471a-8fd8-543677b59c4c_800w.webp"
-                    alt="Email analysis"
-                    className="min-h-[256px] md:min-h-[320px] w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 md:top-4 left-4 right-4 flex items-center justify-between">
-                    <span className="text-slate-100 text-sm md:text-base font-normal tracking-tighter">98%</span>
-                    <span className="text-[11px] md:text-xs text-slate-300/80">Email categorization</span>
-                  </div>
-                  <div className="absolute bottom-3 left-4 right-4 flex items-center gap-2">
-                    <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full">
-                      <div className="w-1.5 h-1.5 rounded-full bg-orange-300"></div>
-                      <span className="text-[10px] text-slate-200">Live processing</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="relative px-2 md:px-1 pt-4">
-                  <h3 className="md:text-xl text-lg font-normal tracking-tighter">AI Email Analysis</h3>
-                  <p className="text-sm text-slate-400">Intelligent categorization in milliseconds</p>
-                </div>
-              </div>
-
-              {/* Card 3: Success Rate */}
-              <div className="md:p-6 flex flex-col bg-slate-900/60 ring-white/10 ring-1 rounded-3xl pt-5 pr-5 pb-5 pl-5 backdrop-blur-md h-full">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="md:text-lg leading-relaxed text-base text-slate-300">
-                    With a <span className="text-orange-300 font-normal">75%</span> user satisfaction rate, we help teams
-                    process email reliably and efficiently.
-                  </p>
-                </div>
-
-                <div className="mt-6 flex-1 flex flex-col justify-between">
-                  <div>
-                    <p className="text-sm text-slate-400">Delivery outcomes</p>
-                    <div className="mt-4 grid grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-slate-300 text-xs">Succeeded</p>
-                        <div className="text-2xl md:text-3xl font-normal tracking-tighter">63%</div>
-                      </div>
-                      <div>
-                        <p className="text-slate-300 text-xs">In Progress</p>
-                        <div className="text-2xl md:text-3xl font-normal tracking-tighter">24%</div>
-                      </div>
-                      <div>
-                        <p className="text-slate-300 text-xs">Failed</p>
-                        <div className="text-2xl md:text-3xl font-normal tracking-tighter">13%</div>
-                      </div>
-                    </div>
-
-                    {/* Bars */}
-                    <div className="mt-5 space-y-3">
-                      {/* Success bar */}
-                      <div className="relative h-5 rounded-full bg-white/5 ring-1 ring-white/10 overflow-hidden">
-                        <div className="bg-orange-400/80 absolute top-0 bottom-0 left-0" style={{ width: '63%' }}></div>
-                        <div className="absolute left-[63%] -translate-x-1/2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow"></div>
-                      </div>
-                      {/* In progress bar */}
-                      <div className="relative h-5 rounded-full bg-white/5 ring-1 ring-white/10 overflow-hidden">
-                        <div className="absolute inset-y-0 left-0 bg-red-500/80" style={{ width: '24%' }}></div>
-                        <div className="absolute left-[24%] -translate-x-1/2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white shadow"></div>
-                      </div>
-                      {/* Failed bar */}
-                      <div className="relative h-5 rounded-full bg-white/5 ring-1 ring-white/10 overflow-hidden">
-                        <div className="absolute inset-y-0 left-0 bg-slate-300/40" style={{ width: '13%' }}></div>
-                        <div className="absolute left-[13%] -translate-x-1/2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-white/80 shadow"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-white/5">
-                    <p className="text-xs text-slate-400">
-                      <span className="text-orange-300 font-normal">+12%</span> improvement vs. industry average
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4: Customer Satisfaction */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
-                  <Smile className="w-3.5 h-3.5" />
-                  Customer satisfaction
-                </div>
-
-                <div className="mt-4 flex-1 flex flex-col items-center justify-center">
-                  <div className="relative w-24 h-24">
-                    <div
-                      className="absolute inset-0 rounded-full"
-                      style={{
-                        background:
-                          'conic-gradient(rgba(163,230,53,0.85) 0% 86%, rgba(255,255,255,0.12) 86% 100%)',
-                      }}
-                    ></div>
-                    <div className="absolute inset-2 rounded-full bg-black/20 ring-1 ring-white/10"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-2xl font-normal tracking-tighter">4.8</div>
-                    </div>
-                  </div>
-                  <p className="mt-3 text-slate-400 text-sm">CSAT • last 90 days</p>
-
-                  <div className="mt-6 w-full pt-4 border-t border-white/5">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center">
-                        <div className="text-lg font-normal text-slate-300">1,240</div>
-                        <p className="text-xs text-slate-400">Responses</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-normal text-slate-300">+0.3</div>
-                        <p className="text-xs text-slate-400">vs. Last Period</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 5: Processing Speed */}
-              <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
-                  <Zap className="w-3.5 h-3.5" />
-                  Processing speed
-                </div>
-
-                <div className="mt-4 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="md:text-5xl text-4xl font-normal tracking-tighter">14 days</div>
-                    <p className="text-slate-400 text-sm">Avg. from signup to mastery</p>
-
-                    <div className="mt-5 grid grid-cols-3 items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-white/10 ring-1 ring-white/10 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-orange-300" />
-                        </div>
-                        <span className="text-xs text-slate-300">Discovery</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-white/10 ring-1 ring-white/10 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-orange-300" />
-                        </div>
-                        <span className="text-xs text-slate-300">Setup</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-white/10 ring-1 ring-white/10 flex items-center justify-center">
-                          <Check className="w-4 h-4 text-orange-300" />
-                        </div>
-                        <span className="text-xs text-slate-300">Mastery</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 pt-4 border-t border-white/5">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-lg font-normal text-slate-300">98%</div>
-                        <p className="text-xs text-slate-400">On-time delivery</p>
-                      </div>
-                      <div>
-                        <div className="text-lg font-normal text-slate-300">24/7</div>
-                        <p className="text-xs text-slate-400">Support coverage</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 6: Response Latency */}
-              <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-5 md:p-6 flex flex-col h-full">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 w-fit">
-                  <Clock className="w-3.5 h-3.5" />
-                  AI response time
-                </div>
-
-                <div className="mt-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="text-4xl md:text-5xl font-normal tracking-tighter">120ms</div>
-                    <p className="text-slate-400 text-sm">p95 response time</p>
-
-                    {/* Latency meter */}
-                    <div className="mt-4">
-                      <div className="relative h-3 rounded-full bg-white/5 ring-1 ring-white/10 overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-400/80 to-red-500/80"
-                          style={{ width: '60%' }}
-                        ></div>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between text-xs text-slate-400">
-                        <span>0ms</span>
-                        <span>200ms</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-white/5">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-lg font-normal text-slate-300">99.9%</div>
-                        <p className="text-xs text-slate-400">Uptime SLA</p>
-                      </div>
-                      <div>
-                        <div className="text-lg font-normal text-slate-300">50ms</div>
-                        <p className="text-xs text-slate-400">p50 latency</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Logos ticker section */}
-          <section className="z-10 fade-in fade-in-delay-4 sm:pb-12 sm:pt-12 pt-8 pb-8 relative animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.5s_both]">
-            <div className="sm:px-6 lg:px-8 max-w-7xl mr-auto ml-auto pr-4 pl-4">
-              <div className="text-center mb-12">
-                <p className="uppercase text-xs font-medium text-zinc-500 tracking-wide">Trusted by teams at</p>
-              </div>
-
-              {/* Ticker Container */}
-              <div
-                className="overflow-hidden relative"
-                style={{
-                  maskImage:
-                    'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-                  WebkitMaskImage:
-                    'linear-gradient(to right, transparent, black 15%, black 85%, transparent)',
-                }}
-              >
-                {/* Animated Ticker */}
-                <div className="ticker-track flex gap-16 pt-2 pb-2 gap-x-16 gap-y-16 items-center">
-                  {/* First set of logos */}
-                  <div className="flex gap-16 shrink-0 gap-x-16 gap-y-16 items-center">
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">TechFlow</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-bold tracking-tighter">Nexus Labs</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-semibold tracking-tighter">DataSync</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">VisionCorp</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-semibold tracking-tighter">CloudBase</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">InnovateTech</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-bold tracking-tighter">FlowState</span>
-                    </div>
-                  </div>
-
-                  {/* Duplicate set for seamless loop */}
-                  <div className="flex items-center gap-16 shrink-0">
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">TechFlow</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-bold tracking-tighter">Nexus Labs</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-semibold tracking-tighter">DataSync</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">VisionCorp</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-semibold tracking-tighter">CloudBase</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-normal tracking-tighter">InnovateTech</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-zinc-400 hover:text-white transition-colors duration-300">
-                      <span className="text-lg font-bold tracking-tighter">FlowState</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </section>
-
-      {/* Showcase Section */}
-      <section
-        className="overflow-hidden lg:py-24 bg-[url(https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/d521c037-f8b6-43a7-ae68-c6c1d0215733_3840w.webp)] bg-cover pt-16 pb-16 relative"
-        id="showcase"
-      >
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none z-0 absolute inset-0">
-          <div className="absolute inset-y-0 left-[12.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[37.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[62.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-        </div>
-
-        {/* Floating portrait (desktop) */}
-        <div className="hidden lg:block absolute right-8 top-10 z-10">
-          <div className="rounded-xl overflow-hidden ring-1 ring-white/10 bg-white/5 backdrop-blur-sm">
-            <img
-              src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/20253914-1507-436f-a56d-f7abbc5d0c73_800w.webp"
-              alt="Team portrait"
-              className="w-48 h-36 object-cover"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatedCard
+              title="Cutting-Edge Knowledge"
+              description="Stay ahead of the curve with insights from AI leaders shaping tomorrow's technology."
+              imageSrc="/landing/images/misc/s3.webp"
+              className="h-80"
+            />
+            <AnimatedCard
+              title="Hands-On Learning"
+              description="Join live workshops and labs to build practical skills in AI and machine learning."
+              imageSrc="/landing/images/misc/s4.webp"
+              className="h-80"
+            />
+            <AnimatedCard
+              title="Global Networking"
+              description="Meet developers, founders, and researchers from around the world to collaborate and grow."
+              imageSrc="/landing/images/misc/s5.webp"
+              className="h-80"
+            />
+            <AnimatedCard
+              title="Startup Showcase"
+              description="Explore the latest AI tools and ideas from promising startups and research labs."
+              imageSrc="/landing/images/misc/s6.webp"
+              className="h-80"
+            />
+            <AnimatedCard
+              title="AI Career Boost"
+              description="Access exclusive job fairs, mentorship sessions, and recruiting events to grow your career."
+              imageSrc="/landing/images/misc/s7.webp"
+              className="h-80"
+            />
+            <AnimatedCard
+              title="Ethics & Future"
+              description="Engage in vital conversations around AI ethics, policy, and the future of intelligence."
+              imageSrc="/landing/images/misc/s8.webp"
+              className="h-80"
             />
           </div>
-          <p className="text-[11px] text-slate-400 mt-2">Product Specialist</p>
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 gap-x-8 gap-y-8 items-center">
-            {/* Large visual */}
-            <div className="lg:col-span-7">
-              <div className="aspect-[16/11] md:aspect-[5/4] overflow-hidden rounded-3xl relative">
-                <img
-                  src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/2bad1237-d4b7-4abc-a4ff-4bb6e105b47d_1600w.png"
-                  alt="Email systems visual"
-                  className="[animation:parallaxElement_linear_both] [animation-timeline:view()] [animation-range:entry_0%_entry_100%] w-full h-full object-cover"
-                />
-              </div>
-            </div>
-
-            {/* Copy */}
-            <div className="lg:col-span-5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.05s_both] w-fit">
-                Point of view
-              </div>
-
-              <h2 className="animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.15s_both] sm:text-5xl md:text-6xl md:font-normal md:tracking-tighter text-4xl font-semibold tracking-tight mt-4">
-                Email Intelligence, Engineered with Precision
-              </h2>
-
-              <p className="md:mt-5 md:text-lg leading-relaxed animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.25s_both] text-base text-white/70 mt-5">
-                We design production-ready email AI that does more than impress in a demo. From rapid inbox triage to
-                mission-critical communications, our systems blend research rigor with product craft to deliver
-                measurable impact—safely, reliably, and at scale.
-              </p>
-
-              <Link
-                href="/features"
-                className="group inline-flex items-center gap-2 mt-6 text-sm font-medium text-white underline decoration-white/30 underline-offset-4 hover:decoration-white/60 animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.35s_both]"
-              >
-                Discover our features
-                <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* Resources Section */}
-      <section
-        className="overflow-hidden lg:py-24 bg-[url(https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/72c90007-7638-4902-8dda-5a6c20e92741_3840w.jpg)] bg-cover pt-16 pb-16 relative"
-        id="resources"
-      >
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none z-0 absolute inset-0">
-          <div className="absolute inset-y-0 left-[12.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[37.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[62.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
-        </div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
-          {/* Section header */}
-          <div className="max-w-3xl">
-            <div className="inline-flex text-[11px] ring-1 ring-white/10 animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.05s_both] font-medium text-white/70 bg-white/5 rounded-full pt-1.5 pr-3 pb-1.5 pl-3 gap-x-2 gap-y-2 items-center">
-              Key Features
+      {/* Speakers Section */}
+      <section id="section-speakers" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+              Speakers
             </div>
-            <h2 className="mt-4 sm:text-5xl md:text-6xl text-4xl font-normal tracking-tighter animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.15s_both]">
-              Experience AI-Powered Email Excellence
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Meet the Visionaries
             </h2>
-            <p className="md:mt-4 mt-3 md:text-lg text-base text-white/70 leading-relaxed animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.25s_both]">
-              Our platform delivers cutting-edge capabilities designed to transform your email workflow with intelligent
-              automation and seamless integration.
+            <p className="text-white/70 text-lg">
+              Learn from the best minds in artificial intelligence, machine learning, and innovation.
             </p>
           </div>
 
-          {/* Features grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-10 gap-x-6 gap-y-6">
-            {/* Card 1 */}
-            <div className="md:p-6 overflow-hidden animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.2s_both] bg-slate-900/50 ring-white/10 ring-1 rounded-3xl pt-5 pr-5 pb-5 pl-5 backdrop-blur-md">
-              <h3 className="text-xl md:text-2xl font-normal tracking-tighter">Smart Email Capture</h3>
-              <p className="mt-2 text-sm text-slate-400">
-                Never miss an important message. Our AI automatically categorizes and prioritizes your most critical
-                communications.
-              </p>
-
-              {/* Mini email preview UI */}
-              <div className="mt-5 rounded-2xl bg-black/30 ring-1 ring-white/10 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="inline-flex items-center gap-2 text-xs text-slate-300">
-                    <Activity className="w-4 h-4 opacity-80" />
-                    Live categorization
-                  </div>
-                  <div className="inline-flex items-center gap-2 bg-white/5 ring-1 ring-white/10 px-2 py-1 rounded-full">
-                    <div className="w-1.5 h-1.5 rounded-full bg-orange-300"></div>
-                    <span className="text-[10px] text-slate-200">Processing</span>
-                  </div>
-                </div>
-                <div className="mt-3 space-y-2">
-                  <div className="text-[11px] text-slate-300/90">Meeting request from team</div>
-                  <div className="text-[11px] text-slate-300/90">Q4 budget review attached</div>
-                  <div className="text-[11px] text-slate-300/90">Client follow-up needed</div>
-                  <div className="text-[11px] text-slate-300/90">Newsletter digest ready</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2 (highlight) */}
-            <div className="relative rounded-3xl overflow-hidden ring-1 ring-white/15 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.28s_both]">
-              <div className="absolute inset-0">
-                <img
-                  src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/459579f4-e2d0-4218-a12d-f974a4b89651_800w.jpg"
-                  alt="Seamless connection"
-                  className="opacity-70 w-full h-full object-cover"
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="group relative rounded-2xl overflow-hidden">
+              <div className="relative h-96">
+                <Image
+                  src="/landing/images/team/1.webp"
+                  alt="Speaker"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="bg-gradient-to-t from-slate-950/80 via-slate-950/30 to-transparent absolute top-0 right-0 bottom-0 left-0"></div>
               </div>
-              <div className="relative p-5 md:p-6">
-                <h3 className="text-xl md:text-2xl font-normal tracking-tighter">Effortless Team Coordination</h3>
-                <p className="mt-2 text-sm text-slate-200/80">
-                  Focus on meaningful work. Spend less time managing email and more time building relationships.
-                </p>
-              </div>
-              <div className="relative p-5 md:p-6 pt-0">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[11px] text-white/80 ring-1 ring-white/15">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Auto‑summaries & smart insights
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <h3 className="text-xl font-bold text-white mb-1">Joshua Henry</h3>
+                  <p className="text-white/70 text-sm">Chief AI Scientist, OpenAI</p>
                 </div>
               </div>
             </div>
 
-            {/* Card 3 */}
-            <div className="md:p-6 overflow-hidden animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.36s_both] bg-slate-900/50 ring-white/10 ring-1 rounded-3xl pt-5 pr-5 pb-5 pl-5 backdrop-blur-md">
-              <h3 className="text-xl md:text-2xl font-normal tracking-tighter">Email Templates & Rules</h3>
-              <p className="mt-2 text-sm text-slate-400">
-                Built for professionals who demand flexibility. Our platform adapts to your unique workflow and
-                communication style.
-              </p>
-
-              {/* Template preview */}
-              <div className="mt-5 rounded-2xl bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.06),rgba(2,6,23,0.6))] ring-1 ring-white/10 p-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-white/10 ring-1 ring-white/10 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-slate-200" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-normal text-slate-200">Professional Template</p>
-                    <p className="text-[11px] text-slate-400">Comprehensive email automation</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-[11px] text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 opacity-80" />
-                    <span>Auto-schedule</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-3.5 h-3.5 opacity-80" />
-                    <span>Smart reply</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <p className="text-[11px] text-slate-400">
-                    <span className="text-slate-300">Subject:</span> Automated meeting follow-up
-                  </p>
-                  <p className="text-[11px] text-slate-400">
-                    <span className="text-slate-300">Action:</span> Send summary and action items
-                  </p>
+            <div className="group relative rounded-2xl overflow-hidden">
+              <div className="relative h-96">
+                <Image
+                  src="/landing/images/team/2.webp"
+                  alt="Speaker"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <h3 className="text-xl font-bold text-white mb-1">Leila Zhang</h3>
+                  <p className="text-white/70 text-sm">VP of Machine Learning, Google</p>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* CTAs */}
-          <div className="flex flex-wrap animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.4s_both] mt-10 gap-x-3 gap-y-3">
-            <Link
-              href="/signup"
-              className="inline-flex items-center gap-2 rounded-full bg-white text-neutral-900 ring-1 ring-white/20 px-4 py-2.5 text-sm font-medium hover:bg-neutral-100 transition"
-            >
-              Start free trial
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/features"
-              className="inline-flex items-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-4 py-2.5 text-sm font-medium hover:bg-white/15 transition"
-            >
-              Explore features
-              <Sparkles className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/security"
-              className="group inline-flex items-center gap-2 text-sm font-medium text-white/90 underline decoration-white/30 underline-offset-4 hover:decoration-white/60"
-            >
-              View security details
-              <Shield className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Link>
+            <div className="group relative rounded-2xl overflow-hidden">
+              <div className="relative h-96">
+                <Image
+                  src="/landing/images/team/3.webp"
+                  alt="Speaker"
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
+                  <h3 className="text-xl font-bold text-white mb-1">Carlos Rivera</h3>
+                  <p className="text-white/70 text-sm">Founder & CEO, NeuralCore</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative" id="pricing">
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none z-0 absolute inset-0">
-          <div className="absolute inset-y-0 left-[12.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[37.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[62.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+      <section id="section-tickets" className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
+        <div className="absolute inset-0 opacity-5">
+          <Image
+            src="/landing/images/background/7.webp"
+            alt=""
+            fill
+            className="object-cover"
+          />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-transparent to-slate-950" />
 
-        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          {/* Section header */}
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="inline-flex text-[11px] ring-1 ring-white/10 animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.05s_both] font-medium text-white/70 bg-white/5 rounded-full pt-1.5 pr-3 pb-1.5 pl-3 gap-x-2 gap-y-2 items-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-3.5 h-3.5"
-              >
-                <rect width="20" height="14" x="2" y="5" rx="2"></rect>
-                <line x1="2" x2="22" y1="10" y2="10"></line>
-              </svg>
-              Pricing Plans
+        <div className="relative z-10 container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+              Ticket Options
             </div>
-            <h2 className="mt-4 sm:text-5xl md:text-6xl text-4xl font-normal tracking-tighter animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.15s_both]">
-              Choose Your Plan
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Choose Your Pass
             </h2>
-            <p className="md:mt-4 mt-3 md:text-lg text-base text-white/70 leading-relaxed animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.25s_both]">
-              Flexible pricing designed to scale with your business. Start free, upgrade when you&apos;re ready.
+            <p className="text-white/70 text-lg">
+              Select the perfect ticket for your needs and gain access to exclusive sessions, workshops, and more.
             </p>
           </div>
 
-          {/* Pricing cards */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
-            {/* Starter Plan */}
-            <div className="rounded-3xl bg-slate-900/50 ring-1 ring-white/10 backdrop-blur-md p-6 md:p-8 flex flex-col animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.2s_both]">
-              <div className="flex-1">
-                <h3 className="text-xl font-normal tracking-tight">Starter</h3>
-                <p className="mt-2 text-sm text-slate-400">Perfect for individuals getting started with AI email</p>
-
-                <div className="mt-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-normal tracking-tighter">$0</span>
-                    <span className="text-slate-400 text-sm">/month</span>
-                  </div>
-                </div>
-
-                <ul className="mt-8 space-y-3">
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Up to 10 emails processed per day</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Basic AI features</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Standard templates</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Email support</span>
-                  </li>
-                </ul>
-              </div>
-
-              <Link
-                href="/signup"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-4 py-2.5 text-sm font-medium hover:bg-white/15 transition w-full"
-              >
-                Get Started
-              </Link>
-            </div>
-
-            {/* Professional Plan (Featured) */}
-            <div className="relative rounded-3xl overflow-hidden ring-2 ring-blue-400/50 bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md p-6 md:p-8 flex flex-col animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.28s_both]">
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center gap-1 rounded-full bg-blue-400/20 ring-1 ring-blue-400/40 px-2.5 py-1 text-[10px] font-medium text-blue-200">
-                  POPULAR
-                </span>
-              </div>
-
-              <div className="flex-1">
-                <h3 className="text-xl font-normal tracking-tight">Professional</h3>
-                <p className="mt-2 text-sm text-slate-200/80">
-                  For professionals who need advanced AI features
-                </p>
-
-                <div className="mt-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-normal tracking-tighter">$49</span>
-                    <span className="text-slate-300 text-sm">/month</span>
-                  </div>
-                </div>
-
-                <ul className="mt-8 space-y-3">
-                  <li className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Unlimited email processing</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Advanced AI (RAG, semantic search)</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Custom templates</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Priority support</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-200">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Advanced analytics</span>
-                  </li>
-                </ul>
-              </div>
-
-              <Link
-                href="/signup"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white text-neutral-900 ring-1 ring-white/20 px-4 py-2.5 text-sm font-medium hover:bg-neutral-100 transition w-full"
-              >
-                Start Free Trial
-              </Link>
-            </div>
-
-            {/* Enterprise Plan */}
-            <div className="rounded-3xl bg-slate-900/50 ring-1 ring-white/10 backdrop-blur-md p-6 md:p-8 flex flex-col animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.36s_both]">
-              <div className="flex-1">
-                <h3 className="text-xl font-normal tracking-tight">Enterprise</h3>
-                <p className="mt-2 text-sm text-slate-400">Custom solutions for large organizations</p>
-
-                <div className="mt-6">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-5xl font-normal tracking-tighter">Custom</span>
-                  </div>
-                </div>
-
-                <ul className="mt-8 space-y-3">
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Everything in Professional</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Dedicated account manager</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>Custom integrations</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>SLA guarantee</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-sm text-slate-300">
-                    <Check className="w-5 h-5 text-blue-300 shrink-0 mt-0.5" />
-                    <span>On-premise deployment option</span>
-                  </li>
-                </ul>
-              </div>
-
-              <Link
-                href="/contact"
-                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-4 py-2.5 text-sm font-medium hover:bg-white/15 transition w-full"
-              >
-                Contact Sales
-              </Link>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <TicketCard
+              title="Standard"
+              price="$299"
+              features={[
+                'Access to keynotes and sessions',
+                'Admission to exhibitions and demos',
+                'Networking opportunities',
+                'Digital materials and session recordings',
+              ]}
+              href="/signup"
+            />
+            <TicketCard
+              title="VIP"
+              price="$699"
+              popular
+              features={[
+                'All Standard benefits',
+                'VIP lounge access and exclusive events',
+                'Front-row seating and priority workshop access',
+                'VIP swag bag and exclusive content',
+              ]}
+              href="/signup"
+            />
+            <TicketCard
+              title="Full Access"
+              price="$1199"
+              features={[
+                'All VIP benefits',
+                'Access to all workshops and breakout sessions',
+                'Personalized session scheduling',
+                'Speaker meet-and-greet and after-party access',
+              ]}
+              href="/signup"
+            />
           </div>
-        </div>
-      </section>
-
-      {/* ROI Calculator Section */}
-      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-950">
-        <div className="z-10 md:px-8 max-w-5xl mr-auto ml-auto pr-6 pl-6 relative">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-white">
-              Calculate Your Savings
-            </h2>
-            <p className="text-slate-400">
-              See how much time and money your team can save with easeMail
-            </p>
-          </div>
-          <ROICalculator />
-        </div>
-      </section>
-
-      {/* Comparison Table Section */}
-      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-900/50">
-        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          <ComparisonTable />
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-950">
-        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          <FAQSection />
+      <section id="section-faq" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div>
+              <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+                Everything You Need to Know
+              </div>
+              <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+                Frequently Asked Questions
+              </h2>
+            </div>
+
+            <div>
+              <Accordion items={faqItems} />
+            </div>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section
-        className="overflow-hidden lg:py-24 bg-[url(https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/32b67867-f241-44ab-a57c-c87e60b99c25_3840w.webp)] bg-cover pt-16 pb-16 relative"
-        id="start"
-      >
-        {/* Decorative grid lines */}
-        <div className="pointer-events-none z-0 absolute inset-0">
-          <div className="absolute inset-y-0 left-[12.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[37.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-          <div className="absolute inset-y-0 left-1/2 w-px bg-gradient-to-b from-transparent via-white/8 to-transparent"></div>
-          <div className="absolute inset-y-0 left-[62.5%] w-px bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
+      <section className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
+        <div className="absolute inset-0 opacity-10">
+          <Image
+            src="/landing/images/background/3.webp"
+            alt=""
+            fill
+            className="object-cover"
+          />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-950/80 to-slate-950" />
 
-        <div className="z-10 md:px-8 animate-on-scroll [animation:fadeSlideIn_1s_ease-out_0.1s_both] max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900/90 to-slate-950/90 ring-1 ring-white/10 backdrop-blur-md">
-            {/* Background decoration */}
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10 container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
+              Stay in the Loop
             </div>
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Join the Future of Innovation
+            </h2>
+            <p className="text-white/70 text-lg mb-8">
+              Drop us your email to stay in the know as we work to reduce our environmental impact. 
+              We'll share other exciting news and exclusive offers, too.
+            </p>
 
-            <div className="relative px-6 py-16 md:px-12 md:py-20 lg:px-16 lg:py-24">
-              <div className="max-w-3xl mx-auto text-center">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1.5 text-xs font-medium text-white/80 ring-1 ring-white/10 mb-6">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Ready to get started?
-                </div>
+            <form className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
+              <input
+                type="email"
+                placeholder="Enter Your Email Address"
+                className="w-full px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#1E40AF] backdrop-blur-sm"
+              />
+              <button
+                type="submit"
+                className="whitespace-nowrap px-8 py-4 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+              >
+                SIGN UP
+              </button>
+            </form>
 
-                <h2 className="text-4xl sm:text-5xl md:text-6xl font-normal tracking-tighter">
-                  Transform Your Email Workflow Today
-                </h2>
-                <p className="mt-6 text-lg text-slate-300 leading-relaxed">
-                  Join thousands of professionals using AI to work smarter with email. Start your free trial now—no
-                  credit card required.
-                </p>
-
-                <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link
-                    href="/signup"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-neutral-900 ring-1 ring-white/20 px-6 py-3 text-base font-medium hover:bg-neutral-100 transition"
-                  >
-                    Start Free Trial
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-6 py-3 text-base font-medium hover:bg-white/15 transition"
-                  >
-                    Schedule Demo
-                    <Calendar className="w-5 h-5" />
-                  </Link>
-                </div>
-
-                <div className="mt-8 flex items-center justify-center gap-6 text-sm text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-300" />
-                    <span>14-day free trial</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-300" />
-                    <span>No credit card required</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-blue-300" />
-                    <span>Cancel anytime</span>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-6 text-sm text-white/50">
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="rounded" defaultChecked />
+                <span>Keep me updated on other news and exclusive offers</span>
+              </label>
             </div>
           </div>
         </div>

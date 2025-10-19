@@ -7,7 +7,7 @@ import { DatabaseHealthProvider } from '@/components/providers/DatabaseHealthPro
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
-const playfair = Playfair_Display({ 
+const playfair = Playfair_Display({
   subsets: ['latin'],
   variable: '--font-playfair',
   display: 'swap',
