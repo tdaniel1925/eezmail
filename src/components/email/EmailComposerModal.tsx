@@ -20,7 +20,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { AttachmentList } from './AttachmentList';
 import { TemplateModal } from './TemplateModal';
 import { SchedulePicker } from './SchedulePicker';
-import { AnimatedButton } from '@/components/ui/AnimatedButton';
+import { AnimatedButton } from '@/components/ui/animated-button';
 import { AudioVisualizer } from './AudioVisualizer';
 import { VoiceMessagePlayer } from './VoiceMessagePlayer';
 

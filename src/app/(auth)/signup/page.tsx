@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Mail, Lock, User, Sparkles, ArrowRight } from 'lucide-react';
-import { AnimatedButton } from '@/components/ui/AnimatedButton';
+import { AnimatedButton } from '@/components/ui/animated-button';
 
 export default function SignupPage(): JSX.Element {
   const [email, setEmail] = useState('');

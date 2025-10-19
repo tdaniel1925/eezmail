@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { EmailList } from './EmailList';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AutoSyncInboxProps {
   accountId: string;

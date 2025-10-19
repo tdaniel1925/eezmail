@@ -6,7 +6,7 @@ import { useAutoSync } from '@/hooks/useAutoSync';
 import { getCustomFolders } from '@/lib/folders/actions';
 import { screenEmail } from '@/lib/screener/actions';
 import { toast } from '@/lib/toast';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import type { Email, CustomFolder } from '@/db/schema';
 

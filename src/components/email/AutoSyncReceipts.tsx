@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { EmailList } from './EmailList';
 import { useAutoSync } from '@/hooks/useAutoSync';
 import { getReceiptsEmails } from '@/lib/email/get-emails';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AutoSyncReceiptsProps {
   accountId: string;

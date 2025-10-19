@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
-import { AnimatedButton } from '@/components/ui/AnimatedButton';
+import { AnimatedButton } from '@/components/ui/animated-button';
 
 export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('');

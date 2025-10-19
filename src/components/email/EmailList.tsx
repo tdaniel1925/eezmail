@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { ExpandableEmailItem } from './ExpandableEmailItem';
 import { EmailComposer } from './EmailComposer';
-import { AnimatedButton } from '@/components/ui/AnimatedButton';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { AnimatedButton } from '@/components/ui/animated-button';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import { toast } from 'sonner';
 import type { Email } from '@/db/schema';
