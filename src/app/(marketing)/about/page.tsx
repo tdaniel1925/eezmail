@@ -124,7 +124,7 @@ export default function AboutPage() {
                     src={founder.image}
                     alt={founder.name}
                     fill
-                    className="object-cover"
+                    className={founder.name === 'Trent T. Daniel' ? 'object-cover scale-125' : 'object-cover'}
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
