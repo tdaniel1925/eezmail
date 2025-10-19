@@ -49,15 +49,28 @@ export async function wipeAllUserData(): Promise<{
     if (accountIds.length > 0) {
       // Delete emails and threads (cascade will handle many relations)
       console.log('🗑️  Deleting emails and threads...');
-      await db.delete(emails).where(inArray(emails.accountId, accountIds));
-      await db
-        .delete(emailThreads)
-        .where(inArray(emailThreads.accountId, accountIds));
+      try {
+        await db.delete(emails).where(inArray(emails.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting emails:', error);
+      }
+      
+      try {
+        await db
+          .delete(emailThreads)
+          .where(inArray(emailThreads.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting email threads:', error);
+      }
 
       // Delete custom folders
-      await db
-        .delete(customFolders)
-        .where(inArray(customFolders.accountId, accountIds));
+      try {
+        await db
+          .delete(customFolders)
+          .where(inArray(customFolders.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting custom folders:', error);
+      }
     }
 
     // Delete contacts and related data
@@ -68,28 +81,70 @@ export async function wipeAllUserData(): Promise<{
     const contactIds = userContacts.map((c) => c.id);
 
     if (contactIds.length > 0) {
-      await db
-        .delete(contactEmails)
-        .where(inArray(contactEmails.contactId, contactIds));
-      await db
-        .delete(contactPhones)
-        .where(inArray(contactPhones.contactId, contactIds));
-      await db
-        .delete(contactAddresses)
-        .where(inArray(contactAddresses.contactId, contactIds));
-      await db.delete(contacts).where(eq(contacts.userId, user.id));
+      try {
+        await db
+          .delete(contactEmails)
+          .where(inArray(contactEmails.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact emails:', error);
+      }
+      
+      try {
+        await db
+          .delete(contactPhones)
+          .where(inArray(contactPhones.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact phones:', error);
+      }
+      
+      try {
+        await db
+          .delete(contactAddresses)
+          .where(inArray(contactAddresses.contactId, contactIds));
+      } catch (error) {
+        console.error('Error deleting contact addresses:', error);
+      }
+      
+      try {
+        await db.delete(contacts).where(eq(contacts.userId, user.id));
+      } catch (error) {
+        console.error('Error deleting contacts:', error);
+      }
     }
 
     // Delete email accounts
     console.log('🗑️  Deleting email accounts...');
-    await db.delete(emailAccounts).where(eq(emailAccounts.userId, user.id));
+    try {
+      await db.delete(emailAccounts).where(eq(emailAccounts.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting email accounts:', error);
+    }
 
     // Delete user settings, rules, signatures
     console.log('🗑️  Deleting user settings and rules...');
-    await db.delete(emailSettings).where(eq(emailSettings.userId, user.id));
-    await db.delete(emailRules).where(eq(emailRules.userId, user.id));
-    await db.delete(emailSignatures).where(eq(emailSignatures.userId, user.id));
-    await db.delete(senderTrust).where(eq(senderTrust.userId, user.id));
+    try {
+      await db.delete(emailSettings).where(eq(emailSettings.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting email settings:', error);
+    }
+    
+    try {
+      await db.delete(emailRules).where(eq(emailRules.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting email rules:', error);
+    }
+    
+    try {
+      await db.delete(emailSignatures).where(eq(emailSignatures.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting email signatures:', error);
+    }
+    
+    try {
+      await db.delete(senderTrust).where(eq(senderTrust.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting sender trust:', error);
+    }
 
     // NOTE: User account and authentication are PRESERVED
     // User stays logged in and can add new email accounts
