@@ -39,6 +39,89 @@ import { eq, inArray } from 'drizzle-orm';
 import { generateTestEmails } from '../../../scripts/generate-test-emails';
 
 /**
+ * Verify all data has been wiped
+ * Returns counts of remaining data
+ */
+export async function verifyDataWipe(): Promise<{
+  success: boolean;
+  remainingData: Record<string, number>;
+  isClean: boolean;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, remainingData: {}, isClean: false };
+    }
+
+    console.log('🔍 Verifying data wipe for user:', user.id);
+
+    // Get account IDs first
+    const userAccounts = await db.query.emailAccounts.findMany({
+      where: eq(emailAccounts.userId, user.id),
+    });
+    const accountIds = userAccounts.map((acc) => acc.id);
+
+    // Count remaining data
+    const counts: Record<string, number> = {};
+
+    // Check user-level data
+    counts.emailAccounts = userAccounts.length;
+    counts.contacts = (await db.query.contacts.findMany({ where: eq(contacts.userId, user.id) })).length;
+    counts.contactNotes = (await db.query.contactNotes.findMany({ where: eq(contactNotes.userId, user.id) })).length;
+    counts.contactTimeline = (await db.query.contactTimeline.findMany({ where: eq(contactTimeline.userId, user.id) })).length;
+    counts.emailSettings = (await db.query.emailSettings.findMany({ where: eq(emailSettings.userId, user.id) })).length;
+    counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
+    counts.emailSignatures = (await db.query.emailSignatures.findMany({ where: eq(emailSignatures.userId, user.id) })).length;
+    counts.senderTrust = (await db.query.senderTrust.findMany({ where: eq(senderTrust.userId, user.id) })).length;
+    counts.aiReplyDrafts = (await db.query.aiReplyDrafts.findMany({ where: eq(aiReplyDrafts.userId, user.id) })).length;
+    counts.chatbotActions = (await db.query.chatbotActions.findMany({ where: eq(chatbotActions.userId, user.id) })).length;
+    counts.extractedActions = (await db.query.extractedActions.findMany({ where: eq(extractedActions.userId, user.id) })).length;
+    counts.followUpReminders = (await db.query.followUpReminders.findMany({ where: eq(followUpReminders.userId, user.id) })).length;
+    counts.tasks = (await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })).length;
+    counts.customLabels = (await db.query.customLabels.findMany({ where: eq(customLabels.userId, user.id) })).length;
+
+    // Check account-level data if accounts exist
+    if (accountIds.length > 0) {
+      counts.emails = (await db.query.emails.findMany({ where: inArray(emails.accountId, accountIds) })).length;
+      counts.emailThreads = (await db.query.emailThreads.findMany({ where: inArray(emailThreads.accountId, accountIds) })).length;
+      counts.emailDrafts = (await db.query.emailDrafts.findMany({ where: inArray(emailDrafts.accountId, accountIds) })).length;
+      counts.scheduledEmails = (await db.query.scheduledEmails.findMany({ where: inArray(scheduledEmails.accountId, accountIds) })).length;
+      counts.customFolders = (await db.query.customFolders.findMany({ where: inArray(customFolders.accountId, accountIds) })).length;
+    } else {
+      counts.emails = 0;
+      counts.emailThreads = 0;
+      counts.emailDrafts = 0;
+      counts.scheduledEmails = 0;
+      counts.customFolders = 0;
+    }
+
+    // Calculate total
+    const totalRemaining = Object.values(counts).reduce((sum, count) => sum + count, 0);
+    const isClean = totalRemaining === 0;
+
+    console.log('📊 Verification Results:', counts);
+    console.log(isClean ? '✅ All data wiped!' : '⚠️  Some data remains:', totalRemaining, 'records');
+
+    return {
+      success: true,
+      remainingData: counts,
+      isClean,
+    };
+  } catch (error) {
+    console.error('❌ Error verifying data wipe:', error);
+    return {
+      success: false,
+      remainingData: {},
+      isClean: false,
+    };
+  }
+}
+
+/**
  * Wipe all user data from the system
  * WARNING: This is irreversible!
  */
@@ -276,6 +359,13 @@ export async function wipeAllUserData(): Promise<{
     // NOTE: User account and authentication are PRESERVED
     // User stays logged in and can add new email accounts
     console.log('✅ All data wiped successfully (user account preserved)');
+    
+    // Verify the wipe
+    const verification = await verifyDataWipe();
+    if (!verification.isClean) {
+      console.warn('⚠️  Warning: Some data may still remain:', verification.remainingData);
+    }
+    
     return { success: true };
   } catch (error) {
     console.error('❌ Error wiping user data:', error);

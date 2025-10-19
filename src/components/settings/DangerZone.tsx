@@ -5,6 +5,7 @@ import { AlertTriangle, Trash2, TestTube } from 'lucide-react';
 import {
   wipeAllUserData,
   generateTestEmailData,
+  verifyDataWipe,
 } from '@/lib/settings/data-actions';
 import { toast } from '@/lib/toast';
 
@@ -12,6 +13,34 @@ export function DangerZone(): JSX.Element {
   const [confirmText, setConfirmText] = useState('');
   const [isWiping, setIsWiping] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  const handleVerifyWipe = async (): Promise<void> => {
+    setIsVerifying(true);
+
+    try {
+      const result = await verifyDataWipe();
+
+      if (result.success && result.isClean) {
+        toast.success('✅ All data has been successfully wiped!');
+        console.log('Verification passed - database is clean');
+      } else if (result.success) {
+        const remaining = Object.entries(result.remainingData)
+          .filter(([_, count]) => count > 0)
+          .map(([table, count]) => `${table}: ${count}`)
+          .join(', ');
+        toast.warning(`⚠️ Some data remains: ${remaining}`);
+        console.warn('Remaining data:', result.remainingData);
+      } else {
+        toast.error('Failed to verify data wipe');
+      }
+    } catch (error) {
+      console.error('Error verifying data:', error);
+      toast.error('An unexpected error occurred during verification');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const handleWipeData = async (): Promise<void> => {
     if (confirmText !== 'DELETE ALL DATA') {
@@ -161,6 +190,14 @@ export function DangerZone(): JSX.Element {
               >
                 <Trash2 size={16} />
                 {isWiping ? 'Wiping All Data...' : 'Wipe All Data'}
+              </button>
+              <button
+                onClick={handleVerifyWipe}
+                disabled={isVerifying}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                <TestTube size={16} />
+                {isVerifying ? 'Verifying...' : 'Verify Data is Clean'}
               </button>
             </div>
           </div>
