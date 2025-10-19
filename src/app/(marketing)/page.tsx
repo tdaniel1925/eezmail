@@ -36,7 +36,7 @@ export default function LandingPage() {
 
         {/* Background image */}
         <img
-          src="https://hoirqrkdgbmvpwutwuwj-all.supabase.co/storage/v1/object/public/assets/assets/92a4234b-15fa-4d5f-8821-48d3f9f7e2f1_3840w.jpg"
+          src="/images/hero-bg.jpg"
           alt=""
           className="pointer-events-none w-full h-full object-cover absolute top-0 right-0 bottom-0 left-0"
         />
