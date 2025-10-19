@@ -21,18 +21,36 @@ export default function LoginPage(): JSX.Element {
     setError(null);
     setLoading(true);
 
+    console.log('🔐 Login attempt for:', email);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Login error:', error);
+        throw error;
+      }
 
-      router.push('/dashboard');
-      router.refresh();
+      console.log('✅ Login successful:', data.user?.email);
+      console.log('🔄 Redirecting to dashboard...');
+
+      // Force a hard redirect to ensure middleware runs
+      window.location.href = '/dashboard';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('❌ Caught error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      
+      // Provide more helpful error messages
+      if (errorMessage.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (errorMessage.includes('Email not confirmed')) {
+        setError('Please confirm your email address. Check your inbox for a confirmation link.');
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
