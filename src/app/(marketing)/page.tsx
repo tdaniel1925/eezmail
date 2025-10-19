@@ -6,6 +6,10 @@ import { MarqueeText } from '@/components/landing/MarqueeText';
 import { TicketCard } from '@/components/landing/TicketCard';
 import { Accordion } from '@/components/landing/Accordion';
 import { AnimatedSection } from '@/components/landing/AnimatedSection';
+import { MarketingInteractions } from '@/components/marketing/MarketingInteractions';
+import { AnimatedCounter } from '@/components/marketing/AnimatedCounter';
+import { NewsletterSignup } from '@/components/marketing/NewsletterSignup';
+import { TestimonialsSection } from '@/components/marketing/TestimonialsSection';
 import Image from 'next/image';
 
 export const metadata = {
@@ -50,6 +54,8 @@ export default function LandingPage() {
 
   return (
     <>
+      <MarketingInteractions />
+      
       {/* Hero Section */}
       <VideoBackground
         videoSrc="/landing/video/2.mp4"
@@ -99,15 +105,21 @@ export default function LandingPage() {
           <div className="container mx-auto px-6">
             <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 grid grid-cols-3 gap-6">
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">10+</div>
+                <div className="text-3xl font-bold text-white mb-1">
+                  <AnimatedCounter end={10} suffix="+" />
+                </div>
                 <p className="text-white/70 text-sm">Hours Saved Per Week</p>
               </div>
               <div className="text-center border-x border-white/10">
-                <div className="text-3xl font-bold text-white mb-1">99.9%</div>
+                <div className="text-3xl font-bold text-white mb-1">
+                  <AnimatedCounter end={99.9} decimals={1} suffix="%" />
+                </div>
                 <p className="text-white/70 text-sm">Uptime SLA</p>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">120ms</div>
+                <div className="text-3xl font-bold text-white mb-1">
+                  <AnimatedCounter end={120} suffix="ms" />
+                </div>
                 <p className="text-white/70 text-sm">Average Response Time</p>
               </div>
             </div>
@@ -305,6 +317,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <TestimonialsSection />
+
       {/* Pricing Section */}
       <section id="section-pricing" className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
         <div className="absolute inset-0 opacity-5">
@@ -396,6 +411,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Newsletter Section */}
+      <NewsletterSignup />
 
       {/* CTA Section */}
       <section className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">

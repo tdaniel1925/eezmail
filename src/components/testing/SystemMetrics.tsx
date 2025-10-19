@@ -44,64 +44,64 @@ export function SystemMetrics({ className }: SystemMetricsProps) {
             const parsed = JSON.parse(storedMetrics);
             setMetrics(parsed);
           } else {
-          // Default metrics if none stored
-          setMetrics([
-            {
-              label: 'Active Users',
-              value: '0',
-              change: 0,
-              trend: 'stable',
-              icon: Users,
-              color: 'text-blue-600',
-              description: 'Users currently online',
-            },
-            {
-              label: 'Total Emails',
-              value: '0',
-              change: 0,
-              trend: 'stable',
-              icon: Mail,
-              color: 'text-green-600',
-              description: 'Emails in database',
-            },
-            {
-              label: 'Database Health',
-              value: '0%',
-              change: 0,
-              trend: 'stable',
-              icon: Database,
-              color: 'text-purple-600',
-              description: 'Database performance score',
-            },
-            {
-              label: 'Memory Usage',
-              value: '0%',
-              change: 0,
-              trend: 'stable',
-              icon: Cpu,
-              color: 'text-orange-600',
-              description: 'System memory usage',
-            },
-            {
-              label: 'Error Rate',
-              value: '0%',
-              change: 0,
-              trend: 'stable',
-              icon: AlertTriangle,
-              color: 'text-red-600',
-              description: 'Application error rate',
-            },
-            {
-              label: 'Sync Status',
-              value: 'Idle',
-              change: 0,
-              trend: 'stable',
-              icon: Activity,
-              color: 'text-indigo-600',
-              description: 'Email sync status',
-            },
-          ]);
-        }
+            // Default metrics if none stored
+            setMetrics([
+              {
+                label: 'Active Users',
+                value: '0',
+                change: 0,
+                trend: 'stable',
+                icon: Users,
+                color: 'text-blue-600',
+                description: 'Users currently online',
+              },
+              {
+                label: 'Total Emails',
+                value: '0',
+                change: 0,
+                trend: 'stable',
+                icon: Mail,
+                color: 'text-green-600',
+                description: 'Emails in database',
+              },
+              {
+                label: 'Database Health',
+                value: '0%',
+                change: 0,
+                trend: 'stable',
+                icon: Database,
+                color: 'text-purple-600',
+                description: 'Database performance score',
+              },
+              {
+                label: 'Memory Usage',
+                value: '0%',
+                change: 0,
+                trend: 'stable',
+                icon: Cpu,
+                color: 'text-orange-600',
+                description: 'System memory usage',
+              },
+              {
+                label: 'Error Rate',
+                value: '0%',
+                change: 0,
+                trend: 'stable',
+                icon: AlertTriangle,
+                color: 'text-red-600',
+                description: 'Application error rate',
+              },
+              {
+                label: 'Sync Status',
+                value: 'Idle',
+                change: 0,
+                trend: 'stable',
+                icon: Activity,
+                color: 'text-indigo-600',
+                description: 'Email sync status',
+              },
+            ]);
+          }
         }
       } catch (error) {
         console.error('Error loading metrics:', error);

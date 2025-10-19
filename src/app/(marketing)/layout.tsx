@@ -11,11 +11,11 @@ export default function MarketingLayout({
 }) {
   return (
     <>
-      {/* Marketing Content */}
+      {/* Fixed header positioned absolutely to allow content to flow underneath */}
       <div className="relative min-h-screen">
         <MarketingNav />
         <GradientBlur />
-        <main className="relative">{children}</main>
+        <main className="relative pt-0">{children}</main>
         <MarketingFooter />
       </div>
 

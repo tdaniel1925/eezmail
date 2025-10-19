@@ -59,7 +59,7 @@ export class ErrorTracker {
 
   private loadErrors() {
     if (!this.isClient) return;
-    
+
     try {
       const stored = localStorage.getItem('error-logs');
       if (stored) {
@@ -77,7 +77,7 @@ export class ErrorTracker {
 
   private saveErrors() {
     if (!this.isClient) return;
-    
+
     try {
       localStorage.setItem('error-logs', JSON.stringify(this.errors));
     } catch (error) {
@@ -87,7 +87,7 @@ export class ErrorTracker {
 
   private setupGlobalErrorHandlers() {
     if (!this.isClient) return;
-    
+
     // Global error handler
     window.addEventListener('error', (event) => {
       this.logError({
