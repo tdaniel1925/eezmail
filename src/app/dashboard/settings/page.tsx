@@ -34,6 +34,7 @@ import { RulesSettings } from '@/components/settings/RulesSettings';
 import { HelpCenter } from '@/components/help/HelpCenter';
 import { DangerZone } from '@/components/settings/DangerZone';
 import { VoiceSettings } from '@/components/settings/VoiceSettings';
+import { useSettingsData } from '@/hooks/useSettingsData';
 
 type SettingsTab =
   | 'account'
@@ -141,17 +142,9 @@ const tabs: TabConfig[] = [
 function SettingsPageContent(): JSX.Element {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<SettingsTab>('account');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Real user data fetched from database
-  const [userData, setUserData] = useState<{
-    user: any;
-    emailAccounts: any[];
-    settings: any;
-    subscription: any;
-    defaultAccountId: string | null;
-  } | null>(null);
+  
+  // Use SWR hook for cached data fetching
+  const { userData, isLoading, isError, refreshSettings } = useSettingsData();
 
   // Read tab from URL on initial load
   useEffect(() => {
@@ -175,84 +168,6 @@ function SettingsPageContent(): JSX.Element {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    // Fetch real user data from database
-    const loadData = async (): Promise<void> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Add cache busting parameter to force fresh data
-        const timestamp = Date.now();
-        console.log(`📊 Loading settings data (cache-bust: ${timestamp})`);
-
-        // Fetch real data from server action
-        const { getUserSettingsData } = await import('@/lib/settings/data');
-        const response = await getUserSettingsData();
-
-        if (!response.success || !response.data) {
-          throw new Error(response.error || 'No data returned');
-        }
-
-        // Transform user data to camelCase for components
-        const transformedData = {
-          user: {
-            id: response.data.user.id,
-            email: response.data.user.email,
-            fullName: response.data.user.fullName || '',
-            avatarUrl: response.data.user.avatarUrl || '',
-            name:
-              response.data.user.fullName ||
-              response.data.user.email.split('@')[0],
-            createdAt: response.data.user.createdAt,
-          },
-          emailAccounts: response.data.emailAccounts,
-          settings: response.data.settings || {
-            aiScreeningEnabled: true,
-            screeningMode: 'strict',
-            notificationsEnabled: true,
-          },
-          subscription: response.data.subscription,
-          defaultAccountId: response.data.defaultAccountId,
-        };
-
-        setUserData(transformedData);
-        console.log('📊 Settings data loaded:', {
-          user: transformedData.user,
-          emailAccounts: transformedData.emailAccounts,
-          accountsCount: transformedData.emailAccounts.length,
-          timestamp,
-        });
-      } catch (err) {
-        console.error('Error loading settings data:', err);
-        // Fall back to mock data if real data fails
-        const mockData = {
-          user: {
-            id: '1',
-            email: 'john@example.com',
-            fullName: 'John Doe',
-            name: 'John Doe',
-            avatarUrl: '',
-            createdAt: new Date(),
-          },
-          emailAccounts: [],
-          settings: {
-            aiScreeningEnabled: true,
-            screeningMode: 'strict',
-            notificationsEnabled: true,
-          },
-          subscription: null,
-          defaultAccountId: null,
-        };
-        setUserData(mockData);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
   const renderTabContent = (): React.ReactNode => {
     // Show loading state
     if (isLoading) {
@@ -264,14 +179,14 @@ function SettingsPageContent(): JSX.Element {
     }
 
     // Show error state
-    if (error || !userData) {
+    if (isError || !userData) {
       return (
         <div className="flex flex-col items-center justify-center py-12">
           <div className="text-red-600 dark:text-red-400 mb-4">
-            {error || 'Failed to load settings'}
+            Failed to load settings
           </div>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => refreshSettings()}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-600 transition-colors"
           >
             Retry

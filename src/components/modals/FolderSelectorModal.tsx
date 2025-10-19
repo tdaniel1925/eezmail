@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Folder, Inbox, Send, Archive, Trash2, Spam } from 'lucide-react';
+import { X, Folder, Inbox, Send, Archive, Trash2, AlertOctagon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FolderSelectorModalProps {
@@ -15,7 +15,7 @@ const FOLDERS = [
   { id: 'inbox', name: 'Inbox', icon: Inbox, color: 'text-blue-500' },
   { id: 'sent', name: 'Sent', icon: Send, color: 'text-green-500' },
   { id: 'archived', name: 'Archived', icon: Archive, color: 'text-gray-500' },
-  { id: 'spam', name: 'Spam', icon: Spam, color: 'text-red-500' },
+  { id: 'spam', name: 'Spam', icon: AlertOctagon, color: 'text-red-500' },
   { id: 'trash', name: 'Trash', icon: Trash2, color: 'text-red-600' },
 ];
 

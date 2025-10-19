@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emails } from '@/db/schema';
+import { emails, customFolders } from '@/db/schema';
 import { eq, and, inArray } from 'drizzle-orm';
 
 /**
@@ -113,5 +113,109 @@ export async function emptyFolder(params: {
   } catch (error) {
     console.error('Error in emptyFolder:', error);
     return { success: false, count: 0, message: 'Failed to empty folder' };
+  }
+}
+
+/**
+ * Create a custom folder
+ */
+export async function createCustomFolder(params: {
+  accountId: string;
+  name: string;
+  color?: string;
+}): Promise<{ success: boolean; folderId?: string; message: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    // Insert new custom folder
+    const result = await db
+      .insert(customFolders)
+      .values({
+        accountId: params.accountId,
+        userId: user.id,
+        name: params.name,
+        color: params.color || '#3B82F6',
+        sortOrder: 0,
+      })
+      .returning();
+
+    return {
+      success: true,
+      folderId: result[0].id,
+      message: `Created folder "${params.name}"`,
+    };
+  } catch (error) {
+    console.error('Error in createCustomFolder:', error);
+    return { success: false, message: 'Failed to create folder' };
+  }
+}
+
+/**
+ * Delete a custom folder
+ */
+export async function deleteCustomFolder(params: {
+  folderId: string;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    // Delete the folder
+    await db.delete(customFolders).where(eq(customFolders.id, params.folderId));
+
+    return {
+      success: true,
+      message: 'Folder deleted successfully',
+    };
+  } catch (error) {
+    console.error('Error in deleteCustomFolder:', error);
+    return { success: false, message: 'Failed to delete folder' };
+  }
+}
+
+/**
+ * Reorder custom folders
+ */
+export async function reorderCustomFolders(params: {
+  folderIds: string[];
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, message: 'Unauthorized' };
+    }
+
+    // Update sort order for each folder
+    for (let i = 0; i < params.folderIds.length; i++) {
+      await db
+        .update(customFolders)
+        .set({ sortOrder: i })
+        .where(eq(customFolders.id, params.folderIds[i]));
+    }
+
+    return {
+      success: true,
+      message: 'Folders reordered successfully',
+    };
+  } catch (error) {
+    console.error('Error in reorderCustomFolders:', error);
+    return { success: false, message: 'Failed to reorder folders' };
   }
 }

@@ -4,6 +4,7 @@ import './globals.css';
 import { BackgroundEffects } from '@/components/layout/BackgroundEffects';
 import { ThemeProvider } from 'next-themes';
 import { DatabaseHealthProvider } from '@/components/providers/DatabaseHealthProvider';
+import { SWRProvider } from '@/providers/SWRProvider';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -28,15 +29,17 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${playfair.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <BackgroundEffects />
-          {children}
-          <Toaster
-            position="top-right"
-            expand={true}
-            richColors
-            closeButton
-            theme="system"
-          />
+          <SWRProvider>
+            <BackgroundEffects />
+            {children}
+            <Toaster
+              position="top-right"
+              expand={true}
+              richColors
+              closeButton
+              theme="system"
+            />
+          </SWRProvider>
         </ThemeProvider>
       </body>
     </html>
