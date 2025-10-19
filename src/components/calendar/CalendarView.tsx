@@ -18,60 +18,18 @@ interface CalendarViewProps {
   onToggleSidebar?: () => void;
 }
 
-// Mock events data
-const mockEvents: CalendarEvent[] = [
-  {
-    id: '1',
-    title: 'Q4 Strategy Meeting',
-    description: 'Discuss Q4 marketing strategy with team',
-    startTime: new Date(2025, 9, 15, 10, 0), // Oct 15, 2025, 10:00 AM
-    endTime: new Date(2025, 9, 15, 11, 30),
-    type: 'meeting',
-    location: 'Conference Room A',
-    attendees: ['Sarah Chen', 'Michael Rodriguez'],
-    color: 'blue',
-  },
-  {
-    id: '2',
-    title: 'Product Demo',
-    description: 'Demo new features to clients',
-    startTime: new Date(2025, 9, 15, 14, 0),
-    endTime: new Date(2025, 9, 15, 15, 0),
-    type: 'meeting',
-    isVirtual: true,
-    attendees: ['Client Team'],
-    color: 'purple',
-  },
-  {
-    id: '3',
-    title: 'Design Review',
-    description: 'Review mockups from Emma',
-    startTime: new Date(2025, 9, 16, 9, 0),
-    endTime: new Date(2025, 9, 16, 10, 0),
-    type: 'meeting',
-    attendees: ['Emma Thompson'],
-    color: 'green',
-  },
-  {
-    id: '4',
-    title: 'Lunch with Alex',
-    description: 'Discuss project updates',
-    startTime: new Date(2025, 9, 16, 12, 30),
-    endTime: new Date(2025, 9, 16, 13, 30),
-    type: 'personal',
-    location: 'Downtown Bistro',
-    color: 'orange',
-  },
-  {
-    id: '5',
-    title: 'Email Campaign Review',
-    description: 'Review and approve Q4 email campaigns',
-    startTime: new Date(2025, 9, 17, 15, 0),
-    endTime: new Date(2025, 9, 17, 16, 30),
-    type: 'task',
-    color: 'red',
-  },
-];
+// Mock events data (empty by default - will be populated from database)
+const mockEvents: CalendarEvent[] = [];
+// TODO: Replace with actual database query
+// Example hardcoded events for reference:
+// {
+//   id: '1',
+//   title: 'Q4 Strategy Meeting',
+//   startTime: new Date(2025, 9, 15, 10, 0),
+//   endTime: new Date(2025, 9, 15, 11, 30),
+//   type: 'meeting',
+//   color: 'blue',
+// },
 
 type ViewMode = 'month' | 'week' | 'day';
 
