@@ -26,19 +26,26 @@ CREATE INDEX IF NOT EXISTS idx_contact_timeline_created ON contact_timeline(crea
 -- Row Level Security for contact_timeline
 ALTER TABLE contact_timeline ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view their own contact timeline"
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own contact timeline" ON contact_timeline;
+DROP POLICY IF EXISTS "Users can insert their own contact timeline" ON contact_timeline;
+DROP POLICY IF EXISTS "Users can update their own contact timeline" ON contact_timeline;
+DROP POLICY IF EXISTS "Users can delete their own contact timeline" ON contact_timeline;
+
+-- Create policies
+CREATE POLICY "Users can view their own contact timeline"
   ON contact_timeline FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can insert their own contact timeline"
+CREATE POLICY "Users can insert their own contact timeline"
   ON contact_timeline FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can update their own contact timeline"
+CREATE POLICY "Users can update their own contact timeline"
   ON contact_timeline FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can delete their own contact timeline"
+CREATE POLICY "Users can delete their own contact timeline"
   ON contact_timeline FOR DELETE
   USING (auth.uid() = user_id);
 
@@ -93,19 +100,26 @@ CREATE INDEX IF NOT EXISTS idx_email_settings_user ON email_settings(user_id);
 -- Row Level Security for email_settings
 ALTER TABLE email_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "Users can view their own email settings"
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own email settings" ON email_settings;
+DROP POLICY IF EXISTS "Users can insert their own email settings" ON email_settings;
+DROP POLICY IF EXISTS "Users can update their own email settings" ON email_settings;
+DROP POLICY IF EXISTS "Users can delete their own email settings" ON email_settings;
+
+-- Create policies
+CREATE POLICY "Users can view their own email settings"
   ON email_settings FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can insert their own email settings"
+CREATE POLICY "Users can insert their own email settings"
   ON email_settings FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can update their own email settings"
+CREATE POLICY "Users can update their own email settings"
   ON email_settings FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can delete their own email settings"
+CREATE POLICY "Users can delete their own email settings"
   ON email_settings FOR DELETE
   USING (auth.uid() = user_id);
 
