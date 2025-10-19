@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { User, Lock, AlertTriangle } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import {
   updateAccountSettings,
   changePassword,

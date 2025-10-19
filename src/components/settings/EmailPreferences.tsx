@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Eye, Type } from 'lucide-react';
-import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { updateEmailPreferences } from '@/lib/settings/actions';
 import type { EmailSetting } from '@/db/schema';
 

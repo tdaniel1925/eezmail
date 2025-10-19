@@ -11,8 +11,8 @@ import {
   ChevronUp,
   PlayCircle,
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import {
   getRules,
   createRule,

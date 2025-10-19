@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Star, CheckCircle2, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import {
   getSignatures,
   createSignature,

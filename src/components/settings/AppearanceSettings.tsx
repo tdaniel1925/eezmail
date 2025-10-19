@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Palette, Sun, Moon, Monitor } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export function AppearanceSettings(): JSX.Element {

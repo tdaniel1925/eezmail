@@ -1,7 +1,7 @@
 'use client';
 
 import { CreditCard, Check, Sparkles } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import type { User as UserType, Subscription } from '@/db/schema';
 
 interface BillingSettingsProps {

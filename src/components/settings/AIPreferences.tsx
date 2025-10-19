@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Sparkles, Zap, Filter } from 'lucide-react';
-import { Switch } from '@/components/ui/Switch';
-import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Switch } from '@/components/ui/switch';
+import { Select } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { updateAIPreferences } from '@/lib/settings/actions';
 import type { EmailSetting } from '@/db/schema';
 

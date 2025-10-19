@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { Shield, Eye, Link } from 'lucide-react';
-import { Switch } from '@/components/ui/Switch';
-import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { updatePrivacySettings } from '@/lib/settings/actions';
 import type { EmailSetting } from '@/db/schema';
 

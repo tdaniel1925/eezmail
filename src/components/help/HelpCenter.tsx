@@ -16,7 +16,7 @@ import {
   Shield,
   CreditCard,
 } from 'lucide-react';
-import { Accordion, type AccordionItem } from '@/components/ui/Accordion';
+import { Accordion, type AccordionItem } from '@/components/ui/accordion';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
 
 export function HelpCenter(): JSX.Element {
