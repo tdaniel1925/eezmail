@@ -32,7 +32,14 @@ export function ReplyLaterStack({
 
   // Don't render on mobile or if no emails
   if (!mounted || isMobile || emails.length === 0) {
-    console.log('[ReplyLaterStack] NOT RENDERING - Mounted:', mounted, 'Mobile:', isMobile, 'Email count:', emails.length);
+    console.log(
+      '[ReplyLaterStack] NOT RENDERING - Mounted:',
+      mounted,
+      'Mobile:',
+      isMobile,
+      'Email count:',
+      emails.length
+    );
     return null;
   }
 
