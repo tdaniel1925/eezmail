@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/AnimatedButton';
 
@@ -47,16 +48,21 @@ export default function LoginPage(): JSX.Element {
       <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center gap-2 mb-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary-600 shadow-lg shadow-primary/30">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
+          <div className="inline-flex items-center justify-center gap-2 mb-6">
+            <Image
+              src="/images/easemail-logo.png"
+              alt="easeMail"
+              width={220}
+              height={50}
+              className="h-10 w-auto"
+              priority
+            />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome to eezMail
+            Welcome!
           </h1>
           <p className="text-gray-600 dark:text-white/60">
-            A Custom Email Client for Darren Miller Law Firm
+            Sign in to your easeMail account
           </p>
         </div>
 
@@ -149,7 +155,7 @@ export default function LoginPage(): JSX.Element {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="bg-white/60 dark:bg-white/5 px-4 text-gray-600 dark:text-white/60">
-                New to eezMail?
+                New to easeMail?
               </span>
             </div>
           </div>
