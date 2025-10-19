@@ -9,12 +9,31 @@ import {
   contactEmails,
   contactPhones,
   contactAddresses,
+  contactNotes,
+  contactTimeline,
+  contactTags,
+  contactTagAssignments,
+  contactCustomFields,
+  contactSocialLinks,
   emailAccounts,
   emailSettings,
   emailRules,
   emailSignatures,
+  emailDrafts,
+  scheduledEmails,
   senderTrust,
   customFolders,
+  customLabels,
+  labelAssignments,
+  emailLabels,
+  emailAttachments,
+  syncJobs,
+  aiReplyDrafts,
+  chatbotActions,
+  extractedActions,
+  followUpReminders,
+  tasks,
+  userPreferences,
 } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { generateTestEmails } from '../../../scripts/generate-test-emails';
@@ -144,6 +163,114 @@ export async function wipeAllUserData(): Promise<{
       await db.delete(senderTrust).where(eq(senderTrust.userId, user.id));
     } catch (error) {
       console.error('Error deleting sender trust:', error);
+    }
+
+    // Delete ALL user-related data (comprehensive cleanup)
+    console.log('🗑️  Deleting additional user data...');
+    
+    try {
+      await db.delete(contactNotes).where(eq(contactNotes.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting contact notes:', error);
+    }
+    
+    try {
+      await db.delete(contactTimeline).where(eq(contactTimeline.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting contact timeline:', error);
+    }
+    
+    try {
+      await db.delete(contactCustomFields).where(eq(contactCustomFields.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting contact custom fields:', error);
+    }
+    
+    try {
+      await db.delete(contactTags).where(eq(contactTags.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting contact tags:', error);
+    }
+    
+    try {
+      await db.delete(aiReplyDrafts).where(eq(aiReplyDrafts.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting AI reply drafts:', error);
+    }
+    
+    try {
+      await db.delete(chatbotActions).where(eq(chatbotActions.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting chatbot actions:', error);
+    }
+    
+    try {
+      await db.delete(extractedActions).where(eq(extractedActions.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting extracted actions:', error);
+    }
+    
+    try {
+      await db.delete(followUpReminders).where(eq(followUpReminders.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting follow-up reminders:', error);
+    }
+    
+    try {
+      await db.delete(tasks).where(eq(tasks.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting tasks:', error);
+    }
+    
+    try {
+      await db.delete(customLabels).where(eq(customLabels.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting custom labels:', error);
+    }
+    
+    try {
+      await db.delete(userPreferences).where(eq(userPreferences.userId, user.id));
+    } catch (error) {
+      console.error('Error deleting user preferences:', error);
+    }
+
+    if (accountIds.length > 0) {
+      // Delete account-specific data
+      try {
+        await db.delete(emailDrafts).where(inArray(emailDrafts.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting email drafts:', error);
+      }
+      
+      try {
+        await db.delete(scheduledEmails).where(inArray(scheduledEmails.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting scheduled emails:', error);
+      }
+      
+      try {
+        await db.delete(emailLabels).where(inArray(emailLabels.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting email labels:', error);
+      }
+      
+      try {
+        await db.delete(labelAssignments).where(inArray(labelAssignments.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting label assignments:', error);
+      }
+      
+      try {
+        await db.delete(emailAttachments).where(inArray(emailAttachments.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting email attachments:', error);
+      }
+      
+      try {
+        await db.delete(syncJobs).where(inArray(syncJobs.accountId, accountIds));
+      } catch (error) {
+        console.error('Error deleting sync jobs:', error);
+      }
     }
 
     // NOTE: User account and authentication are PRESERVED
