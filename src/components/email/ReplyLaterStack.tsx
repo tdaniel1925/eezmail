@@ -18,28 +18,14 @@ export function ReplyLaterStack({
   onOpenFull,
 }: ReplyLaterStackProps): JSX.Element | null {
   const [mounted, setMounted] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  const isMobile = useMediaQuery('(max-width: 768px)'); // Changed to 768px to match Tailwind's md breakpoint
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Debug: Log when emails prop changes
-  useEffect(() => {
-    console.log('[ReplyLaterStack] Emails prop:', emails.length, emails);
-    console.log('[ReplyLaterStack] Mounted:', mounted, 'Mobile:', isMobile);
-  }, [emails, mounted, isMobile]);
-
-  // Don't render on mobile or if no emails
+  // Don't render on server, mobile, or if no emails
   if (!mounted || isMobile || emails.length === 0) {
-    console.log(
-      '[ReplyLaterStack] NOT RENDERING - Mounted:',
-      mounted,
-      'Mobile:',
-      isMobile,
-      'Email count:',
-      emails.length
-    );
     return null;
   }
 
