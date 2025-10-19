@@ -3,8 +3,7 @@ import { Check, X, ArrowRight, Sparkles } from 'lucide-react';
 
 export const metadata = {
   title: 'Pricing - easeMail | Simple, Transparent Pricing',
-  description:
-    'Start free, upgrade when ready. easeMail offers flexible pricing for individuals and teams. 50% less than Superhuman with more features.',
+  description: 'Start free, upgrade when ready.',
 };
 
 const plans = [
@@ -14,16 +13,12 @@ const plans = [
     period: '/month',
     description: 'Perfect for trying out easeMail',
     features: [
-      { text: 'Up to 10 emails processed per day', included: true },
-      { text: 'Basic AI features', included: true },
-      { text: 'Standard templates', included: true },
-      { text: 'Email support', included: true },
-      { text: 'Single email account', included: true },
-      { text: 'Mobile app access', included: true },
-      { text: 'Advanced AI (RAG, semantic search)', included: false },
-      { text: 'Unlimited processing', included: false },
-      { text: 'Priority support', included: false },
-      { text: 'Team features', included: false },
+      'Up to 10 emails per day',
+      'Basic AI features',
+      'Standard templates',
+      'Email support',
+      'Single email account',
+      'Mobile app access',
     ],
     cta: 'Start Free',
     ctaLink: '/signup',
@@ -35,16 +30,16 @@ const plans = [
     period: '/month',
     description: 'For professionals who need power and speed',
     features: [
-      { text: 'Unlimited email processing', included: true },
-      { text: 'Advanced AI (RAG, semantic search)', included: true },
-      { text: 'Smart compose with context', included: true },
-      { text: 'Thread summarization', included: true },
-      { text: 'Voice dictation', included: true },
-      { text: 'Custom templates', included: true },
-      { text: 'Priority support (24/7)', included: true },
-      { text: 'Unlimited email accounts', included: true },
-      { text: 'Advanced analytics', included: true },
-      { text: 'Scheduled sending', included: true },
+      'Unlimited email processing',
+      'Advanced AI (RAG, semantic search)',
+      'Smart compose with context',
+      'Thread summarization',
+      'Voice dictation',
+      'Custom templates',
+      'Priority support (24/7)',
+      'Unlimited email accounts',
+      'Advanced analytics',
+      'Scheduled sending',
     ],
     cta: 'Start Free Trial',
     ctaLink: '/signup',
@@ -56,100 +51,22 @@ const plans = [
     period: '',
     description: 'For teams and organizations',
     features: [
-      { text: 'Everything in Professional', included: true },
-      { text: 'Dedicated account manager', included: true },
-      { text: 'SSO/SAML authentication', included: true },
-      { text: 'Custom integrations', included: true },
-      { text: 'On-premise deployment option', included: true },
-      { text: 'Custom data retention', included: true },
-      { text: 'SLA guarantee (99.9% uptime)', included: true },
-      { text: 'Advanced security controls', included: true },
-      { text: 'Team training & onboarding', included: true },
-      { text: 'Volume discounts', included: true },
+      'Everything in Professional',
+      'Dedicated account manager',
+      'SSO/SAML authentication',
+      'Custom integrations',
+      'On-premise deployment',
+      'Custom data retention',
+      'SLA guarantee (99.9% uptime)',
+      'Advanced security controls',
+      'Team training',
+      'Volume discounts',
     ],
     cta: 'Contact Sales',
     ctaLink: '/contact',
     popular: false,
   },
 ];
-
-const comparisonFeatures = [
-  {
-    category: 'Core Features',
-    items: [
-      { name: 'Email accounts', starter: '1', pro: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'Emails processed per day', starter: '10', pro: 'Unlimited', enterprise: 'Unlimited' },
-      { name: 'AI semantic search', starter: false, pro: true, enterprise: true },
-      { name: 'Smart compose', starter: 'Basic', pro: 'Advanced', enterprise: 'Advanced' },
-      { name: 'Thread summarization', starter: false, pro: true, enterprise: true },
-      { name: 'Voice dictation', starter: false, pro: true, enterprise: true },
-    ],
-  },
-  {
-    category: 'Productivity',
-    items: [
-      { name: 'Templates', starter: 'Standard', pro: 'Custom', enterprise: 'Team templates' },
-      { name: 'Scheduled sending', starter: false, pro: true, enterprise: true },
-      { name: 'Bulk operations', starter: false, pro: true, enterprise: true },
-      { name: 'Keyboard shortcuts', starter: true, pro: true, enterprise: true },
-      { name: 'Offline mode', starter: false, pro: true, enterprise: true },
-    ],
-  },
-  {
-    category: 'Team & Enterprise',
-    items: [
-      { name: 'Team collaboration', starter: false, pro: false, enterprise: true },
-      { name: 'Shared inboxes', starter: false, pro: false, enterprise: true },
-      { name: 'SSO/SAML', starter: false, pro: false, enterprise: true },
-      { name: 'Custom data retention', starter: false, pro: false, enterprise: true },
-      { name: 'Dedicated support', starter: false, pro: false, enterprise: true },
-      { name: 'SLA guarantee', starter: false, pro: false, enterprise: '99.9%' },
-    ],
-  },
-  {
-    category: 'Support',
-    items: [
-      { name: 'Email support', starter: true, pro: true, enterprise: true },
-      { name: 'Priority support', starter: false, pro: '24/7', enterprise: '24/7' },
-      { name: 'Account manager', starter: false, pro: false, enterprise: 'Dedicated' },
-      { name: 'Training & onboarding', starter: false, pro: false, enterprise: true },
-    ],
-  },
-];
-
-const faqs = [
-  {
-    q: 'Can I switch plans anytime?',
-    a: 'Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any charges.',
-  },
-  {
-    q: 'What payment methods do you accept?',
-    a: 'We accept all major credit cards (Visa, Mastercard, Amex) and can invoice enterprise customers via ACH or wire transfer.',
-  },
-  {
-    q: 'Is there a free trial?',
-    a: 'Yes! All paid plans come with a 14-day free trial with full access to all features. No credit card required to start.',
-  },
-  {
-    q: 'Do you offer discounts for annual billing?',
-    a: 'Yes! Save 20% when you pay annually. Annual plans are billed as $470/year (vs $588 monthly) for Professional.',
-  },
-  {
-    q: 'What happens when I cancel?',
-    a: 'You can cancel anytime. You'll have access until the end of your billing period, and we'll export all your data if needed.',
-  },
-];
-
-function FeatureCell({ value }: { value: boolean | string }) {
-  if (typeof value === 'boolean') {
-    return value ? (
-      <Check className="w-5 h-5 text-green-400 mx-auto" />
-    ) : (
-      <X className="w-5 h-5 text-slate-600 mx-auto" />
-    );
-  }
-  return <span className="text-sm text-slate-300">{value}</span>;
-}
 
 export default function PricingPage() {
   return (
@@ -170,19 +87,20 @@ export default function PricingPage() {
               </span>
             </h1>
             <p className="text-xl text-slate-300 leading-relaxed mb-8">
-              Start free, upgrade when you&apos;re ready. All plans include a 14-day free trial—no credit card required.
+              Start free, upgrade when you are ready. All plans include a 14-day
+              free trial.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards with Features */}
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {plans.map((plan, index) => (
+            {plans.map((plan) => (
               <div
-                key={index}
+                key={plan.name}
                 className={`rounded-3xl backdrop-blur-md p-8 flex flex-col ${
                   plan.popular
                     ? 'bg-gradient-to-b from-white/10 to-white/5 ring-2 ring-[#FF4C5A]/50 relative'
@@ -199,24 +117,22 @@ export default function PricingPage() {
 
                 <div className="mb-8">
                   <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
+                  <p className="text-slate-400 text-sm mb-6">
+                    {plan.description}
+                  </p>
                   <div className="flex items-baseline gap-2">
                     <span className="text-5xl font-bold">{plan.price}</span>
-                    {plan.period && <span className="text-slate-400">{plan.period}</span>}
+                    {plan.period && (
+                      <span className="text-slate-400">{plan.period}</span>
+                    )}
                   </div>
                 </div>
 
-                <ul className="space-y-4 mb-8 flex-1">
-                  {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-3">
-                      {feature.included ? (
-                        <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      ) : (
-                        <X className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5" />
-                      )}
-                      <span className={`text-sm ${feature.included ? 'text-slate-200' : 'text-slate-500'}`}>
-                        {feature.text}
-                      </span>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {plan.features.map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-200">{feature}</span>
                     </li>
                   ))}
                 </ul>
@@ -238,69 +154,58 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Feature Comparison Table */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Detailed Feature Comparison</h2>
-            <p className="text-slate-400">See exactly what&apos;s included in each plan</p>
-          </div>
-
-          <div className="rounded-3xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="p-6 text-left text-sm font-semibold text-slate-300">Feature</th>
-                    <th className="p-6 text-center text-sm font-semibold text-white min-w-[140px]">Starter</th>
-                    <th className="p-6 text-center text-sm font-semibold text-white min-w-[140px] bg-[#FF4C5A]/5">
-                      Professional
-                    </th>
-                    <th className="p-6 text-center text-sm font-semibold text-white min-w-[140px]">Enterprise</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonFeatures.map((section, sectionIdx) => (
-                    <tbody key={sectionIdx}>
-                      <tr className="border-t border-white/10 bg-white/5">
-                        <td colSpan={4} className="p-4 text-sm font-semibold text-white">
-                          {section.category}
-                        </td>
-                      </tr>
-                      {section.items.map((item, idx) => (
-                        <tr key={idx} className="border-t border-white/5">
-                          <td className="p-4 text-sm text-slate-300">{item.name}</td>
-                          <td className="p-4 text-center">
-                            <FeatureCell value={item.starter} />
-                          </td>
-                          <td className="p-4 text-center bg-[#FF4C5A]/5">
-                            <FeatureCell value={item.pro} />
-                          </td>
-                          <td className="p-4 text-center">
-                            <FeatureCell value={item.enterprise} />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
+      {/* FAQ Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Pricing FAQs</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            Pricing FAQs
+          </h2>
           <div className="space-y-6">
-            {faqs.map((faq, idx) => (
-              <div key={idx} className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-                <h3 className="text-lg font-semibold mb-2">{faq.q}</h3>
-                <p className="text-slate-400">{faq.a}</p>
-              </div>
-            ))}
+            <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
+              <h3 className="text-lg font-semibold mb-2">
+                Can I switch plans anytime?
+              </h3>
+              <p className="text-slate-400">
+                Yes! You can upgrade or downgrade your plan at any time. Changes
+                take effect immediately.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
+              <h3 className="text-lg font-semibold mb-2">
+                What payment methods do you accept?
+              </h3>
+              <p className="text-slate-400">
+                We accept all major credit cards (Visa, Mastercard, Amex) and
+                can invoice enterprise customers.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
+              <h3 className="text-lg font-semibold mb-2">
+                Is there a free trial?
+              </h3>
+              <p className="text-slate-400">
+                Yes! All paid plans come with a 14-day free trial with full
+                access to all features.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
+              <h3 className="text-lg font-semibold mb-2">
+                Do you offer discounts for annual billing?
+              </h3>
+              <p className="text-slate-400">
+                Yes! Save 20% when you pay annually. $470/year vs $588 for
+                monthly billing.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
+              <h3 className="text-lg font-semibold mb-2">
+                What happens when I cancel?
+              </h3>
+              <p className="text-slate-400">
+                You can cancel anytime. You will have access until the end of
+                your billing period.
+              </p>
+            </div>
           </div>
         </div>
       </section>
@@ -309,9 +214,11 @@ export default function PricingPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Ready to Get Started?
+            </h2>
             <p className="text-xl text-slate-300 mb-8">
-              Start your 14-day free trial today—no credit card required
+              Start your 14-day free trial today
             </p>
             <Link
               href="/signup"
