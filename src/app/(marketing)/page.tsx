@@ -63,37 +63,30 @@ export default function LandingPage() {
             <div className="text-center max-w-5xl mx-auto">
               <div className="inline-flex items-center gap-2 text-xs font-medium text-white/80 bg-white/5 ring-white/10 ring-1 rounded-full mb-8 pt-1.5 pr-3 pb-1.5 pl-3 backdrop-blur-sm">
                 <Sparkles className="h-3.5 w-3.5" />
-                The Future of Intelligence
+                Next-Gen Email Intelligence
               </div>
 
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-6">
-                AI Email Summit 2025
+                Transform Your Email Workflow
               </h1>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-8 text-lg">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-6 w-6 text-[#1E40AF]" />
-                  <span className="text-white font-semibold">October 1–5, 2025</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <MapPin className="h-6 w-6 text-[#1E40AF]" />
-                  <span className="text-white font-semibold">San Francisco, CA</span>
-                </div>
-              </div>
+              <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
+                AI-powered email client that saves 10+ hours per week. Built for professionals who demand speed, intelligence, and privacy.
+              </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   href="/signup"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
                 >
-                  <span>Get Tickets</span>
+                  <span>Start Free Trial</span>
                   <ArrowRight className="h-5 w-5" />
                 </Link>
                 <Link
-                  href="#section-schedule"
+                  href="#section-features"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white font-semibold rounded-full ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15 transition-all duration-300"
                 >
-                  <span>View Schedule</span>
+                  <span>Explore Features</span>
                 </Link>
               </div>
             </div>
@@ -103,17 +96,18 @@ export default function LandingPage() {
         {/* Bottom Card */}
         <div className="absolute bottom-0 left-0 right-0 z-30 pb-8 hidden md:block">
           <div className="container mx-auto px-6">
-            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 flex items-center justify-between gap-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-1">Hurry Up!</h2>
-                <p className="text-white/70">Book Your Seat Now</p>
+            <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-6 grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white mb-1">10+</div>
+                <p className="text-white/70 text-sm">Hours Saved Per Week</p>
               </div>
-              <div className="flex items-center gap-3">
-                <MapPin className="h-12 w-12 text-[#1E40AF]" />
-                <div>
-                  <p className="text-white font-semibold">121 AI Blvd</p>
-                  <p className="text-white/70 text-sm">San Francisco BCA 94107</p>
-                </div>
+              <div className="text-center border-x border-white/10">
+                <div className="text-3xl font-bold text-white mb-1">99.9%</div>
+                <p className="text-white/70 text-sm">Uptime SLA</p>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white mb-1">120ms</div>
+                <p className="text-white/70 text-sm">Average Response Time</p>
               </div>
             </div>
           </div>
@@ -126,28 +120,28 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-                About the Event
+                About easeMail
               </div>
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                A Global Gathering of AI Innovators
+                Email Productivity, Reimagined
               </h2>
               <p className="text-white/70 text-lg mb-8">
-                Join thought leaders, developers, researchers, and founders as we explore how artificial intelligence 
-                is reshaping industries, creativity, and the future of work.
+                easeMail combines cutting-edge AI with intuitive design to transform how professionals manage email. 
+                Process messages 10x faster, never miss important communications, and reclaim your time.
               </p>
 
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">5 days of keynotes, workshops, and networking</span>
+                  <span className="text-white/80">AI-powered inbox triage and smart categorization</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">50 world-class speakers</span>
+                  <span className="text-white/80">Semantic search across your entire email history</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">Startup showcase and live demos</span>
+                  <span className="text-white/80">Enterprise-grade security and compliance</span>
                 </li>
               </ul>
             </div>
@@ -156,7 +150,7 @@ export default function LandingPage() {
               <div className="relative w-full aspect-square">
                 <Image
                   src="/landing/images/misc/c1.webp"
-                  alt="AI Innovation"
+                  alt="easeMail Platform"
                   fill
                   className="object-cover rounded-2xl"
                 />
@@ -171,12 +165,12 @@ export default function LandingPage() {
         <div className="bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] py-6 transform rotate-2">
           <MarqueeText
             items={[
-              'Next Intelligence',
-              'Future Now',
-              'Empowering Innovation',
-              'Smarter Tomorrow',
-              'Think Forward',
-              'Cognitive Shift',
+              'Smart Inbox',
+              'AI Assistant',
+              'Instant Search',
+              'Privacy First',
+              '10x Faster',
+              'Enterprise Ready',
             ]}
             className="text-white text-4xl md:text-6xl font-bold"
           />
@@ -184,12 +178,12 @@ export default function LandingPage() {
         <div className="bg-gradient-to-r from-[#3B82F6] to-[#1E40AF] py-6 transform -rotate-1 -mt-8">
           <MarqueeText
             items={[
-              'Next Intelligence',
-              'Future Now',
-              'Empowering Innovation',
-              'Smarter Tomorrow',
-              'Think Forward',
-              'Cognitive Shift',
+              'Smart Inbox',
+              'AI Assistant',
+              'Instant Search',
+              'Privacy First',
+              '10x Faster',
+              'Enterprise Ready',
             ]}
             direction="right"
             className="text-white text-4xl md:text-6xl font-bold"
@@ -198,54 +192,54 @@ export default function LandingPage() {
       </section>
 
       {/* Why Attend Section */}
-      <section id="section-why-attend" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section id="section-features" className="bg-slate-950 section-dark text-light py-20 md:py-32">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-              Why Attend
+              Why easeMail
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              What You'll Gain
+              Built for Productivity
             </h2>
             <p className="text-white/70 text-lg">
-              Hear from global AI pioneers, industry disruptors, and bold thinkers shaping the future across every domain.
+              Experience email management that adapts to your workflow, learns from your behavior, and helps you focus on what matters most.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatedCard
-              title="Cutting-Edge Knowledge"
-              description="Stay ahead of the curve with insights from AI leaders shaping tomorrow's technology."
+              title="AI-Powered Triage"
+              description="Automatically categorize, prioritize, and surface your most important emails. Never miss what matters."
               imageSrc="/landing/images/misc/s3.webp"
               className="h-80"
             />
             <AnimatedCard
-              title="Hands-On Learning"
-              description="Join live workshops and labs to build practical skills in AI and machine learning."
+              title="Semantic Search"
+              description="Find any email instantly with natural language search. No more endless scrolling or complex filters."
               imageSrc="/landing/images/misc/s4.webp"
               className="h-80"
             />
             <AnimatedCard
-              title="Global Networking"
-              description="Meet developers, founders, and researchers from around the world to collaborate and grow."
+              title="Smart Compose"
+              description="Write emails faster with AI suggestions, templates, and tone adjustment. Save hours every week."
               imageSrc="/landing/images/misc/s5.webp"
               className="h-80"
             />
             <AnimatedCard
-              title="Startup Showcase"
-              description="Explore the latest AI tools and ideas from promising startups and research labs."
+              title="Team Collaboration"
+              description="Share drafts, delegate emails, and collaborate seamlessly with your team without leaving your inbox."
               imageSrc="/landing/images/misc/s6.webp"
               className="h-80"
             />
             <AnimatedCard
-              title="AI Career Boost"
-              description="Access exclusive job fairs, mentorship sessions, and recruiting events to grow your career."
+              title="Enterprise Security"
+              description="SOC 2 Type II certified, GDPR compliant, and end-to-end encrypted. Your data stays private."
               imageSrc="/landing/images/misc/s7.webp"
               className="h-80"
             />
             <AnimatedCard
-              title="Ethics & Future"
-              description="Engage in vital conversations around AI ethics, policy, and the future of intelligence."
+              title="Lightning Fast"
+              description="Built on modern infrastructure with 120ms average response time. Email at the speed of thought."
               imageSrc="/landing/images/misc/s8.webp"
               className="h-80"
             />
@@ -254,26 +248,26 @@ export default function LandingPage() {
       </section>
 
       {/* Speakers Section */}
-      <section id="section-speakers" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section id="section-team" className="bg-slate-950 section-dark text-light py-20 md:py-32">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-              Speakers
+              Our Team
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Meet the Visionaries
+              Meet the Founders
             </h2>
             <p className="text-white/70 text-lg">
-              Learn from the best minds in artificial intelligence, machine learning, and innovation.
+              Built by email power users who were frustrated with existing solutions and decided to create something better.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="group relative rounded-2xl overflow-hidden">
               <div className="relative h-96">
                 <Image
-                  src="/landing/images/team/1.webp"
-                  alt="Speaker"
+                  src="/images/trent-daniel.png"
+                  alt="Trent T. Daniel"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -282,8 +276,8 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">Joshua Henry</h3>
-                  <p className="text-white/70 text-sm">Chief AI Scientist, OpenAI</p>
+                  <h3 className="text-xl font-bold text-white mb-1">Trent T. Daniel</h3>
+                  <p className="text-white/70 text-sm">Founder, BotMakers Inc.</p>
                 </div>
               </div>
             </div>
@@ -291,8 +285,8 @@ export default function LandingPage() {
             <div className="group relative rounded-2xl overflow-hidden">
               <div className="relative h-96">
                 <Image
-                  src="/landing/images/team/2.webp"
-                  alt="Speaker"
+                  src="/images/sella-hall.png"
+                  alt="Sella Hall"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
@@ -301,27 +295,8 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">Leila Zhang</h3>
-                  <p className="text-white/70 text-sm">VP of Machine Learning, Google</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="group relative rounded-2xl overflow-hidden">
-              <div className="relative h-96">
-                <Image
-                  src="/landing/images/team/3.webp"
-                  alt="Speaker"
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">Carlos Rivera</h3>
-                  <p className="text-white/70 text-sm">Founder & CEO, NeuralCore</p>
+                  <h3 className="text-xl font-bold text-white mb-1">Sella Hall</h3>
+                  <p className="text-white/70 text-sm">Chief Experience Officer</p>
                 </div>
               </div>
             </div>
@@ -330,7 +305,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="section-tickets" className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
+      <section id="section-pricing" className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
         <div className="absolute inset-0 opacity-5">
           <Image
             src="/landing/images/background/7.webp"
@@ -344,50 +319,58 @@ export default function LandingPage() {
         <div className="relative z-10 container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-              Ticket Options
+              Pricing Plans
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Choose Your Pass
+              Choose Your Plan
             </h2>
             <p className="text-white/70 text-lg">
-              Select the perfect ticket for your needs and gain access to exclusive sessions, workshops, and more.
+              Start free, upgrade when you're ready. All plans include 14-day free trial. No credit card required.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <TicketCard
-              title="Standard"
-              price="$299"
+              title="Free"
+              price="$0"
               features={[
-                'Access to keynotes and sessions',
-                'Admission to exhibitions and demos',
-                'Networking opportunities',
-                'Digital materials and session recordings',
+                'Up to 100 emails per month',
+                'Basic AI categorization',
+                'Standard search',
+                'Email support',
+                '1 email account',
               ]}
               href="/signup"
             />
             <TicketCard
-              title="VIP"
-              price="$699"
+              title="Professional"
+              price="$49"
               popular
               features={[
-                'All Standard benefits',
-                'VIP lounge access and exclusive events',
-                'Front-row seating and priority workshop access',
-                'VIP swag bag and exclusive content',
+                'Unlimited emails',
+                'Advanced AI features',
+                'Semantic search',
+                'Priority support',
+                'Multiple accounts',
+                'Custom templates',
+                'Advanced analytics',
               ]}
               href="/signup"
             />
             <TicketCard
-              title="Full Access"
-              price="$1199"
+              title="Enterprise"
+              price="Custom"
+              period=""
               features={[
-                'All VIP benefits',
-                'Access to all workshops and breakout sessions',
-                'Personalized session scheduling',
-                'Speaker meet-and-greet and after-party access',
+                'Everything in Professional',
+                'Dedicated account manager',
+                'Custom integrations',
+                'SLA guarantee',
+                'On-premise deployment',
+                'Advanced security features',
+                'Training & onboarding',
               ]}
-              href="/signup"
+              href="/contact"
             />
           </div>
         </div>
@@ -428,35 +411,44 @@ export default function LandingPage() {
         <div className="relative z-10 container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-              Stay in the Loop
+              Ready to Transform Your Email?
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Join the Future of Innovation
+              Start Your Free Trial Today
             </h2>
             <p className="text-white/70 text-lg mb-8">
-              Drop us your email to stay in the know as we work to reduce our environmental impact. 
-              We'll share other exciting news and exclusive offers, too.
+              Join thousands of professionals using easeMail to reclaim their time and focus on what matters. 
+              No credit card required. Cancel anytime.
             </p>
 
-            <form className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-lg mx-auto">
-              <input
-                type="email"
-                placeholder="Enter Your Email Address"
-                className="w-full px-6 py-4 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-[#1E40AF] backdrop-blur-sm"
-              />
-              <button
-                type="submit"
-                className="whitespace-nowrap px-8 py-4 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+              <Link
+                href="/signup"
+                className="px-8 py-4 bg-gradient-to-r from-[#1E40AF] to-[#3B82F6] text-white font-semibold rounded-full hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
               >
-                SIGN UP
-              </button>
-            </form>
+                Start Free Trial
+              </Link>
+              <Link
+                href="/contact"
+                className="px-8 py-4 bg-white/10 text-white font-semibold rounded-full ring-1 ring-white/20 backdrop-blur-sm hover:bg-white/15 transition-all duration-300"
+              >
+                Contact Sales
+              </Link>
+            </div>
 
-            <div className="mt-6 text-sm text-white/50">
-              <label className="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded" defaultChecked />
-                <span>Keep me updated on other news and exclusive offers</span>
-              </label>
+            <div className="flex flex-wrap gap-6 justify-center text-sm text-white/60">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#1E40AF]" />
+                <span>14-day free trial</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#1E40AF]" />
+                <span>No credit card required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-[#1E40AF]" />
+                <span>Cancel anytime</span>
+              </div>
             </div>
           </div>
         </div>
