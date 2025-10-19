@@ -91,7 +91,7 @@ export function FAQSection() {
         ))}
       </div>
 
-      <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-[#FF4C5A]/10 to-transparent ring-1 ring-[#FF4C5A]/20 text-center">
+      <div className="mt-12 p-6 rounded-2xl bg-gradient-to-r from-[#1E40AF]/10 to-transparent ring-1 ring-[#1E40AF]/20 text-center">
         <p className="text-white font-semibold mb-2">Still have questions?</p>
         <p className="text-slate-400 text-sm mb-4">
           Our team is here to help you get started

@@ -88,7 +88,7 @@ export function ComparisonTable() {
               </th>
               <th className="p-4 text-center min-w-[120px]">
                 <div className="text-sm font-semibold text-white mb-1">easeMail</div>
-                <div className="text-xs text-[#FF4C5A]">⭐ Best Value</div>
+                <div className="text-xs text-[#1E40AF]">⭐ Best Value</div>
               </th>
               <th className="p-4 text-center min-w-[120px]">
                 <div className="text-sm font-medium text-slate-300">Gmail</div>
@@ -117,7 +117,7 @@ export function ComparisonTable() {
                     <td className="p-4 text-sm text-slate-300 sticky left-0 bg-slate-900/40 backdrop-blur-md z-10">
                       {feature.name}
                     </td>
-                    <td className="p-4 text-center bg-[#FF4C5A]/5">
+                    <td className="p-4 text-center bg-[#1E40AF]/5">
                       {renderCell(feature.easeMail)}
                     </td>
                     <td className="p-4 text-center">{renderCell(feature.gmail)}</td>
@@ -131,7 +131,7 @@ export function ComparisonTable() {
         </table>
       </div>
 
-      <div className="p-6 bg-gradient-to-r from-[#FF4C5A]/10 to-transparent border-t border-white/5">
+      <div className="p-6 bg-gradient-to-r from-[#1E40AF]/10 to-transparent border-t border-white/5">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <p className="text-white font-semibold">Ready to make the switch?</p>
@@ -139,7 +139,7 @@ export function ComparisonTable() {
           </div>
           <a
             href="/signup"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF4C5A] text-white px-6 py-3 text-sm font-medium hover:bg-[#FF4C5A]/90 transition whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E40AF] text-white px-6 py-3 text-sm font-medium hover:bg-[#1E40AF]/90 transition whitespace-nowrap"
           >
             Get Started Free
           </a>

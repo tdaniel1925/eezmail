@@ -56,7 +56,7 @@ export function AnimatedButton({
           background: radial-gradient(65.28% 65.28% at 50% 100%,
               rgba(255, 76, 90, 0.8) 0%,
               rgba(255, 76, 90, 0) 100%),
-            linear-gradient(0deg, #FF4C5A, #FF4C5A);
+            linear-gradient(0deg, #1E40AF, #1E40AF);
           border-radius: 9999px;
           border: none;
           outline: none;
@@ -86,7 +86,7 @@ export function AnimatedButton({
           background: radial-gradient(65.28% 65.28% at 50% 100%,
               rgba(255, 76, 90, 0.8) 0%,
               rgba(255, 76, 90, 0) 100%),
-            linear-gradient(0deg, #FF4C5A, #FF4C5A);
+            linear-gradient(0deg, #1E40AF, #1E40AF);
           border-radius: 9999px;
         }
 

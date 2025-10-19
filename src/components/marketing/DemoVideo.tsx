@@ -17,7 +17,7 @@ export function DemoVideo() {
               <div className="w-full h-full rounded-2xl bg-slate-950/50 ring-1 ring-white/10 overflow-hidden">
                 {/* Header */}
                 <div className="h-16 bg-slate-900/80 border-b border-white/10 flex items-center px-6">
-                  <div className="w-32 h-8 bg-gradient-to-r from-[#FF4C5A] to-white/20 rounded"></div>
+                  <div className="w-32 h-8 bg-gradient-to-r from-[#1E40AF] to-white/20 rounded"></div>
                 </div>
                 {/* Content area */}
                 <div className="flex h-[calc(100%-4rem)]">
@@ -36,7 +36,7 @@ export function DemoVideo() {
                   {/* Right sidebar */}
                   <div className="w-80 bg-slate-900/60 border-l border-white/5 p-4">
                     <div className="space-y-3">
-                      <div className="h-10 bg-gradient-to-r from-[#FF4C5A]/20 to-transparent rounded"></div>
+                      <div className="h-10 bg-gradient-to-r from-[#1E40AF]/20 to-transparent rounded"></div>
                       <div className="h-32 bg-slate-800/30 rounded"></div>
                       <div className="h-24 bg-slate-800/30 rounded"></div>
                     </div>
@@ -48,13 +48,13 @@ export function DemoVideo() {
             {/* Play button overlay */}
             <button
               onClick={() => setIsPlaying(true)}
-              className="absolute z-10 w-20 h-20 rounded-full bg-[#FF4C5A] flex items-center justify-center hover:bg-[#FF4C5A]/90 transition-all hover:scale-110 ring-8 ring-[#FF4C5A]/20"
+              className="absolute z-10 w-20 h-20 rounded-full bg-[#1E40AF] flex items-center justify-center hover:bg-[#1E40AF]/90 transition-all hover:scale-110 ring-8 ring-[#1E40AF]/20"
             >
               <Play className="w-8 h-8 text-white ml-1" fill="white" />
             </button>
 
             {/* Animated pulse */}
-            <div className="absolute z-0 w-20 h-20 rounded-full bg-[#FF4C5A] animate-ping opacity-20"></div>
+            <div className="absolute z-0 w-20 h-20 rounded-full bg-[#1E40AF] animate-ping opacity-20"></div>
           </>
         ) : (
           <div className="w-full h-full bg-slate-950 flex items-center justify-center">

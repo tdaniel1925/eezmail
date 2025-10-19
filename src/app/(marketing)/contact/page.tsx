@@ -43,12 +43,12 @@ export default function ContactPage() {
     <div className="min-h-screen bg-slate-950">
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1E40AF]/10 to-transparent"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Get in{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E40AF] to-white">
                 Touch
               </span>
             </h1>
@@ -69,12 +69,12 @@ export default function ContactPage() {
                 href={method.link}
                 className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6 text-center hover:ring-white/20 transition group"
               >
-                <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-[#FF4C5A]/20 transition">
-                  <method.icon className="w-6 h-6 text-[#FF4C5A]" />
+                <div className="w-12 h-12 rounded-full bg-[#1E40AF]/10 ring-1 ring-[#1E40AF]/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-[#1E40AF]/20 transition">
+                  <method.icon className="w-6 h-6 text-[#1E40AF]" />
                 </div>
                 <h3 className="text-lg font-semibold mb-1">{method.title}</h3>
                 <p className="text-sm text-slate-400 mb-3">{method.description}</p>
-                <p className="text-sm font-medium text-[#FF4C5A]">{method.value}</p>
+                <p className="text-sm font-medium text-[#1E40AF]">{method.value}</p>
               </a>
             ))}
           </div>
@@ -100,7 +100,7 @@ export default function ContactPage() {
                     id="firstName"
                     name="firstName"
                     required
-                    className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition"
+                    className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition"
                     placeholder="John"
                   />
                 </div>
@@ -113,7 +113,7 @@ export default function ContactPage() {
                     id="lastName"
                     name="lastName"
                     required
-                    className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition"
+                    className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition"
                     placeholder="Doe"
                   />
                 </div>
@@ -127,7 +127,7 @@ export default function ContactPage() {
                   id="email"
                   name="email"
                   required
-                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition"
+                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition"
                   placeholder="john@company.com"
                 />
               </div>
@@ -139,7 +139,7 @@ export default function ContactPage() {
                   type="text"
                   id="company"
                   name="company"
-                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition"
+                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition"
                   placeholder="Acme Inc."
                 />
               </div>
@@ -151,7 +151,7 @@ export default function ContactPage() {
                   id="subject"
                   name="subject"
                   required
-                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition"
+                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition"
                 >
                   <option value="">Select a subject</option>
                   <option value="sales">Sales Inquiry</option>
@@ -170,13 +170,13 @@ export default function ContactPage() {
                   name="message"
                   required
                   rows={6}
-                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#FF4C5A] focus:outline-none transition resize-none"
+                  className="w-full rounded-xl bg-slate-900/60 ring-1 ring-white/10 px-4 py-3 text-white placeholder:text-slate-500 focus:ring-2 focus:ring-[#1E40AF] focus:outline-none transition resize-none"
                   placeholder="Tell us how we can help..."
                 />
               </div>
               <button
                 type="submit"
-                className="w-full rounded-full bg-[#FF4C5A] text-white px-8 py-4 text-lg font-semibold hover:bg-[#FF4C5A]/90 transition"
+                className="w-full rounded-full bg-[#1E40AF] text-white px-8 py-4 text-lg font-semibold hover:bg-[#1E40AF]/90 transition"
               >
                 Send Message
               </button>
@@ -188,7 +188,7 @@ export default function ContactPage() {
       {/* FAQ Link */}
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
+          <div className="rounded-3xl bg-gradient-to-br from-[#1E40AF]/20 to-transparent ring-1 ring-[#1E40AF]/30 p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Have a Quick Question?</h2>
             <p className="text-xl text-slate-300 mb-8">
               Check out our FAQ section—you might find your answer there

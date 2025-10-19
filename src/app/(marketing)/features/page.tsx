@@ -112,7 +112,7 @@ export default function FeaturesPage() {
     <div className="min-h-screen bg-slate-950">
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1E40AF]/10 to-transparent"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
@@ -121,7 +121,7 @@ export default function FeaturesPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Features That Save You{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E40AF] to-white">
                 10+ Hours Per Week
               </span>
             </h1>
@@ -131,7 +131,7 @@ export default function FeaturesPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF4C5A] text-white px-8 py-4 text-lg font-medium hover:bg-[#FF4C5A]/90 transition"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1E40AF] text-white px-8 py-4 text-lg font-medium hover:bg-[#1E40AF]/90 transition"
               >
                 Start Free Trial
               </Link>
@@ -155,8 +155,8 @@ export default function FeaturesPage() {
                 key={index}
                 className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-8 hover:ring-white/20 transition"
               >
-                <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mb-6">
-                  <feature.icon className="w-6 h-6 text-[#FF4C5A]" />
+                <div className="w-12 h-12 rounded-full bg-[#1E40AF]/10 ring-1 ring-[#1E40AF]/20 flex items-center justify-center mb-6">
+                  <feature.icon className="w-6 h-6 text-[#1E40AF]" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>
                 <p className="text-slate-400 mb-6">{feature.description}</p>
@@ -177,7 +177,7 @@ export default function FeaturesPage() {
       {/* CTA Section */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
+          <div className="rounded-3xl bg-gradient-to-br from-[#1E40AF]/20 to-transparent ring-1 ring-[#1E40AF]/30 p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Ready to Transform Your Email?</h2>
             <p className="text-xl text-slate-300 mb-8">
               Join thousands of professionals saving 10+ hours per week with easeMail

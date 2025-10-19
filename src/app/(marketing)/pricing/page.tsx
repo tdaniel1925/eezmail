@@ -73,7 +73,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-slate-950">
       {/* Hero */}
       <section className="relative overflow-hidden py-20 md:py-32">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1E40AF]/10 to-transparent"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
@@ -82,7 +82,7 @@ export default function PricingPage() {
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Choose the Plan That{' '}
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E40AF] to-white">
                 Fits Your Needs
               </span>
             </h1>
@@ -103,13 +103,13 @@ export default function PricingPage() {
                 key={plan.name}
                 className={`rounded-3xl backdrop-blur-md p-8 flex flex-col ${
                   plan.popular
-                    ? 'bg-gradient-to-b from-white/10 to-white/5 ring-2 ring-[#FF4C5A]/50 relative'
+                    ? 'bg-gradient-to-b from-white/10 to-white/5 ring-2 ring-[#1E40AF]/50 relative'
                     : 'bg-slate-900/60 ring-1 ring-white/10'
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#FF4C5A] px-4 py-1.5 text-xs font-semibold text-white">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[#1E40AF] px-4 py-1.5 text-xs font-semibold text-white">
                       ⭐ MOST POPULAR
                     </span>
                   </div>
@@ -141,7 +141,7 @@ export default function PricingPage() {
                   href={plan.ctaLink}
                   className={`w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-semibold transition ${
                     plan.popular
-                      ? 'bg-[#FF4C5A] text-white hover:bg-[#FF4C5A]/90'
+                      ? 'bg-[#1E40AF] text-white hover:bg-[#1E40AF]/90'
                       : 'bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15'
                   }`}
                 >
@@ -213,7 +213,7 @@ export default function PricingPage() {
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
+          <div className="rounded-3xl bg-gradient-to-br from-[#1E40AF]/20 to-transparent ring-1 ring-[#1E40AF]/30 p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
               Ready to Get Started?
             </h2>

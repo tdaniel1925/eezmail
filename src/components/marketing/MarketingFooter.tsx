@@ -19,7 +19,7 @@ export function MarketingFooter() {
           <div className="col-span-2">
             <Link
               href="/"
-              className="inline-flex items-center justify-center text-xl font-bold bg-gradient-to-r from-[#FF4C5A] to-white bg-clip-text text-transparent"
+              className="inline-flex items-center justify-center text-xl font-bold bg-gradient-to-r from-[#1E40AF] to-white bg-clip-text text-transparent"
             >
               easeMail
             </Link>
