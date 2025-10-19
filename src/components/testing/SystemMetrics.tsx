@@ -38,11 +38,12 @@ export function SystemMetrics({ className }: SystemMetricsProps) {
         setIsLoading(true);
 
         // Load metrics from localStorage or API
-        const storedMetrics = localStorage.getItem('system-metrics');
-        if (storedMetrics) {
-          const parsed = JSON.parse(storedMetrics);
-          setMetrics(parsed);
-        } else {
+        if (typeof window !== 'undefined') {
+          const storedMetrics = localStorage.getItem('system-metrics');
+          if (storedMetrics) {
+            const parsed = JSON.parse(storedMetrics);
+            setMetrics(parsed);
+          } else {
           // Default metrics if none stored
           setMetrics([
             {
@@ -100,6 +101,7 @@ export function SystemMetrics({ className }: SystemMetricsProps) {
               description: 'Email sync status',
             },
           ]);
+        }
         }
       } catch (error) {
         console.error('Error loading metrics:', error);

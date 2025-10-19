@@ -88,14 +88,16 @@ export function TestDashboard({ className }: TestDashboardProps) {
   const loadTestResults = async () => {
     try {
       // Load from localStorage or run fresh tests
-      const stored = localStorage.getItem('test-results');
-      if (stored) {
-        const results = JSON.parse(stored);
-        setTestResults(results);
-        calculateOverallScore(results);
-      } else {
-        // Run initial tests
-        await runAllTests();
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('test-results');
+        if (stored) {
+          const results = JSON.parse(stored);
+          setTestResults(results);
+          calculateOverallScore(results);
+        } else {
+          // Run initial tests
+          await runAllTests();
+        }
       }
     } catch (error) {
       console.error('Error loading test results:', error);
@@ -152,8 +154,10 @@ export function TestDashboard({ className }: TestDashboardProps) {
       calculateOverallScore(results);
 
       // Store results
-      localStorage.setItem('test-results', JSON.stringify(results));
-      localStorage.setItem('test-last-run', new Date().toISOString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('test-results', JSON.stringify(results));
+        localStorage.setItem('test-last-run', new Date().toISOString());
+      }
 
       toast.success('Tests completed!', {
         description: `Overall score: ${Math.round(results.reduce((sum, r) => sum + r.score, 0) / results.length)}/100`,
@@ -170,17 +174,19 @@ export function TestDashboard({ className }: TestDashboardProps) {
 
   const runDatabaseTests = async (): Promise<TestResult> => {
     // Get database health report
-    const healthReport = localStorage.getItem('db-health-report');
-    if (healthReport) {
-      const parsed = JSON.parse(healthReport);
-      return {
-        category: 'Database',
-        score: parsed.score || 0,
-        status: parsed.isHealthy ? 'good' : 'poor',
-        issues: parsed.issues || [],
-        recommendations: parsed.recommendations || [],
-        lastRun: new Date(),
-      };
+    if (typeof window !== 'undefined') {
+      const healthReport = localStorage.getItem('db-health-report');
+      if (healthReport) {
+        const parsed = JSON.parse(healthReport);
+        return {
+          category: 'Database',
+          score: parsed.score || 0,
+          status: parsed.isHealthy ? 'good' : 'poor',
+          issues: parsed.issues || [],
+          recommendations: parsed.recommendations || [],
+          lastRun: new Date(),
+        };
+      }
     }
 
     return {

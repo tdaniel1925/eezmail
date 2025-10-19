@@ -45,16 +45,21 @@ export class ErrorTracker {
   private errors: ErrorLog[] = [];
   private maxErrors = 1000; // Keep last 1000 errors
   private listeners: ((error: ErrorLog) => void)[] = [];
+  private isClient = typeof window !== 'undefined';
 
   constructor() {
-    // Load existing errors from localStorage
-    this.loadErrors();
+    if (this.isClient) {
+      // Load existing errors from localStorage
+      this.loadErrors();
 
-    // Set up global error handlers
-    this.setupGlobalErrorHandlers();
+      // Set up global error handlers
+      this.setupGlobalErrorHandlers();
+    }
   }
 
   private loadErrors() {
+    if (!this.isClient) return;
+    
     try {
       const stored = localStorage.getItem('error-logs');
       if (stored) {
@@ -71,6 +76,8 @@ export class ErrorTracker {
   }
 
   private saveErrors() {
+    if (!this.isClient) return;
+    
     try {
       localStorage.setItem('error-logs', JSON.stringify(this.errors));
     } catch (error) {
@@ -79,6 +86,8 @@ export class ErrorTracker {
   }
 
   private setupGlobalErrorHandlers() {
+    if (!this.isClient) return;
+    
     // Global error handler
     window.addEventListener('error', (event) => {
       this.logError({
