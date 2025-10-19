@@ -24,8 +24,15 @@ export function ReplyLaterStack({
     setMounted(true);
   }, []);
 
+  // Debug: Log when emails prop changes
+  useEffect(() => {
+    console.log('[ReplyLaterStack] Emails prop:', emails.length, emails);
+    console.log('[ReplyLaterStack] Mounted:', mounted, 'Mobile:', isMobile);
+  }, [emails, mounted, isMobile]);
+
   // Don't render on mobile or if no emails
   if (!mounted || isMobile || emails.length === 0) {
+    console.log('[ReplyLaterStack] NOT RENDERING - Mounted:', mounted, 'Mobile:', isMobile, 'Email count:', emails.length);
     return null;
   }
 
@@ -81,7 +88,7 @@ export function ReplyLaterStack({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-20 left-1/4 z-40 flex -translate-x-1/2 justify-center"
+        className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 justify-center"
       >
         <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-1.5 shadow-lg">
           <Clock className="h-3.5 w-3.5 text-white" />
@@ -101,7 +108,7 @@ export function ReplyLaterStack({
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
-        className="fixed bottom-6 left-1/4 z-40 flex -translate-x-1/2 justify-center items-end gap-0"
+        className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center items-end gap-0"
       >
         <div className="flex items-end justify-center">
           {visibleEmails.map((email, index) => {

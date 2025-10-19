@@ -66,8 +66,14 @@ export function ReplyLaterProvider({
 
   // Load emails on mount
   useEffect(() => {
+    console.log('[ReplyLaterContext] Mounting, loading emails...');
     refreshEmails();
   }, [refreshEmails]);
+
+  // Debug: Log emails when they change
+  useEffect(() => {
+    console.log('[ReplyLaterContext] Emails updated:', emails.length, emails);
+  }, [emails]);
 
   // Add email to reply later
   const addEmail = useCallback(

@@ -158,10 +158,18 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
 
     setShowReplyLaterPicker(false);
     setShowCustomDateTime(false);
+    
+    toast.loading('Adding to Reply Later...', { id: 'reply-later' });
+    
     const success = await addEmail(email.id, date);
     
-    if (success && onClose) {
-      onClose(); // Close viewer after adding to reply later
+    if (success) {
+      toast.success('Added to Reply Later! Check the bottom of your screen for the bubble.', { id: 'reply-later' });
+      if (onClose) {
+        onClose(); // Close viewer after adding to reply later
+      }
+    } else {
+      toast.error('Failed to add to Reply Later', { id: 'reply-later' });
     }
   };
 
