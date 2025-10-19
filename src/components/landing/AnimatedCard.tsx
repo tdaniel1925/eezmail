@@ -25,8 +25,11 @@ export function AnimatedCard({
   return (
     <motion.div
       className={`group relative rounded-xl overflow-hidden cursor-pointer ${className}`}
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      viewport={{ once: true, amount: 0.2 }}
       whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.5 }}
     >
       {/* Image */}
       <div className="relative w-full h-full">

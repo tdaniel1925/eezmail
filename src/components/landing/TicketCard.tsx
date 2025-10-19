@@ -27,8 +27,11 @@ export function TicketCard({
   return (
     <motion.div
       className={`relative ${className}`}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
       whileHover={{ y: -8 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.5 }}
     >
       {popular && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">

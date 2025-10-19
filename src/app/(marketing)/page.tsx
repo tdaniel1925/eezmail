@@ -5,6 +5,7 @@ import { AnimatedCard } from '@/components/landing/AnimatedCard';
 import { MarqueeText } from '@/components/landing/MarqueeText';
 import { TicketCard } from '@/components/landing/TicketCard';
 import { Accordion } from '@/components/landing/Accordion';
+import { AnimatedSection } from '@/components/landing/AnimatedSection';
 import Image from 'next/image';
 
 export const metadata = {
