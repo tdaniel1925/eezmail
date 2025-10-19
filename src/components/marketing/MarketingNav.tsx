@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function MarketingNav() {
   return (
@@ -10,9 +11,16 @@ export function MarketingNav() {
         <div className="flex md:gap-6 ring-white/5 ring-1 [animation:fadeSlideIn_1s_ease-out_0.1s_both] rounded-full pt-1 pr-1 pb-1 pl-1 gap-x-4 gap-y-4 items-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center text-xl font-bold bg-gradient-to-r from-[#1E40AF] to-white bg-clip-text text-transparent px-4"
+            className="inline-flex items-center justify-center px-4"
           >
-            easeMail
+            <Image
+              src="/images/easemail-logo.png"
+              alt="easeMail"
+              width={180}
+              height={40}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
           <nav className="hidden md:flex gap-2 gap-x-2 gap-y-2 items-center">
             <Link
