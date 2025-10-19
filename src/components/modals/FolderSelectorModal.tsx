@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Folder, Inbox, Send, Archive, Trash2, AlertOctagon } from 'lucide-react';
+import {
+  X,
+  Folder,
+  Inbox,
+  Send,
+  Archive,
+  Trash2,
+  AlertOctagon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FolderSelectorModalProps {

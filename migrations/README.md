@@ -9,6 +9,7 @@ This folder contains SQL migration files to optimize and maintain the easeMail d
 **Purpose**: Add indexes to frequently queried columns to dramatically improve query performance.
 
 **Expected Improvements**:
+
 - Email queries: 50-70% faster
 - Contact search: 80% faster
 - Settings page: 40% faster
@@ -25,6 +26,7 @@ This folder contains SQL migration files to optimize and maintain the easeMail d
 7. Wait for the success message
 
 **Verification**: After running, you should see a success message like:
+
 ```
 ✅ Performance indexes created successfully!
 
@@ -56,6 +58,7 @@ Expected Performance Improvements:
 ## Need Help?
 
 If you encounter issues:
+
 1. Check the Supabase logs in your dashboard
 2. Verify your database schema matches expectations
 3. Ensure you have proper permissions to create indexes
@@ -64,4 +67,3 @@ If you encounter issues:
 ---
 
 **Last Updated**: October 19, 2025
-

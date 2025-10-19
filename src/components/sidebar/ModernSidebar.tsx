@@ -112,7 +112,8 @@ export function ModernSidebar({
                 alt="easeMail"
                 width={140}
                 height={32}
-                className="h-8 w-auto"
+                className="h-8"
+                style={{ width: 'auto' }}
                 priority
               />
               <p className="text-[10px] font-medium text-gray-500 dark:text-gray-400 -mt-0.5">

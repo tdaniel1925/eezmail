@@ -88,10 +88,6 @@ export async function verifyDataWipe(): Promise<{
     } catch (e) { counts.contactTimeline = 0; missingTables.push('contact_timeline'); }
     
     try {
-      counts.emailSettings = (await db.query.emailSettings.findMany({ where: eq(emailSettings.userId, user.id) })).length;
-    } catch (e) { counts.emailSettings = 0; missingTables.push('email_settings'); }
-    
-    try {
       counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
     } catch (e) { counts.emailRules = 0; missingTables.push('email_rules'); }
     
@@ -146,15 +142,19 @@ export async function verifyDataWipe(): Promise<{
       } catch (e) { counts.scheduledEmails = 0; }
       
       try {
-        counts.customFolders = (await db.query.customFolders.findMany({ where: inArray(customFolders.accountId, accountIds) })).length;
-      } catch (e) { counts.customFolders = 0; }
+        counts.emailSettings = (await db.query.emailSettings.findMany({ where: inArray(emailSettings.accountId, accountIds) })).length;
+      } catch (e) { counts.emailSettings = 0; missingTables.push('email_settings'); }
     } else {
       counts.emails = 0;
       counts.emailThreads = 0;
       counts.emailDrafts = 0;
       counts.scheduledEmails = 0;
-      counts.customFolders = 0;
+      counts.emailSettings = 0;
     }
+    
+    try {
+      counts.customFolders = (await db.query.customFolders.findMany({ where: eq(customFolders.userId, user.id) })).length;
+    } catch (e) { counts.customFolders = 0; missingTables.push('custom_folders'); }
 
     // Calculate total
     const totalRemaining = Object.values(counts).reduce((sum, count) => sum + count, 0);
