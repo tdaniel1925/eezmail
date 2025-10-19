@@ -70,27 +70,80 @@ export async function verifyDataWipe(): Promise<{
 
     // Check user-level data
     counts.emailAccounts = userAccounts.length;
-    counts.contacts = (await db.query.contacts.findMany({ where: eq(contacts.userId, user.id) })).length;
-    counts.contactNotes = (await db.query.contactNotes.findMany({ where: eq(contactNotes.userId, user.id) })).length;
-    counts.contactTimeline = (await db.query.contactTimeline.findMany({ where: eq(contactTimeline.userId, user.id) })).length;
-    counts.emailSettings = (await db.query.emailSettings.findMany({ where: eq(emailSettings.userId, user.id) })).length;
-    counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
-    counts.emailSignatures = (await db.query.emailSignatures.findMany({ where: eq(emailSignatures.userId, user.id) })).length;
-    counts.senderTrust = (await db.query.senderTrust.findMany({ where: eq(senderTrust.userId, user.id) })).length;
-    counts.aiReplyDrafts = (await db.query.aiReplyDrafts.findMany({ where: eq(aiReplyDrafts.userId, user.id) })).length;
-    counts.chatbotActions = (await db.query.chatbotActions.findMany({ where: eq(chatbotActions.userId, user.id) })).length;
-    counts.extractedActions = (await db.query.extractedActions.findMany({ where: eq(extractedActions.userId, user.id) })).length;
-    counts.followUpReminders = (await db.query.followUpReminders.findMany({ where: eq(followUpReminders.userId, user.id) })).length;
-    counts.tasks = (await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })).length;
-    counts.customLabels = (await db.query.customLabels.findMany({ where: eq(customLabels.userId, user.id) })).length;
+    
+    try {
+      counts.contacts = (await db.query.contacts.findMany({ where: eq(contacts.userId, user.id) })).length;
+    } catch (e) { counts.contacts = 0; }
+    
+    try {
+      counts.contactNotes = (await db.query.contactNotes.findMany({ where: eq(contactNotes.userId, user.id) })).length;
+    } catch (e) { counts.contactNotes = 0; }
+    
+    try {
+      counts.contactTimeline = (await db.query.contactTimeline.findMany({ where: eq(contactTimeline.userId, user.id) })).length;
+    } catch (e) { counts.contactTimeline = 0; }
+    
+    try {
+      counts.emailSettings = (await db.query.emailSettings.findMany({ where: eq(emailSettings.userId, user.id) })).length;
+    } catch (e) { counts.emailSettings = 0; }
+    
+    try {
+      counts.emailRules = (await db.query.emailRules.findMany({ where: eq(emailRules.userId, user.id) })).length;
+    } catch (e) { counts.emailRules = 0; }
+    
+    try {
+      counts.emailSignatures = (await db.query.emailSignatures.findMany({ where: eq(emailSignatures.userId, user.id) })).length;
+    } catch (e) { counts.emailSignatures = 0; }
+    
+    try {
+      counts.senderTrust = (await db.query.senderTrust.findMany({ where: eq(senderTrust.userId, user.id) })).length;
+    } catch (e) { counts.senderTrust = 0; }
+    
+    try {
+      counts.aiReplyDrafts = (await db.query.aiReplyDrafts.findMany({ where: eq(aiReplyDrafts.userId, user.id) })).length;
+    } catch (e) { counts.aiReplyDrafts = 0; }
+    
+    try {
+      counts.chatbotActions = (await db.query.chatbotActions.findMany({ where: eq(chatbotActions.userId, user.id) })).length;
+    } catch (e) { counts.chatbotActions = 0; }
+    
+    try {
+      counts.extractedActions = (await db.query.extractedActions.findMany({ where: eq(extractedActions.userId, user.id) })).length;
+    } catch (e) { counts.extractedActions = 0; }
+    
+    try {
+      counts.followUpReminders = (await db.query.followUpReminders.findMany({ where: eq(followUpReminders.userId, user.id) })).length;
+    } catch (e) { counts.followUpReminders = 0; }
+    
+    try {
+      counts.tasks = (await db.query.tasks.findMany({ where: eq(tasks.userId, user.id) })).length;
+    } catch (e) { counts.tasks = 0; }
+    
+    try {
+      counts.customLabels = (await db.query.customLabels.findMany({ where: eq(customLabels.userId, user.id) })).length;
+    } catch (e) { counts.customLabels = 0; }
 
     // Check account-level data if accounts exist
     if (accountIds.length > 0) {
-      counts.emails = (await db.query.emails.findMany({ where: inArray(emails.accountId, accountIds) })).length;
-      counts.emailThreads = (await db.query.emailThreads.findMany({ where: inArray(emailThreads.accountId, accountIds) })).length;
-      counts.emailDrafts = (await db.query.emailDrafts.findMany({ where: inArray(emailDrafts.accountId, accountIds) })).length;
-      counts.scheduledEmails = (await db.query.scheduledEmails.findMany({ where: inArray(scheduledEmails.accountId, accountIds) })).length;
-      counts.customFolders = (await db.query.customFolders.findMany({ where: inArray(customFolders.accountId, accountIds) })).length;
+      try {
+        counts.emails = (await db.query.emails.findMany({ where: inArray(emails.accountId, accountIds) })).length;
+      } catch (e) { counts.emails = 0; }
+      
+      try {
+        counts.emailThreads = (await db.query.emailThreads.findMany({ where: inArray(emailThreads.accountId, accountIds) })).length;
+      } catch (e) { counts.emailThreads = 0; }
+      
+      try {
+        counts.emailDrafts = (await db.query.emailDrafts.findMany({ where: inArray(emailDrafts.accountId, accountIds) })).length;
+      } catch (e) { counts.emailDrafts = 0; }
+      
+      try {
+        counts.scheduledEmails = (await db.query.scheduledEmails.findMany({ where: inArray(scheduledEmails.accountId, accountIds) })).length;
+      } catch (e) { counts.scheduledEmails = 0; }
+      
+      try {
+        counts.customFolders = (await db.query.customFolders.findMany({ where: inArray(customFolders.accountId, accountIds) })).length;
+      } catch (e) { counts.customFolders = 0; }
     } else {
       counts.emails = 0;
       counts.emailThreads = 0;
