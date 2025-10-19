@@ -8,6 +8,7 @@
 ## What Was Fixed
 
 ### **Issue**
+
 The Reply Later bubbles were not appearing at the **bottom-center** of the screen after clicking "Reply Later" on an email.
 
 ### **Root Causes Identified**
@@ -37,19 +38,24 @@ The Reply Later bubbles were not appearing at the **bottom-center** of the scree
 
 ```typescript
 // BEFORE (Wrong - positioned at 25% from left)
-className="fixed bottom-6 left-1/4 z-40 flex -translate-x-1/2 justify-center items-end gap-0"
+className =
+  'fixed bottom-6 left-1/4 z-40 flex -translate-x-1/2 justify-center items-end gap-0';
 
 // AFTER (Correct - centered at 50%)
-className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center items-end gap-0"
+className =
+  'fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 justify-center items-end gap-0';
 ```
 
 **Also fixed the badge above bubbles**:
+
 ```typescript
 // BEFORE
-className="fixed bottom-20 left-1/4 z-40 flex -translate-x-1/2 justify-center"
+className =
+  'fixed bottom-20 left-1/4 z-40 flex -translate-x-1/2 justify-center';
 
 // AFTER
-className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 justify-center"
+className =
+  'fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 justify-center';
 ```
 
 ---
@@ -59,22 +65,23 @@ className="fixed bottom-20 left-1/2 z-40 flex -translate-x-1/2 justify-center"
 **File**: `src/components/email/EmailViewer.tsx`
 
 **Added Loading + Success Toast**:
+
 ```typescript
 const handleReplyLater = async (date: Date): Promise<void> => {
   if (!email) return;
 
   setShowReplyLaterPicker(false);
   setShowCustomDateTime(false);
-  
+
   // Show loading state
   toast.loading('Adding to Reply Later...', { id: 'reply-later' });
-  
+
   const success = await addEmail(email.id, date);
-  
+
   if (success) {
     // Clear success message guiding user
     toast.success(
-      'Added to Reply Later! Check the bottom of your screen for the bubble.', 
+      'Added to Reply Later! Check the bottom of your screen for the bubble.',
       { id: 'reply-later' }
     );
     if (onClose) {
@@ -87,6 +94,7 @@ const handleReplyLater = async (date: Date): Promise<void> => {
 ```
 
 **Benefits**:
+
 - ✅ User sees loading state
 - ✅ User knows where to look (bottom of screen)
 - ✅ User knows if action failed
@@ -122,15 +130,19 @@ useEffect(() => {
 // Don't render on mobile or if no emails
 if (!mounted || isMobile || emails.length === 0) {
   console.log(
-    '[ReplyLaterStack] NOT RENDERING - Mounted:', mounted, 
-    'Mobile:', isMobile, 
-    'Email count:', emails.length
+    '[ReplyLaterStack] NOT RENDERING - Mounted:',
+    mounted,
+    'Mobile:',
+    isMobile,
+    'Email count:',
+    emails.length
   );
   return null;
 }
 ```
 
 **Benefits**:
+
 - ✅ Track email flow through context
 - ✅ See why bubbles aren't rendering
 - ✅ Debug mobile vs desktop behavior
@@ -154,13 +166,15 @@ if (!mounted || isMobile || emails.length === 0) {
 ### **Step 2: Verify Bubble Appearance**
 
 **What You Should See**:
+
 - **Badge** at bottom-center showing: `1 Reply Later` (or count)
 - **Circular bubble(s)** directly below the badge
 - **Initials** of sender in the bubble
 - **Colored background** (auto-generated from email)
 - **White border** with shadow
 
-**Position**: 
+**Position**:
+
 - Desktop: Centered horizontally at bottom of viewport
 - Mobile: Hidden (by design)
 
@@ -176,9 +190,11 @@ Open browser console (`F12` or `Ctrl+Shift+J`) and look for:
 ```
 
 **If you see `NOT RENDERING`**:
+
 ```
 [ReplyLaterStack] NOT RENDERING - Mounted: true Mobile: false Email count: 0
 ```
+
 This means emails aren't being loaded from database.
 
 ### **Step 4: Interact with Bubble**
@@ -195,16 +211,19 @@ This means emails aren't being loaded from database.
 ### **Problem: No bubbles appear**
 
 **Check Console for**:
+
 ```
 [ReplyLaterContext] Emails updated: 0 []
 ```
 
 **Possible Causes**:
+
 1. **Database not updated** - Check `emails` table, verify `replyLaterUntil` is set
 2. **Auth issue** - User not authenticated properly
 3. **Server action failed** - Check Network tab for API errors
 
 **Solution**:
+
 - Open Network tab in DevTools
 - Try adding email to Reply Later again
 - Look for server action calls and check responses
@@ -215,6 +234,7 @@ This means emails aren't being loaded from database.
 ### **Problem: Bubbles appear off-center**
 
 **If bubbles are still not centered**:
+
 1. Clear browser cache (`Ctrl+Shift+Delete`)
 2. Hard refresh (`Ctrl+F5`)
 3. Check if Tailwind classes are being applied (Inspect element)
@@ -227,11 +247,13 @@ This means emails aren't being loaded from database.
 **Expected**: Bubbles are **hidden on mobile** (by design)
 
 **Check Console**:
+
 ```
 [ReplyLaterStack] NOT RENDERING - Mounted: true Mobile: true Email count: 1
 ```
 
 **If bubbles show on mobile**:
+
 - `useMediaQuery` hook may not be working
 - Check viewport width is correctly detected
 
@@ -277,6 +299,7 @@ DashboardLayout (Server Component)
 ### **Why Bottom-Center?**
 
 **Design Decision** (Hey.com inspired):
+
 - ✅ Always visible without being intrusive
 - ✅ Doesn't block main content
 - ✅ Easy to access with mouse
@@ -295,16 +318,16 @@ DashboardLayout (Server Component)
 
 ## Current Status
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Add to Reply Later | ✅ Working | Server action updates DB |
-| Show Bubbles | ✅ Fixed | Now centered at bottom |
-| User Feedback | ✅ Improved | Clear loading + success toasts |
-| Bubble Interaction | ✅ Working | Hover, click, remove all work |
-| AI Draft Generation | ✅ Working | Generates on bubble click |
-| Preview Modal | ✅ Working | Shows above bubble |
-| Send Reply | ✅ Working | Sends and removes bubble |
-| Debug Logging | ✅ Added | Console logs for troubleshooting |
+| Feature             | Status      | Notes                            |
+| ------------------- | ----------- | -------------------------------- |
+| Add to Reply Later  | ✅ Working  | Server action updates DB         |
+| Show Bubbles        | ✅ Fixed    | Now centered at bottom           |
+| User Feedback       | ✅ Improved | Clear loading + success toasts   |
+| Bubble Interaction  | ✅ Working  | Hover, click, remove all work    |
+| AI Draft Generation | ✅ Working  | Generates on bubble click        |
+| Preview Modal       | ✅ Working  | Shows above bubble               |
+| Send Reply          | ✅ Working  | Sends and removes bubble         |
+| Debug Logging       | ✅ Added    | Console logs for troubleshooting |
 
 ---
 
@@ -313,10 +336,11 @@ DashboardLayout (Server Component)
 If bubbles still don't appear after these fixes:
 
 1. **Check Database**:
+
    ```sql
-   SELECT id, subject, "replyLaterUntil", "fromAddress" 
-   FROM emails 
-   WHERE "replyLaterUntil" IS NOT NULL 
+   SELECT id, subject, "replyLaterUntil", "fromAddress"
+   FROM emails
+   WHERE "replyLaterUntil" IS NOT NULL
    AND "isTrashed" = false;
    ```
 
@@ -353,4 +377,3 @@ If bubbles still don't appear after these fixes:
 ---
 
 **If you still don't see bubbles**, please check the console logs and share what you see. The debug logging will tell us exactly what's happening.
-

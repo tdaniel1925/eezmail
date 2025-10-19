@@ -17,13 +17,18 @@ export async function markAsReplyLater(
   success: boolean;
   error?: string;
 }> {
+  console.log('[markAsReplyLater] Called with:', { emailId, replyLaterUntil, note });
+  
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
+    console.log('[markAsReplyLater] User:', user?.id);
+
     if (!user) {
+      console.error('[markAsReplyLater] No user found');
       return { success: false, error: 'Unauthorized' };
     }
 
@@ -34,6 +39,7 @@ export async function markAsReplyLater(
       .where(eq(emailAccounts.userId, user.id));
 
     const accountIds = userAccountIds.map((acc) => acc.id);
+    console.log('[markAsReplyLater] User account IDs:', accountIds);
 
     const result = await db
       .update(emails)
@@ -47,10 +53,14 @@ export async function markAsReplyLater(
       )
       .returning({ id: emails.id });
 
+    console.log('[markAsReplyLater] Database update result:', result);
+
     if (result.length === 0) {
+      console.error('[markAsReplyLater] No rows updated - email not found or access denied');
       return { success: false, error: 'Email not found or access denied' };
     }
 
+    console.log('[markAsReplyLater] Success!');
     return { success: true };
   } catch (error) {
     console.error('Error marking email as reply later:', error);
@@ -66,13 +76,18 @@ export async function getReplyLaterEmails(): Promise<{
   emails?: Email[];
   error?: string;
 }> {
+  console.log('[getReplyLaterEmails] Called');
+  
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
+    console.log('[getReplyLaterEmails] User:', user?.id);
+
     if (!user) {
+      console.error('[getReplyLaterEmails] No user found');
       return { success: false, error: 'Unauthorized' };
     }
 
@@ -83,8 +98,10 @@ export async function getReplyLaterEmails(): Promise<{
       .where(eq(emailAccounts.userId, user.id));
 
     const accountIds = userAccountIds.map((acc) => acc.id);
+    console.log('[getReplyLaterEmails] User account IDs:', accountIds);
 
     if (accountIds.length === 0) {
+      console.log('[getReplyLaterEmails] No accounts found');
       return { success: true, emails: [] };
     }
 
@@ -99,9 +116,11 @@ export async function getReplyLaterEmails(): Promise<{
       limit: 20, // Limit to prevent performance issues
     });
 
+    console.log('[getReplyLaterEmails] Found emails:', replyLaterEmails.length, replyLaterEmails);
+
     return { success: true, emails: replyLaterEmails };
   } catch (error) {
-    console.error('Error fetching reply later emails:', error);
+    console.error('[getReplyLaterEmails] Error:', error);
     return { success: false, error: 'Failed to fetch reply later emails' };
   }
 }
