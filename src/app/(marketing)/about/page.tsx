@@ -5,7 +5,7 @@ import { Sparkles, Target, Users, Zap } from 'lucide-react';
 export const metadata = {
   title: 'About Us - easeMail | Meet the Team Behind the AI Email Revolution',
   description:
-    'Learn about easeMail\'s mission to transform email with AI. Meet our founders: Trent T. Daniel and Sella Hall.',
+    "Learn about easeMail's mission to transform email with AI. Meet our founders: Trent T. Daniel and Sella Hall.",
 };
 
 export default function AboutPage() {
@@ -20,7 +20,7 @@ export default function AboutPage() {
       name: 'Sella Hall',
       title: 'Chief Experience Officer',
       image: '/images/sella-hall.png',
-      bio: 'Sella is a UX expert and product strategist with over a decade of experience designing intuitive software for Fortune 500 companies. She ensures that easeMail\'s powerful AI features are accessible and delightful to use, making productivity effortless.',
+      bio: "Sella is a UX expert and product strategist with over a decade of experience designing intuitive software for Fortune 500 companies. She ensures that easeMail's powerful AI features are accessible and delightful to use, making productivity effortless.",
     },
   ];
 
@@ -35,7 +35,7 @@ export default function AboutPage() {
       icon: Target,
       title: 'User-Centric Design',
       description:
-        'Powerful doesn\'t mean complicated. We obsess over making complex AI features simple and intuitive.',
+        "Powerful doesn't mean complicated. We obsess over making complex AI features simple and intuitive.",
     },
     {
       icon: Users,
@@ -53,10 +53,17 @@ export default function AboutPage() {
 
   const milestones = [
     { year: '2023', event: 'BotMakers, Inc. founded by Trent T. Daniel' },
-    { year: '2024', event: 'easeMail concept born from frustration with existing email clients' },
+    {
+      year: '2024',
+      event:
+        'easeMail concept born from frustration with existing email clients',
+    },
     { year: 'Q1 2025', event: 'Beta launch with 500+ early adopters' },
     { year: 'Q2 2025', event: 'Public launch and Series A funding' },
-    { year: 'Future', event: 'AI-powered email for 1M+ professionals worldwide' },
+    {
+      year: 'Future',
+      event: 'AI-powered email for 1M+ professionals worldwide',
+    },
   ];
 
   return (
@@ -77,8 +84,9 @@ export default function AboutPage() {
               </span>
             </h1>
             <p className="text-xl text-slate-300 leading-relaxed">
-              easeMail was born from a simple frustration: email clients haven't evolved for decades. We're changing
-              that with AI-first design and relentless focus on productivity.
+              easeMail was born from a simple frustration: email clients haven't
+              evolved for decades. We're changing that with AI-first design and
+              relentless focus on productivity.
             </p>
           </div>
         </div>
@@ -88,11 +96,17 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-5xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-8 md:p-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">Our Mission</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+              Our Mission
+            </h2>
             <p className="text-xl text-slate-300 leading-relaxed text-center mb-8">
-              To save professionals <span className="text-white font-semibold">10+ hours per week</span> by making
-              email management intelligent, fast, and delightful. We believe AI should handle the busywork so you can
-              focus on what matters—building relationships and making decisions.
+              To save professionals{' '}
+              <span className="text-white font-semibold">
+                10+ hours per week
+              </span>{' '}
+              by making email management intelligent, fast, and delightful. We
+              believe AI should handle the busywork so you can focus on what
+              matters—building relationships and making decisions.
             </p>
             <div className="flex justify-center">
               <Link
@@ -110,7 +124,9 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Meet Our Founders</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Meet Our Founders
+            </h2>
             <p className="text-slate-400">The visionaries behind easeMail</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -124,14 +140,23 @@ export default function AboutPage() {
                     src={founder.image}
                     alt={founder.name}
                     fill
-                    className={founder.name === 'Trent T. Daniel' ? 'object-cover scale-125' : 'object-cover'}
+                    className="object-cover"
+                    style={
+                      founder.name === 'Sella Hall'
+                        ? { objectPosition: '50% 30%' }
+                        : undefined
+                    }
                     sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
                 <div className="p-8">
                   <h3 className="text-2xl font-bold mb-1">{founder.name}</h3>
-                  <p className="text-[#FF4C5A] font-medium mb-4">{founder.title}</p>
-                  <p className="text-slate-300 leading-relaxed">{founder.bio}</p>
+                  <p className="text-[#FF4C5A] font-medium mb-4">
+                    {founder.title}
+                  </p>
+                  <p className="text-slate-300 leading-relaxed">
+                    {founder.bio}
+                  </p>
                 </div>
               </div>
             ))}
@@ -168,7 +193,9 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Journey</h2>
-            <p className="text-slate-400">From idea to AI-powered email revolution</p>
+            <p className="text-slate-400">
+              From idea to AI-powered email revolution
+            </p>
           </div>
           <div className="space-y-6">
             {milestones.map((milestone, index) => (
@@ -178,7 +205,9 @@ export default function AboutPage() {
               >
                 <div className="flex-shrink-0">
                   <div className="w-16 h-16 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center">
-                    <span className="text-sm font-bold text-[#FF4C5A]">{milestone.year}</span>
+                    <span className="text-sm font-bold text-[#FF4C5A]">
+                      {milestone.year}
+                    </span>
                   </div>
                 </div>
                 <div className="flex-1 pt-3">
@@ -194,7 +223,9 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Us on This Journey</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Join Us on This Journey
+            </h2>
             <p className="text-xl text-slate-300 mb-8">
               Be part of the email revolution. Start using easeMail today.
             </p>
@@ -204,7 +235,9 @@ export default function AboutPage() {
             >
               Start Free Trial
             </Link>
-            <p className="text-sm text-slate-400 mt-4">14-day free trial • No credit card required</p>
+            <p className="text-sm text-slate-400 mt-4">
+              14-day free trial • No credit card required
+            </p>
           </div>
         </div>
       </section>
