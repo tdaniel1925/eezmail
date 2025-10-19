@@ -64,7 +64,7 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/#pricing" className="text-sm text-slate-400 hover:text-white transition">
+                <Link href="/pricing" className="text-sm text-slate-400 hover:text-white transition">
                   Pricing
                 </Link>
               </li>
@@ -101,7 +101,7 @@ export function MarketingFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-slate-400 hover:text-white transition">
+                <Link href="/contact" className="text-sm text-slate-400 hover:text-white transition">
                   Contact
                 </Link>
               </li>

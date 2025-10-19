@@ -3,6 +3,7 @@ import { Sparkles, Zap, Activity, Smile, Clock, Check, ArrowRight, Calendar, Shi
 import { ROICalculator } from '@/components/marketing/ROICalculator';
 import { ComparisonTable } from '@/components/marketing/ComparisonTable';
 import { FAQSection } from '@/components/marketing/FAQSection';
+import { DemoVideo } from '@/components/marketing/DemoVideo';
 
 export const metadata = {
   title: 'easeMail - AI-Powered Email for Enterprises | Save 10 Hours Per Week',
@@ -113,6 +114,25 @@ export default function LandingPage() {
         {/* Subtle vignette */}
         <div className="pointer-events-none absolute top-0 right-0 bottom-0 left-0"></div>
       </div>
+
+      {/* Demo Video Section */}
+      <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-900/50">
+        <div className="z-10 md:px-8 max-w-7xl mr-auto ml-auto pr-6 pl-6 relative">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
+              <Sparkles className="w-4 h-4" />
+              See It In Action
+            </div>
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4">
+              Watch How AI Transforms Your Email
+            </h2>
+            <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+              See easeMail's powerful features in action—from semantic search to smart compose—all in under 2 minutes
+            </p>
+          </div>
+          <DemoVideo />
+        </div>
+      </section>
 
       {/* Solutions Section (Stats Cards) */}
       <section className="overflow-hidden lg:py-20 pt-8 pb-8 relative bg-slate-950" id="solutions">
