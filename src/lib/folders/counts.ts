@@ -289,7 +289,7 @@ export async function getArchiveCount(): Promise<number> {
       .where(
         and(
           inArray(emails.accountId, accountIds),
-          eq(emails.isArchived, true),
+          eq(emails.folderName, 'archive'),
           eq(emails.isTrashed, false)
         )
       );

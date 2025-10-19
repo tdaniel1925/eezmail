@@ -403,7 +403,7 @@ async function syncFoldersWithGraph(
           type: mapFolderType(folder.displayName),
         })
         .onConflictDoUpdate({
-          target: [emailFolders.externalId],
+          target: [emailFolders.accountId, emailFolders.externalId],
           set: {
             name: normalizedName,
             type: mapFolderType(folder.displayName),
