@@ -1,136 +1,210 @@
-import { Shield, Lock, Eye, Server, FileCheck, AlertCircle } from 'lucide-react';
+import Link from 'next/link';
+import { Shield, Lock, Eye, Database, Server, FileCheck, Users, CheckCircle, Globe } from 'lucide-react';
 
 export const metadata = {
-  title: 'Security - easeMail Enterprise-Grade Protection',
-  description: 'Bank-grade security, GDPR compliance, and zero email scanning. Your data stays private and secure.',
+  title: 'Security - easeMail | Enterprise-Grade Email Security',
+  description:
+    'SOC 2 Type II certified, GDPR compliant, with AES-256 encryption. Learn how easeMail protects your data with enterprise-grade security.',
 };
 
 export default function SecurityPage() {
-  return (
-    <>
-      {/* Hero */}
-      <section className="z-10 relative pt-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both]">
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <Shield className="h-12 w-12 text-emerald-400" />
-              <Lock className="h-12 w-12 text-emerald-400" />
-              <Eye className="h-12 w-12 text-emerald-400 opacity-30" />
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
-              Enterprise-Grade Security <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-white">Without Compromise</span>
-            </h1>
-            <p className="text-lg text-white/70 mb-8">
-              Bank-level encryption, zero email scanning, and complete data privacy. Your emails are yours alone.
-            </p>
+  const certifications = [
+    {
+      icon: Shield,
+      title: 'SOC 2 Type II',
+      description: 'Audited annually for security, availability, and confidentiality',
+    },
+    {
+      icon: FileCheck,
+      title: 'GDPR Compliant',
+      description: 'Full compliance with EU data protection regulations',
+    },
+    {
+      icon: Globe,
+      title: 'ISO 27001',
+      description: 'International standard for information security management',
+    },
+    {
+      icon: Lock,
+      title: 'HIPAA Ready',
+      description: 'Healthcare-compliant configurations available for enterprise',
+    },
+  ];
 
-            {/* Trust Badges */}
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              {['GDPR', 'CCPA', 'SOC 2', 'ISO 27001'].map((badge) => (
-                <div
-                  key={badge}
-                  className="px-6 py-3 bg-emerald-500/20 border-2 border-emerald-500/50 rounded-lg text-emerald-300 font-semibold"
-                >
-                  {badge}
-                </div>
-              ))}
+  const securityFeatures = [
+    {
+      icon: Lock,
+      title: 'End-to-End Encryption',
+      description: 'All data encrypted in transit (TLS 1.3) and at rest (AES-256)',
+      details: [
+        'TLS 1.3 for data in transit',
+        'AES-256 encryption at rest',
+        'Zero-knowledge architecture option',
+        'Encrypted backups',
+      ],
+    },
+    {
+      icon: Eye,
+      title: 'Privacy First',
+      description: 'We never train AI models on your emails or sell your data',
+      details: [
+        'No data selling, ever',
+        'No AI training on private emails',
+        'Data isolation per customer',
+        'Right to be forgotten',
+      ],
+    },
+    {
+      icon: Database,
+      title: 'Data Sovereignty',
+      description: 'Choose where your data is stored with regional data centers',
+      details: [
+        'US, EU, and Asia data centers',
+        'Custom data retention policies',
+        'Data residency guarantees',
+        'Local compliance adherence',
+      ],
+    },
+    {
+      icon: Server,
+      title: 'Infrastructure Security',
+      description: 'Built on enterprise-grade infrastructure with 99.9% uptime SLA',
+      details: [
+        'AWS/GCP secure infrastructure',
+        'DDoS protection',
+        'Regular security audits',
+        'Incident response team',
+      ],
+    },
+    {
+      icon: Users,
+      title: 'Access Control',
+      description: 'Enterprise SSO, MFA, and granular permission management',
+      details: [
+        'SSO/SAML support',
+        'Multi-factor authentication',
+        'Role-based access control',
+        'Session management',
+      ],
+    },
+    {
+      icon: FileCheck,
+      title: 'Audit & Compliance',
+      description: 'Comprehensive audit logs and compliance reporting',
+      details: [
+        'Complete audit trails',
+        'Real-time monitoring',
+        'Compliance reports',
+        'Security event alerts',
+      ],
+    },
+  ];
+
+  const trustPillars = [
+    {
+      title: 'Transparent',
+      description: 'Open about our security practices and incident response',
+    },
+    {
+      title: 'Proactive',
+      description: 'Regular penetration testing and security audits',
+    },
+    {
+      title: 'Compliant',
+      description: 'Meet global standards for data protection and privacy',
+    },
+    {
+      title: 'Responsive',
+      description: '24/7 security operations center monitoring threats',
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-slate-950">
+      {/* Hero */}
+      <section className="relative overflow-hidden py-20 md:py-32">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
+              <Shield className="w-4 h-4" />
+              Enterprise-Grade Security
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+              Your Data Is{' '}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
+                Safe With Us
+              </span>
+            </h1>
+            <p className="text-xl text-slate-300 leading-relaxed mb-8">
+              Bank-level security meets cutting-edge AI. easeMail is SOC 2 Type II certified and GDPR compliant, with
+              enterprise-grade encryption and privacy controls.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF4C5A] text-white px-8 py-4 text-lg font-medium hover:bg-[#FF4C5A]/90 transition"
+              >
+                Start Secure Trial
+              </Link>
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-8 py-4 text-lg font-medium hover:bg-white/15 transition"
+              >
+                Talk to Security Team
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Security Architecture */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <h2 className="text-4xl font-bold text-white mb-4">Security Architecture</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Multi-layered protection that keeps your data safe at every step.
-            </p>
+      {/* Certifications */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Certified & Compliant</h2>
+            <p className="text-slate-400">Independently verified security and compliance</p>
           </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Lock className="h-8 w-8" />,
-                title: 'End-to-End Encryption',
-                desc: 'All data encrypted in transit (TLS 1.3) and at rest (AES-256). Your emails are unreadable to anyone but you.',
-              },
-              {
-                icon: <Shield className="h-8 w-8" />,
-                title: 'Zero-Knowledge Architecture',
-                desc: 'We can\'t read your emails even if we wanted to. Your data is encrypted with keys only you control.',
-              },
-              {
-                icon: <Server className="h-8 w-8" />,
-                title: 'Data Residency',
-                desc: 'Choose where your data lives. US, EU, or Asia-Pacific data centers with full sovereignty.',
-              },
-            ].map((feature, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {certifications.map((cert, index) => (
               <div
-                key={idx}
-                className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-6 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll"
-                style={{ animationDelay: `${0.2 + idx * 0.1}s` }}
+                key={index}
+                className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6 text-center hover:ring-white/20 transition"
               >
-                <div className="text-emerald-400 mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-bold text-white mb-3">{feature.title}</h3>
-                <p className="text-white/60 text-sm">{feature.desc}</p>
+                <div className="w-16 h-16 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mx-auto mb-4">
+                  <cert.icon className="w-8 h-8 text-[#FF4C5A]" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{cert.title}</h3>
+                <p className="text-sm text-slate-400">{cert.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Compliance */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <h2 className="text-4xl font-bold text-white mb-4">Compliance & Certifications</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Meet regulatory requirements with certifications and controls your auditors trust.
-            </p>
+      {/* Security Features */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Security Features</h2>
+            <p className="text-slate-400">Comprehensive protection at every layer</p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              {
-                icon: <FileCheck className="h-10 w-10" />,
-                title: 'GDPR Compliance',
-                desc: 'Full General Data Protection Regulation compliance with data export, deletion, and privacy controls built in.',
-                features: ['Right to access', 'Right to deletion', 'Data portability', 'Privacy by design'],
-              },
-              {
-                icon: <FileCheck className="h-10 w-10" />,
-                title: 'CCPA Compliance',
-                desc: 'California Consumer Privacy Act compliance. Transparent data practices and user control.',
-                features: ['Data disclosure', 'Opt-out rights', 'Non-discrimination', 'Access requests'],
-              },
-              {
-                icon: <Shield className="h-10 w-10" />,
-                title: 'SOC 2 Type II',
-                desc: 'Independent audit of security controls (in progress). Annual security assessments.',
-                features: ['Security controls', 'Availability', 'Confidentiality', 'Privacy'],
-              },
-              {
-                icon: <Shield className="h-10 w-10" />,
-                title: 'ISO 27001',
-                desc: 'Information security management system certification (planned for Q2 2025).',
-                features: ['Risk assessment', 'Security policies', 'Incident response', 'Continuous improvement'],
-              },
-            ].map((cert, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {securityFeatures.map((feature, index) => (
               <div
-                key={idx}
-                className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-8 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll"
-                style={{ animationDelay: `${0.2 + idx * 0.1}s` }}
+                key={index}
+                className="rounded-2xl bg-slate-900/40 ring-1 ring-white/10 backdrop-blur-md p-8 hover:ring-white/20 transition"
               >
-                <div className="text-emerald-400 mb-4">{cert.icon}</div>
-                <h3 className="text-2xl font-bold text-white mb-3">{cert.title}</h3>
-                <p className="text-white/60 mb-4">{cert.desc}</p>
+                <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mb-6">
+                  <feature.icon className="w-6 h-6 text-[#FF4C5A]" />
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-slate-400 mb-6">{feature.description}</p>
                 <ul className="space-y-2">
-                  {cert.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-white/60">
-                      <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      {f}
+                  {feature.details.map((detail, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-slate-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                      {detail}
                     </li>
                   ))}
                 </ul>
@@ -140,101 +214,115 @@ export default function SecurityPage() {
         </div>
       </section>
 
-      {/* Data Privacy */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-12 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <div className="max-w-3xl">
-              <h2 className="text-3xl font-bold text-white mb-6">Our Privacy Promise</h2>
-              
-              <div className="space-y-6 text-white/70">
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">What We DON'T Do</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-400 mt-1">✗</span>
-                      <span>We <strong className="text-white">never scan</strong> your emails for advertising</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-400 mt-1">✗</span>
-                      <span>We <strong className="text-white">never sell</strong> your data to third parties</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-red-400 mt-1">✗</span>
-                      <span>We <strong className="text-white">never train AI models</strong> on your email content</span>
-                    </li>
-                  </ul>
-                </div>
+      {/* Trust Pillars */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Built on Trust</h2>
+            <p className="text-slate-400">Our commitment to your security</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {trustPillars.map((pillar, index) => (
+              <div
+                key={index}
+                className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6 text-center"
+              >
+                <h3 className="text-xl font-semibold mb-2">{pillar.title}</h3>
+                <p className="text-sm text-slate-400">{pillar.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-                <div>
-                  <h3 className="text-xl font-semibold text-white mb-2">What We DO</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-1">✓</span>
-                      <span>Encrypt everything with keys you control</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-1">✓</span>
-                      <span>Give you full data export and deletion tools</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-1">✓</span>
-                      <span>Process data only to provide the service you requested</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-emerald-400 mt-1">✓</span>
-                      <span>Be transparent about what we collect and why</span>
-                    </li>
-                  </ul>
+      {/* Enterprise Security */}
+      <section className="py-20">
+        <div className="max-w-5xl mx-auto px-6 md:px-8">
+          <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md overflow-hidden">
+            <div className="p-8 md:p-12">
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Enterprise Security Add-Ons</h2>
+              <div className="space-y-6 mb-8">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">On-Premise Deployment</h3>
+                    <p className="text-slate-400">
+                      Deploy easeMail in your own data center with full control over infrastructure and data location.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Custom Data Retention</h3>
+                    <p className="text-slate-400">
+                      Configure retention policies to meet your compliance requirements, from 30 days to unlimited.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Advanced DLP</h3>
+                    <p className="text-slate-400">
+                      Data Loss Prevention with custom rules, content scanning, and automated remediation.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-1">Security Integrations</h3>
+                    <p className="text-slate-400">
+                      Integrate with your existing security stack: SIEM, MDM, threat intelligence platforms.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Incident Response */}
-      <section className="z-10 mt-24 py-12 relative">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mb-12 [animation:fadeSlideIn_0.5s_ease-in-out_0.1s_both] animate-on-scroll">
-            <h2 className="text-4xl font-bold text-white mb-4">24/7 Security Monitoring</h2>
-            <p className="text-lg text-white/70 max-w-2xl">
-              Continuous protection with rapid response to any security concerns.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-8 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.2s_both] animate-on-scroll">
-              <AlertCircle className="h-10 w-10 text-[#FF4C5A] mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">Incident Response</h3>
-              <ul className="space-y-3 text-white/60">
-                <li>• 24/7 security operations center</li>
-                <li>• <span className="text-white font-semibold">&lt;15 minute</span> initial response time</li>
-                <li>• Automated threat detection and blocking</li>
-                <li>• Regular security audits and penetration testing</li>
-              </ul>
-            </div>
-
-            <div className="border-gradient before:rounded-2xl bg-white/5 rounded-2xl p-8 backdrop-blur [animation:fadeSlideIn_0.5s_ease-in-out_0.3s_both] animate-on-scroll">
-              <Shield className="h-10 w-10 text-emerald-400 mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">Vulnerability Disclosure</h3>
-              <p className="text-white/60 mb-4">
-                Found a security issue? We welcome responsible disclosure and respond rapidly to all reports.
-              </p>
-              <a
-                href="mailto:security@easemail.com"
-                className="inline-flex items-center gap-2 text-[#FF4C5A] hover:text-[#FF4C5A]/80 font-semibold"
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[#FF4C5A] text-white px-8 py-3 text-base font-semibold hover:bg-[#FF4C5A]/90 transition"
               >
-                security@easemail.com
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </a>
+                Contact Enterprise Sales
+              </Link>
             </div>
           </div>
         </div>
       </section>
-    </>
+
+      {/* CTA */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="max-w-4xl mx-auto px-6 md:px-8">
+          <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Questions About Security?</h2>
+            <p className="text-xl text-slate-300 mb-8">
+              Our security team is here to answer your questions and provide documentation
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-slate-900 px-8 py-4 text-lg font-semibold hover:bg-slate-100 transition"
+              >
+                Contact Security Team
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 text-white ring-1 ring-white/15 px-8 py-4 text-lg font-semibold hover:bg-white/15 transition"
+              >
+                Start Secure Trial
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
-
