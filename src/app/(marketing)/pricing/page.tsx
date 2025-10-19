@@ -80,7 +80,7 @@ export default function PricingPage() {
               <Sparkles className="w-4 h-4" />
               Simple, Transparent Pricing
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Choose the Plan That{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
                 Fits Your Needs
@@ -116,7 +116,7 @@ export default function PricingPage() {
                 )}
 
                 <div className="mb-8">
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold mb-2 text-white">{plan.name}</h3>
                   <p className="text-slate-400 text-sm mb-6">
                     {plan.description}
                   </p>
@@ -157,12 +157,12 @@ export default function PricingPage() {
       {/* FAQ Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-white">
             Pricing FAQs
           </h2>
           <div className="space-y-6">
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 Can I switch plans anytime?
               </h3>
               <p className="text-slate-400">
@@ -171,7 +171,7 @@ export default function PricingPage() {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 What payment methods do you accept?
               </h3>
               <p className="text-slate-400">
@@ -180,7 +180,7 @@ export default function PricingPage() {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 Is there a free trial?
               </h3>
               <p className="text-slate-400">
@@ -189,7 +189,7 @@ export default function PricingPage() {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 Do you offer discounts for annual billing?
               </h3>
               <p className="text-slate-400">
@@ -198,7 +198,7 @@ export default function PricingPage() {
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
-              <h3 className="text-lg font-semibold mb-2">
+              <h3 className="text-lg font-semibold mb-2 text-white">
                 What happens when I cancel?
               </h3>
               <p className="text-slate-400">
@@ -214,7 +214,7 @@ export default function PricingPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
               Ready to Get Started?
             </h2>
             <p className="text-xl text-slate-300 mb-8">

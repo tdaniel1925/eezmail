@@ -46,7 +46,7 @@ export default function ContactPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#FF4C5A]/10 to-transparent"></div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Get in{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
                 Touch
@@ -86,7 +86,7 @@ export default function ContactPage() {
         <div className="max-w-3xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-8 md:p-12">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-2">Send Us a Message</h2>
+              <h2 className="text-3xl font-bold mb-2 text-white">Send Us a Message</h2>
               <p className="text-slate-400">We'll get back to you within 24 hours</p>
             </div>
             <form className="space-y-6">
@@ -189,7 +189,7 @@ export default function ContactPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Have a Quick Question?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Have a Quick Question?</h2>
             <p className="text-xl text-slate-300 mb-8">
               Check out our FAQ section—you might find your answer there
             </p>

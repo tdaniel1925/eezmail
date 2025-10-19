@@ -77,7 +77,7 @@ export default function AboutPage() {
               <Sparkles className="w-4 h-4" />
               Meet the Team
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               We're Building the{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
                 Future of Email
@@ -96,7 +96,7 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-5xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-8 md:p-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center text-white">
               Our Mission
             </h2>
             <p className="text-xl text-slate-300 leading-relaxed text-center mb-8">
@@ -124,7 +124,7 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
               Meet Our Founders
             </h2>
             <p className="text-slate-400">The visionaries behind easeMail</p>
@@ -150,7 +150,7 @@ export default function AboutPage() {
                   />
                 </div>
                 <div className="p-8">
-                  <h3 className="text-2xl font-bold mb-1">{founder.name}</h3>
+                  <h3 className="text-2xl font-bold mb-1 text-white">{founder.name}</h3>
                   <p className="text-[#FF4C5A] font-medium mb-4">
                     {founder.title}
                   </p>
@@ -168,7 +168,7 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Values</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Our Values</h2>
             <p className="text-slate-400">What drives us every day</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -192,7 +192,7 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Our Journey</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Our Journey</h2>
             <p className="text-slate-400">
               From idea to AI-powered email revolution
             </p>
@@ -223,7 +223,7 @@ export default function AboutPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
               Join Us on This Journey
             </h2>
             <p className="text-xl text-slate-300 mb-8">

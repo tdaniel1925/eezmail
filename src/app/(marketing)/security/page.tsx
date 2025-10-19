@@ -130,7 +130,7 @@ export default function SecurityPage() {
               <Shield className="w-4 h-4" />
               Enterprise-Grade Security
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Your Data Is{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
                 Safe With Us
@@ -162,7 +162,7 @@ export default function SecurityPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Certified & Compliant</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Certified & Compliant</h2>
             <p className="text-slate-400">Independently verified security and compliance</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -186,7 +186,7 @@ export default function SecurityPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Security Features</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Security Features</h2>
             <p className="text-slate-400">Comprehensive protection at every layer</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -198,7 +198,7 @@ export default function SecurityPage() {
                 <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mb-6">
                   <feature.icon className="w-6 h-6 text-[#FF4C5A]" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>
                 <p className="text-slate-400 mb-6">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.details.map((detail, idx) => (
@@ -218,7 +218,7 @@ export default function SecurityPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Built on Trust</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Built on Trust</h2>
             <p className="text-slate-400">Our commitment to your security</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -227,7 +227,7 @@ export default function SecurityPage() {
                 key={index}
                 className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6 text-center"
               >
-                <h3 className="text-xl font-semibold mb-2">{pillar.title}</h3>
+                <h3 className="text-xl font-semibold mb-2 text-white">{pillar.title}</h3>
                 <p className="text-sm text-slate-400">{pillar.description}</p>
               </div>
             ))}
@@ -240,14 +240,14 @@ export default function SecurityPage() {
         <div className="max-w-5xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md overflow-hidden">
             <div className="p-8 md:p-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Enterprise Security Add-Ons</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6 text-white">Enterprise Security Add-Ons</h2>
               <div className="space-y-6 mb-8">
                 <div className="flex items-start gap-4">
                   <div className="w-8 h-8 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center flex-shrink-0 mt-1">
                     <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">On-Premise Deployment</h3>
+                    <h3 className="text-lg font-semibold mb-1 text-white">On-Premise Deployment</h3>
                     <p className="text-slate-400">
                       Deploy easeMail in your own data center with full control over infrastructure and data location.
                     </p>
@@ -258,7 +258,7 @@ export default function SecurityPage() {
                     <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">Custom Data Retention</h3>
+                    <h3 className="text-lg font-semibold mb-1 text-white">Custom Data Retention</h3>
                     <p className="text-slate-400">
                       Configure retention policies to meet your compliance requirements, from 30 days to unlimited.
                     </p>
@@ -269,7 +269,7 @@ export default function SecurityPage() {
                     <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">Advanced DLP</h3>
+                    <h3 className="text-lg font-semibold mb-1 text-white">Advanced DLP</h3>
                     <p className="text-slate-400">
                       Data Loss Prevention with custom rules, content scanning, and automated remediation.
                     </p>
@@ -280,7 +280,7 @@ export default function SecurityPage() {
                     <CheckCircle className="w-5 h-5 text-[#FF4C5A]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-1">Security Integrations</h3>
+                    <h3 className="text-lg font-semibold mb-1 text-white">Security Integrations</h3>
                     <p className="text-slate-400">
                       Integrate with your existing security stack: SIEM, MDM, threat intelligence platforms.
                     </p>
@@ -302,7 +302,7 @@ export default function SecurityPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Questions About Security?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Questions About Security?</h2>
             <p className="text-xl text-slate-300 mb-8">
               Our security team is here to answer your questions and provide documentation
             </p>

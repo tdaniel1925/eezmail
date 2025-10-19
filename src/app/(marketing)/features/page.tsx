@@ -119,7 +119,7 @@ export default function FeaturesPage() {
               <Sparkles className="w-4 h-4" />
               Powered by Advanced AI
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
               Features That Save You{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#FF4C5A] to-white">
                 10+ Hours Per Week
@@ -158,7 +158,7 @@ export default function FeaturesPage() {
                 <div className="w-12 h-12 rounded-full bg-[#FF4C5A]/10 ring-1 ring-[#FF4C5A]/20 flex items-center justify-center mb-6">
                   <feature.icon className="w-6 h-6 text-[#FF4C5A]" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <h3 className="text-xl font-semibold mb-3 text-white">{feature.title}</h3>
                 <p className="text-slate-400 mb-6">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, idx) => (
@@ -178,7 +178,7 @@ export default function FeaturesPage() {
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-6 md:px-8">
           <div className="rounded-3xl bg-gradient-to-br from-[#FF4C5A]/20 to-transparent ring-1 ring-[#FF4C5A]/30 p-12 text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Email?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">Ready to Transform Your Email?</h2>
             <p className="text-xl text-slate-300 mb-8">
               Join thousands of professionals saving 10+ hours per week with easeMail
             </p>

@@ -123,7 +123,7 @@ export default function LandingPage() {
               <Sparkles className="w-4 h-4" />
               See It In Action
             </div>
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4">
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-4 text-white">
               Watch How AI Transforms Your Email
             </h2>
             <p className="text-slate-400 text-lg max-w-2xl mx-auto">
@@ -895,7 +895,7 @@ export default function LandingPage() {
       <section className="overflow-hidden lg:py-24 pt-16 pb-16 relative bg-slate-950">
         <div className="z-10 md:px-8 max-w-5xl mr-auto ml-auto pr-6 pl-6 relative">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mb-4 text-white">
               Calculate Your Savings
             </h2>
             <p className="text-slate-400">
