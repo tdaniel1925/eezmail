@@ -51,11 +51,11 @@ CREATE INDEX IF NOT EXISTS idx_contact_notes_contact_id
   ON contact_notes(contact_id);
 
 -- Custom folders indexes
-CREATE INDEX IF NOT EXISTS idx_custom_folders_account_id 
-  ON custom_folders(account_id);
+CREATE INDEX IF NOT EXISTS idx_custom_folders_user_id 
+  ON custom_folders(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_custom_folders_sort_order 
-  ON custom_folders(account_id, sort_order);
+  ON custom_folders(user_id, sort_order);
 
 -- Email threads indexes  
 CREATE INDEX IF NOT EXISTS idx_email_threads_account_id 
