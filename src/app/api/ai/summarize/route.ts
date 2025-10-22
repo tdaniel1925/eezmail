@@ -150,21 +150,22 @@ export async function POST(req: Request): Promise<Response> {
       });
     }
 
-    // Call OpenAI to generate summary (optimized for speed)
+    // Call OpenAI to generate summary (optimized for maximum speed)
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Faster than gpt-4 (2-3x speed)
+      model: 'gpt-3.5-turbo', // Fastest model
       messages: [
         {
           role: 'system',
-          content: `Summarize the main email content in 2-3 sentences. Focus ONLY on the actual message content. Ignore signatures, inline images, metadata, and quoted/forwarded sections. Include: main purpose, key info, action items.`,
+          content: `Summarize this email in 1-2 brief sentences. Focus only on the main point and any action items.`,
         },
         {
           role: 'user',
-          content: `Subject: ${emailSubject}\n\nBody:\n${emailBody.substring(0, 2000)}`, // Reduced from 3000 for speed
+          content: `Subject: ${emailSubject}\n\n${emailBody.substring(0, 1500)}`, // Reduced from 2000 for speed
         },
       ],
-      temperature: 0.3, // Lower for faster, more consistent results
-      max_tokens: 150, // Reduced from 200 for speed
+      temperature: 0.5, // Slightly higher for faster generation
+      max_tokens: 100, // Reduced from 150 for speed
+      top_p: 0.9, // Slightly lower for faster, more focused responses
     });
 
     const summary = response.choices[0]?.message?.content;
@@ -176,29 +177,20 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
-    // Cache the summary in the database
-    await db
-      .update(emails)
+    // Cache the summary in the database (async, don't wait)
+    db.update(emails)
       .set({
         summary: summary.trim(),
         updatedAt: new Date(),
       } as any)
-      .where(eq(emails.id, emailId));
+      .where(eq(emails.id, emailId))
+      .catch((err) => console.error('Failed to cache summary:', err));
 
-    // Calculate word count reduction
-    const originalWords = emailBody.split(/\s+/).length;
-    const summaryWords = summary.trim().split(/\s+/).length;
-    const reduction = Math.round(
-      ((originalWords - summaryWords) / originalWords) * 100
-    );
-
+    // Return immediately without waiting for DB update
     return NextResponse.json({
       success: true,
       summary: summary.trim(),
       cached: false,
-      originalWords,
-      summaryWords,
-      reduction: `${reduction}%`,
     });
   } catch (error) {
     console.error('Error in summarize API:', error);
