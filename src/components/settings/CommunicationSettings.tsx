@@ -1,0 +1,354 @@
+'use client';
+
+/**
+ * Communication Settings Component
+ * Configure Twilio credentials and billing preferences
+ */
+
+import { useState, useEffect } from 'react';
+import { Phone, Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  getUserCommunicationSettings,
+  updateCommunicationSettings,
+  testUserTwilioCredentials,
+  type CommunicationSettingsData,
+  type CommunicationLimitsData,
+} from '@/lib/contacts/communication-settings-actions';
+
+export function CommunicationSettings() {
+  const [settings, setSettings] = useState<CommunicationSettingsData>({
+    useCustomTwilio: false,
+    billingEnabled: true,
+  });
+  const [limits, setLimits] = useState<CommunicationLimitsData | null>(null);
+  const [accountSidMasked, setAccountSidMasked] = useState<string>('');
+  
+  const [showAccountSid, setShowAccountSid] = useState(false);
+  const [showAuthToken, setShowAuthToken] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    const result = await getUserCommunicationSettings();
+
+    if (result.success && result.settings && result.limits) {
+      setSettings(result.settings);
+      setLimits(result.limits);
+      setAccountSidMasked(result.settings.accountSidMasked || '');
+    } else {
+      toast.error('Failed to load settings');
+    }
+    setIsLoading(false);
+  };
+
+  const handleTestCredentials = async () => {
+    if (!settings.twilioAccountSid || !settings.twilioAuthToken) {
+      toast.error('Please enter Account SID and Auth Token');
+      return;
+    }
+
+    setIsTesting(true);
+
+    const result = await testUserTwilioCredentials(
+      settings.twilioAccountSid,
+      settings.twilioAuthToken,
+      settings.twilioPhoneNumber
+    );
+
+    if (result.success) {
+      toast.success('Twilio credentials are valid!');
+    } else {
+      toast.error(result.error || 'Invalid credentials');
+    }
+
+    setIsTesting(false);
+  };
+
+  const handleSave = async () => {
+    if (settings.useCustomTwilio && (!settings.twilioAccountSid || !settings.twilioAuthToken)) {
+      toast.error('Please provide Twilio credentials or disable custom Twilio');
+      return;
+    }
+
+    setIsSaving(true);
+
+    const result = await updateCommunicationSettings(settings);
+
+    if (result.success) {
+      toast.success('Settings saved successfully');
+      await loadSettings(); // Reload to get masked values
+    } else {
+      toast.error(result.error || 'Failed to save settings');
+    }
+
+    setIsSaving(false);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Communication Settings
+        </h2>
+        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          Configure SMS and voice call settings
+        </p>
+      </div>
+
+      <div className="space-y-6">
+        {/* Twilio Integration */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <Phone className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Twilio Integration
+            </h3>
+          </div>
+
+          {/* Use Custom Twilio Toggle */}
+          <div className="mb-6">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={settings.useCustomTwilio}
+                onChange={(e) =>
+                  setSettings({ ...settings, useCustomTwilio: e.target.checked })
+                }
+                className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  Use My Own Twilio Account
+                </span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Provide your own Twilio credentials to avoid per-use billing
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Twilio Credentials */}
+          {settings.useCustomTwilio && (
+            <div className="space-y-4">
+              {/* Account SID */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Account SID
+                </label>
+                <div className="relative">
+                  <input
+                    type={showAccountSid ? 'text' : 'password'}
+                    value={settings.twilioAccountSid || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, twilioAccountSid: e.target.value })
+                    }
+                    placeholder={accountSidMasked || 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'}
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAccountSid(!showAccountSid)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showAccountSid ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Auth Token */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Auth Token
+                </label>
+                <div className="relative">
+                  <input
+                    type={showAuthToken ? 'text' : 'password'}
+                    value={settings.twilioAuthToken || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, twilioAuthToken: e.target.value })
+                    }
+                    placeholder="••••••••••••••••••••••••••••••••"
+                    className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthToken(!showAuthToken)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showAuthToken ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Twilio Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={settings.twilioPhoneNumber || ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, twilioPhoneNumber: e.target.value })
+                  }
+                  placeholder="+1234567890"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Must be in E.164 format (e.g., +14155552671)
+                </p>
+              </div>
+
+              {/* Test Button */}
+              <button
+                onClick={handleTestCredentials}
+                disabled={isTesting}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {isTesting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Testing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Test Credentials</span>
+                  </>
+                )}
+              </button>
+
+              {/* Security Notice */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-xs text-blue-800 dark:text-blue-200">
+                  <strong>Security:</strong> Your Twilio credentials are encrypted using AES-256
+                  before being stored in the database. They are never exposed in API responses.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Billing Settings */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Billing Settings
+          </h3>
+
+          {!settings.useCustomTwilio && (
+            <div className="mb-4">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={settings.billingEnabled}
+                  onChange={(e) =>
+                    setSettings({ ...settings, billingEnabled: e.target.checked })
+                  }
+                  className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary"
+                />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    Enable System Twilio (Per-Use Billing)
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Use our Twilio account - you'll be charged per message/call
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
+
+          {/* Current Rates */}
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              Current Rates (System Twilio)
+            </h4>
+            <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <li>• SMS: $0.0075 per message (US)</li>
+              <li>• Voice Call: $0.013 per minute (US)</li>
+              <li>• Rates vary by country</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Rate Limits */}
+        {limits && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Your Rate Limits ({limits.planType} plan)
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">SMS Limits</p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>Per minute: {limits.smsPerMinute}</li>
+                  <li>Per hour: {limits.smsPerHour}</li>
+                  <li>Per day: {limits.smsPerDay}</li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Voice Limits</p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <li>Per minute: {limits.voicePerMinute}</li>
+                  <li>Per hour: {limits.voicePerHour}</li>
+                  <li>Per day: {limits.voicePerDay}</li>
+                </ul>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              Contact support to upgrade your plan or adjust custom limits
+            </p>
+          </div>
+        )}
+
+        {/* Save Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Save Settings</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
