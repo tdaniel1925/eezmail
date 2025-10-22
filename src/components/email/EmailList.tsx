@@ -464,27 +464,28 @@ export function EmailList({
         subtitle={`${unreadCount} unread${newEmailsCount > 0 ? ` • +${newEmailsCount} new` : ''}`}
         onRefresh={onRefresh}
         isRefreshing={isSyncing}
+        leftActions={
+          /* Select All Checkbox - Aligned with email card checkboxes */
+          <button
+            onClick={toggleSelectAll}
+            className="flex items-center justify-center rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+            title={
+              selectedEmails.size === displayEmails.length &&
+              displayEmails.length > 0
+                ? 'Deselect all'
+                : 'Select all'
+            }
+          >
+            {selectedEmails.size === displayEmails.length &&
+            displayEmails.length > 0 ? (
+              <CheckSquare className="h-5 w-5 text-blue-600" />
+            ) : (
+              <Square className="h-5 w-5 text-gray-400" />
+            )}
+          </button>
+        }
         customActions={
           <>
-            {/* Select All Checkbox */}
-            <button
-              onClick={toggleSelectAll}
-              className="flex items-center justify-center rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title={
-                selectedEmails.size === displayEmails.length &&
-                displayEmails.length > 0
-                  ? 'Deselect all'
-                  : 'Select all'
-              }
-            >
-              {selectedEmails.size === displayEmails.length &&
-              displayEmails.length > 0 ? (
-                <CheckSquare className="h-5 w-5 text-blue-600" />
-              ) : (
-                <Square className="h-5 w-5 text-gray-400" />
-              )}
-            </button>
-
             {/* Compose Button */}
             <AnimatedButton
               variant="particles"

@@ -29,6 +29,7 @@ interface UnifiedHeaderProps {
   actions?: HeaderAction[];
   showSettings?: boolean;
   showThemeToggle?: boolean;
+  leftActions?: React.ReactNode;
   customActions?: React.ReactNode;
   onToggleSidebar?: () => void;
   onRefresh?: () => void;
@@ -42,6 +43,7 @@ export function UnifiedHeader({
   actions = [],
   showSettings = true,
   showThemeToggle = true,
+  leftActions,
   customActions,
   onToggleSidebar,
   onRefresh,
@@ -88,6 +90,13 @@ export function UnifiedHeader({
           >
             <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400" />
           </button>
+        )}
+
+        {/* Left Actions (e.g., bulk select checkbox) */}
+        {leftActions && (
+          <div className="flex items-center">
+            {leftActions}
+          </div>
         )}
 
         <div>
