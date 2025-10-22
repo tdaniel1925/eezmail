@@ -103,10 +103,21 @@ export function FolderList({
 
   // Helper function to convert strings to title case
   const toTitleCase = (str: string): string => {
-    return str
-      .toLowerCase()
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    if (!str) return str;
+    
+    // Handle common patterns: replace underscores and hyphens with spaces
+    const normalized = str
+      .replace(/_/g, ' ')
+      .replace(/-/g, ' ')
+      .trim();
+    
+    // Split on spaces and capitalize each word
+    return normalized
+      .split(/\s+/)
+      .map(word => {
+        if (word.length === 0) return word;
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
       .join(' ');
   };
 
