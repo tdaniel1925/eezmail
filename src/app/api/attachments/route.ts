@@ -74,6 +74,14 @@ export async function GET(request: Request) {
     const allAttachments = await db.query.emailAttachments.findMany({
       where: inArray(emailAttachments.emailId, emailIds),
       orderBy: [desc(emailAttachments.createdAt)],
+      with: {
+        email: {
+          columns: {
+            fromAddress: true,
+            subject: true,
+          },
+        },
+      },
     });
 
     // Filter out non-qualified attachments (calendar invites, vcards, etc.)

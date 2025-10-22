@@ -74,10 +74,9 @@ export function AttachmentListView({
       <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
           <div className="col-span-1">Date</div>
-          <div className="col-span-1">Time</div>
-          <div className="col-span-3">Filename</div>
-          <div className="col-span-1">Type</div>
-          <div className="col-span-1">Size</div>
+          <div className="col-span-2">Filename</div>
+          <div className="col-span-2">From</div>
+          <div className="col-span-2">File Type</div>
           <div className="col-span-4">Description</div>
           <div className="col-span-1 text-right">Actions</div>
         </div>
@@ -98,18 +97,18 @@ export function AttachmentListView({
                 index % 2 === 1 && 'bg-gray-50/50 dark:bg-gray-800/50'
               )}
             >
-              {/* Date */}
-              <div className="col-span-1 flex items-center text-sm text-gray-900 dark:text-gray-100">
-                {format(date, 'MMM dd, yyyy')}
-              </div>
-
-              {/* Time */}
-              <div className="col-span-1 flex items-center text-sm text-gray-600 dark:text-gray-400">
-                {format(date, 'h:mm a')}
+              {/* Date & Time */}
+              <div className="col-span-1 flex flex-col justify-center">
+                <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                  {format(date, 'MMM dd')}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {format(date, 'h:mm a')}
+                </span>
               </div>
 
               {/* Filename */}
-              <div className="col-span-3 flex items-center min-w-0">
+              <div className="col-span-2 flex items-center min-w-0">
                 <span
                   className="text-sm text-gray-900 dark:text-gray-100 truncate"
                   title={attachment.filename}
@@ -118,17 +117,26 @@ export function AttachmentListView({
                 </span>
               </div>
 
-              {/* Type */}
-              <div className="col-span-1 flex items-center gap-2">
-                <Icon className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {typeLabel}
+              {/* From - Extract from email relationship */}
+              <div className="col-span-2 flex items-center min-w-0">
+                <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {(attachment as any).email?.fromAddress?.name || 
+                   (attachment as any).email?.fromAddress?.email || 
+                   'Unknown'}
                 </span>
               </div>
 
-              {/* Size */}
-              <div className="col-span-1 flex items-center text-sm text-gray-600 dark:text-gray-400">
-                {formatFileSize(attachment.size)}
+              {/* File Type & Size */}
+              <div className="col-span-2 flex items-center gap-2">
+                <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <div className="flex flex-col">
+                  <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+                    {typeLabel}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatFileSize(attachment.size)}
+                  </span>
+                </div>
               </div>
 
               {/* Description */}
