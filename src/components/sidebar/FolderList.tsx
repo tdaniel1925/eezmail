@@ -86,7 +86,12 @@ export function FolderList({
       
       if (result.success) {
         console.log('✅ Fetched server folders:', result.folders);
-        setServerFolders(result.folders);
+        // Convert folder names to title case
+        const titleCaseFolders = result.folders.map(folder => ({
+          ...folder,
+          name: toTitleCase(folder.name)
+        }));
+        setServerFolders(titleCaseFolders);
       } else {
         console.error('❌ Failed to fetch folders:', result.message);
         setServerFolders([]);
@@ -95,6 +100,15 @@ export function FolderList({
 
     fetchFolders();
   }, [currentAccountId]);
+
+  // Helper function to convert strings to title case
+  const toTitleCase = (str: string): string => {
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
 
   const primaryFolders = [
     { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCounts.inbox },
