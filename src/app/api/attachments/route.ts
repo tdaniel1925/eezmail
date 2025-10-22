@@ -97,27 +97,44 @@ export async function GET(request: Request) {
       .orderBy(desc(emailAttachments.createdAt));
 
     // Transform the data to include email relationship
-    const allAttachments = allAttachmentsRaw.map((att) => ({
-      id: att.id,
-      emailId: att.emailId,
-      providerAttachmentId: att.providerAttachmentId,
-      contentId: att.contentId,
-      filename: att.filename,
-      contentType: att.contentType,
-      size: att.size,
-      storageUrl: att.storageUrl,
-      storageKey: att.storageKey,
-      isInline: att.isInline,
-      downloadCount: att.downloadCount,
-      lastDownloadedAt: att.lastDownloadedAt,
-      aiDescription: att.aiDescription,
-      aiDescriptionGeneratedAt: att.aiDescriptionGeneratedAt,
-      createdAt: att.createdAt,
-      email: {
-        fromAddress: att.emailFromAddress,
-        subject: att.emailSubject,
-      },
-    }));
+    const allAttachments = allAttachmentsRaw.map((att) => {
+      // Safely parse fromAddress to ensure it's a valid object
+      let fromAddress = null;
+      try {
+        if (att.emailFromAddress && typeof att.emailFromAddress === 'object') {
+          fromAddress = att.emailFromAddress;
+        }
+      } catch (error) {
+        console.error(
+          'Error parsing fromAddress for attachment:',
+          att.id,
+          error
+        );
+        fromAddress = null;
+      }
+
+      return {
+        id: att.id,
+        emailId: att.emailId,
+        providerAttachmentId: att.providerAttachmentId,
+        contentId: att.contentId,
+        filename: att.filename,
+        contentType: att.contentType,
+        size: att.size,
+        storageUrl: att.storageUrl,
+        storageKey: att.storageKey,
+        isInline: att.isInline,
+        downloadCount: att.downloadCount,
+        lastDownloadedAt: att.lastDownloadedAt,
+        aiDescription: att.aiDescription,
+        aiDescriptionGeneratedAt: att.aiDescriptionGeneratedAt,
+        createdAt: att.createdAt,
+        email: {
+          fromAddress: fromAddress,
+          subject: att.emailSubject || null,
+        },
+      };
+    });
 
     // Filter out non-qualified attachments (calendar invites, vcards, etc.)
     const qualifiedAttachments = allAttachments.filter((att) =>

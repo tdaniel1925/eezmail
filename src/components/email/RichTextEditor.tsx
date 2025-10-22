@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
 import { Color } from '@tiptap/extension-color';
 import { TextStyle } from '@tiptap/extension-text-style';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -24,8 +25,11 @@ import {
   Undo,
   Redo,
   Type,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { toast } from '@/lib/toast';
 
 interface RichTextEditorProps {
   content?: string;
@@ -67,6 +71,8 @@ export function RichTextEditor({
   const [linkUrl, setLinkUrl] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showFontSize, setShowFontSize] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false, // Fix SSR hydration issues
@@ -85,6 +91,13 @@ export function RichTextEditor({
           class: 'text-primary underline cursor-pointer',
         },
       }),
+      Image.configure({
+        inline: true,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
       Color,
       TextStyle,
       Placeholder.configure({
@@ -96,6 +109,43 @@ export function RichTextEditor({
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[300px] p-4',
         spellcheck: 'true', // Enable native spell check
+      },
+      // Handle paste images
+      handlePaste: (view, event) => {
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (item.type.indexOf('image') === 0) {
+            event.preventDefault();
+            const file = item.getAsFile();
+            if (file) {
+              handleImageUpload(file);
+            }
+            return true;
+          }
+        }
+        return false;
+      },
+      // Handle drag and drop images
+      handleDrop: (view, event, slice, moved) => {
+        if (moved) return false;
+
+        const files = event.dataTransfer?.files;
+        if (!files || files.length === 0) return false;
+
+        const imageFiles = Array.from(files).filter((file) =>
+          file.type.startsWith('image/')
+        );
+
+        if (imageFiles.length > 0) {
+          event.preventDefault();
+          imageFiles.forEach((file) => handleImageUpload(file));
+          return true;
+        }
+
+        return false;
       },
     },
     onUpdate: ({ editor }) => {
@@ -154,6 +204,52 @@ export function RichTextEditor({
   const setColor = (color: string) => {
     editor.chain().focus().setColor(color).run();
     setShowColorPicker(false);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!editor) return;
+
+    setIsUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/inline-image/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const { url } = await response.json();
+
+      // Insert image into editor
+      editor.chain().focus().setImage({ src: url }).run();
+
+      toast.success('Image inserted');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleImageButtonClick = () => {
+    imageInputRef.current?.click();
+  };
+
+  const handleImageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+    // Reset input
+    if (imageInputRef.current) {
+      imageInputRef.current.value = '';
+    }
   };
 
   return (
@@ -396,6 +492,30 @@ export function RichTextEditor({
               </button>
             </div>
           )}
+        </div>
+
+        {/* Image */}
+        <div className="flex items-center gap-1 border-r pr-2">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageInputChange}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={handleImageButtonClick}
+            disabled={isUploadingImage}
+            className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Insert Image"
+          >
+            {isUploadingImage ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              <ImageIcon size={16} />
+            )}
+          </button>
         </div>
 
         {/* Undo/Redo */}

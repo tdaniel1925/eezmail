@@ -28,16 +28,24 @@ interface AttachmentListViewProps {
 // Get icon for file type
 function getFileIcon(contentType: string) {
   const type = contentType.toLowerCase();
-  
+
   if (type.startsWith('image/')) return ImageIcon;
   if (type.startsWith('video/')) return Film;
   if (type.startsWith('audio/')) return Music;
   if (type === 'application/pdf') return FileText;
   if (type.includes('word') || type.includes('document')) return FileText;
-  if (type.includes('excel') || type.includes('spreadsheet')) return FileSpreadsheet;
-  if (type.includes('zip') || type.includes('rar') || type.includes('tar') || type.includes('7z')) return ArchiveIcon;
-  if (type.includes('json') || type.includes('xml') || type.startsWith('text/')) return FileCode;
-  
+  if (type.includes('excel') || type.includes('spreadsheet'))
+    return FileSpreadsheet;
+  if (
+    type.includes('zip') ||
+    type.includes('rar') ||
+    type.includes('tar') ||
+    type.includes('7z')
+  )
+    return ArchiveIcon;
+  if (type.includes('json') || type.includes('xml') || type.startsWith('text/'))
+    return FileCode;
+
   return File;
 }
 
@@ -88,7 +96,7 @@ export function AttachmentListView({
           const Icon = getFileIcon(attachment.contentType);
           const typeLabel = getFileTypeLabel(attachment.contentType);
           const date = new Date(attachment.createdAt);
-          
+
           return (
             <div
               key={attachment.id}
@@ -121,9 +129,41 @@ export function AttachmentListView({
               <div className="col-span-2 flex items-center min-w-0">
                 <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {(() => {
-                    const fromAddress = (attachment as any).email?.fromAddress;
-                    if (!fromAddress) return 'Unknown';
-                    return fromAddress.name || fromAddress.email || 'Unknown';
+                    try {
+                      const fromAddress = (attachment as any).email
+                        ?.fromAddress;
+
+                      // Handle null/undefined
+                      if (!fromAddress) return 'Unknown';
+
+                      // Handle Error objects or non-plain objects
+                      if (fromAddress instanceof Error) {
+                        console.warn(
+                          'fromAddress is an Error object:',
+                          fromAddress
+                        );
+                        return 'Unknown';
+                      }
+
+                      // Ensure it's a plain object with expected properties
+                      if (
+                        typeof fromAddress === 'object' &&
+                        fromAddress !== null
+                      ) {
+                        // Type-safe property access
+                        const name = fromAddress.name;
+                        const email = fromAddress.email;
+
+                        // Return string values only
+                        if (typeof name === 'string' && name) return name;
+                        if (typeof email === 'string' && email) return email;
+                      }
+
+                      return 'Unknown';
+                    } catch (error) {
+                      console.error('Error rendering fromAddress:', error);
+                      return 'Unknown';
+                    }
                   })()}
                 </span>
               </div>
@@ -183,4 +223,3 @@ export function AttachmentListView({
     </div>
   );
 }
-

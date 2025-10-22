@@ -26,6 +26,8 @@ import { AnimatedButton } from '@/components/ui/animated-button';
 import { AudioVisualizer } from './AudioVisualizer';
 import { VoiceMessagePlayer } from './VoiceMessagePlayer';
 import { WritingCoach } from './WritingCoach';
+import { AIAssistantMenu } from './AIAssistantMenu';
+import { RecipientInput } from './RecipientInput';
 import {
   GroupRecipientSelector,
   type SelectedGroup,
@@ -256,37 +258,41 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                 <label className="w-16 text-sm text-gray-600 dark:text-gray-400">
                   To:
                 </label>
-                <input
-                  type="text"
+                <RecipientInput
                   value={props.to}
-                  onChange={(e) => props.setTo(e.target.value)}
+                  onChange={props.setTo}
                   placeholder="recipient@example.com"
-                  className="flex-1 border-none bg-transparent text-sm focus:outline-none focus:ring-0 dark:text-white"
                 />
-                <div className="flex items-center space-x-2 text-sm">
+                <div className="flex items-center space-x-2 text-sm ml-2">
                   {/* Group Selector Button */}
                   <button
                     onClick={() => setShowGroupSelector(true)}
                     className="flex items-center gap-1 text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
                     title="Select groups"
+                    type="button"
                   >
                     <Users className="h-4 w-4" />
-                    <span>Groups</span>
                   </button>
                   {!props.showCc && (
                     <button
                       onClick={() => props.setShowCc(true)}
-                      className="text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+                      title="Add Cc"
+                      type="button"
                     >
-                      Cc
+                      <AtSign className="h-3.5 w-3.5" />
+                      <span>Cc</span>
                     </button>
                   )}
                   {!props.showBcc && (
                     <button
                       onClick={() => props.setShowBcc(true)}
-                      className="text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 rounded text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+                      title="Add Bcc"
+                      type="button"
                     >
-                      Bcc
+                      <AtSign className="h-3.5 w-3.5" />
+                      <span>Bcc</span>
                     </button>
                   )}
                 </div>
@@ -297,12 +303,10 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                   <label className="w-16 text-sm text-gray-600 dark:text-gray-400">
                     Cc:
                   </label>
-                  <input
-                    type="text"
+                  <RecipientInput
                     value={props.cc}
-                    onChange={(e) => props.setCc(e.target.value)}
+                    onChange={props.setCc}
                     placeholder="cc@example.com"
-                    className="flex-1 border-none bg-transparent text-sm focus:outline-none focus:ring-0 dark:text-white"
                   />
                 </div>
               )}
@@ -312,12 +316,10 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                   <label className="w-16 text-sm text-gray-600 dark:text-gray-400">
                     Bcc:
                   </label>
-                  <input
-                    type="text"
+                  <RecipientInput
                     value={props.bcc}
-                    onChange={(e) => props.setBcc(e.target.value)}
+                    onChange={props.setBcc}
                     placeholder="bcc@example.com"
-                    className="flex-1 border-none bg-transparent text-sm focus:outline-none focus:ring-0 dark:text-white"
                   />
                 </div>
               )}
@@ -560,69 +562,41 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     <span>Template</span>
                   </button>
 
-                  {/* Dictate Button - Voice to Full Email */}
+                  {/* Dictate to AI Button - Voice to Full Email */}
                   <button
                     onClick={props.handleDictationToggle}
                     className={`flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
                       props.isDictating
                         ? 'bg-red-500 text-white hover:bg-red-600'
-                        : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'
+                        : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50'
                     }`}
-                    title="Speak about your email and AI will write it"
+                    title="Speak about your email and AI will write it for you"
                   >
                     {props.isDictating ? (
                       <>
                         <MicOff className="h-4 w-4 animate-pulse" />
-                        <span>Stop</span>
+                        <span>Stop AI</span>
                       </>
                     ) : (
                       <>
                         <Mic className="h-4 w-4" />
-                        <span>Dictate</span>
+                        <span>Dictate to AI</span>
                       </>
                     )}
                   </button>
 
-                  {/* AI Buttons Group */}
-                  <AnimatedButton
-                    variant="particles"
-                    onClick={props.handleAIWriter}
-                    disabled={props.isAIWriting || !props.body}
-                    loading={props.isAIWriting}
-                    icon={<Sparkles className="h-4 w-4" />}
-                    className="text-sm"
-                    title="Expand brief text into a full email"
-                  >
-                    {props.isAIWriting ? 'Writing...' : 'AI Writer'}
-                  </AnimatedButton>
+                  {/* AI Assistant Menu - Consolidated AI Tools */}
+                  <AIAssistantMenu
+                    onExpandText={props.handleAIWriter}
+                    onFixGrammar={props.handleRemix}
+                    onToggleCoach={() => setShowWritingCoach(!showWritingCoach)}
+                    isCoachOpen={showWritingCoach}
+                    isAIWriting={props.isAIWriting}
+                    isRemixing={props.isRemixing}
+                    disabled={!props.body}
+                  />
 
-                  <AnimatedButton
-                    variant="particles"
-                    onClick={props.handleRemix}
-                    disabled={props.isRemixing || !props.body}
-                    loading={props.isRemixing}
-                    icon={<Sparkles className="h-4 w-4" />}
-                    className="text-sm"
-                    title="Fix spelling, grammar, and context"
-                  >
-                    {props.isRemixing ? 'Polishing...' : 'AI Remix'}
-                  </AnimatedButton>
-
-                  {/* Writing Coach Toggle */}
-                  <button
-                    onClick={() => setShowWritingCoach(!showWritingCoach)}
-                    className={`flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
-                      showWritingCoach
-                        ? 'bg-purple-600 text-white hover:bg-purple-700'
-                        : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'
-                    }`}
-                    title="Get real-time writing suggestions"
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                    <span>Coach</span>
-                  </button>
-
-                  {/* Voice Message Button */}
+                  {/* Record Audio Button */}
                   <AnimatedButton
                     variant={
                       props.isRecordingVoiceMessage ? 'ripple' : 'particles'
@@ -637,18 +611,18 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                         <Mic className="h-4 w-4" />
                       )
                     }
-                    className={`text-sm ${props.isRecordingVoiceMessage ? 'bg-red-500 text-white hover:bg-red-600' : ''}`}
+                    className={`text-sm ${props.isRecordingVoiceMessage ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'}`}
                     title={
                       props.isRecordingVoiceMessage
-                        ? 'Stop recording voice message'
-                        : 'Record a voice message'
+                        ? 'Stop recording audio message'
+                        : 'Record an audio message to attach to the email'
                     }
                   >
                     {props.isUploadingVoice
                       ? 'Uploading...'
                       : props.isRecordingVoiceMessage
                         ? 'Stop'
-                        : 'Voice Msg'}
+                        : 'Record Audio'}
                   </AnimatedButton>
                 </div>
 
