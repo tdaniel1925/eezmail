@@ -22,11 +22,17 @@ export function MarketingNav() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('activeSectionChange', handleActiveSectionChange as EventListener);
+    window.addEventListener(
+      'activeSectionChange',
+      handleActiveSectionChange as EventListener
+    );
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('activeSectionChange', handleActiveSectionChange as EventListener);
+      window.removeEventListener(
+        'activeSectionChange',
+        handleActiveSectionChange as EventListener
+      );
     };
   }, []);
 
@@ -60,9 +66,12 @@ export function MarketingNav() {
       <div className="flex md:px-8 max-w-7xl mr-auto ml-auto pt-5 pr-6 pb-5 pl-6 items-center justify-between">
         {/* Left: brand + primary nav */}
         <div className="flex md:gap-6 ring-white/5 ring-1 rounded-full pt-1 pr-1 pb-1 pl-1 gap-x-4 gap-y-4 items-center">
-          <Link href="/" className="inline-flex items-center justify-center px-4">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center px-4"
+          >
             <Image
-              src="/images/easemail-logo.png"
+              src="/easemail-logo.png"
               alt="easeMail"
               width={180}
               height={40}
@@ -103,7 +112,11 @@ export function MarketingNav() {
             className="lg:hidden inline-flex items-center gap-2 transition hover:bg-white/10 hover:ring-white/20 text-sm font-medium text-white/90 bg-white/5 ring-white/10 ring-1 rounded-full p-2 backdrop-blur-sm"
             aria-label="Toggle menu"
           >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </button>
         </div>
 

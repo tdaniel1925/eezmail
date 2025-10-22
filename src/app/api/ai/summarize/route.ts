@@ -69,27 +69,21 @@ export async function POST(req: Request): Promise<Response> {
       });
     }
 
-    // Call OpenAI to generate summary
+    // Call OpenAI to generate summary (optimized for speed)
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo', // Faster than gpt-4 (2-3x speed)
       messages: [
         {
           role: 'system',
-          content: `You are an email summarization assistant. Summarize emails into 2-3 clear, concise sentences that capture the key points and any action items. Focus on:
-- Main purpose of the email
-- Key information or requests
-- Any deadlines or action items
-- Important decisions or updates
-
-Keep the summary brief but informative. Use professional language.`,
+          content: `Summarize emails in 2-3 sentences. Include: main purpose, key info, action items.`,
         },
         {
           role: 'user',
-          content: `Subject: ${emailSubject}\n\nBody:\n${emailBody.substring(0, 3000)}`,
+          content: `Subject: ${emailSubject}\n\nBody:\n${emailBody.substring(0, 2000)}`, // Reduced from 3000 for speed
         },
       ],
-      temperature: 0.5,
-      max_tokens: 200,
+      temperature: 0.3, // Lower for faster, more consistent results
+      max_tokens: 150, // Reduced from 200 for speed
     });
 
     const summary = response.choices[0]?.message?.content;
@@ -136,6 +130,3 @@ Keep the summary brief but informative. Use professional language.`,
     );
   }
 }
-
-
-

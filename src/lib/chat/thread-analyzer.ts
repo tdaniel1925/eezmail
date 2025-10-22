@@ -112,32 +112,22 @@ export async function summarizeThread(params: {
       };
     });
 
-    // Ask GPT-4 to analyze the thread
+    // Ask GPT to analyze the thread (optimized for speed)
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo', // 2-3x faster than gpt-4
       messages: [
         {
           role: 'system',
-          content: `You are analyzing an email thread. Provide:
-1. A chronological summary of the conversation (2-3 sentences)
-2. Key discussion points (bullet list)
-3. Action items with assignees and deadlines if mentioned
-4. Use plain text formatting (no markdown)
-
-Return as JSON with fields:
-{
-  "summary": "...",
-  "keyPoints": ["point 1", "point 2"],
-  "actionItems": [{"task": "...", "assignee": "...", "deadline": "YYYY-MM-DD or null", "status": "pending"}]
-}`,
+          content: `Analyze email thread. Return JSON with: summary (2-3 sentences), keyPoints (array), actionItems (array with task, assignee, deadline, status fields). Plain text only.`,
         },
         {
           role: 'user',
-          content: `Analyze this email thread:\n\n${JSON.stringify(threadContent, null, 2)}\n\nReturn summary, key points, and action items as JSON.`,
+          content: `Analyze:\n${JSON.stringify(threadContent, null, 2)}\nReturn JSON: {"summary":"...","keyPoints":[],"actionItems":[]}`,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 800,
+      temperature: 0.5, // Lower for speed
+      max_tokens: 600, // Reduced from 800 for speed
+      response_format: { type: 'json_object' }, // Force JSON response
     });
 
     const content = response.choices[0]?.message?.content;

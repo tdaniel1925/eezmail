@@ -108,7 +108,7 @@ export function ModernSidebar({
               className="flex flex-col items-center"
             >
               <Image
-                src="/images/easemail-logo.png"
+                src="/easemail-logo.png"
                 alt="easeMail"
                 width={140}
                 height={32}

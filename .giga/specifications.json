@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "main-overview.mdc",
+    "description": "Complete system overview documenting the AI-powered email management platform, key components, and architecture patterns"
+  },
+  {
+    "fileName": "email-classification-engine.mdc",
+    "description": "Detailed documentation of the email categorization algorithms, screening system, and automated routing logic including Hey-style workflow implementation"
+  },
+  {
+    "fileName": "data-models.mdc",
+    "description": "Comprehensive documentation of data models including email threading, contact relationships, timeline events, and folder organization structures"
+  },
+  {
+    "fileName": "ai-integration.mdc",
+    "description": "Details of AI integration patterns including sentiment analysis, writing suggestions, thread summarization, and context management"
+  },
+  {
+    "fileName": "sync-architecture.mdc",
+    "description": "Documentation of the multi-provider email sync system including delta sync strategies, threading logic, and provider-specific optimizations"
+  }
+]

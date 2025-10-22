@@ -41,13 +41,18 @@ export default function LoginPage(): JSX.Element {
       window.location.href = '/dashboard';
     } catch (err) {
       console.error('❌ Caught error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
-      
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred';
+
       // Provide more helpful error messages
       if (errorMessage.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please check your credentials and try again.');
+        setError(
+          'Invalid email or password. Please check your credentials and try again.'
+        );
       } else if (errorMessage.includes('Email not confirmed')) {
-        setError('Please confirm your email address. Check your inbox for a confirmation link.');
+        setError(
+          'Please confirm your email address. Check your inbox for a confirmation link.'
+        );
       } else {
         setError(errorMessage);
       }
@@ -68,7 +73,7 @@ export default function LoginPage(): JSX.Element {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center gap-2 mb-6">
             <Image
-              src="/images/easemail-logo.png"
+              src="/easemail-logo.png"
               alt="easeMail"
               width={220}
               height={50}

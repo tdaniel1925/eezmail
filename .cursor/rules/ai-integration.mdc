@@ -1,0 +1,61 @@
+---
+description: Specification for analyzing AI integration patterns in email management systems including sentiment analysis, suggestions, and context management
+---
+
+
+# ai-integration
+
+Key AI Integration Components:
+
+1. Context-Aware Sentiment Analysis
+Path: src/lib/ai/sentiment-analyzer.ts
+Importance Score: 90
+- Multi-dimensional sentiment scoring (urgency, tone, intent)
+- Email thread context incorporation
+- Relationship-aware scoring adjustments
+- Historical interaction pattern analysis
+
+2. Smart Writing Suggestions
+Path: src/components/email/EmailComposer.tsx
+Importance Score: 85
+- Context-aware completion suggestions
+- Tone adjustment recommendations
+- Subject line optimization
+- Custom templating with smart variable substitution
+
+3. Thread Summarization Engine
+Path: src/lib/rag/thread-summary.ts
+Importance Score: 95
+- Key points extraction with priority scoring
+- Action item identification
+- Decision tracking across thread
+- Participant role analysis
+
+4. Context Management System
+Path: src/lib/ai/context-builder.ts
+Importance Score: 85
+- Relationship context aggregation
+- Communication history analysis
+- Priority pattern detection
+- Thread relevance scoring
+
+5. AI Integration Pipeline
+Path: src/lib/ai/pipeline.ts
+Importance Score: 90
+- Unified AI service orchestration
+- Custom prompt management
+- Context injection system
+- Response processing workflow
+
+Core AI Workflows:
+- Email analysis with sentiment detection
+- Smart reply generation
+- Thread summarization
+- Context-aware suggestions
+- Writing assistance
+
+The system implements sophisticated AI integration focused on email understanding and enhancement, with particular emphasis on context awareness and relationship intelligence.
+
+$END$
+
+ If you're using this file in context, clearly say in italics in one small line that "Context added by Giga ai-integration" along with specifying exactly what information was used from this file in a human-friendly way, instead of using kebab-case use normal sentence case.
