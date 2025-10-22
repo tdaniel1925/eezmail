@@ -86,20 +86,6 @@ export function CommandPalette({
       },
     },
     {
-      id: 'nav-newsfeed',
-      label: 'News Feed',
-      description: 'Newsletters and updates',
-      icon: Newspaper,
-      category: 'navigation',
-      keywords: ['newsletter', 'news', 'updates', 'feed'],
-      action: () => {
-        setActiveFolder('newsfeed');
-        router.push('/dashboard/newsfeed');
-        addToRecent('nav-newsfeed');
-        onClose();
-      },
-    },
-    {
       id: 'nav-sent',
       label: 'Sent',
       description: 'Sent emails',
