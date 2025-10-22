@@ -81,7 +81,10 @@ export default function AttachmentsPage(): JSX.Element {
   const handleGenerateDescriptions = async () => {
     setIsGeneratingDescriptions(true);
     try {
+      console.log('🤖 Starting AI description generation...');
       const result = await generateMissingDescriptions(20);
+      
+      console.log('🤖 Generation result:', result);
       
       if (result.success && result.generated > 0) {
         toast.success(`Generated ${result.generated} descriptions`);
@@ -90,11 +93,12 @@ export default function AttachmentsPage(): JSX.Element {
       } else if (result.generated === 0) {
         toast.info('All attachments already have descriptions');
       } else {
-        toast.error('Failed to generate descriptions');
+        toast.error(result.error || 'Failed to generate descriptions');
+        console.error('❌ Generation failed:', result.error);
       }
     } catch (error) {
       console.error('Error generating descriptions:', error);
-      toast.error('Error generating descriptions');
+      toast.error(error instanceof Error ? error.message : 'Error generating descriptions');
     } finally {
       setIsGeneratingDescriptions(false);
     }

@@ -62,6 +62,8 @@ export async function generateAttachmentDescription(
     // Generate description
     const description = await generateAIDescription(context);
 
+    console.log(`✅ Generated description for ${attachment.filename}:`, description);
+
     // Update database
     await db
       .update(emailAttachments)
@@ -76,7 +78,7 @@ export async function generateAttachmentDescription(
     console.error('Error generating attachment description:', error);
     return {
       success: false,
-      error: 'Failed to generate description',
+      error: error instanceof Error ? error.message : 'Failed to generate description',
     };
   }
 }
