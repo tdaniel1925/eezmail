@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,28 +8,22 @@ import {
   Calendar as CalendarIcon,
   Clock,
   Menu,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventModal } from './EventModal';
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
+import {
+  getCalendarEvents,
+  deleteCalendarEvent,
+} from '@/lib/calendar/calendar-actions';
+import type { CalendarEvent as DBCalendarEvent } from '@/db/schema';
 import type { CalendarEvent } from './types';
+import { toast } from 'sonner';
 
 interface CalendarViewProps {
   onToggleSidebar?: () => void;
 }
-
-// Mock events data (empty by default - will be populated from database)
-const mockEvents: CalendarEvent[] = [];
-// TODO: Replace with actual database query
-// Example hardcoded events for reference:
-// {
-//   id: '1',
-//   title: 'Q4 Strategy Meeting',
-//   startTime: new Date(2025, 9, 15, 10, 0),
-//   endTime: new Date(2025, 9, 15, 11, 30),
-//   type: 'meeting',
-//   color: 'blue',
-// },
 
 type ViewMode = 'month' | 'week' | 'day';
 
@@ -38,12 +32,13 @@ export function CalendarView({
 }: CalendarViewProps): JSX.Element {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>(mockEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
+  const [isLoading, setIsLoading] = useState(true);
 
   const monthNames = [
     'January',
@@ -61,6 +56,58 @@ export function CalendarView({
   ];
 
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Load events when month changes
+  useEffect(() => {
+    loadEvents();
+  }, [currentDate]);
+
+  // Load events for current month
+  const loadEvents = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Get first and last day of month + surrounding days
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      // Extend range to include previous/next month days shown in calendar
+      const startDate = new Date(firstDay);
+      startDate.setDate(startDate.getDate() - startDate.getDay());
+
+      const endDate = new Date(lastDay);
+      endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+      const result = await getCalendarEvents(startDate, endDate);
+
+      if (result.success && result.events) {
+        // Transform DB events to calendar events
+        const transformedEvents: CalendarEvent[] = result.events.map((event) => ({
+          id: event.id,
+          title: event.title,
+          description: event.description || undefined,
+          startTime: new Date(event.startTime),
+          endTime: new Date(event.endTime),
+          type: event.type,
+          location: event.location || undefined,
+          attendees: [], // Will be populated from attendees relation if needed
+          isVirtual: event.isVirtual || false,
+          color: (event.color as any) || 'blue',
+        }));
+
+        setEvents(transformedEvents);
+      } else {
+        toast.error(result.error || 'Failed to load events');
+      }
+    } catch (error) {
+      console.error('Error loading events:', error);
+      toast.error('Failed to load calendar events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Navigation
   const goToPreviousMonth = (): void => {
@@ -145,21 +192,30 @@ export function CalendarView({
   };
 
   // Handle save event
-  const handleSaveEvent = (event: CalendarEvent): void => {
-    if (selectedEvent) {
-      // Update existing event
-      setEvents(events.map((e) => (e.id === event.id ? event : e)));
-    } else {
-      // Add new event
-      setEvents([...events, { ...event, id: Date.now().toString() }]);
-    }
+  const handleSaveEvent = async (event: CalendarEvent): Promise<void> => {
+    // The EventModal will handle the actual save via server actions
+    // This is just to refresh the calendar
+    await loadEvents();
     setIsEventModalOpen(false);
     setSelectedEvent(null);
   };
 
   // Handle delete event
-  const handleDeleteEvent = (eventId: string): void => {
-    setEvents(events.filter((e) => e.id !== eventId));
+  const handleDeleteEvent = async (eventId: string): Promise<void> => {
+    try {
+      const result = await deleteCalendarEvent(eventId);
+
+      if (result.success) {
+        toast.success('Event deleted successfully');
+        await loadEvents();
+      } else {
+        toast.error(result.error || 'Failed to delete event');
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      toast.error('Failed to delete event');
+    }
+    
     setIsEventModalOpen(false);
     setSelectedEvent(null);
   };
@@ -243,7 +299,14 @@ export function CalendarView({
 
       {/* Calendar Grid */}
       <div className="flex-1 overflow-auto p-6">
-        {viewMode === 'month' && (
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Loading events...</p>
+            </div>
+          </div>
+        ) : viewMode === 'month' ? (
           <div className="bg-gray-50 dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
             {/* Days of week header */}
             <div className="grid grid-cols-7 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -327,9 +390,7 @@ export function CalendarView({
               })}
             </div>
           </div>
-        )}
-
-        {viewMode === 'week' && (
+        ) : viewMode === 'week' ? (
           <div className="text-center py-20">
             <CalendarIcon
               size={64}
@@ -339,9 +400,7 @@ export function CalendarView({
               Week view coming soon!
             </p>
           </div>
-        )}
-
-        {viewMode === 'day' && (
+        ) : (
           <div className="text-center py-20">
             <Clock
               size={64}

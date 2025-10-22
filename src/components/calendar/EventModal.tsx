@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, MapPin, Users, Video, Trash2 } from 'lucide-react';
+import { X, MapPin, Users, Video, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createCalendarEvent, updateCalendarEvent } from '@/lib/calendar/calendar-actions';
+import { toast } from 'sonner';
 import type { CalendarEvent } from './types';
 
 interface EventModalProps {
@@ -33,6 +35,7 @@ export function EventModal({
   const [attendees, setAttendees] = useState('');
   const [isVirtual, setIsVirtual] = useState(false);
   const [color, setColor] = useState<CalendarEvent['color']>('blue');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (event) {
@@ -78,28 +81,77 @@ export function EventModal({
     setColor('blue');
   };
 
-  const handleSave = (): void => {
+  const handleSave = async (): Promise<void> => {
     if (!title || !startDate || !startTime || !endDate || !endTime) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    const startDateTime = new Date(`${startDate}T${startTime}`);
-    const endDateTime = new Date(`${endDate}T${endTime}`);
+    try {
+      setIsSaving(true);
+      
+      const startDateTime = new Date(`${startDate}T${startTime}`);
+      const endDateTime = new Date(`${endDate}T${endTime}`);
 
-    const newEvent: CalendarEvent = {
-      id: event?.id || '',
-      title,
-      description,
-      startTime: startDateTime,
-      endTime: endDateTime,
-      type,
-      location,
-      attendees: attendees ? attendees.split(',').map((a) => a.trim()) : [],
-      isVirtual,
-      color,
-    };
+      const eventData = {
+        title,
+        description: description || undefined,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        type,
+        location: location || undefined,
+        isVirtual,
+        color,
+      };
 
-    onSave(newEvent);
+      const attendeeEmails = attendees
+        ? attendees.split(',').map((a) => a.trim()).filter(Boolean)
+        : [];
+
+      const attendeeData = attendeeEmails.map((email) => ({
+        email,
+        name: email.split('@')[0], // Simple name extraction
+      }));
+
+      let result;
+      if (event?.id) {
+        // Update existing event
+        result = await updateCalendarEvent(event.id, eventData, attendeeData);
+      } else {
+        // Create new event
+        result = await createCalendarEvent(eventData, attendeeData, [
+          // Default reminders
+          { minutesBefore: 15, method: 'email' as const },
+        ]);
+      }
+
+      if (result.success) {
+        toast.success(event ? 'Event updated!' : 'Event created!');
+        
+        // Call onSave with the event data (for calendar refresh)
+        const newEvent: CalendarEvent = {
+          id: event?.id || result.eventId || '',
+          title,
+          description,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          type,
+          location,
+          attendees: attendeeEmails,
+          isVirtual,
+          color,
+        };
+        
+        onSave(newEvent);
+      } else {
+        toast.error(result.error || 'Failed to save event');
+      }
+    } catch (error) {
+      console.error('Error saving event:', error);
+      toast.error('Failed to save event');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDelete = (): void => {
@@ -345,11 +397,18 @@ export function EventModal({
             <button
               onClick={handleSave}
               disabled={
-                !title || !startDate || !startTime || !endDate || !endTime
+                !title || !startDate || !startTime || !endDate || !endTime || isSaving
               }
-              className="px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {event ? 'Save Changes' : 'Create Event'}
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <span>{event ? 'Save Changes' : 'Create Event'}</span>
+              )}
             </button>
           </div>
         </div>
