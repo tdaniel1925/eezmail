@@ -18,6 +18,7 @@ import { Contact } from './ContactDetailModal';
 import { GroupBadge } from './GroupBadge';
 import { TagBadge } from './TagBadge';
 import { TagSelector } from './TagSelector';
+import { CommunicationActions } from './CommunicationActions';
 import {
   useContactGroups,
   addMembersToContactGroup,
@@ -77,6 +78,19 @@ export function ContactOverview({
 
   return (
     <div className="space-y-6">
+      {/* Communication Actions */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          Quick Actions
+        </h3>
+        <CommunicationActions
+          contactId={contact.id}
+          phone={contactDetails.phones[0]?.phone}
+          email={contactDetails.emails[0]?.email}
+          contactName={contact.displayName || `${contact.firstName} ${contact.lastName}`}
+        />
+      </div>
+
       {/* Basic Info */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
