@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Mail,
   Phone,
@@ -8,12 +9,32 @@ import {
   MapPin,
   Calendar,
   Star,
+  Users,
+  Tag as TagIcon,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Contact } from './ContactDetailModal';
+import { GroupBadge } from './GroupBadge';
+import { TagBadge } from './TagBadge';
+import { TagSelector } from './TagSelector';
+import {
+  useContactGroups,
+  addMembersToContactGroup,
+} from '@/hooks/useContactGroups';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface ContactOverviewProps {
-  contact: Contact;
+  contact: Contact & {
+    groups?: Array<{ id: string; name: string; color: string }>;
+    tags?: Array<{ id: string; name: string; color: string }>;
+  };
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -23,6 +44,11 @@ export function ContactOverview({
   onEdit,
   onDelete,
 }: ContactOverviewProps): JSX.Element {
+  const { groups } = useContactGroups();
+  const [isAddingToGroup, setIsAddingToGroup] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
+    contact.tags?.map((t) => t.id) || []
+  );
   // Mock data - replace with real data from API
   const contactDetails = {
     emails: [
@@ -204,6 +230,112 @@ export function ContactOverview({
             </div>
           )}
         </div>
+      </div>
+
+      {/* Groups Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Groups
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          {/* Current Groups */}
+          {contact.groups && contact.groups.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {contact.groups.map((group) => (
+                <GroupBadge
+                  key={group.id}
+                  name={group.name}
+                  color={group.color}
+                  size="md"
+                  removable
+                  onRemove={async () => {
+                    try {
+                      // Remove from group via API
+                      await fetch(`/api/contacts/groups/${group.id}/members`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contactIds: [contact.id] }),
+                      });
+                      toast.success(`Removed from ${group.name}`);
+                      // Refresh page or update state
+                      window.location.reload();
+                    } catch (error) {
+                      console.error('Error removing from group:', error);
+                      toast.error('Failed to remove from group');
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Not in any groups yet
+            </p>
+          )}
+
+          {/* Add to Group */}
+          <div className="flex items-center gap-2">
+            <Select
+              onValueChange={async (groupId) => {
+                try {
+                  await addMembersToContactGroup(groupId, {
+                    contactIds: [contact.id],
+                  });
+                  const group = groups.find((g) => g.id === groupId);
+                  toast.success(`Added to ${group?.name}`);
+                  // Refresh page or update state
+                  window.location.reload();
+                } catch (error) {
+                  console.error('Error adding to group:', error);
+                  toast.error('Failed to add to group');
+                }
+              }}
+            >
+              <SelectTrigger className="w-[200px]">
+                <Plus className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Add to group" />
+              </SelectTrigger>
+              <SelectContent>
+                {groups
+                  .filter((g) => !contact.groups?.some((cg) => cg.id === g.id))
+                  .map((group) => (
+                    <SelectItem key={group.id} value={group.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        {group.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Tags Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <TagIcon className="h-5 w-5" />
+            Tags
+          </h3>
+        </div>
+
+        <TagSelector
+          contactId={contact.id}
+          selectedTagIds={selectedTagIds}
+          onTagsChange={(newTagIds) => {
+            setSelectedTagIds(newTagIds);
+            // Optionally refresh or update parent state
+          }}
+        />
       </div>
 
       {/* Action Buttons */}

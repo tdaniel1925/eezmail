@@ -133,6 +133,7 @@ export interface ContactListItem extends Contact {
   primaryEmail: string | null;
   primaryPhone: string | null;
   tags: ContactTag[];
+  groups?: Array<{ id: string; name: string; color: string }>;
 }
 
 export interface ListContactsOptions {
@@ -168,6 +169,9 @@ export async function getContactsList(
   options: ListContactsOptions = {}
 ): Promise<ListContactsResult> {
   try {
+    console.log('📋 getContactsList called with userId:', userId);
+    console.log('📋 Options:', options);
+
     const {
       search,
       favorites,
@@ -183,8 +187,12 @@ export async function getContactsList(
     // Build base query conditions
     const conditions = [eq(contacts.userId, userId)];
 
+    console.log('📋 Base condition - userId:', userId);
+
     // Filter by archived status
     conditions.push(eq(contacts.isArchived, archived));
+
+    console.log('📋 Filtering by archived:', archived);
 
     // Filter by favorites
     if (favorites) {
@@ -221,6 +229,10 @@ export async function getContactsList(
       .where(and(...conditions));
 
     const total = Number(count);
+
+    console.log('📋 Total count from query:', total);
+    console.log('📋 Query conditions:', conditions.length, 'conditions');
+
     const totalPages = Math.ceil(total / perPage);
     const offset = (page - 1) * perPage;
 

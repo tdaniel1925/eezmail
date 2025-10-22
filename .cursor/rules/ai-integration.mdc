@@ -1,60 +1,81 @@
 ---
-description: Specification for analyzing AI integration patterns in email management systems including sentiment analysis, suggestions, and context management
+description: AI integration specification for email client including sentiment analysis, writing suggestions, thread summarization, and context management
 ---
 
 
 # ai-integration
 
-Key AI Integration Components:
+## Core AI Integration Components
 
-1. Context-Aware Sentiment Analysis
-Path: src/lib/ai/sentiment-analyzer.ts
-Importance Score: 90
-- Multi-dimensional sentiment scoring (urgency, tone, intent)
-- Email thread context incorporation
-- Relationship-aware scoring adjustments
-- Historical interaction pattern analysis
+### 1. Sentiment Analysis Engine
+**Path**: src/lib/ai/sentiment-analyzer.ts
+**Importance**: 90/100
 
-2. Smart Writing Suggestions
-Path: src/components/email/EmailComposer.tsx
-Importance Score: 85
+- Real-time email sentiment detection
+- Custom scoring algorithm for business context
+- Five-tier classification system:
+  - Urgent/Critical
+  - Professional/Formal  
+  - Friendly/Casual
+  - Negative/Concerned
+  - Neutral
+- Context-aware tone matching based on recipient relationship
+
+### 2. Writing Coach System
+**Path**: src/components/ai/WritingCoach.tsx
+**Importance**: 85/100
+
+- Real-time writing suggestions with custom metrics:
+  - Professionalism scoring
+  - Readability analysis
+  - Tone matching
+  - Length optimization
+- Business-specific suggestion categories:
+  - Clarity improvements
+  - Professional tone adjustments
+  - Contextual formality
+  - Response urgency
+
+### 3. Thread Analysis Engine
+**Path**: src/lib/ai/thread-analyzer.ts
+**Importance**: 95/100
+
+- Sophisticated email thread summarization
+- Action item extraction with priority detection
+- Meeting detail identification
+- Participant relationship mapping
+- Decision tracking across conversation flow
+- Context preservation between related threads
+
+### 4. Smart Compose Engine
+**Path**: src/components/ai/SmartCompose.tsx
+**Importance**: 85/100
+
 - Context-aware completion suggestions
-- Tone adjustment recommendations
-- Subject line optimization
-- Custom templating with smart variable substitution
+- Professional template integration
+- Relationship-based tone matching
+- Custom suggestion filtering based on:
+  - Previous communications
+  - Recipient relationship
+  - Email context
+  - Time of day
 
-3. Thread Summarization Engine
-Path: src/lib/rag/thread-summary.ts
-Importance Score: 95
-- Key points extraction with priority scoring
-- Action item identification
-- Decision tracking across thread
-- Participant role analysis
+### 5. Context Management System
+**Path**: src/lib/ai/context-builder.ts
+**Importance**: 80/100
 
-4. Context Management System
-Path: src/lib/ai/context-builder.ts
-Importance Score: 85
-- Relationship context aggregation
-- Communication history analysis
-- Priority pattern detection
-- Thread relevance scoring
+- Intelligent context building for AI operations
+- Relationship strength incorporation
+- Communication history integration
+- Previous interaction analysis
+- Topic clustering across threads
 
-5. AI Integration Pipeline
-Path: src/lib/ai/pipeline.ts
-Importance Score: 90
-- Unified AI service orchestration
-- Custom prompt management
-- Context injection system
-- Response processing workflow
-
-Core AI Workflows:
-- Email analysis with sentiment detection
-- Smart reply generation
-- Thread summarization
-- Context-aware suggestions
-- Writing assistance
-
-The system implements sophisticated AI integration focused on email understanding and enhancement, with particular emphasis on context awareness and relationship intelligence.
+Key Business Rules:
+- Sentiment analysis must consider recipient relationship
+- Writing suggestions adapt to formal/informal relationships
+- Thread summaries preserve critical business context
+- Smart compose maintains professional tone standards
+- Context building prioritizes recent relevant interactions
 
 $END$
 

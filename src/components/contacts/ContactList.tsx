@@ -13,6 +13,8 @@ import {
   Menu,
 } from 'lucide-react';
 import { ContactAvatar } from './ContactAvatar';
+import { GroupBadge } from './GroupBadge';
+import { TagBadge } from './TagBadge';
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import { cn } from '@/lib/utils';
 import { getContactAvatarData } from '@/lib/contacts/avatar';
@@ -24,6 +26,10 @@ interface ContactListProps {
   onContactSelect: (contactId: string) => void;
   onToggleSidebar?: () => void;
   onAddContact?: () => void;
+  selectedIds?: string[];
+  onToggleSelect?: (contactId: string) => void;
+  onSelectAll?: () => void;
+  onClearSelection?: () => void;
 }
 
 export function ContactList({
@@ -31,6 +37,10 @@ export function ContactList({
   onContactSelect,
   onToggleSidebar,
   onAddContact,
+  selectedIds = [],
+  onToggleSelect,
+  onSelectAll,
+  onClearSelection,
 }: ContactListProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
@@ -130,115 +140,192 @@ export function ContactList({
             </p>
           </div>
         ) : viewMode === 'list' ? (
-          <div className="divide-y divide-gray-200 dark:divide-gray-800">
-            {filteredContacts.map((contact) => {
-              const avatarData = getContactAvatarData(
-                contact,
-                contact.primaryEmail || undefined
-              );
-
-              return (
-                <div
-                  key={contact.id}
-                  onClick={() => onContactSelect(contact.id)}
-                  className="group px-4 py-3 hover:bg-white dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* Avatar */}
-                    <ContactAvatar
-                      avatarUrl={avatarData.url}
-                      name={avatarData.name}
-                      initials={avatarData.initials}
-                      color={avatarData.color}
-                      size="lg"
+          <div>
+            {/* Table Header - Fixed height with aligned bottom border */}
+            <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3 h-12 px-4 text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                {/* Checkbox Column */}
+                {onToggleSelect && (
+                  <div className="flex items-center justify-center w-4 flex-shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedIds.length === filteredContacts.length &&
+                        filteredContacts.length > 0
+                      }
+                      onChange={() => {
+                        if (selectedIds.length === filteredContacts.length) {
+                          onClearSelection?.();
+                        } else {
+                          onSelectAll?.();
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                     />
+                  </div>
+                )}
 
-                    {/* Contact Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate">
-                          {avatarData.name}
-                        </h3>
-                        {contact.isFavorite && (
-                          <Star
-                            size={14}
-                            className="text-yellow-500 fill-yellow-500 flex-shrink-0"
-                          />
+                {/* Avatar Spacer */}
+                <div className="w-12 flex-shrink-0" />
+
+                {/* Name Column */}
+                <div className="flex-1 min-w-[200px]">Name</div>
+
+                {/* Company Column */}
+                <div className="w-48 flex-shrink-0">Company</div>
+
+                {/* Email Column */}
+                <div className="w-56 flex-shrink-0">Email</div>
+
+                {/* Phone Column */}
+                <div className="w-40 flex-shrink-0">Phone</div>
+
+                {/* Tags/Groups Column */}
+                <div className="w-48 flex-shrink-0">Tags & Groups</div>
+              </div>
+            </div>
+
+            {/* Table Body */}
+            <div className="divide-y divide-gray-200 dark:divide-gray-800">
+              {filteredContacts.map((contact) => {
+                const avatarData = getContactAvatarData(
+                  contact,
+                  contact.primaryEmail || undefined
+                );
+
+                return (
+                  <div
+                    key={contact.id}
+                    className="group px-4 py-3 hover:bg-white dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Checkbox - Always visible */}
+                      {onToggleSelect && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(contact.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            onToggleSelect(contact.id);
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary flex-shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+
+                      {/* Avatar */}
+                      <div
+                        onClick={() => onContactSelect(contact.id)}
+                        className="cursor-pointer flex-shrink-0"
+                      >
+                        <ContactAvatar
+                          avatarUrl={avatarData.url}
+                          name={avatarData.name}
+                          initials={avatarData.initials}
+                          color={avatarData.color}
+                          size="lg"
+                        />
+                      </div>
+
+                      {/* Name Column - flex-1 to match header */}
+                      <div
+                        onClick={() => onContactSelect(contact.id)}
+                        className="flex-1 min-w-[200px] cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-gray-900 dark:text-white truncate">
+                            {avatarData.name}
+                          </h3>
+                          {contact.isFavorite && (
+                            <Star
+                              size={14}
+                              className="text-yellow-500 fill-yellow-500 flex-shrink-0"
+                            />
+                          )}
+                        </div>
+                        {contact.jobTitle && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                            {contact.jobTitle}
+                          </p>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      {/* Company Column - w-48 to match header */}
+                      <div className="w-48 flex-shrink-0">
                         {contact.company && (
-                          <div className="flex items-center gap-1.5 truncate">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                             <Building2 size={14} className="flex-shrink-0" />
                             <span className="truncate">{contact.company}</span>
-                            {contact.jobTitle && (
-                              <span className="text-gray-400 dark:text-gray-500">
-                                · {contact.jobTitle}
-                              </span>
-                            )}
                           </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {/* Email Column - w-56 to match header */}
+                      <div className="w-56 flex-shrink-0">
                         {contact.primaryEmail && (
-                          <div className="flex items-center gap-1.5 truncate">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
                             <Mail size={14} className="flex-shrink-0" />
                             <span className="truncate">
                               {contact.primaryEmail}
                             </span>
                           </div>
                         )}
+                      </div>
+
+                      {/* Phone Column - w-40 to match header */}
+                      <div className="w-40 flex-shrink-0">
                         {contact.primaryPhone && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
                             <Phone size={14} className="flex-shrink-0" />
-                            <span>{contact.primaryPhone}</span>
+                            <span className="truncate">
+                              {contact.primaryPhone}
+                            </span>
                           </div>
                         )}
                       </div>
 
-                      {/* Tags */}
-                      {contact.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {contact.tags.map((tag) => (
-                            <span
-                              key={tag.id}
-                              className={cn(
-                                'px-2 py-0.5 text-xs font-medium rounded-full',
-                                tag.color === 'blue' &&
-                                  'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-                                tag.color === 'green' &&
-                                  'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-                                tag.color === 'red' &&
-                                  'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-                                tag.color === 'purple' &&
-                                  'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-                                tag.color === 'orange' &&
-                                  'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
-                                tag.color === 'pink' &&
-                                  'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
-                              )}
-                            >
-                              {tag.name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Last Contacted */}
-                    {contact.lastContactedAt && (
-                      <div className="text-xs text-gray-500 dark:text-gray-400 text-right flex-shrink-0">
-                        Last contacted
-                        <br />
-                        {format(new Date(contact.lastContactedAt), 'MMM d')}
+                      {/* Tags/Groups Column - w-48 to match header */}
+                      <div className="w-48 flex-shrink-0">
+                        {(contact.groups && contact.groups.length > 0) ||
+                        contact.tags.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {/* Groups */}
+                            {contact.groups?.slice(0, 2).map((group) => (
+                              <GroupBadge
+                                key={group.id}
+                                name={group.name}
+                                color={group.color}
+                                size="sm"
+                              />
+                            ))}
+                            {/* Tags */}
+                            {contact.tags.slice(0, 2).map((tag) => (
+                              <TagBadge
+                                key={tag.id}
+                                name={tag.name}
+                                color={tag.color}
+                                size="sm"
+                              />
+                            ))}
+                            {/* Show +N if more */}
+                            {(contact.groups ? contact.groups.length : 0) +
+                              contact.tags.length >
+                              4 && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                +
+                                {(contact.groups ? contact.groups.length : 0) +
+                                  contact.tags.length -
+                                  4}
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ) : (
           /* Grid View */
@@ -289,29 +376,39 @@ export function ContactList({
                       </p>
                     )}
 
-                    {contact.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2 justify-center">
+                    {/* Groups and Tags */}
+                    {((contact.groups && contact.groups.length > 0) ||
+                      contact.tags.length > 0) && (
+                      <div className="flex flex-wrap gap-1 mt-2 justify-center max-w-full">
+                        {/* Show first group */}
+                        {contact.groups && contact.groups.length > 0 && (
+                          <GroupBadge
+                            name={contact.groups[0].name}
+                            color={contact.groups[0].color}
+                            size="sm"
+                          />
+                        )}
+                        {/* Show first 2 tags */}
                         {contact.tags.slice(0, 2).map((tag) => (
-                          <span
+                          <TagBadge
                             key={tag.id}
-                            className={cn(
-                              'px-1.5 py-0.5 text-[10px] font-medium rounded-full',
-                              tag.color === 'blue' &&
-                                'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-                              tag.color === 'green' &&
-                                'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-                              tag.color === 'red' &&
-                                'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
-                              tag.color === 'purple' &&
-                                'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                            )}
-                          >
-                            {tag.name}
-                          </span>
+                            name={tag.name}
+                            color={tag.color}
+                            size="sm"
+                          />
                         ))}
-                        {contact.tags.length > 2 && (
+                        {/* Show +N if more items */}
+                        {(contact.groups ? contact.groups.length - 1 : 0) +
+                          (contact.tags.length > 2
+                            ? contact.tags.length - 2
+                            : 0) >
+                          0 && (
                           <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                            +{contact.tags.length - 2}
+                            +
+                            {(contact.groups ? contact.groups.length - 1 : 0) +
+                              (contact.tags.length > 2
+                                ? contact.tags.length - 2
+                                : 0)}
                           </span>
                         )}
                       </div>

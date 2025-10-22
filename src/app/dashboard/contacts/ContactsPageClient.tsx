@@ -1,12 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ContactList } from '@/components/contacts/ContactList';
 import { ContactDetailModal } from '@/components/contacts/ContactDetailModal';
 import {
   ContactFormModal,
   type ContactFormData,
 } from '@/components/contacts/ContactFormModal';
+import {
+  ContactsSidebar,
+  type ContactFilter,
+} from '@/components/contacts/ContactsSidebar';
+import { BulkActionsToolbar } from '@/components/contacts/BulkActionsToolbar';
+import { CreateGroupModal } from '@/components/contacts/CreateGroupModal';
+import { ManageTagsModal } from '@/components/contacts/ManageTagsModal';
 import { toast } from 'sonner';
 import type { ContactListItem, ContactDetails } from '@/lib/contacts/data';
 import type { Contact } from '@/db/schema';
@@ -26,7 +34,16 @@ export function ContactsPageClient({
   initialContacts,
   userId,
 }: ContactsPageClientProps): JSX.Element {
+  const router = useRouter();
   const [contacts, setContacts] = useState<ContactListItem[]>(initialContacts);
+
+  // Debug: Log initial contacts
+  console.log(
+    '📋 ContactsPageClient initialized with',
+    initialContacts.length,
+    'contacts'
+  );
+  console.log('📋 Initial contacts:', initialContacts);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
@@ -37,6 +54,44 @@ export function ContactsPageClient({
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isLoadingContact, setIsLoadingContact] = useState(false);
+
+  // Sidebar filtering and bulk selection state
+  const [currentFilter, setCurrentFilter] = useState<ContactFilter>({
+    type: 'all',
+  });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [showManageTagsModal, setShowManageTagsModal] = useState(false);
+
+  // Client-side filtering based on current filter
+  const filteredContacts = contacts.filter((contact) => {
+    if (currentFilter.type === 'all') return true;
+    if (currentFilter.type === 'favorites') return contact.isFavorite;
+    if (currentFilter.type === 'group') {
+      return contact.groups?.some((g) => g.id === currentFilter.groupId);
+    }
+    if (currentFilter.type === 'tag') {
+      return contact.tags?.some((t) => currentFilter.tagIds?.includes(t.id));
+    }
+    return true;
+  });
+
+  // Bulk selection handlers
+  const toggleSelectContact = (contactId: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(contactId)
+        ? prev.filter((id) => id !== contactId)
+        : [...prev, contactId]
+    );
+  };
+
+  const selectAllContacts = () => {
+    setSelectedIds(filteredContacts.map((c) => c.id));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds([]);
+  };
 
   const handleContactSelect = async (contactId: string) => {
     setSelectedContactId(contactId);
@@ -80,13 +135,48 @@ export function ContactsPageClient({
 
   const refreshContacts = async () => {
     try {
-      const response = await fetch('/api/contacts/list');
+      console.log('🔄 Starting refresh...');
+
+      // Method 1: Force server-side re-render (best for SSR pages)
+      router.refresh();
+
+      // Method 2: Also fetch via API for immediate update
+      const response = await fetch('/api/contacts/list', {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        },
+      });
       const data = await response.json();
+
+      console.log('🔄 Refreshed contacts:', {
+        success: data.success,
+        count: data.contacts?.length || 0,
+        total: data.total,
+        contacts: data.contacts?.map((c: any) => c.id), // Show IDs
+      });
+
       if (data.success) {
+        console.log(
+          '✅ Setting contacts state with',
+          data.contacts.length,
+          'contacts'
+        );
+        console.log('📋 Current contacts state:', contacts.length);
         setContacts(data.contacts);
+        console.log(
+          '📋 After setState - this might not show immediately due to async'
+        );
+
+        // Force a re-render check
+        setTimeout(() => {
+          console.log('📋 State after 100ms:', contacts.length);
+        }, 100);
+      } else {
+        console.error('❌ Failed to refresh contacts:', data.error);
       }
     } catch (error) {
-      console.error('Error refreshing contacts:', error);
+      console.error('❌ Error refreshing contacts:', error);
     }
   };
 
@@ -137,10 +227,12 @@ export function ContactsPageClient({
         });
 
         if (result.success) {
+          console.log('✅ Contact created successfully:', result.contactId);
           toast.success('Contact created successfully');
           await refreshContacts();
           handleCloseFormModal();
         } else {
+          console.error('❌ Failed to create contact:', result.error);
           toast.error(result.error || 'Failed to create contact');
         }
       }
@@ -178,12 +270,39 @@ export function ContactsPageClient({
   };
 
   return (
-    <>
-      <ContactList
-        contacts={contacts}
-        onContactSelect={handleContactSelect}
-        onAddContact={handleOpenAddModal}
+    <div className="flex flex-1 h-full overflow-hidden bg-white dark:bg-gray-900">
+      {/* Contacts Sidebar */}
+      <ContactsSidebar
+        currentFilter={currentFilter}
+        onFilterChange={setCurrentFilter}
+        onCreateGroup={() => setShowCreateGroupModal(true)}
+        onManageTags={() => setShowManageTagsModal(true)}
       />
+
+      {/* Main Content - ContactList with full flex */}
+      <div className="flex-1 h-full overflow-hidden flex flex-col">
+        <ContactList
+          contacts={filteredContacts}
+          onContactSelect={handleContactSelect}
+          onAddContact={handleOpenAddModal}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelectContact}
+          onSelectAll={selectAllContacts}
+          onClearSelection={clearSelection}
+        />
+      </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectedIds.length > 0 && (
+        <BulkActionsToolbar
+          selectedCount={selectedIds.length}
+          selectedIds={selectedIds}
+          onClearSelection={clearSelection}
+          onRefresh={refreshContacts}
+        />
+      )}
+
+      {/* Modals */}
       {isDetailModalOpen && selectedContact && (
         <ContactDetailModal
           contact={selectedContact}
@@ -199,6 +318,16 @@ export function ContactsPageClient({
         onClose={handleCloseFormModal}
         onSave={handleSaveContact}
       />
-    </>
+      <CreateGroupModal
+        open={showCreateGroupModal}
+        onOpenChange={setShowCreateGroupModal}
+        onSuccess={refreshContacts}
+      />
+      <ManageTagsModal
+        open={showManageTagsModal}
+        onOpenChange={setShowManageTagsModal}
+        onSuccess={refreshContacts}
+      />
+    </div>
   );
 }

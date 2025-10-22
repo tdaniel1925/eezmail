@@ -15,6 +15,8 @@ import {
   Clock,
   Play,
   Pause,
+  Lightbulb,
+  Users,
 } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { AttachmentList } from './AttachmentList';
@@ -23,6 +25,12 @@ import { SchedulePicker } from './SchedulePicker';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import { AudioVisualizer } from './AudioVisualizer';
 import { VoiceMessagePlayer } from './VoiceMessagePlayer';
+import { WritingCoach } from './WritingCoach';
+import {
+  GroupRecipientSelector,
+  type SelectedGroup,
+} from './GroupRecipientSelector';
+import { useState } from 'react';
 
 // Define Attachment type locally
 interface Attachment {
@@ -111,6 +119,52 @@ interface EmailComposerModalProps {
 }
 
 export function EmailComposerModal(props: EmailComposerModalProps) {
+  // Internal state for Writing Coach
+  const [showWritingCoach, setShowWritingCoach] = useState(false);
+
+  // Group selection state
+  const [showGroupSelector, setShowGroupSelector] = useState(false);
+  const [selectedGroups, setSelectedGroups] = useState<SelectedGroup[]>([]);
+
+  const handleSelectGroups = (groups: SelectedGroup[]) => {
+    setSelectedGroups(groups);
+
+    // Extract all member emails and add to "To" field
+    const allEmails = groups.flatMap((g) => g.memberEmails).filter(Boolean);
+    const currentEmails = props.to
+      .split(',')
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const newEmails = allEmails.filter(
+      (email) => !currentEmails.includes(email)
+    );
+
+    if (newEmails.length > 0) {
+      const updatedTo =
+        currentEmails.length > 0
+          ? `${props.to}, ${newEmails.join(', ')}`
+          : newEmails.join(', ');
+      props.setTo(updatedTo);
+    }
+  };
+
+  const handleRemoveGroup = (groupId: string) => {
+    const group = selectedGroups.find((g) => g.id === groupId);
+    if (!group) return;
+
+    setSelectedGroups((prev) => prev.filter((g) => g.id !== groupId));
+
+    // Remove group emails from "To" field
+    const currentEmails = props.to
+      .split(',')
+      .map((e) => e.trim())
+      .filter(Boolean);
+    const updatedEmails = currentEmails.filter(
+      (email) => !group.memberEmails.includes(email)
+    );
+    props.setTo(updatedEmails.join(', '));
+  };
+
   return createPortal(
     <div>
       {/* Backdrop */}
@@ -173,6 +227,31 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
           <>
             {/* Recipients Section */}
             <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              {/* Selected Groups Display */}
+              {selectedGroups.length > 0 && (
+                <div className="flex flex-wrap gap-2 px-4 pt-3">
+                  {selectedGroups.map((group) => (
+                    <div
+                      key={group.id}
+                      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium text-white"
+                      style={{ backgroundColor: group.color }}
+                    >
+                      <Users className="h-3 w-3" />
+                      <span>
+                        {group.name} ({group.memberCount})
+                      </span>
+                      <button
+                        onClick={() => handleRemoveGroup(group.id)}
+                        className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* To Field */}
               <div className="flex items-center border-b border-gray-200 dark:border-gray-700 px-4 py-2">
                 <label className="w-16 text-sm text-gray-600 dark:text-gray-400">
                   To:
@@ -184,12 +263,31 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                   placeholder="recipient@example.com"
                   className="flex-1 border-none bg-transparent text-sm focus:outline-none focus:ring-0 dark:text-white"
                 />
-                <div className="flex items-center space-x-2 text-sm text-[#FF4C5A]">
+                <div className="flex items-center space-x-2 text-sm">
+                  {/* Group Selector Button */}
+                  <button
+                    onClick={() => setShowGroupSelector(true)}
+                    className="flex items-center gap-1 text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
+                    title="Select groups"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Groups</span>
+                  </button>
                   {!props.showCc && (
-                    <button onClick={() => props.setShowCc(true)}>Cc</button>
+                    <button
+                      onClick={() => props.setShowCc(true)}
+                      className="text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
+                    >
+                      Cc
+                    </button>
                   )}
                   {!props.showBcc && (
-                    <button onClick={() => props.setShowBcc(true)}>Bcc</button>
+                    <button
+                      onClick={() => props.setShowBcc(true)}
+                      className="text-[#FF4C5A] hover:text-[#FF4C5A]/80 transition-colors"
+                    >
+                      Bcc
+                    </button>
                   )}
                 </div>
               </div>
@@ -250,18 +348,31 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
               </div>
             )}
 
-            {/* Editor Section */}
-            <div
-              className="flex-1 overflow-y-auto px-4 py-3"
-              onDrop={props.handleDrop}
-              onDragOver={props.handleDragOver}
-              onDragLeave={props.handleDragLeave}
-            >
-              <RichTextEditor
-                value={props.body}
-                onChange={props.setBody}
-                onEditorReady={props.onEditorReady}
-              />
+            {/* Editor Section with Writing Coach */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Editor */}
+              <div
+                className="flex-1 overflow-y-auto px-4 py-3"
+                onDrop={props.handleDrop}
+                onDragOver={props.handleDragOver}
+                onDragLeave={props.handleDragLeave}
+              >
+                <RichTextEditor
+                  value={props.body}
+                  onChange={props.setBody}
+                  onEditorReady={props.onEditorReady}
+                />
+              </div>
+
+              {/* Writing Coach Sidebar */}
+              {showWritingCoach && (
+                <div className="w-80 border-l border-gray-200 dark:border-gray-700 overflow-y-auto">
+                  <WritingCoach
+                    content={props.body}
+                    onClose={() => setShowWritingCoach(false)}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Audio Visualizer + Live Transcript (when dictating) */}
@@ -497,6 +608,20 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     {props.isRemixing ? 'Polishing...' : 'AI Remix'}
                   </AnimatedButton>
 
+                  {/* Writing Coach Toggle */}
+                  <button
+                    onClick={() => setShowWritingCoach(!showWritingCoach)}
+                    className={`flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                      showWritingCoach
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'text-gray-600 hover:bg-gray-200 dark:text-gray-400 dark:hover:bg-gray-700'
+                    }`}
+                    title="Get real-time writing suggestions"
+                  >
+                    <Lightbulb className="h-4 w-4" />
+                    <span>Coach</span>
+                  </button>
+
                   {/* Voice Message Button */}
                   <AnimatedButton
                     variant={
@@ -553,6 +678,14 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
         isOpen={props.showSchedulePicker}
         onClose={() => props.setShowSchedulePicker(false)}
         onSchedule={props.handleSchedule}
+      />
+
+      {/* Group Recipient Selector Modal */}
+      <GroupRecipientSelector
+        open={showGroupSelector}
+        onOpenChange={setShowGroupSelector}
+        onSelectGroups={handleSelectGroups}
+        selectedGroupIds={selectedGroups.map((g) => g.id)}
       />
     </div>,
     document.body

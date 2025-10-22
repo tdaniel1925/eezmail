@@ -35,27 +35,36 @@ export function useInboxEmails(options: UseInboxEmailsOptions = {}) {
         return response.json();
       },
       {
-        // Revalidation settings - balanced for performance and freshness
-        refreshInterval: 180000, // Revalidate every 3 minutes
-        // Don't revalidate on mount to prevent loops
-        revalidateIfStale: false,
-        // Don't revalidate on focus to prevent loops
-        revalidateOnFocus: false,
-        // Revalidate when network reconnects
-        revalidateOnReconnect: true,
-        // Show cached data immediately while revalidating
-        keepPreviousData: true,
+        // Revalidation settings - INSTANT LOAD with aggressive caching
+        refreshInterval: 180000, // Revalidate every 3 minutes in background
+
+        // CRITICAL: Always use cached data first (instant load)
+        revalidateIfStale: true, // Revalidate in background if stale
+        revalidateOnMount: true, // Revalidate on mount (but show cache first)
+        revalidateOnFocus: true, // Revalidate when tab becomes active
+        revalidateOnReconnect: true, // Revalidate when network reconnects
+
+        // CRITICAL: Show cached data immediately while revalidating
+        keepPreviousData: true, // Never show loading state if we have cached data
+
         // Dedupe requests within 2 seconds
         dedupingInterval: 2000,
+
         // Retry on error
         errorRetryCount: 3,
         errorRetryInterval: 5000,
+
+        // Cache the response so it's instantly available
+        suspense: false, // Don't use suspense mode (we want instant cache)
+
+        // Fallback data while first loading
+        fallbackData: undefined,
       }
     );
 
   return {
     emails: data?.emails || [],
-    isLoading: isLoading && !data, // Only show loading if no cached data
+    isLoading: isLoading && !data, // Only show loading if no cached data exists
     isValidating, // Background revalidation indicator
     error: error || (data && !data.success ? data.error : null),
     refresh: mutate, // Manual refresh function

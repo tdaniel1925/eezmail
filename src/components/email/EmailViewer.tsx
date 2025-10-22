@@ -13,6 +13,7 @@ import {
   Paperclip,
   Download,
   Sparkles,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Email } from '@/db/schema';
@@ -22,6 +23,7 @@ import { useEmailBody } from '@/hooks/useEmailBody';
 import { toast } from 'sonner';
 import { useChatbotContext } from '@/components/ai/ChatbotContext';
 import { useReplyLater } from '@/contexts/ReplyLaterContext';
+import { ThreadTimeline } from './ThreadTimeline';
 
 interface EmailViewerProps {
   email: Email | null;
@@ -41,6 +43,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const [showCustomDateTime, setShowCustomDateTime] = useState(false);
   const [customDate, setCustomDate] = useState('');
   const [customTime, setCustomTime] = useState('');
+  const [showThreadTimeline, setShowThreadTimeline] = useState(false);
   const replyLaterRef = useRef<HTMLDivElement>(null);
 
   // Set current email context when viewing
@@ -413,6 +416,17 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
         >
           <Forward className="h-4 w-4" />
         </button>
+        {email.threadId && (
+          <button
+            type="button"
+            onClick={() => setShowThreadTimeline(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            aria-label="View thread timeline"
+            title="View Conversation Timeline"
+          >
+            <GitBranch className="h-4 w-4" />
+          </button>
+        )}
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
@@ -605,6 +619,14 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
                 ? `\n\n------- Forwarded message -------\nFrom: ${email.fromAddress.email}\nDate: ${format(new Date(email.receivedAt), 'MMM d, yyyy h:mm a')}\nSubject: ${email.subject}\n\n${email.bodyText}`
                 : aiReplyContent || '', // Use AI-generated content if available
           }}
+        />
+      )}
+
+      {/* Thread Timeline Modal */}
+      {showThreadTimeline && email.threadId && (
+        <ThreadTimeline
+          threadId={email.threadId}
+          onClose={() => setShowThreadTimeline(false)}
         />
       )}
     </div>

@@ -183,13 +183,11 @@ export function ContactFormModal({
         tags: [],
       });
 
-      toast.success(
-        contact
-          ? 'Contact updated successfully'
-          : 'Contact created successfully'
-      );
+      // Toast notification handled by parent component
+      // Removed duplicate toast to prevent double notifications
       onClose();
     } catch (error) {
+      // Only show error toast here (parent won't know about this error)
       toast.error('Failed to save contact');
       console.error('Error saving contact:', error);
     } finally {

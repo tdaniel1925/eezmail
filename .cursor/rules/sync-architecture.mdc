@@ -1,82 +1,72 @@
 ---
-description: Defines email synchronization architecture, multi-provider sync strategies, and delta sync implementation patterns
+description: Documentation for email sync system including delta sync strategies, threading logic, provider-specific optimizations
 ---
 
 
 # sync-architecture
 
-## Core Sync Components
+## Core Sync Engine
+File: src/lib/sync/email-sync-service.ts
+Importance Score: 95/100
 
-### Provider-Agnostic Sync Engine
-Path: `src/lib/sync/email-sync-service.ts`
-Importance Score: 95
+Multi-provider email synchronization system:
+- Initial full sync for past 30 days
+- Delta sync using provider cursors for incremental updates 
+- Intelligent batching with provider-specific limits:
+  - Gmail: 100 messages/batch
+  - Microsoft: 50 messages/batch
+  - IMAP: 25 messages/batch
+- Automatic retry with exponential backoff
+- Conflict resolution for cross-device edits
 
-Key Business Logic:
-- Delta sync implementation with provider-specific cursors
-- Three-phase sync strategy (metadata, headers, content)
-- Provider abstraction layer for Gmail/Microsoft/IMAP
-- Intelligent batching based on provider limits
-- Cross-account sync coordination
+## Real-Time Sync Management
+File: src/lib/sync/sync-modes.ts
+Importance Score: 85/100
 
-### Real-time Sync Manager
-Path: `src/lib/sync/real-time-sync.ts`
-Importance Score: 90
+Three-tier sync strategy:
+1. Webhook-based instant sync
+   - Microsoft Graph change notifications
+   - Gmail push notifications
+   - < 5 second latency target
+2. IMAP IDLE connections
+   - Real-time updates for IMAP providers
+   - Connection pooling with auto-reconnect
+3. Fallback polling
+   - 5-minute intervals for providers without push
+   - Full refresh every 30 minutes
 
-Domain Logic:
-- Adaptive sync intervals (30s-5min) based on activity
-- Provider-specific webhook integration
-- Smart polling fallback with exponential backoff
-- Change detection optimizations for different providers
+## Threading Engine
+File: src/lib/sync/thread-service.ts
+Importance Score: 90/100
 
-### Sync State Management
-Path: `src/lib/sync/sync-state.ts`
-Importance Score: 85
+Thread synchronization logic:
+- Cross-provider thread mapping
+- Reference-based conversation linking
+- Subject line normalization
+- Participant-based thread grouping
+- Timeline preservation across providers
 
-Business Rules:
-- Account-specific sync progress tracking
-- Multi-folder sync orchestration
-- Intelligent retry management
-- Conflict resolution between providers
+## Sync State Management
+File: src/lib/sync/sync-state.ts
+Importance Score: 80/100
 
-### Threading Engine
-Path: `src/lib/sync/threading.ts`
-Importance Score: 85
-
-Threading Logic:
-- Custom thread ID generation
-- Cross-provider thread matching
-- Conversation reconstruction
-- Parent-child relationship mapping
-
-### Rate Limiting
-Path: `src/lib/sync/rate-limiter.ts`
-Importance Score: 80
-
-Provider Limits:
-- Gmail: 250 requests/user/second
-- Microsoft: 240 requests/minute
-- IMAP: Provider-specific adaptive limits
-- Auto-throttling based on response headers
-
-## Core Sync Workflows
-
-1. Initial Sync:
-- Metadata-first approach
-- Progressive content loading
-- Smart batching by date ranges
-- Folder prioritization
-
-2. Delta Sync:
-- Change token management
-- Incremental updates
+Cursor-based sync state tracking:
+- Provider-specific sync tokens
+- Last successful sync timestamp
+- Failed message tracking
 - Partial sync recovery
-- Modified time tracking
+- Progress calculation
 
-3. Real-time Updates:
-- Webhook integration
-- Smart polling fallback
-- Push notification handling
-- Change aggregation
+## Folder Sync Logic
+File: src/lib/sync/folder-sync.ts
+Importance Score: 75/100
+
+Folder synchronization rules:
+- Provider label mapping
+- Nested folder support
+- Custom folder permissions
+- Auto-creation of system folders
+- Cross-provider folder normalization
 
 $END$
 

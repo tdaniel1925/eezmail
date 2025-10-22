@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { OpenAI } from 'openai';
+import { getUserSignatureData } from '@/lib/email/signature-formatter';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -30,6 +31,9 @@ export async function POST(req: Request): Promise<Response> {
     const body = await req.json();
     const { prompt, currentText, subject, recipientEmail, context } = body;
 
+    // Get user's signature data for professional formatting
+    const signatureData = await getUserSignatureData(user.id);
+
     // Mode 1: Generate full email from prompt (AI Writer)
     if (prompt) {
       const response = await openai.chat.completions.create({
@@ -40,7 +44,7 @@ export async function POST(req: Request): Promise<Response> {
             content: `You are an AI email writing assistant. Write a complete, professional email based on a short user prompt.
 
 **Instructions:**
-- Write a natural, professional email
+- Write a natural, professional business letter
 - Keep it concise but complete (2-4 paragraphs)
 - Use appropriate greeting and closing
 - Match the tone to the context
@@ -49,7 +53,7 @@ export async function POST(req: Request): Promise<Response> {
 **CRITICAL FORMATTING RULES - Use \\n\\n to separate sections:**
 
 STRUCTURE:
-Greeting (Dear X,)
+Greeting (Dear X, or Hi X,)
 \\n\\n
 First paragraph of body text
 \\n\\n
@@ -59,16 +63,17 @@ Additional paragraphs (if needed)
 \\n\\n
 Closing paragraph
 \\n\\n
-Sign-off (Best regards,)
+Best regards,
 \\n\\n
-[Your Name]
-[Your Contact Information]
+${signatureData.name}
+${signatureData.email}
 
 RULES:
 - Use EXACTLY \\n\\n (double newline) between each section
 - This creates ONE blank line between paragraphs
-- Contact info goes directly under name with NO blank line (single \\n)
+- Email goes directly under name with NO blank line (single \\n)
 - Do NOT add extra spacing or double-double spacing
+- Always include the signature block at the end
 
 Return a JSON object with:
 {

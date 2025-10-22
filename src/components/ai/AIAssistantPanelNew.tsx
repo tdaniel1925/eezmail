@@ -39,6 +39,21 @@ export function AIAssistantPanel(): JSX.Element {
     }
   }, []);
 
+  // Handle window resize to ensure panel stays within viewport
+  useEffect(() => {
+    const handleResize = () => {
+      if (!isExpanded) return;
+
+      const maxAllowedWidth = window.innerWidth - 250; // 250px minimum for main content
+      if (width > maxAllowedWidth) {
+        setWidth(Math.max(320, maxAllowedWidth));
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isExpanded, width, setWidth]);
+
   // Handle resize
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -51,7 +66,15 @@ export function AIAssistantPanel(): JSX.Element {
     const handleMouseMove = (e: MouseEvent) => {
       if (!panelRef.current) return;
       const newWidth = window.innerWidth - e.clientX;
-      setWidth(newWidth);
+
+      // Constrain width to min/max bounds
+      const constrainedWidth = Math.max(320, Math.min(600, newWidth));
+
+      // Ensure panel doesn't exceed viewport width (leave space for sidebar)
+      const maxAllowedWidth = window.innerWidth - 250; // 250px minimum for main content
+      const finalWidth = Math.min(constrainedWidth, maxAllowedWidth);
+
+      setWidth(finalWidth);
     };
 
     const handleMouseUp = () => {
@@ -101,7 +124,7 @@ export function AIAssistantPanel(): JSX.Element {
       ref={panelRef}
       animate={{ width: isExpanded ? width : 48 }}
       transition={{ duration: 0.2 }}
-      className="relative flex flex-col border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
+      className="relative flex h-screen flex-col border-l border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900"
       style={{
         minWidth: isExpanded ? 320 : 48,
         maxWidth: isExpanded ? 600 : 48,

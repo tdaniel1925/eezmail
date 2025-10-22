@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { OpenAI } from 'openai';
+import { getUserSignatureData } from '@/lib/email/signature-formatter';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -54,6 +55,9 @@ export async function POST(req: Request): Promise<Response> {
       );
     }
 
+    // Get user's signature data for professional formatting
+    const signatureData = await getUserSignatureData(user.id);
+
     // Build context for AI
     let contextPrompt = `You are composing a reply to this email:
 
@@ -75,16 +79,35 @@ ${emailBody}`;
       messages: [
         {
           role: 'system',
-          content: `You are an email reply assistant. Generate professional and contextual email replies.
+          content: `You are an email reply assistant. Generate professional, business-style email replies.
 
-Guidelines:
-- Acknowledge the original message
+**CRITICAL FORMATTING RULES:**
+
+STRUCTURE (use \\n\\n for spacing):
+Dear/Hi [Name],
+\\n\\n
+[Opening paragraph - acknowledge their message]
+\\n\\n
+[Body paragraph - address key points]
+\\n\\n
+[Closing paragraph - call to action or conclusion]
+\\n\\n
+Best regards,
+\\n\\n
+${signatureData.name}
+${signatureData.email}
+
+GUIDELINES:
+- Use proper business letter format with greeting
+- Acknowledge the original message context
 - Address key points appropriately
-- Maintain professional but friendly tone
 - Keep it concise (2-4 paragraphs max)
-- Match the formality level of the original
-- Include a proper greeting and closing
-- Return as valid JSON with "subject" and "body" fields`,
+- Match the formality level of the original email
+- Use EXACTLY \\n\\n (double newline) between sections for proper spacing
+- Always include the signature block at the end
+- Maintain professional but friendly tone
+
+Return as valid JSON with "subject" and "body" fields.`,
         },
         {
           role: 'user',
@@ -113,7 +136,7 @@ Guidelines:
       const subjectMatch = content.match(
         /subject[":]+\s*["']?([^"'\n]+)["']?/i
       );
-      const bodyMatch = content.match(/body[":]+\s*["']?(.+)["']?/is);
+      const bodyMatch = content.match(/body[":]+\s*["']?(.+)["']?/i);
 
       if (subjectMatch && bodyMatch) {
         parsed = {
@@ -129,17 +152,13 @@ Guidelines:
       }
     }
 
-    // Add signature if provided
-    let finalBody = parsed.body;
-    if (userSignature) {
-      finalBody += `\n\n${userSignature}`;
-    }
+    // Body already includes signature from AI, no need to append
 
     // If isDraft, return just the reply text for the Reply Later feature
     if (isDraft) {
       return NextResponse.json({
         success: true,
-        reply: finalBody,
+        reply: parsed.body,
         subject: parsed.subject || `Re: ${emailSubject}`,
         emailId: emailId || null,
       });
@@ -149,7 +168,7 @@ Guidelines:
     return NextResponse.json({
       success: true,
       subject: parsed.subject || `Re: ${emailSubject}`,
-      body: finalBody,
+      body: parsed.body,
     });
   } catch (error) {
     console.error('Error in reply API:', error);
@@ -159,4 +178,3 @@ Guidelines:
     );
   }
 }
-

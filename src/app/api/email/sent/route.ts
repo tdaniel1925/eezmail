@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
-import { emails, emailAccounts } from '@/db/schema';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { db } from '@/db/client';
+import { emails } from '@/db/schema';
+import { eq, and, desc } from 'drizzle-orm';
 import { z } from 'zod';
 
-// Validation schema for sent emails request
-const sentEmailSchema = z.object({
-  limit: z.number().min(1).max(100).optional().default(25),
-  offset: z.number().min(0).optional().default(0),
+// Input validation schema
+const sentEmailsSchema = z.object({
+  limit: z.coerce.number().min(1).max(100).default(50),
+  offset: z.coerce.number().min(0).default(0),
 });
 
 export async function GET(request: NextRequest) {
   try {
-    // Authenticate user
     const supabase = await createClient();
     const {
       data: { user },
@@ -23,84 +22,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse query parameters
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit') || '25');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    // Get query parameters
+    const searchParams = request.nextUrl.searchParams;
+    const rawParams = {
+      limit: searchParams.get('limit') || '50',
+      offset: searchParams.get('offset') || '0',
+    };
 
-    // Validate parameters
-    const validatedData = sentEmailSchema.parse({ limit, offset });
-
-    console.log(`📧 Fetching sent emails for user:`, user.id);
-
-    // Get user's email accounts
-    const userAccounts = await db.query.emailAccounts.findMany({
-      where: eq(emailAccounts.userId, user.id),
-    });
-
-    if (userAccounts.length === 0) {
-      console.log('📧 No email accounts found for user');
-      return NextResponse.json({
-        success: true,
-        emails: [],
-        total: 0,
-        hasMore: false,
-      });
-    }
-
-    const accountIds = userAccounts.map((account) => account.id);
-    console.log('📧 Found accounts:', accountIds);
-
-    // Get sent emails (emails where the user is the sender)
-    const sentEmails = await db
-      .select()
-      .from(emails)
-      .where(
-        and(
-          inArray(emails.accountId, accountIds),
-          eq(emails.folderName, 'sent')
-        )
-      )
-      .orderBy(desc(emails.receivedAt))
-      .limit(validatedData.limit)
-      .offset(validatedData.offset);
-
-    // Get total count for pagination
-    const totalCount = await db
-      .select({ count: emails.id })
-      .from(emails)
-      .where(
-        and(
-          inArray(emails.accountId, accountIds),
-          eq(emails.folderName, 'sent')
-        )
-      );
-
-    const total = totalCount.length;
-    const hasMore = validatedData.offset + validatedData.limit < total;
-
-    console.log(`📧 Found sent emails:`, sentEmails.length);
-
-    return NextResponse.json({
-      success: true,
-      emails: sentEmails,
-      total,
-      hasMore,
-      limit: validatedData.limit,
-      offset: validatedData.offset,
-    });
-  } catch (error) {
-    console.error('❌ Error fetching sent emails:', error);
-
-    if (error instanceof z.ZodError) {
+    // Validate params
+    const validationResult = sentEmailsSchema.safeParse(rawParams);
+    if (!validationResult.success) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Invalid parameters', details: validationResult.error },
         { status: 400 }
       );
     }
 
+    const { limit, offset } = validationResult.data;
+
+    console.log(
+      `📤 Fetching sent emails for user: ${user.id}, limit: ${limit}, offset: ${offset}`
+    );
+
+    // Query sent emails
+    const sentEmails = await db.query.emails.findMany({
+      where: (emails, { eq, and, or }) =>
+        and(
+          // Get emails from user's accounts
+          eq(emails.userId, user.id),
+          // Filter by sent folder
+          or(
+            eq(emails.folderName, 'sent'),
+            eq(emails.folderName, 'sentitems'),
+            eq(emails.folderName, 'sent items'),
+            eq(emails.folderName, 'sent mail')
+          )
+        ),
+      orderBy: (emails, { desc }) => [desc(emails.receivedAt)],
+      limit,
+      offset,
+    });
+
+    console.log(`✅ Found ${sentEmails.length} sent emails`);
+
+    return NextResponse.json({
+      success: true,
+      emails: sentEmails,
+      count: sentEmails.length,
+    });
+  } catch (error) {
+    console.error('Error fetching sent emails:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch sent emails' },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error',
+      },
       { status: 500 }
     );
   }

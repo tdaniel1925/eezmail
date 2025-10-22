@@ -31,12 +31,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Generate smart replies using AI
-    const replies = await generateSmartReplies({
-      from,
-      subject,
-      body: bodyText,
-    });
+    // Generate smart replies using AI with user signature
+    const replies = await generateSmartReplies(
+      {
+        from,
+        subject,
+        body: bodyText,
+      },
+      user.id
+    );
 
     return NextResponse.json({
       success: true,

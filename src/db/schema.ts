@@ -305,6 +305,7 @@ export const emailAccounts = pgTable(
     lastSyncAt: timestamp('last_sync_at'),
     lastSyncError: text('last_sync_error'),
     syncCursor: text('sync_cursor'),
+    sentSyncCursor: text('sent_sync_cursor'), // Separate cursor for sent folder
 
     // Enhanced sync tracking
     syncStatus: emailSyncStatusEnum('sync_status').default('idle'),
@@ -347,6 +348,9 @@ export const emails = pgTable(
     accountId: uuid('account_id')
       .notNull()
       .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+
+    // User association (denormalized for faster queries)
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
 
     // Email identifiers
     messageId: text('message_id').notNull(),
@@ -431,6 +435,9 @@ export const emails = pgTable(
 
     // Search
     searchVector: text('search_vector'),
+
+    // RAG/Embedding for semantic search
+    embedding: text('embedding'), // Stored as JSON string or pgvector
 
     // Voice message support
     voiceMessageUrl: text('voice_message_url'),
@@ -969,6 +976,116 @@ export const contactPhones = pgTable(
 );
 
 // ============================================================================
+// CONTACT GROUPS TABLE
+// ============================================================================
+
+export const contactGroups = pgTable(
+  'contact_groups',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 100 }).notNull(),
+    description: text('description'),
+    color: varchar('color', { length: 7 }).notNull().default('#3B82F6'),
+    isFavorite: boolean('is_favorite').notNull().default(false),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('idx_contact_groups_user_id').on(table.userId),
+    nameIdx: index('idx_contact_groups_name').on(table.name),
+    isFavoriteIdx: index('idx_contact_groups_is_favorite').on(table.isFavorite),
+    userNameIdx: uniqueIndex('idx_contact_groups_user_name').on(
+      table.userId,
+      table.name
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT GROUP MEMBERS TABLE (Many-to-Many)
+// ============================================================================
+
+export const contactGroupMembers = pgTable(
+  'contact_group_members',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => contactGroups.id, { onDelete: 'cascade' }),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    addedAt: timestamp('added_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    groupIdIdx: index('idx_contact_group_members_group_id').on(table.groupId),
+    contactIdIdx: index('idx_contact_group_members_contact_id').on(
+      table.contactId
+    ),
+    uniqueIdx: uniqueIndex('idx_contact_group_members_unique').on(
+      table.groupId,
+      table.contactId
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT TAGS TABLE
+// ============================================================================
+
+export const contactTags = pgTable(
+  'contact_tags',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: 50 }).notNull(),
+    color: varchar('color', { length: 7 }).notNull().default('#10B981'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('idx_contact_tags_user_id').on(table.userId),
+    nameIdx: index('idx_contact_tags_name').on(table.name),
+    userNameIdx: uniqueIndex('idx_contact_tags_user_name').on(
+      table.userId,
+      table.name
+    ),
+  })
+);
+
+// ============================================================================
+// CONTACT TAG ASSIGNMENTS TABLE (Many-to-Many)
+// ============================================================================
+
+export const contactTagAssignments = pgTable(
+  'contact_tag_assignments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    contactId: uuid('contact_id')
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    tagId: uuid('tag_id')
+      .notNull()
+      .references(() => contactTags.id, { onDelete: 'cascade' }),
+    assignedAt: timestamp('assigned_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    contactIdIdx: index('idx_contact_tag_assignments_contact_id').on(
+      table.contactId
+    ),
+    tagIdIdx: index('idx_contact_tag_assignments_tag_id').on(table.tagId),
+    uniqueIdx: uniqueIndex('idx_contact_tag_assignments_unique').on(
+      table.contactId,
+      table.tagId
+    ),
+  })
+);
+
+// ============================================================================
 // CONTACT ADDRESSES TABLE
 // ============================================================================
 
@@ -1012,55 +1129,6 @@ export const contactSocialLinks = pgTable(
     contactIdIdx: index('contact_social_links_contact_id_idx').on(
       table.contactId
     ),
-  })
-);
-
-// ============================================================================
-// CONTACT TAGS TABLE
-// ============================================================================
-
-export const contactTags = pgTable(
-  'contact_tags',
-  {
-    id: uuid('id').defaultRandom().primaryKey(),
-    userId: uuid('user_id')
-      .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
-    name: varchar('name', { length: 50 }).notNull(),
-    color: varchar('color', { length: 20 }).default('blue'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    userIdIdx: index('contact_tags_user_id_idx').on(table.userId),
-    nameIdx: index('contact_tags_name_idx').on(table.name),
-  })
-);
-
-// ============================================================================
-// CONTACT TAG ASSIGNMENTS TABLE
-// ============================================================================
-
-export const contactTagAssignments = pgTable(
-  'contact_tag_assignments',
-  {
-    contactId: uuid('contact_id')
-      .notNull()
-      .references(() => contacts.id, { onDelete: 'cascade' }),
-    tagId: uuid('tag_id')
-      .notNull()
-      .references(() => contactTags.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    contactIdIdx: index('contact_tag_assignments_contact_id_idx').on(
-      table.contactId
-    ),
-    tagIdIdx: index('contact_tag_assignments_tag_id_idx').on(table.tagId),
-    // Composite primary key
-    pk: {
-      name: 'contact_tag_assignments_pk',
-      columns: [table.contactId, table.tagId],
-    },
   })
 );
 
@@ -1799,27 +1867,35 @@ export const webhookSubscriptions = pgTable(
     accountId: uuid('account_id')
       .notNull()
       .references(() => emailAccounts.id, { onDelete: 'cascade' }),
-    
+
     // Microsoft Graph subscription details
-    subscriptionId: varchar('subscription_id', { length: 255 }).notNull().unique(),
+    subscriptionId: varchar('subscription_id', { length: 255 })
+      .notNull()
+      .unique(),
     resource: text('resource').notNull(), // e.g., /me/mailFolders/inbox/messages
     changeType: varchar('change_type', { length: 100 }).notNull(), // created,updated,deleted
     notificationUrl: text('notification_url').notNull(),
     clientState: varchar('client_state', { length: 255 }).notNull(),
-    
+
     // Expiration management
     expirationDateTime: timestamp('expiration_date_time').notNull(),
     isActive: boolean('is_active').default(true).notNull(),
-    
+
     // Metadata
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
     lastRenewedAt: timestamp('last_renewed_at'),
   },
   (table) => ({
-    accountIdIdx: index('webhook_subscriptions_account_id_idx').on(table.accountId),
-    subscriptionIdIdx: uniqueIndex('webhook_subscriptions_subscription_id_idx').on(table.subscriptionId),
-    expirationIdx: index('webhook_subscriptions_expiration_idx').on(table.expirationDateTime),
+    accountIdIdx: index('webhook_subscriptions_account_id_idx').on(
+      table.accountId
+    ),
+    subscriptionIdIdx: uniqueIndex(
+      'webhook_subscriptions_subscription_id_idx'
+    ).on(table.subscriptionId),
+    expirationIdx: index('webhook_subscriptions_expiration_idx').on(
+      table.expirationDateTime
+    ),
   })
 );
 

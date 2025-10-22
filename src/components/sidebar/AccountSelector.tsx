@@ -81,7 +81,7 @@ export function AccountSelector({
               {currentAccount && getProviderIcon(currentAccount.provider)}
             </span>
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {currentAccount?.email || 'No account'}
+              {currentAccount?.emailAddress || 'No account'}
             </p>
           </div>
           {currentAccount && (

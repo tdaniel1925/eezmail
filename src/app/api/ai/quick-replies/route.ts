@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+import { getUserSignatureData } from '@/lib/email/signature-formatter';
+import { OpenAI } from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Validation schema for AI quick replies request
 const quickRepliesSchema = z.object({
@@ -29,26 +35,63 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = quickRepliesSchema.parse(body);
 
-    // TODO: Implement actual AI quick replies generation
-    // For now, return mock quick replies
-    const mockReplies = [
-      `Thank you for your email. I'll review this and get back to you soon.`,
-      `I appreciate you reaching out. Let me look into this matter and respond accordingly.`,
-      `Thanks for the information. I'll take this into consideration and follow up as needed.`,
-    ].slice(0, validatedData.maxReplies);
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured' },
+        { status: 500 }
+      );
+    }
 
-    console.log('AI Quick Replies request:', {
+    // Get user signature data
+    const signatureData = await getUserSignatureData(user.id);
+
+    // Generate AI quick replies with professional formatting
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an email reply assistant. Generate ${validatedData.maxReplies} quick, professional reply options.
+
+**FORMATTING RULES:**
+Each reply should follow this structure:
+Hi [Name],\\n\\n[Reply text 1-2 sentences]\\n\\nBest regards,\\n\\n${signatureData.name}\\n${signatureData.email}
+
+Tone: ${validatedData.tone}
+
+Return as JSON:
+{
+  "replies": ["reply1", "reply2", "reply3"]
+}`,
+        },
+        {
+          role: 'user',
+          content: `Generate ${validatedData.maxReplies} quick reply options for this email context:\n\n${validatedData.context}`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 400,
+      response_format: { type: 'json_object' },
+    });
+
+    const result = JSON.parse(response.choices[0]?.message?.content || '{}');
+    const replies = (result.replies || []).map((reply: string) =>
+      reply.replace(/\\n/g, '\n')
+    );
+
+    console.log('AI Quick Replies generated:', {
       emailId: validatedData.emailId,
       context: validatedData.context.substring(0, 100) + '...',
       tone: validatedData.tone,
       maxReplies: validatedData.maxReplies,
+      repliesCount: replies.length,
     });
 
     return NextResponse.json({
       success: true,
-      replies: mockReplies,
+      replies: replies,
       tone: validatedData.tone,
-      count: mockReplies.length,
+      count: replies.length,
     });
   } catch (error) {
     console.error('Error generating AI quick replies:', error);

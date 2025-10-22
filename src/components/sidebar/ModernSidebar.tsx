@@ -99,13 +99,28 @@ export function ModernSidebar({
         }}
       >
         {/* Header with Collapse Button - 64px height to match other columns */}
-        <div className="relative flex h-16 items-center justify-center border-b border-gray-200 bg-white px-6 dark:border-gray-700 dark:bg-gray-800">
+        <div className="relative flex h-16 items-center border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-800">
+          {/* Collapse Button - Left aligned when expanded */}
+          {!isCollapsed && (
+            <button
+              onClick={toggleCollapse}
+              className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors mr-3"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose
+                size={20}
+                className="text-gray-600 dark:text-gray-400"
+              />
+            </button>
+          )}
+
+          {/* Logo - Centered */}
           {!isCollapsed && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center flex-1"
             >
               <Image
                 src="/easemail-logo.png"
@@ -121,26 +136,20 @@ export function ModernSidebar({
               </p>
             </motion.div>
           )}
-          <button
-            onClick={toggleCollapse}
-            className={cn(
-              'rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors',
-              isCollapsed ? 'mx-auto' : 'absolute right-4'
-            )}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {isCollapsed ? (
+
+          {/* Expand Button - Centered when collapsed */}
+          {isCollapsed && (
+            <button
+              onClick={toggleCollapse}
+              className="mx-auto rounded-lg p-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 transition-colors"
+              title="Expand sidebar"
+            >
               <PanelLeft
                 size={20}
                 className="text-gray-600 dark:text-gray-400"
               />
-            ) : (
-              <PanelLeftClose
-                size={20}
-                className="text-gray-600 dark:text-gray-400"
-              />
-            )}
-          </button>
+            </button>
+          )}
         </div>
 
         {/* Account Selector */}

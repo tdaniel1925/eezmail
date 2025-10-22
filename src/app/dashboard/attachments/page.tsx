@@ -116,7 +116,8 @@ export default function AttachmentsPage(): JSX.Element {
       let comparison = 0;
       switch (sortBy) {
         case 'date':
-          comparison = a.createdAt.getTime() - b.createdAt.getTime();
+          comparison =
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
           break;
         case 'name':
           comparison = a.filename.localeCompare(b.filename);

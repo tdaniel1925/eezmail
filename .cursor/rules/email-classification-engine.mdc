@@ -1,58 +1,64 @@
 ---
-description: Specification for email classification and screening engine components, focusing on AI-powered categorization and routing logic.
+description: Specification for email classification and screening system including AI-powered categorization, filtering rules, and automated routing logic
 ---
 
 
 # email-classification-engine
 
-Key Classification Components:
+## Core Classification Engine
+Importance Score: 95/100
 
-1. Screening Engine (src/lib/screener/email-screener.ts)
-Importance Score: 95
-- Multi-stage email classification pipeline
-- Primary categories: Imbox/Feed/Paper Trail
-- Uses ML model for initial classification
-- Maintains sender reputation scoring
-- Implements learning from user corrections
+Primary classification pipeline with three-tier system:
+- Imbox (important/personal emails)
+- Feed (newsletters/marketing)
+- Paper Trail (receipts/transactions)
 
-2. AI Analysis Pipeline (src/lib/ai/email-analyzer.ts)
-Importance Score: 90
-- Content analysis for urgency detection
-- Newsletter/promotional content detection
-- Receipt and transaction identification
-- Meeting invitation parsing
-- Action item extraction
+Implementation in `src/lib/screener/email-categorizer.ts`:
+- Initial rule-based screening using sender patterns
+- AI-powered content analysis for ambiguous cases
+- Learning system that adapts to user corrections
+- Domain-level decisions that apply to all future emails
+- Bulk email detection using header analysis
 
-3. Routing Logic (src/lib/email/router.ts)
-Importance Score: 85
-- Custom folder mapping based on classification
-- Rules for handling first-time senders
-- Contact relationship-based routing
-- Priority inbox qualification rules
-- Auto-filing logic for recognized patterns
+## Screening Rules Engine
+Importance Score: 90/100
 
-4. Screener Actions (src/components/email/ActionItems.tsx)
-Importance Score: 80
-- User feedback processing for classification
-- Sender status management (approved/blocked)
-- Category override handling
-- Bulk action processing for similar emails
-- Learning system for pattern recognition
+Custom rule processing system in `src/lib/screener/rule-processor.ts`:
+- Complex condition evaluation with AND/OR logic
+- Multi-factor sender trust scoring
+- Automated folder suggestions based on content
+- Rule priority management with inheritance
+- Custom folder mapping per email provider
 
-5. Classification Rules Engine (src/lib/screener/rules.ts)
-Importance Score: 85
-- Pattern matching for common email types
-- Domain reputation integration
-- Subject line analysis rules
-- Content similarity detection
-- Custom rule creation and management
+## AI Classification System
+Importance Score: 85/100
 
-Core Classification Patterns:
-- Three-tier classification system
-- Sender reputation tracking
-- ML-powered content analysis
-- User feedback integration
-- Pattern-based auto-routing
+Intelligent classification in `src/lib/ai/classifier/email-classifier.ts`:
+- RAG-enhanced content analysis
+- Sender relationship strength scoring
+- Communication pattern detection
+- Auto-learning from user actions
+- Confidence scoring for classification decisions
+
+## Routing Logic
+Importance Score: 80/100
+
+Smart routing system in `src/components/email/screening/AutoRouter.tsx`:
+- Provider-specific folder management
+- Label inheritance rules
+- Priority-based delivery paths
+- Custom routing rules per category
+- Automated folder creation
+
+## Classification Analytics
+Importance Score: 75/100
+
+Analytics engine in `src/lib/screener/analytics.ts`:
+- Classification accuracy tracking
+- User correction patterns
+- Category distribution analysis
+- AI intervention frequency
+- Rule effectiveness scoring
 
 $END$
 

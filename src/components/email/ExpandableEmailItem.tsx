@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronDown,
   Trash2,
@@ -11,6 +12,7 @@ import {
   Forward,
   CheckSquare,
   Square,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addHours, addDays } from 'date-fns';
@@ -24,6 +26,7 @@ import { ThreadTimelineModal } from './ThreadTimelineModal';
 import { getThreadCount } from '@/lib/email/thread-actions';
 import { useChatbotContext } from '@/components/ai/ChatbotContext';
 import type { Email } from '@/db/schema';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ExpandableEmailItemProps {
   email: Email;
@@ -57,6 +60,16 @@ export function ExpandableEmailItem({
   const [customDate, setCustomDate] = useState('');
   const [customTime, setCustomTime] = useState('');
   const replyLaterRef = useRef<HTMLDivElement>(null);
+
+  // AI Summary Hover State
+  const [showSummary, setShowSummary] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [summaryError, setSummaryError] = useState(false);
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch thread count if email has a threadId
   useEffect(() => {
@@ -159,6 +172,162 @@ export function ExpandableEmailItem({
     });
   };
 
+  // AI Summary Hover Functions
+  const fetchSummary = async (): Promise<void> => {
+    if (summary || isLoadingSummary || isExpanded) return;
+
+    setIsLoadingSummary(true);
+    setSummaryError(false);
+
+    try {
+      console.log('🔍 Fetching AI summary for email:', email.id);
+
+      const response = await fetch('/api/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emailId: email.id }),
+      });
+
+      console.log('📡 API Response Status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch summary');
+      }
+
+      const data = await response.json();
+      console.log('✅ API Response Data:', data);
+
+      if (data.success && data.summary) {
+        setSummary(data.summary);
+        console.log('✅ Summary set successfully');
+      } else {
+        console.error('❌ No summary in response:', data);
+        setSummaryError(true);
+      }
+    } catch (error) {
+      console.error('❌ Error fetching summary:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+      }
+      setSummaryError(true);
+    } finally {
+      setIsLoadingSummary(false);
+    }
+  };
+
+  const calculatePopupPosition = (mouseX: number, mouseY: number): void => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const popupWidth = 320;
+    const popupHeight = 200;
+    const aiSidebarWidth = 380; // Approximate AI sidebar width when expanded
+
+    // Position 15 pixels to the right of cursor
+    let finalLeft = mouseX + 15;
+
+    // Vertically center on cursor
+    let finalTop = mouseY - popupHeight / 2;
+
+    console.log('🎯 Popup Calculation:', {
+      cursor: { x: mouseX, y: mouseY },
+      initialLeft: finalLeft,
+      initialTop: finalTop,
+      viewport: { width: viewportWidth, height: viewportHeight },
+    });
+
+    // Check if popup would overlap with AI sidebar (on right side of screen)
+    const rightEdgeOfPopup = finalLeft + popupWidth;
+    const aiSidebarStartsAt = viewportWidth - aiSidebarWidth;
+
+    // If popup would overlap with AI sidebar, show on left of cursor instead
+    if (rightEdgeOfPopup > aiSidebarStartsAt - 20) {
+      finalLeft = mouseX - popupWidth - 15;
+      console.log(
+        '📍 Adjusted left (would overlap AI sidebar, showing on left):',
+        finalLeft
+      );
+    }
+
+    // If showing on right but would go off viewport edge, show on left
+    if (finalLeft + popupWidth > viewportWidth - 20 && finalLeft > mouseX) {
+      finalLeft = mouseX - popupWidth - 15;
+      console.log('📍 Adjusted left (showing on left of cursor):', finalLeft);
+    }
+
+    // Ensure doesn't go off left edge
+    if (finalLeft < 20) {
+      finalLeft = 20;
+      console.log('📍 Clamped to left edge:', finalLeft);
+    }
+
+    // PRIORITY: Ensure popup stays in viewport vertically (overrides centering)
+    if (finalTop + popupHeight > viewportHeight - 20) {
+      // Would go off bottom, adjust to fit
+      finalTop = viewportHeight - popupHeight - 20;
+      console.log('📍 Adjusted top (near bottom):', finalTop);
+    }
+
+    if (finalTop < 20) {
+      // Would go off top, adjust to fit
+      finalTop = 20;
+      console.log('📍 Adjusted top (near top):', finalTop);
+    }
+
+    console.log('✅ Final Position:', { top: finalTop, left: finalLeft });
+    setPopupPosition({ top: finalTop, left: finalLeft });
+  };
+
+  const handleMouseEnter = (event: React.MouseEvent): void => {
+    if (isExpanded) return;
+
+    // Track cursor position
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    setCursorPosition({ x: mouseX, y: mouseY });
+
+    console.log('🖱️ Mouse Enter:', { x: mouseX, y: mouseY });
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      calculatePopupPosition(mouseX, mouseY);
+      setShowSummary(true);
+      fetchSummary();
+    }, 500);
+  };
+
+  const handleMouseMove = (event: React.MouseEvent): void => {
+    if (isExpanded) return;
+
+    // Update cursor position while hovering (in case user moves mouse)
+    const mouseX = event.clientX;
+    const mouseY = event.clientY;
+    setCursorPosition({ x: mouseX, y: mouseY });
+
+    // Recalculate position if summary is already showing
+    if (showSummary) {
+      calculatePopupPosition(mouseX, mouseY);
+    }
+  };
+
+  const handleMouseLeave = (): void => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setShowSummary(false);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const senderName =
     email.fromAddress?.name || email.fromAddress?.email || 'Unknown';
   const initials = getSenderInitials(senderName);
@@ -166,6 +335,10 @@ export function ExpandableEmailItem({
 
   return (
     <div
+      ref={cardRef}
+      onMouseEnter={handleMouseEnter}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className={cn(
         'px-6 py-3 border-b transition-all duration-200 cursor-pointer',
         'bg-[var(--bg-secondary)] border-[var(--border-color)]',
@@ -578,6 +751,82 @@ export function ExpandableEmailItem({
           onNavigateToEmail={onNavigateToEmail}
         />
       )}
+
+      {/* AI Summary Hover Popup - Rendered via Portal */}
+      {typeof window !== 'undefined' &&
+        createPortal(
+          <AnimatePresence>
+            {showSummary && !isExpanded && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: 'fixed',
+                  top: `${popupPosition.top}px`,
+                  left: `${popupPosition.left}px`,
+                  zIndex: 99999,
+                  width: '320px',
+                  pointerEvents: 'none', // Prevent interfering with mouse events
+                }}
+                className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-blue-500/30 rounded-lg shadow-2xl p-4"
+              >
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    AI Summary
+                  </h3>
+                </div>
+
+                {/* Content */}
+                <div className="min-h-[80px]">
+                  {isLoadingSummary && (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+                      <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                        Generating summary...
+                      </span>
+                    </div>
+                  )}
+
+                  {summaryError && !isLoadingSummary && (
+                    <div className="text-sm py-4">
+                      <p className="text-red-600 dark:text-red-400 mb-2">
+                        ❌ Failed to generate summary
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        Check console for details. Possible causes:
+                      </p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-400 mt-1 ml-4 list-disc">
+                        <li>OpenAI API key not configured</li>
+                        <li>Network connection issue</li>
+                        <li>Email content too short</li>
+                      </ul>
+                    </div>
+                  )}
+
+                  {summary && !isLoadingSummary && (
+                    <>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+                        {summary}
+                      </p>
+                      <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                          💡 Click email for full details
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body
+        )}
     </div>
   );
 }

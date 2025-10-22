@@ -1,72 +1,66 @@
 ---
-description: Specification for documenting data model structures and relationships in email management systems
+description: Specification for email data models including threading, contacts, timelines and folder structures
 ---
 
 
 # data-models
 
 ## Email Threading Model
-Path: src/lib/models/thread.ts
-Importance Score: 95
+Importance Score: 95/100
 
-Core data relationships:
-- Thread to Message (1:many)
-- Message to Participants (many:many)
-- Thread to Labels (many:many)
-- Thread to Folders (many:one)
-
-Key business rules:
-- Threads maintain participant history across messages
-- Labels inherit to child messages
-- Threading algorithm uses custom message-id chains
-- Parent-child relationships tracked via references header
+Core data structures for email threading and relationships:
+- Thread grouping with parent-child relationships
+- Multi-provider thread ID mapping 
+- Thread participant tracking with role identification
+- Timeline-based thread organization
+- Thread status tracking (active/archived/snoozed)
 
 ## Contact Relationship Model
-Path: src/lib/models/contact.ts
-Importance Score: 90
+Importance Score: 90/100
 
-Entity relationships:
-- Contact to Emails (one:many)
-- Contact to Organizations (many:many)
-- Contact to Timeline Events (one:many)
-- Contact to Interaction Stats (one:one)
+Contact data organization:
+- Hierarchical contact grouping system
+- Contact interaction history with timeline events
+- Relationship strength scoring based on interaction patterns
+- Auto-categorization rules for contact organization
+- VIP status tracking and criteria
 
-Business rules:
-- Automated relationship strength scoring
-- Communication pattern tracking
-- Interaction frequency analysis
-- Organization affiliation detection
+## Timeline Event Model 
+Importance Score: 85/100
+
+Timeline data structure:
+- Event categorization (email/meeting/call/note)
+- Event relationship mapping to threads and contacts
+- Priority scoring for timeline events
+- Action item extraction and tracking
+- Event grouping by conversation context
 
 ## Folder Organization Model
-Path: src/lib/models/folder.ts
-Importance Score: 85
+Importance Score: 80/100
 
-Structure:
-- Hierarchical folder relationships
-- Custom folder types (imbox/feed/paper-trail)
-- Folder to Message mappings
-- Provider-specific folder sync states
+Custom folder hierarchy:
+- Smart folder categorization (Imbox/Feed/Paper Trail)
+- Provider-specific folder mapping
+- Rule-based folder assignment criteria
+- Folder access patterns tracking
+- Unified folder view across providers
 
-Rules:
-- Automatic folder categorization
-- Smart folder type inference
-- Custom folder inheritance patterns
-- Provider-agnostic folder mapping
+## Email Screening Model
+Importance Score: 85/100
 
-## Timeline Event Model
-Path: src/lib/models/timeline.ts
-Importance Score: 80
+Screening data organization:
+- Sender trust level tracking
+- Domain-level screening decisions
+- Custom screening rules storage
+- Screening history with user decisions
+- Auto-categorization patterns
 
-Relationships:
-- Event to Contact (many:one)
-- Event to Messages (many:many)
-- Event to Organizations (many:many)
-
-Business rules:
-- Automatic event generation from interactions
-- Event categorization system
-- Relationship impact scoring
-- Timeline analytics aggregation
+Key relationships:
+- Threads contain multiple Timeline Events
+- Contacts participate in multiple Threads
+- Timeline Events reference Contacts and Threads
+- Folders contain multiple Threads
+- Screening Rules apply to multiple Senders
 
 $END$
 

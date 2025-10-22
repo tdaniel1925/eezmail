@@ -26,6 +26,17 @@ export class TokenManager {
       throw new Error('No access token available');
     }
 
+    // IMAP accounts use password authentication - no token refresh needed
+    if (account.provider === 'imap' || account.authType === 'password') {
+      console.log(
+        '✅ Valid access token obtained for IMAP account (password auth)'
+      );
+      return {
+        accessToken: account.accessToken,
+        needsRefresh: false,
+      };
+    }
+
     // Check if token is expired or will expire soon (within 5 minutes)
     const now = new Date();
     const expiresAt = account.tokenExpiresAt;
@@ -165,6 +176,17 @@ export class TokenManager {
 
     if (!account) return true;
     if (!account.accessToken) return true;
+
+    // IMAP accounts use password authentication, not OAuth tokens
+    // They only need the accessToken (password) and don't use refresh tokens
+    if (account.provider === 'imap' || account.authType === 'password') {
+      // Only check if password exists (stored as accessToken)
+      // IMAP passwords don't expire, so skip refresh token check
+      console.log('✅ IMAP account has valid password, no reconnection needed');
+      return false;
+    }
+
+    // For OAuth accounts (Gmail, Microsoft), check refresh token
     if (!account.refreshToken) return true;
     if (account.status === 'error') return true;
 

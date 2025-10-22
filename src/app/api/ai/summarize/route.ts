@@ -10,6 +10,66 @@ const openai = new OpenAI({
 });
 
 /**
+ * Clean email body by removing signatures, inline images, and metadata
+ */
+function cleanEmailBody(body: string): string {
+  if (!body) return '';
+
+  let cleaned = body;
+
+  // Remove HTML tags if present
+  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  cleaned = cleaned.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<[^>]+>/g, ' ');
+
+  // Remove common signature patterns
+  const signaturePatterns = [
+    /^--\s*$/gm, // Standard -- separator
+    /_{3,}/g, // Multiple underscores
+    /={3,}/g, // Multiple equals
+    /-{3,}/g, // Multiple dashes (but not standard --)
+    /\n\s*Best regards,?\s*\n[\s\S]*$/i,
+    /\n\s*Regards,?\s*\n[\s\S]*$/i,
+    /\n\s*Sincerely,?\s*\n[\s\S]*$/i,
+    /\n\s*Thanks,?\s*\n[\s\S]*$/i,
+    /\n\s*Thank you,?\s*\n[\s\S]*$/i,
+    /\n\s*Cheers,?\s*\n[\s\S]*$/i,
+    /\n\s*Best,?\s*\n[\s\S]*$/i,
+    /\n\s*Sent from my .*/i, // "Sent from my iPhone" etc
+  ];
+
+  for (const pattern of signaturePatterns) {
+    cleaned = cleaned.replace(pattern, '\n');
+  }
+
+  // Remove inline image references
+  cleaned = cleaned.replace(/\[image:.*?\]/gi, '');
+  cleaned = cleaned.replace(/\[cid:.*?\]/gi, '');
+  cleaned = cleaned.replace(/data:image\/[^;]+;base64,[^\s]+/g, '');
+
+  // Remove email metadata patterns
+  cleaned = cleaned.replace(/^From:.*$/gm, '');
+  cleaned = cleaned.replace(/^To:.*$/gm, '');
+  cleaned = cleaned.replace(/^Subject:.*$/gm, '');
+  cleaned = cleaned.replace(/^Date:.*$/gm, '');
+  cleaned = cleaned.replace(/^Cc:.*$/gm, '');
+  cleaned = cleaned.replace(/^Bcc:.*$/gm, '');
+
+  // Remove quoted/forwarded email sections
+  cleaned = cleaned.replace(/^>+.*$/gm, ''); // Lines starting with >
+  cleaned = cleaned.replace(/^On .* wrote:[\s\S]*$/gm, ''); // "On Date, Person wrote:"
+  cleaned = cleaned.replace(/^-+ Forwarded message -+[\s\S]*$/gm, '');
+  cleaned = cleaned.replace(/^-+ Original message -+[\s\S]*$/gm, '');
+
+  // Clean up excessive whitespace
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+  cleaned = cleaned.trim();
+
+  return cleaned;
+}
+
+/**
  * Summarize an email into 2-3 sentences
  */
 export async function POST(req: Request): Promise<Response> {
@@ -58,14 +118,25 @@ export async function POST(req: Request): Promise<Response> {
       });
     }
 
-    const emailBody = email.bodyText || email.bodyHtml || '';
+    const rawEmailBody = email.bodyText || email.bodyHtml || '';
     const emailSubject = email.subject;
+
+    if (!rawEmailBody || rawEmailBody.length < 50) {
+      return NextResponse.json({
+        success: true,
+        summary: emailSubject,
+        message: 'Email too short to summarize',
+      });
+    }
+
+    // Clean the email body to remove signatures, inline images, and metadata
+    const emailBody = cleanEmailBody(rawEmailBody);
 
     if (!emailBody || emailBody.length < 50) {
       return NextResponse.json({
         success: true,
         summary: emailSubject,
-        message: 'Email too short to summarize',
+        message: 'Email body empty after cleaning',
       });
     }
 
@@ -75,7 +146,7 @@ export async function POST(req: Request): Promise<Response> {
       messages: [
         {
           role: 'system',
-          content: `Summarize emails in 2-3 sentences. Include: main purpose, key info, action items.`,
+          content: `Summarize the main email content in 2-3 sentences. Focus ONLY on the actual message content. Ignore signatures, inline images, metadata, and quoted/forwarded sections. Include: main purpose, key info, action items.`,
         },
         {
           role: 'user',

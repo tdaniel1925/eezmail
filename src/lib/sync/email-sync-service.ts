@@ -338,15 +338,28 @@ async function syncWithMicrosoftGraph(
       accessToken
     );
 
-    // Step 2: Sync emails with folder mapping
-    console.log('📧 Step 2: Syncing emails...');
+    // Step 2: Sync inbox emails
+    console.log('📧 Step 2: Syncing inbox emails...');
     await syncEmailsWithGraph(
       account,
       accountId,
       userId,
       folderMapping,
       accessToken,
-      syncType
+      syncType,
+      'inbox' // Sync inbox folder
+    );
+
+    // Step 3: Sync sent emails
+    console.log('📤 Step 3: Syncing sent emails...');
+    await syncEmailsWithGraph(
+      account,
+      accountId,
+      userId,
+      folderMapping,
+      accessToken,
+      syncType,
+      'sentitems' // Sync sent folder
     );
 
     console.log('✅ Microsoft Graph sync completed');
@@ -445,7 +458,8 @@ async function syncEmailsWithGraph(
   userId: string,
   folderMapping: Record<string, string> = {},
   accessToken: string,
-  syncType: 'initial' | 'manual' | 'auto' = 'auto'
+  syncType: 'initial' | 'manual' | 'auto' = 'auto',
+  folderName: string = 'inbox' // inbox or sentitems
 ) {
   try {
     // Get the last sync cursor (deltaLink or skiptoken) if exists
@@ -453,19 +467,21 @@ async function syncEmailsWithGraph(
       where: (accounts, { eq }) => eq(accounts.id, accountId),
     });
 
-    const deltaLink = accountRecord?.syncCursor;
+    // Use folder-specific sync cursor key
+    const cursorKey =
+      folderName === 'sentitems' ? 'sentSyncCursor' : 'syncCursor';
+    const deltaLink = (accountRecord as any)?.[cursorKey];
 
     // Use delta query if we have a deltaLink, otherwise do initial sync
     let currentUrl: string | null;
     if (deltaLink && deltaLink.includes('delta')) {
       // Use the stored deltaLink for incremental sync
       currentUrl = deltaLink;
-      console.log('📊 Using delta sync for incremental updates');
+      console.log(`📊 Using delta sync for ${folderName}`);
     } else {
       // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
-      currentUrl =
-        'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta?$top=100&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId';
-      console.log('🔄 Performing initial delta sync');
+      currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderName}/messages/delta?$top=100&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
+      console.log(`🔄 Performing initial delta sync for ${folderName}`);
     }
 
     let totalSynced = 0;
@@ -598,20 +614,28 @@ async function syncEmailsWithGraph(
 
     // Update sync cursor with final deltaLink
     if (finalDeltaLink) {
+      const updateData: any = {
+        updatedAt: new Date(),
+      };
+
+      // Use folder-specific cursor key
+      if (folderName === 'sentitems') {
+        updateData.sentSyncCursor = finalDeltaLink;
+      } else {
+        updateData.syncCursor = finalDeltaLink;
+      }
+
       await db
         .update(emailAccounts)
-        .set({
-          syncCursor: finalDeltaLink,
-          updatedAt: new Date(),
-        } as any)
+        .set(updateData)
         .where(eq(emailAccounts.id, accountId));
 
-      console.log('✅ Delta link saved for next incremental sync');
+      console.log(`✅ Delta link saved for ${folderName}`);
     }
 
-    console.log(`✅ Synced ${totalSynced} emails`);
+    console.log(`✅ Synced ${totalSynced} emails from ${folderName}`);
   } catch (error) {
-    console.error('Error syncing emails with Graph:', error);
+    console.error(`Error syncing emails from ${folderName}:`, error);
     throw error;
   }
 }
@@ -963,6 +987,7 @@ async function syncGmailMessages(
 
           const emailData = {
             accountId,
+            userId, // Add userId for direct user reference
             messageId: messageDetails.id,
             threadId: messageDetails.threadId,
             subject,
@@ -1152,110 +1177,158 @@ async function syncWithImap(
 
     // Step 2: Sync messages from INBOX
     console.log('📧 Step 2: Syncing IMAP messages from INBOX...');
-    const messages = await imap.fetchMessages('INBOX', 50);
+    await syncImapFolderMessages(imap, 'INBOX', accountId, userId, syncType);
 
-    let syncedCount = 0;
-    for (const message of messages) {
+    // Step 3: Sync messages from Sent folder
+    console.log('📤 Step 3: Syncing IMAP messages from Sent...');
+    // Try different possible Sent folder names
+    const sentFolderNames = [
+      'Sent',
+      'Sent Items',
+      'Sent Mail',
+      '[Gmail]/Sent Mail',
+    ];
+    let sentFolderSynced = false;
+
+    for (const sentFolder of sentFolderNames) {
       try {
-        // Categorize email
-        let emailCategory;
-        let screenedBy;
-
-        if (syncType === 'initial' || syncType === 'manual') {
-          // Skip AI categorization - use original folder (INBOX for IMAP)
-          emailCategory = mapFolderToCategory('inbox');
-          screenedBy = 'manual_sync';
-          console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
-        } else {
-          // Auto-sync: use AI categorization
-          emailCategory = await categorizeIncomingEmail(
-            {
-              subject: message.subject,
-              fromAddress: message.from,
-              bodyPreview: message.bodyPreview,
-            } as any,
-            userId
-          );
-          screenedBy = 'ai_rule';
-          console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
-        }
-
-        const emailData = {
+        await syncImapFolderMessages(
+          imap,
+          sentFolder,
           accountId,
-          messageId: message.id,
-          subject: message.subject,
-          fromAddress: message.from,
-          toAddresses: message.to,
-          receivedAt: message.receivedAt,
-          isRead: message.isRead,
-          bodyPreview: message.bodyPreview,
-          emailCategory,
-          screenedBy,
-          screenedAt: new Date(),
-          screeningStatus: 'screened' as const,
-          bodyHtml: message.bodyHtml,
-          bodyText: message.bodyText,
-          hasAttachments: message.hasAttachments,
-          folderName: message.folderName,
-        };
-
-        // Insert or update email
-        const insertResult = await db
-          .insert(emails)
-          .values(emailData as any)
-          .onConflictDoUpdate({
-            target: [emails.accountId, emails.messageId],
-            set: {
-              isRead: emailData.isRead,
-              folderName: emailData.folderName,
-              emailCategory: emailData.emailCategory as any,
-              screenedAt: emailData.screenedAt,
-              screenedBy: emailData.screenedBy,
-            },
-          })
-          .returning({ id: emails.id });
-
-        const emailId = insertResult[0]?.id;
-
-        // Auto-log to contact timeline (don't block on errors)
-        try {
-          const senderEmail = extractEmailAddress(emailData.fromAddress);
-          if (senderEmail) {
-            const contactId = await findContactByEmail(senderEmail);
-            if (contactId) {
-              await logEmailReceived(contactId, emailData.subject, message.id);
-            }
-          }
-        } catch (logError) {
-          // Don't block sync on logging errors
-          console.error(
-            `Failed to log IMAP email to contact timeline:`,
-            logError
-          );
-        }
-
-        // Generate embedding for RAG (don't block on errors)
-        if (emailId) {
-          try {
-            await embedEmail(emailId);
-          } catch (embedError) {
-            // Don't block sync on embedding errors
-            console.error(`Failed to embed IMAP email:`, embedError);
-          }
-        }
-
-        syncedCount++;
-      } catch (emailError) {
-        console.error(`Error syncing IMAP message ${message.id}:`, emailError);
+          userId,
+          syncType
+        );
+        sentFolderSynced = true;
+        break; // Success, stop trying other names
+      } catch (error) {
+        console.log(`📫 Sent folder "${sentFolder}" not found, trying next...`);
+        // Try next folder name
       }
     }
 
-    console.log(`✅ Synced ${syncedCount} IMAP messages`);
+    if (!sentFolderSynced) {
+      console.log('⚠️ Could not find Sent folder, skipping sent emails sync');
+    }
+
+    await imap.disconnect();
     console.log('✅ IMAP sync completed');
   } catch (error) {
     console.error('❌ IMAP sync failed:', error);
     throw error;
   }
+}
+
+/**
+ * Helper function to sync messages from a specific IMAP folder
+ */
+async function syncImapFolderMessages(
+  imap: any,
+  folderName: string,
+  accountId: string,
+  userId: string,
+  syncType: 'initial' | 'manual' | 'auto' = 'auto'
+) {
+  const messages = await imap.fetchMessages(folderName, 50);
+
+  let syncedCount = 0;
+  for (const message of messages) {
+    try {
+      // Categorize email
+      let emailCategory;
+      let screenedBy;
+
+      if (syncType === 'initial' || syncType === 'manual') {
+        // Skip AI categorization - use original folder (INBOX for IMAP)
+        emailCategory = mapFolderToCategory('inbox');
+        screenedBy = 'manual_sync';
+        console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
+      } else {
+        // Auto-sync: use AI categorization
+        emailCategory = await categorizeIncomingEmail(
+          {
+            subject: message.subject,
+            fromAddress: message.from,
+            bodyPreview: message.bodyPreview,
+          } as any,
+          userId
+        );
+        screenedBy = 'ai_rule';
+        console.log(`🤖 Auto sync - AI categorized to: ${emailCategory}`);
+      }
+
+      const emailData = {
+        accountId,
+        userId, // Add userId for direct user reference
+        messageId: message.id,
+        subject: message.subject,
+        fromAddress: message.from,
+        toAddresses: message.to,
+        receivedAt: message.receivedAt,
+        isRead: message.isRead,
+        bodyPreview: message.bodyPreview,
+        emailCategory,
+        screenedBy,
+        screenedAt: new Date(),
+        screeningStatus: 'screened' as const,
+        bodyHtml: message.bodyHtml,
+        bodyText: message.bodyText,
+        hasAttachments: message.hasAttachments,
+        folderName: message.folderName,
+      };
+
+      // Insert or update email
+      const insertResult = await db
+        .insert(emails)
+        .values(emailData as any)
+        .onConflictDoUpdate({
+          target: [emails.accountId, emails.messageId],
+          set: {
+            isRead: emailData.isRead,
+            folderName: emailData.folderName,
+            emailCategory: emailData.emailCategory as any,
+            screenedAt: emailData.screenedAt,
+            screenedBy: emailData.screenedBy,
+          },
+        })
+        .returning({ id: emails.id });
+
+      const emailId = insertResult[0]?.id;
+
+      // Auto-log to contact timeline (don't block on errors)
+      try {
+        const senderEmail = extractEmailAddress(emailData.fromAddress);
+        if (senderEmail) {
+          const contactId = await findContactByEmail(senderEmail);
+          if (contactId) {
+            await logEmailReceived(contactId, emailData.subject, message.id);
+          }
+        }
+      } catch (logError) {
+        // Don't block sync on logging errors
+        console.error(
+          `Failed to log IMAP email to contact timeline:`,
+          logError
+        );
+      }
+
+      // Generate embedding for RAG (don't block on errors)
+      if (emailId) {
+        try {
+          await embedEmail(emailId);
+        } catch (embedError) {
+          // Don't block sync on embedding errors
+          console.error(`Failed to embed IMAP email:`, embedError);
+        }
+      }
+
+      syncedCount++;
+    } catch (emailError) {
+      console.error(`Error syncing IMAP message ${message.id}:`, emailError);
+    }
+  }
+
+  console.log(`✅ Synced ${syncedCount} messages from ${folderName}`);
 }
 
 /**

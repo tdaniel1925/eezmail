@@ -79,23 +79,23 @@ export type ContactSocialLinkInput = z.infer<typeof ContactSocialLinkSchema>;
 export const CreateContactSchema = z
   .object({
     // Basic info - at least one name field required
-    firstName: z.string().min(1).max(100).optional(),
-    lastName: z.string().min(1).max(100).optional(),
-    displayName: z.string().min(1).max(200).optional(),
-    nickname: z.string().max(100).optional(),
+    firstName: z.string().min(1).max(100).optional().or(z.literal('')),
+    lastName: z.string().min(1).max(100).optional().or(z.literal('')),
+    displayName: z.string().min(1).max(200).optional().or(z.literal('')),
+    nickname: z.string().max(100).optional().or(z.literal('')),
 
     // Work info
-    company: z.string().max(200).optional(),
-    jobTitle: z.string().max(200).optional(),
-    department: z.string().max(100).optional(),
+    company: z.string().max(200).optional().or(z.literal('')),
+    jobTitle: z.string().max(200).optional().or(z.literal('')),
+    department: z.string().max(100).optional().or(z.literal('')),
 
     // Personal info
-    birthday: z.string().datetime().optional(),
-    notes: z.string().optional(),
+    birthday: z.string().datetime().optional().or(z.literal('')),
+    notes: z.string().optional().or(z.literal('')),
 
     // Avatar
     avatarUrl: z.string().url().optional().or(z.literal('')),
-    avatarProvider: z.string().max(50).optional(),
+    avatarProvider: z.string().max(50).optional().or(z.literal('')),
 
     // Status
     isFavorite: z.boolean().default(false),
@@ -106,6 +106,23 @@ export const CreateContactSchema = z
     addresses: z.array(ContactAddressSchema).default([]),
     socialLinks: z.array(ContactSocialLinkSchema).default([]),
     tags: z.array(z.string().uuid()).default([]), // Array of tag IDs
+  })
+  .transform((data) => {
+    // Convert empty strings to undefined
+    return {
+      ...data,
+      firstName: data.firstName || undefined,
+      lastName: data.lastName || undefined,
+      displayName: data.displayName || undefined,
+      nickname: data.nickname || undefined,
+      company: data.company || undefined,
+      jobTitle: data.jobTitle || undefined,
+      department: data.department || undefined,
+      birthday: data.birthday || undefined,
+      notes: data.notes || undefined,
+      avatarUrl: data.avatarUrl || undefined,
+      avatarProvider: data.avatarProvider || undefined,
+    };
   })
   .refine(
     (data) => {
@@ -128,33 +145,51 @@ export type CreateContactInput = z.infer<typeof CreateContactSchema>;
 // UPDATE CONTACT SCHEMA
 // ============================================================================
 
-export const UpdateContactSchema = z.object({
-  // Basic info
-  firstName: z.string().min(1).max(100).optional(),
-  lastName: z.string().min(1).max(100).optional(),
-  displayName: z.string().min(1).max(200).optional(),
-  nickname: z.string().max(100).optional(),
+export const UpdateContactSchema = z
+  .object({
+    // Basic info
+    firstName: z.string().min(1).max(100).optional().or(z.literal('')),
+    lastName: z.string().min(1).max(100).optional().or(z.literal('')),
+    displayName: z.string().min(1).max(200).optional().or(z.literal('')),
+    nickname: z.string().max(100).optional().or(z.literal('')),
 
-  // Work info
-  company: z.string().max(200).optional(),
-  jobTitle: z.string().max(200).optional(),
-  department: z.string().max(100).optional(),
+    // Work info
+    company: z.string().max(200).optional().or(z.literal('')),
+    jobTitle: z.string().max(200).optional().or(z.literal('')),
+    department: z.string().max(100).optional().or(z.literal('')),
 
-  // Personal info
-  birthday: z.string().datetime().optional().nullable(),
-  notes: z.string().optional(),
+    // Personal info
+    birthday: z.string().datetime().optional().or(z.literal('')).nullable(),
+    notes: z.string().optional().or(z.literal('')),
 
-  // Avatar
-  avatarUrl: z.string().url().optional().or(z.literal('')).nullable(),
-  avatarProvider: z.string().max(50).optional(),
+    // Avatar
+    avatarUrl: z.string().url().optional().or(z.literal('')).nullable(),
+    avatarProvider: z.string().max(50).optional().or(z.literal('')),
 
-  // Status
-  isFavorite: z.boolean().optional(),
-  isArchived: z.boolean().optional(),
+    // Status
+    isFavorite: z.boolean().optional(),
+    isArchived: z.boolean().optional(),
 
-  // Related data - these will be handled separately
-  // emails, phones, addresses, socialLinks, tags
-});
+    // Related data - these will be handled separately
+    // emails, phones, addresses, socialLinks, tags
+  })
+  .transform((data) => {
+    // Convert empty strings to undefined or null
+    return {
+      ...data,
+      firstName: data.firstName || undefined,
+      lastName: data.lastName || undefined,
+      displayName: data.displayName || undefined,
+      nickname: data.nickname || undefined,
+      company: data.company || undefined,
+      jobTitle: data.jobTitle || undefined,
+      department: data.department || undefined,
+      birthday: data.birthday || null,
+      notes: data.notes || undefined,
+      avatarUrl: data.avatarUrl || null,
+      avatarProvider: data.avatarProvider || undefined,
+    };
+  });
 
 export type UpdateContactInput = z.infer<typeof UpdateContactSchema>;
 
@@ -238,4 +273,3 @@ export const ListContactsFiltersSchema = z.object({
 });
 
 export type ListContactsFilters = z.infer<typeof ListContactsFiltersSchema>;
-

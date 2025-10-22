@@ -33,7 +33,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const contactId = params.id;
+    const contactId = params.contactId;
 
     // Get contact's email addresses
     const contactEmailAddresses = await db.query.contactEmails.findMany({

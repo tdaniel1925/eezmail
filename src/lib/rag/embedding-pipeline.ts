@@ -62,9 +62,7 @@ export async function embedEmail(emailId: string): Promise<{
 /**
  * Get count of emails without embeddings for a user
  */
-export async function getUnembeddedEmailCount(
-  userId: string
-): Promise<number> {
+export async function getUnembeddedEmailCount(userId: string): Promise<number> {
   try {
     const result = await db
       .select({ count: emails.id })
@@ -187,4 +185,3 @@ export async function processUnembeddedEmails(
     };
   }
 }
-

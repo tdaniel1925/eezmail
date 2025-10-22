@@ -4,6 +4,7 @@
  */
 
 import { openai, AI_MODELS } from './client';
+import { getUserSignatureData } from '@/lib/email/signature-formatter';
 
 export interface EmailScreeningResult {
   suggestedView: 'imbox' | 'feed' | 'paper_trail';
@@ -175,14 +176,24 @@ Respond with valid JSON:
 }
 
 /**
- * Generate smart reply suggestions
+ * Generate smart reply suggestions with professional formatting
  */
-export async function generateSmartReplies(email: {
-  from: string;
-  subject: string;
-  body: string;
-}): Promise<string[]> {
+export async function generateSmartReplies(
+  email: {
+    from: string;
+    subject: string;
+    body: string;
+  },
+  userId?: string
+): Promise<string[]> {
   try {
+    // Get signature data if userId provided
+    let signatureLine = '';
+    if (userId) {
+      const signatureData = await getUserSignatureData(userId);
+      signatureLine = `\\n\\nBest regards,\\n\\n${signatureData.name}\\n${signatureData.email}`;
+    }
+
     const prompt = `Generate 3 short, professional reply suggestions for this email:
 
 From: ${email.from}
@@ -190,13 +201,24 @@ Subject: ${email.subject}
 Body: ${email.body.substring(0, 500)}
 
 Each reply should be:
-- 1-2 sentences maximum
-- Appropriate tone
-- Common responses (accept/decline/acknowledge/ask for more info)
+- Professionally formatted with proper greeting and closing
+- 2-3 sentences in the body
+- Include greeting (Dear/Hello [Name],)
+- Include closing (Best regards, etc.)
+- Use \\n\\n for paragraph spacing
+
+FORMAT EACH REPLY AS:
+"Dear [Name],\\n\\n[Response text]\\n\\nBest regards,\\n\\n[Your Name]\\n[Your Email]"
+
+Common response types:
+- Accept/agree professionally
+- Decline politely
+- Acknowledge and confirm
+- Ask for more information
 
 Respond with JSON:
 {
-  "replies": ["string", "string", "string"]
+  "replies": ["reply1", "reply2", "reply3"]
 }`;
 
     const completion = await openai.chat.completions.create({
@@ -204,7 +226,7 @@ Respond with JSON:
       messages: [
         {
           role: 'system',
-          content: 'You generate quick email reply suggestions.',
+          content: `You generate professional email reply suggestions with proper business formatting. Always include greeting, body, and signature block with ${userId ? 'the user signature' : 'placeholder [Your Name]'}.`,
         },
         {
           role: 'user',
@@ -212,12 +234,15 @@ Respond with JSON:
         },
       ],
       temperature: 0.7,
-      max_tokens: 200,
+      max_tokens: 300,
       response_format: { type: 'json_object' },
     });
 
     const result = JSON.parse(completion.choices[0]?.message?.content || '{}');
-    return result.replies || [];
+    const replies = result.replies || [];
+
+    // Convert escaped newlines to actual newlines for proper formatting
+    return replies.map((reply: string) => reply.replace(/\\n/g, '\n'));
   } catch (error) {
     console.error('Smart reply generation error:', error);
     return [];
