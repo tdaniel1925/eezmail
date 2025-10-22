@@ -120,9 +120,11 @@ export function AttachmentListView({
               {/* From - Extract from email relationship */}
               <div className="col-span-2 flex items-center min-w-0">
                 <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {(attachment as any).email?.fromAddress?.name || 
-                   (attachment as any).email?.fromAddress?.email || 
-                   'Unknown'}
+                  {(() => {
+                    const fromAddress = (attachment as any).email?.fromAddress;
+                    if (!fromAddress) return 'Unknown';
+                    return fromAddress.name || fromAddress.email || 'Unknown';
+                  })()}
                 </span>
               </div>
 

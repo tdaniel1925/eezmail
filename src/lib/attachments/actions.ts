@@ -26,32 +26,37 @@ export async function generateAttachmentDescription(
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Fetch attachment with email context
-    const attachment = await db.query.emailAttachments.findFirst({
-      where: eq(emailAttachments.id, attachmentId),
-      with: {
-        email: {
-          columns: {
-            subject: true,
-            bodyText: true,
-            fromAddress: true,
-          },
-        },
-      },
-    });
+    // Fetch attachment with email context using a direct join
+    const attachmentResult = await db
+      .select({
+        id: emailAttachments.id,
+        filename: emailAttachments.filename,
+        contentType: emailAttachments.contentType,
+        size: emailAttachments.size,
+        emailId: emailAttachments.emailId,
+        emailSubject: emails.subject,
+        emailBodyText: emails.bodyText,
+        emailFromAddress: emails.fromAddress,
+      })
+      .from(emailAttachments)
+      .leftJoin(emails, eq(emailAttachments.emailId, emails.id))
+      .where(eq(emailAttachments.id, attachmentId))
+      .limit(1);
 
-    if (!attachment) {
+    if (attachmentResult.length === 0) {
       return { success: false, error: 'Attachment not found' };
     }
+
+    const attachment = attachmentResult[0];
 
     // Build context for AI
     const context: AttachmentContext = {
       filename: attachment.filename,
       contentType: attachment.contentType,
       size: attachment.size,
-      emailSubject: attachment.email?.subject,
-      emailBodyPreview: attachment.email?.bodyText?.substring(0, 500),
-      senderName: (attachment.email?.fromAddress as any)?.name || '',
+      emailSubject: attachment.emailSubject || undefined,
+      emailBodyPreview: attachment.emailBodyText?.substring(0, 500) || undefined,
+      senderName: (attachment.emailFromAddress as any)?.name || '',
     };
 
     // Generate description
@@ -175,25 +180,23 @@ export async function generateMissingDescriptions(
       return { success: false, generated: 0, error: 'Unauthorized' };
     }
 
-    // Find attachments without descriptions
-    const attachmentsWithoutDesc = await db.query.emailAttachments.findMany({
-      where: isNull(emailAttachments.aiDescription),
-      limit,
-      with: {
-        email: {
-          columns: {
-            userId: true,
-          },
-        },
-      },
-    });
+    // Find attachments without descriptions using a direct join
+    const attachmentsWithoutDesc = await db
+      .select({
+        id: emailAttachments.id,
+        userId: emails.userId,
+      })
+      .from(emailAttachments)
+      .leftJoin(emails, eq(emailAttachments.emailId, emails.id))
+      .where(
+        and(
+          isNull(emailAttachments.aiDescription),
+          eq(emails.userId, user.id)
+        )
+      )
+      .limit(limit);
 
-    // Filter to only user's attachments
-    const userAttachments = attachmentsWithoutDesc.filter(
-      (att) => att.email?.userId === user.id
-    );
-
-    const attachmentIds = userAttachments.map((att) => att.id);
+    const attachmentIds = attachmentsWithoutDesc.map((att) => att.id);
 
     if (attachmentIds.length === 0) {
       return { success: true, generated: 0 };
