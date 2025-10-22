@@ -294,7 +294,7 @@ export function ExpandableEmailItem({
       calculatePopupPosition(mouseX, mouseY);
       setShowSummary(true);
       fetchSummary();
-    }, 500);
+    }, 200);
   };
 
   const handleMouseMove = (event: React.MouseEvent): void => {
