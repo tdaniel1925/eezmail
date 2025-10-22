@@ -764,7 +764,7 @@ export function ExpandableEmailItem({
                 transition={{ duration: 0.2 }}
                 style={{
                   position: 'fixed',
-                  top: '50%',
+                  top: '40%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
                   zIndex: 99999,
