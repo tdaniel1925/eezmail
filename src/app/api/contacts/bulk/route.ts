@@ -5,7 +5,7 @@ import {
   removeMembersFromGroup,
 } from '@/lib/contacts/groups';
 import { bulkAssignTag } from '@/lib/contacts/tags';
-import { db } from '@/db/client';
+import { db } from '@/lib/db';
 import { contacts, contactTagAssignments } from '@/db/schema';
 import { and, eq, inArray } from 'drizzle-orm';
 import { z } from 'zod';
