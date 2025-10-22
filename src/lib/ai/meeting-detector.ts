@@ -18,7 +18,7 @@ export interface MeetingDetails {
   detected: boolean;
   confidence: number; // 0-1
   title?: string;
-  date?: string;
+  date?: string; // ISO date string
   time?: string;
   duration?: string;
   location?: string;
@@ -26,6 +26,9 @@ export interface MeetingDetails {
   agenda?: string;
   meetingType?: 'in-person' | 'video-call' | 'phone-call' | 'unknown';
   conferenceLink?: string;
+  // Parsed datetime objects for easy use
+  startTime?: Date;
+  endTime?: Date;
 }
 
 /**
@@ -113,6 +116,26 @@ Respond in JSON format:
 
     try {
       const parsed = JSON.parse(response);
+      
+      // Parse the start and end times
+      let startTime: Date | undefined;
+      let endTime: Date | undefined;
+      
+      if (parsed.date && parsed.time) {
+        try {
+          // Combine date and time
+          const timeStr = convertToTime24(parsed.time);
+          const dateTimeStr = `${parsed.date}T${timeStr}`;
+          startTime = new Date(dateTimeStr);
+          
+          // Calculate end time
+          const durationMinutes = parseDuration(parsed.duration) || 60;
+          endTime = new Date(startTime.getTime() + durationMinutes * 60000);
+        } catch (e) {
+          console.error('Error parsing meeting date/time:', e);
+        }
+      }
+      
       return {
         detected: parsed.detected || false,
         confidence: parsed.confidence || 0,
@@ -125,6 +148,8 @@ Respond in JSON format:
         agenda: parsed.agenda,
         meetingType: parsed.meetingType || 'unknown',
         conferenceLink: parsed.conferenceLink,
+        startTime,
+        endTime,
       };
     } catch (parseError) {
       console.error('Error parsing AI response:', parseError);

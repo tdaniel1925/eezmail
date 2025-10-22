@@ -23,6 +23,7 @@ import { AIAnalysisModal } from './AIAnalysisModal';
 import { ContextualActions } from './ContextualActions';
 import { ThreadBadge } from './ThreadBadge';
 import { ThreadTimelineModal } from './ThreadTimelineModal';
+import { AddToCalendarButton } from './AddToCalendarButton';
 import { getThreadCount } from '@/lib/email/thread-actions';
 import { useChatbotContext } from '@/components/ai/ChatbotContext';
 import type { Email } from '@/db/schema';
@@ -624,10 +625,18 @@ export function ExpandableEmailItem({
               <Forward className="h-3.5 w-3.5" />
               Forward
             </button>
+            
+            {/* Add to Calendar Button - AI-powered meeting detection */}
+            <AddToCalendarButton 
+              emailId={email.id} 
+              userId={email.userId}
+              className="ml-auto mr-2"
+            />
+            
             <button
               type="button"
               onClick={() => handleAction('delete')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border ml-auto"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border"
               style={{
                 background: 'var(--bg-primary)',
                 borderColor: 'var(--border-color)',
