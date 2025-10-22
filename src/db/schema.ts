@@ -1797,6 +1797,203 @@ export const tasks = pgTable(
 );
 
 // ============================================================================
+// CALENDAR ENUMS
+// ============================================================================
+
+export const calendarEventTypeEnum = pgEnum('calendar_event_type', [
+  'meeting',
+  'task',
+  'personal',
+  'reminder',
+  'all_day',
+]);
+
+export const calendarEventStatusEnum = pgEnum('calendar_event_status', [
+  'confirmed',
+  'tentative',
+  'cancelled',
+]);
+
+export const attendeeResponseStatusEnum = pgEnum('attendee_response_status', [
+  'pending',
+  'accepted',
+  'declined',
+  'tentative',
+]);
+
+export const reminderMethodEnum = pgEnum('reminder_method', [
+  'email',
+  'push',
+  'sms',
+]);
+
+export const externalCalendarProviderEnum = pgEnum('external_calendar_provider', [
+  'google',
+  'microsoft',
+  'apple',
+  'other',
+]);
+
+export const syncDirectionEnum = pgEnum('sync_direction', [
+  'pull',
+  'push',
+  'bidirectional',
+]);
+
+// ============================================================================
+// CALENDAR EVENTS TABLE
+// ============================================================================
+
+export const calendarEvents = pgTable(
+  'calendar_events',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Basic Info
+    title: text('title').notNull(),
+    description: text('description'),
+    location: text('location'),
+    isVirtual: boolean('is_virtual').default(false),
+    meetingUrl: text('meeting_url'),
+
+    // Timing
+    startTime: timestamp('start_time').notNull(),
+    endTime: timestamp('end_time').notNull(),
+    timezone: text('timezone').default('UTC'),
+    isAllDay: boolean('is_all_day').default(false),
+
+    // Categorization
+    type: calendarEventTypeEnum('type').notNull().default('meeting'),
+    status: calendarEventStatusEnum('status').default('confirmed'),
+    color: text('color').default('blue'), // blue, purple, green, orange, red, pink
+
+    // Recurrence (for repeating events)
+    isRecurring: boolean('is_recurring').default(false),
+    recurrenceRule: text('recurrence_rule'), // RRULE format (RFC 5545)
+    recurrenceEndDate: timestamp('recurrence_end_date'),
+    parentEventId: uuid('parent_event_id'), // For recurring event instances
+
+    // Integration with Emails
+    emailThreadId: text('email_thread_id'), // Link to email thread
+    emailId: uuid('email_id').references(() => emails.id, { onDelete: 'set null' }),
+
+    // External Calendar Integration
+    externalEventId: text('external_event_id'), // Google/MS calendar event ID
+    externalCalendarId: text('external_calendar_id'), // Which external calendar
+    externalProvider: externalCalendarProviderEnum('external_provider'),
+
+    // Metadata
+    createdBy: text('created_by').default('user'), // 'user', 'ai', 'sync'
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('calendar_events_user_id_idx').on(table.userId),
+    startTimeIdx: index('calendar_events_start_time_idx').on(table.startTime),
+    endTimeIdx: index('calendar_events_end_time_idx').on(table.endTime),
+    emailThreadIdx: index('calendar_events_email_thread_idx').on(table.emailThreadId),
+    emailIdIdx: index('calendar_events_email_id_idx').on(table.emailId),
+    externalEventIdx: index('calendar_events_external_id_idx').on(table.externalEventId),
+    typeIdx: index('calendar_events_type_idx').on(table.type),
+    statusIdx: index('calendar_events_status_idx').on(table.status),
+  })
+);
+
+// ============================================================================
+// CALENDAR ATTENDEES TABLE
+// ============================================================================
+
+export const calendarAttendees = pgTable(
+  'calendar_attendees',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => calendarEvents.id, { onDelete: 'cascade' }),
+
+    email: text('email').notNull(),
+    name: text('name'),
+    responseStatus: attendeeResponseStatusEnum('response_status').default('pending'),
+    isOrganizer: boolean('is_organizer').default(false),
+    isOptional: boolean('is_optional').default(false),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    eventIdIdx: index('calendar_attendees_event_id_idx').on(table.eventId),
+    emailIdx: index('calendar_attendees_email_idx').on(table.email),
+  })
+);
+
+// ============================================================================
+// CALENDAR REMINDERS TABLE
+// ============================================================================
+
+export const calendarReminders = pgTable(
+  'calendar_reminders',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    eventId: uuid('event_id')
+      .notNull()
+      .references(() => calendarEvents.id, { onDelete: 'cascade' }),
+
+    minutesBefore: integer('minutes_before').notNull(), // 0, 5, 15, 30, 60, 1440 (1 day), etc.
+    method: reminderMethodEnum('method').notNull(),
+    sent: boolean('sent').default(false),
+    sentAt: timestamp('sent_at'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    eventIdIdx: index('calendar_reminders_event_id_idx').on(table.eventId),
+    sentIdx: index('calendar_reminders_sent_idx').on(table.sent),
+  })
+);
+
+// ============================================================================
+// EXTERNAL CALENDARS TABLE
+// For syncing with Google Calendar, Microsoft Calendar, etc.
+// ============================================================================
+
+export const externalCalendars = pgTable(
+  'external_calendars',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    provider: externalCalendarProviderEnum('provider').notNull(),
+    calendarId: text('calendar_id').notNull(), // External calendar ID
+    calendarName: text('calendar_name'),
+    calendarColor: text('calendar_color'),
+
+    // Sync settings
+    syncEnabled: boolean('sync_enabled').default(true),
+    syncDirection: syncDirectionEnum('sync_direction').default('bidirectional'),
+    lastSyncAt: timestamp('last_sync_at'),
+    syncToken: text('sync_token'), // For incremental sync
+    nextSyncToken: text('next_sync_token'),
+
+    // OAuth tokens (should be encrypted in production)
+    accessToken: text('access_token'),
+    refreshToken: text('refresh_token'),
+    tokenExpiry: timestamp('token_expiry'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('external_calendars_user_id_idx').on(table.userId),
+    providerIdx: index('external_calendars_provider_idx').on(table.provider),
+    syncEnabledIdx: index('external_calendars_sync_enabled_idx').on(table.syncEnabled),
+  })
+);
+
+// ============================================================================
 // CUSTOM LABELS TABLE
 // ============================================================================
 
@@ -2101,6 +2298,18 @@ export type ScheduledEmailStatus =
 
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type NewCalendarEvent = typeof calendarEvents.$inferInsert;
+
+export type CalendarAttendee = typeof calendarAttendees.$inferSelect;
+export type NewCalendarAttendee = typeof calendarAttendees.$inferInsert;
+
+export type CalendarReminder = typeof calendarReminders.$inferSelect;
+export type NewCalendarReminder = typeof calendarReminders.$inferInsert;
+
+export type ExternalCalendar = typeof externalCalendars.$inferSelect;
+export type NewExternalCalendar = typeof externalCalendars.$inferInsert;
 
 export type CustomLabel = typeof customLabels.$inferSelect;
 export type NewCustomLabel = typeof customLabels.$inferInsert;
