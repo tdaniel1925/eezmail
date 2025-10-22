@@ -841,6 +841,9 @@ export const contactEventTypeEnum = pgEnum('contact_event_type', [
   'document_shared',
   'contact_created',
   'contact_updated',
+  'sms_sent',
+  'sms_received',
+  'voice_call_made',
 ]);
 
 export const contactPhoneTypeEnum = pgEnum('contact_phone_type', [
@@ -870,6 +873,28 @@ export const contactFieldTypeEnum = pgEnum('contact_field_type', [
   'number',
   'date',
   'url',
+]);
+
+// ============================================================================
+// COMMUNICATION ENUMS
+// ============================================================================
+
+export const communicationPlanTypeEnum = pgEnum('communication_plan_type', [
+  'personal',
+  'professional',
+  'enterprise',
+  'custom',
+]);
+
+export const communicationTypeEnum = pgEnum('communication_type', [
+  'sms',
+  'voice_call',
+]);
+
+export const communicationStatusEnum = pgEnum('communication_status', [
+  'sent',
+  'failed',
+  'rate_limited',
 ]);
 
 // ============================================================================
@@ -1900,6 +1925,81 @@ export const webhookSubscriptions = pgTable(
 );
 
 // ============================================================================
+// COMMUNICATION SETTINGS TABLE
+// Stores user's Twilio configuration and billing preferences
+// ============================================================================
+
+export const communicationSettings = pgTable('communication_settings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  twilioAccountSid: text('twilio_account_sid'),
+  twilioAuthToken: text('twilio_auth_token'),
+  twilioPhoneNumber: text('twilio_phone_number'),
+  useCustomTwilio: boolean('use_custom_twilio').default(false).notNull(),
+  billingEnabled: boolean('billing_enabled').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// COMMUNICATION LIMITS TABLE
+// Rate limiting rules per user to prevent abuse
+// ============================================================================
+
+export const communicationLimits = pgTable('communication_limits', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+  planType: communicationPlanTypeEnum('plan_type').default('personal').notNull(),
+  smsPerMinute: integer('sms_per_minute').default(1).notNull(),
+  smsPerHour: integer('sms_per_hour').default(10).notNull(),
+  smsPerDay: integer('sms_per_day').default(100).notNull(),
+  voicePerMinute: integer('voice_per_minute').default(1).notNull(),
+  voicePerHour: integer('voice_per_hour').default(5).notNull(),
+  voicePerDay: integer('voice_per_day').default(20).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  overrideBy: uuid('override_by').references(() => users.id),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// COMMUNICATION USAGE TABLE
+// Audit log of all SMS and voice communications
+// ============================================================================
+
+export const communicationUsage = pgTable(
+  'communication_usage',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    type: communicationTypeEnum('type').notNull(),
+    recipientPhone: text('recipient_phone').notNull(),
+    contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
+    status: communicationStatusEnum('status').notNull(),
+    cost: varchar('cost', { length: 20 }),
+    usedCustomTwilio: boolean('used_custom_twilio').default(false).notNull(),
+    messagePreview: text('message_preview'),
+    errorMessage: text('error_message'),
+    sentAt: timestamp('sent_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userTimeIdx: index('comm_usage_user_time_idx').on(table.userId, table.sentAt),
+    userTypeIdx: index('comm_usage_user_type_idx').on(table.userId, table.type),
+    statusIdx: index('comm_usage_status_idx').on(table.status),
+    contactIdx: index('comm_usage_contact_idx').on(table.contactId),
+  })
+);
+
+// ============================================================================
 // TYPE EXPORTS
 // ============================================================================
 
@@ -2009,3 +2109,16 @@ export type NewUserPreference = typeof userPreferences.$inferInsert;
 
 export type WebhookSubscription = typeof webhookSubscriptions.$inferSelect;
 export type NewWebhookSubscription = typeof webhookSubscriptions.$inferInsert;
+
+export type CommunicationSettings = typeof communicationSettings.$inferSelect;
+export type NewCommunicationSettings = typeof communicationSettings.$inferInsert;
+
+export type CommunicationLimits = typeof communicationLimits.$inferSelect;
+export type NewCommunicationLimits = typeof communicationLimits.$inferInsert;
+
+export type CommunicationUsage = typeof communicationUsage.$inferSelect;
+export type NewCommunicationUsage = typeof communicationUsage.$inferInsert;
+export type CommunicationType = (typeof communicationTypeEnum.enumValues)[number];
+export type CommunicationStatus = (typeof communicationStatusEnum.enumValues)[number];
+export type CommunicationPlanType = (typeof communicationPlanTypeEnum.enumValues)[number];
+
