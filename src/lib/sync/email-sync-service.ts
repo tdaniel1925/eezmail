@@ -1234,15 +1234,29 @@ async function syncImapFolderMessages(
   let syncedCount = 0;
   for (const message of messages) {
     try {
-      // Categorize email
+      // Categorize email based on folder
       let emailCategory;
       let screenedBy;
 
       if (syncType === 'initial' || syncType === 'manual') {
-        // Skip AI categorization - use original folder (INBOX for IMAP)
-        emailCategory = mapFolderToCategory('inbox');
+        // Use the actual folder name for categorization
+        // Map IMAP folder names to our categories
+        const normalizedFolder = folderName.toLowerCase();
+        if (normalizedFolder === 'inbox') {
+          emailCategory = mapFolderToCategory('inbox');
+        } else if (normalizedFolder.includes('sent')) {
+          emailCategory = mapFolderToCategory('sent');
+        } else if (normalizedFolder.includes('draft')) {
+          emailCategory = mapFolderToCategory('drafts');
+        } else if (normalizedFolder.includes('trash') || normalizedFolder.includes('deleted')) {
+          emailCategory = mapFolderToCategory('trash');
+        } else if (normalizedFolder.includes('spam') || normalizedFolder.includes('junk')) {
+          emailCategory = mapFolderToCategory('spam');
+        } else {
+          emailCategory = mapFolderToCategory('inbox'); // Default fallback
+        }
         screenedBy = 'manual_sync';
-        console.log(`📬 ${syncType} sync - Email going to: ${emailCategory}`);
+        console.log(`📬 ${syncType} sync - Email from "${folderName}" going to: ${emailCategory}`);
       } else {
         // Auto-sync: use AI categorization
         emailCategory = await categorizeIncomingEmail(
