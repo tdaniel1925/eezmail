@@ -2,32 +2,24 @@
 
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { TabType } from '@/stores/aiPanelStore';
 
 interface PanelSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  sections: {
-    emailInsights: boolean;
-    quickActions: boolean;
-    analytics: boolean;
-    research: boolean;
-    chat: boolean;
-  };
   autoExpandOnEmail: boolean;
-  onToggleSection: (section: string) => void;
+  defaultTab: TabType;
   onToggleAutoExpand: () => void;
-  onResetDefaults: () => void;
+  onSetDefaultTab: (tab: TabType) => void;
 }
 
 export function PanelSettingsModal({
   isOpen,
   onClose,
-  sections,
   autoExpandOnEmail,
-  onToggleSection,
+  defaultTab,
   onToggleAutoExpand,
-  onResetDefaults,
+  onSetDefaultTab,
 }: PanelSettingsModalProps): JSX.Element {
   return (
     <AnimatePresence>
@@ -50,9 +42,9 @@ export function PanelSettingsModal({
               className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800"
             >
               {/* Header */}
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  AI Panel Settings
+                  AI Assistant Settings
                 </h2>
                 <button
                   onClick={onClose}
@@ -62,103 +54,90 @@ export function PanelSettingsModal({
                 </button>
               </div>
 
-              {/* Sections */}
-              <div className="space-y-4">
+              {/* Settings */}
+              <div className="space-y-6">
+                {/* Auto-expand toggle */}
                 <div>
-                  <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Panel Sections
-                  </h3>
-                  <div className="space-y-2">
-                    <ToggleItem
-                      label="Email Insights"
-                      description="AI-powered email analysis and summary"
-                      checked={sections.emailInsights}
-                      onChange={() => onToggleSection('emailInsights')}
+                  <label className="flex cursor-pointer items-start space-x-3 rounded-md p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <input
+                      type="checkbox"
+                      checked={autoExpandOnEmail}
+                      onChange={onToggleAutoExpand}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 dark:border-gray-600 dark:bg-gray-700"
                     />
-                    <ToggleItem
-                      label="Quick Actions"
-                      description="Context-aware action buttons"
-                      checked={sections.quickActions}
-                      onChange={() => onToggleSection('quickActions')}
-                    />
-                    <ToggleItem
-                      label="Analytics"
-                      description="Sender stats and patterns"
-                      checked={sections.analytics}
-                      onChange={() => onToggleSection('analytics')}
-                    />
-                    <ToggleItem
-                      label="Research"
-                      description="Related context and intelligence"
-                      checked={sections.research}
-                      onChange={() => onToggleSection('research')}
-                    />
-                    <ToggleItem
-                      label="Chat Interface"
-                      description="Conversational AI assistant"
-                      checked={sections.chat}
-                      onChange={() => onToggleSection('chat')}
-                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        Auto-open when viewing emails
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Automatically expand the panel when you select an email
+                      </div>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Default tab selector */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Default tab when opening
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => onSetDefaultTab('chat')}
+                      className={`
+                        px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all
+                        ${
+                          defaultTab === 'chat'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-primary'
+                        }
+                      `}
+                    >
+                      Chat
+                    </button>
+                    <button
+                      onClick={() => onSetDefaultTab('insights')}
+                      className={`
+                        px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all
+                        ${
+                          defaultTab === 'insights'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-primary'
+                        }
+                      `}
+                    >
+                      Insights
+                    </button>
+                    <button
+                      onClick={() => onSetDefaultTab('actions')}
+                      className={`
+                        px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all
+                        ${
+                          defaultTab === 'actions'
+                            ? 'bg-primary text-white border-primary'
+                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600 hover:border-primary'
+                        }
+                      `}
+                    >
+                      Actions
+                    </button>
                   </div>
+                  <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Choose which tab appears first when selecting an email
+                  </p>
                 </div>
 
-                <div className="border-t border-gray-200 pt-4 dark:border-gray-700">
-                  <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Behavior
-                  </h3>
-                  <ToggleItem
-                    label="Auto-expand on email view"
-                    description="Automatically open panel when viewing emails"
-                    checked={autoExpandOnEmail}
-                    onChange={onToggleAutoExpand}
-                  />
+                {/* Info text */}
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Panel width can be adjusted by dragging the left edge when expanded.
+                  </p>
                 </div>
-
-                {/* Reset Button */}
-                <button
-                  onClick={onResetDefaults}
-                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                  Reset to Defaults
-                </button>
               </div>
             </motion.div>
           </motion.div>
         </>
       )}
     </AnimatePresence>
-  );
-}
-
-interface ToggleItemProps {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: () => void;
-}
-
-function ToggleItem({
-  label,
-  description,
-  checked,
-  onChange,
-}: ToggleItemProps): JSX.Element {
-  return (
-    <label className="flex cursor-pointer items-start space-x-3 rounded-md p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary focus:ring-offset-0 dark:border-gray-600 dark:bg-gray-700"
-      />
-      <div className="flex-1">
-        <div className="text-sm font-medium text-gray-900 dark:text-white">
-          {label}
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {description}
-        </div>
-      </div>
-    </label>
   );
 }

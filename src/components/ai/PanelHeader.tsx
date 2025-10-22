@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, X, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Sparkles, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -9,20 +9,22 @@ interface PanelHeaderProps {
   isExpanded: boolean;
   onToggleExpand: () => void;
   onClose: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function PanelHeader({
   isExpanded,
   onToggleExpand,
   onClose,
+  onOpenSettings,
 }: PanelHeaderProps): JSX.Element {
-  // Collapsed state - full-height animated vertical bar
+  // Collapsed state - simplified vertical bar
   if (!isExpanded) {
     return (
       <div className="relative w-full h-full overflow-hidden">
         <motion.button
           onClick={onToggleExpand}
-          className="relative flex w-full h-full flex-col items-center justify-center bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all"
+          className="relative flex w-full h-full flex-col items-center justify-center gap-3 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-all py-6"
           whileHover={{ scale: 1.02 }}
           title="Expand AI Assistant"
         >
@@ -33,25 +35,34 @@ export function PanelHeader({
             transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
           />
 
-          {/* Sparkles icon at top with pulse */}
+          {/* Larger icon with pulse */}
           <motion.div
-            animate={{ opacity: [1, 0.6, 1] }}
+            animate={{ scale: [1, 1.1, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="relative z-10 mb-4"
+            className="relative z-10"
           >
-            <Sparkles className="h-6 w-6 text-white" />
+            <Sparkles className="h-8 w-8 text-white" />
           </motion.div>
 
-          {/* Vertical text */}
+          {/* Simplified vertical text */}
           <span
-            className="text-white font-bold text-sm tracking-wider relative z-10"
+            className="text-white font-bold text-base tracking-wider relative z-10"
             style={{ 
               writingMode: 'vertical-rl', 
               textOrientation: 'mixed' 
             }}
           >
-            AI ASSISTANT
+            AI
           </span>
+
+          {/* Expand arrow hint */}
+          <motion.div
+            animate={{ x: [-2, 2, -2] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="relative z-10 mt-2"
+          >
+            <ChevronLeft className="h-5 w-5 text-white/80" />
+          </motion.div>
         </motion.button>
       </div>
     );
@@ -76,6 +87,15 @@ export function PanelHeader({
       </div>
 
       <div className="flex items-center space-x-1">
+        {onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+            title="Settings"
+          >
+            <Settings className="h-5 w-5" />
+          </button>
+        )}
         <button
           onClick={onToggleExpand}
           className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300"

@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// Tab types for the right sidebar
-export type TabType = 'assistant' | 'thread' | 'actions' | 'contacts';
+// Tab types for the right sidebar (simplified to 3)
+export type TabType = 'chat' | 'insights' | 'actions';
 
 // Email interface for context
 export interface Email {
@@ -15,47 +15,31 @@ export interface Email {
   threadId?: string;
 }
 
-interface AIPanelSections {
-  emailInsights: boolean;
-  quickActions: boolean;
-  analytics: boolean;
-  research: boolean;
-  chat: boolean;
-}
-
 interface AIPanelState {
   isExpanded: boolean;
   isVisible: boolean;
   width: number;
-  sections: AIPanelSections;
   autoExpandOnEmail: boolean;
 
-  // New state for tabs and context
+  // State for tabs and context
   activeTab: TabType;
   currentEmail: Email | null;
   selectedContactId: string | null;
+  defaultTab: TabType; // User's preferred default tab
 
   // Actions
   setExpanded: (expanded: boolean) => void;
   setVisible: (visible: boolean) => void;
   setWidth: (width: number) => void;
-  toggleSection: (section: keyof AIPanelSections) => void;
   setAutoExpand: (enabled: boolean) => void;
+  setDefaultTab: (tab: TabType) => void;
   resetToDefaults: () => void;
 
-  // New actions for tabs and context
+  // Actions for tabs and context
   setActiveTab: (tab: TabType) => void;
   setCurrentEmail: (email: Email | null) => void;
   setSelectedContact: (contactId: string | null) => void;
 }
-
-const DEFAULT_SECTIONS: AIPanelSections = {
-  emailInsights: true,
-  quickActions: true,
-  analytics: true,
-  research: true,
-  chat: true,
-};
 
 const DEFAULT_WIDTH = 380;
 const MIN_WIDTH = 320;
@@ -68,11 +52,11 @@ export const useAIPanelStore = create<AIPanelState>()(
       isExpanded: true, // Start expanded by default
       isVisible: true,
       width: DEFAULT_WIDTH,
-      sections: DEFAULT_SECTIONS,
       autoExpandOnEmail: true,
+      defaultTab: 'chat', // Default starting tab
 
-      // New state (NOT persisted)
-      activeTab: 'assistant',
+      // State (NOT persisted)
+      activeTab: 'chat',
       currentEmail: null,
       selectedContactId: null,
 
@@ -86,37 +70,31 @@ export const useAIPanelStore = create<AIPanelState>()(
         set({ width: clampedWidth });
       },
 
-      toggleSection: (section) =>
-        set((state) => ({
-          sections: {
-            ...state.sections,
-            [section]: !state.sections[section],
-          },
-        })),
-
       setAutoExpand: (enabled) => set({ autoExpandOnEmail: enabled }),
+
+      setDefaultTab: (tab) => set({ defaultTab: tab }),
 
       resetToDefaults: () =>
         set({
           isExpanded: true,
           isVisible: true,
           width: DEFAULT_WIDTH,
-          sections: DEFAULT_SECTIONS,
           autoExpandOnEmail: true,
-          activeTab: 'assistant',
+          defaultTab: 'chat',
+          activeTab: 'chat',
           currentEmail: null,
           selectedContactId: null,
         }),
 
-      // New actions
+      // Tab actions
       setActiveTab: (tab) => set({ activeTab: tab }),
 
-      // When setting a new email, always reset to assistant tab
+      // When setting a new email, reset to default tab
       setCurrentEmail: (email) =>
-        set({
+        set((state) => ({
           currentEmail: email,
-          activeTab: 'assistant',
-        }),
+          activeTab: state.defaultTab,
+        })),
 
       setSelectedContact: (contactId) => set({ selectedContactId: contactId }),
     }),
@@ -127,11 +105,11 @@ export const useAIPanelStore = create<AIPanelState>()(
         isExpanded: state.isExpanded,
         isVisible: state.isVisible,
         width: state.width,
-        sections: state.sections,
         autoExpandOnEmail: state.autoExpandOnEmail,
+        defaultTab: state.defaultTab,
         // currentEmail: NOT persisted (contextual)
         // selectedContactId: NOT persisted (contextual)
-        // activeTab: NOT persisted (always starts at 'assistant')
+        // activeTab: NOT persisted (resets to defaultTab)
       }),
     }
   )

@@ -5,11 +5,11 @@ import { motion } from 'framer-motion';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAIPanelStore } from '@/stores/aiPanelStore';
 import { PanelHeader } from './PanelHeader';
+import { PanelSettingsModal } from './PanelSettingsModal';
 import { TabNavigation } from './TabNavigation';
-import { AssistantTab } from './tabs/AssistantTab';
-import { ThreadSummaryTab } from './tabs/ThreadSummaryTab';
-import { QuickActionsTab } from './tabs/QuickActionsTab';
-import { ContactActionsTab } from './tabs/ContactActionsTab';
+import { ChatTab } from './tabs/ChatTab';
+import { InsightsTab } from './tabs/InsightsTab';
+import { ActionsTab } from './tabs/ActionsTab';
 
 export function AIAssistantPanel(): JSX.Element {
   const {
@@ -18,14 +18,19 @@ export function AIAssistantPanel(): JSX.Element {
     width,
     activeTab,
     currentEmail,
+    autoExpandOnEmail,
+    defaultTab,
     setExpanded,
     setVisible,
     setWidth,
     setActiveTab,
+    setAutoExpand,
+    setDefaultTab,
   } = useAIPanelStore();
 
   const [isResizing, setIsResizing] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const isDesktop = useMediaQuery('(min-width: 1280px)');
   const isMobile = useMediaQuery('(max-width: 767px)');
@@ -103,21 +108,16 @@ export function AIAssistantPanel(): JSX.Element {
   // Render tab content based on active tab
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'assistant':
-        return <AssistantTab currentEmail={currentEmail} />;
-      case 'thread':
-        return <ThreadSummaryTab currentEmail={currentEmail} />;
+      case 'chat':
+        return <ChatTab currentEmail={currentEmail} />;
+      case 'insights':
+        return <InsightsTab currentEmail={currentEmail} />;
       case 'actions':
-        return <QuickActionsTab />;
-      case 'contacts':
-        return <ContactActionsTab />;
+        return <ActionsTab />;
       default:
-        return <AssistantTab currentEmail={currentEmail} />;
+        return <ChatTab currentEmail={currentEmail} />;
     }
   };
-
-  // Check if email has a thread (threadId exists and is not null/empty)
-  const hasThread = !!currentEmail?.threadId;
 
   return (
     <motion.aside
@@ -144,6 +144,7 @@ export function AIAssistantPanel(): JSX.Element {
         isExpanded={isExpanded}
         onToggleExpand={() => setExpanded(!isExpanded)}
         onClose={() => setVisible(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Content */}
@@ -154,7 +155,6 @@ export function AIAssistantPanel(): JSX.Element {
             activeTab={activeTab}
             onTabChange={setActiveTab}
             hasEmailSelected={!!currentEmail}
-            hasThread={hasThread}
           />
 
           {/* Tab Content */}
@@ -163,6 +163,16 @@ export function AIAssistantPanel(): JSX.Element {
           </div>
         </div>
       )}
+
+      {/* Settings Modal */}
+      <PanelSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        autoExpandOnEmail={autoExpandOnEmail}
+        defaultTab={defaultTab}
+        onToggleAutoExpand={() => setAutoExpand(!autoExpandOnEmail)}
+        onSetDefaultTab={setDefaultTab}
+      />
     </motion.aside>
   );
 }

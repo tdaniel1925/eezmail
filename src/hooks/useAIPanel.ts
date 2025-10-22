@@ -11,13 +11,13 @@ export function useAIPanel() {
     isExpanded,
     isVisible,
     width,
-    sections,
     autoExpandOnEmail,
+    defaultTab,
     setExpanded,
     setVisible,
     setWidth,
-    toggleSection,
     setAutoExpand,
+    setDefaultTab,
     resetToDefaults,
   } = useAIPanelStore();
 
@@ -33,16 +33,16 @@ export function useAIPanel() {
     isExpanded,
     isVisible,
     width,
-    sections,
     autoExpandOnEmail,
+    defaultTab,
     currentEmail,
 
     // Actions
     setExpanded,
     setVisible,
     setWidth,
-    toggleSection,
     setAutoExpand,
+    setDefaultTab,
     resetToDefaults,
   };
 }
