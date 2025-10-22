@@ -69,8 +69,11 @@ export class ImapService {
   > {
     return new Promise((resolve, reject) => {
       const imap = new Imap(this.config);
-      const mailboxes: Array<{ name: string; path: string; delimiter: string }> =
-        [];
+      const mailboxes: Array<{
+        name: string;
+        path: string;
+        delimiter: string;
+      }> = [];
 
       imap.once('ready', () => {
         imap.getBoxes((err, boxes) => {
@@ -81,7 +84,9 @@ export class ImapService {
 
           const parseBoxes = (boxes: any, prefix = '') => {
             for (const [name, box] of Object.entries(boxes)) {
-              const fullPath = prefix ? `${prefix}${box.delimiter}${name}` : name;
+              const fullPath = prefix
+                ? `${prefix}${box.delimiter}${name}`
+                : name;
               mailboxes.push({
                 name,
                 path: fullPath,
@@ -171,7 +176,10 @@ export class ImapService {
               try {
                 const parsed = await simpleParser(headerBuffer + textBuffer);
 
-                const from = parsed.from?.value?.[0] || { address: '', name: '' };
+                const from = parsed.from?.value?.[0] || {
+                  address: '',
+                  name: '',
+                };
                 const to =
                   parsed.to?.value?.map((addr) => ({
                     email: addr.address || '',
@@ -181,14 +189,36 @@ export class ImapService {
                 // Debug logging to track sender/recipient
                 console.log(`📧 IMAP Parse - Subject: "${parsed.subject}"`);
                 console.log(`   From: ${from.name} <${from.address}>`);
-                console.log(`   To: ${to.map(t => `${t.name} <${t.email}>`).join(', ')}`);
+                console.log(
+                  `   To: ${to.map((t) => `${t.name} <${t.email}>`).join(', ')}`
+                );
+
+                // Fix: Extract name from email address if the display name doesn't match
+                // This handles cases where the sender's email client has wrong display name
+                let senderName = from.name || '';
+                const senderEmail = from.address || '';
+                
+                // If the display name contains the recipient's info (like "TRENT DANIEL")
+                // but the email is from someone else, extract name from email
+                if (senderEmail && senderEmail !== this.config.user) {
+                  // Use the part before @ as fallback if name seems wrong
+                  const emailLocalPart = senderEmail.split('@')[0];
+                  // If name is empty or suspiciously different, use email-based name
+                  if (!senderName || senderName.toUpperCase().includes('TRENT')) {
+                    senderName = emailLocalPart
+                      .split(/[._-]/)
+                      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                      .join(' ');
+                    console.log(`   ⚠️ Fixed sender name from "${from.name}" to "${senderName}"`);
+                  }
+                }
 
                 messages.push({
                   id: uid,
                   subject: parsed.subject || '(No Subject)',
                   from: {
-                    email: from.address || '',
-                    name: from.name || '',
+                    email: senderEmail,
+                    name: senderName,
                   },
                   to,
                   receivedAt: parsed.date || new Date(),
@@ -260,10 +290,7 @@ export class ImapService {
   /**
    * Move message to another folder
    */
-  async moveMessage(
-    messageId: string,
-    targetFolder: string
-  ): Promise<void> {
+  async moveMessage(messageId: string, targetFolder: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const imap = new Imap(this.config);
 
