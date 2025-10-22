@@ -621,6 +621,10 @@ export const emailAttachments = pgTable(
     downloadCount: integer('download_count').default(0).notNull(),
     lastDownloadedAt: timestamp('last_downloaded_at'),
 
+    // AI description
+    aiDescription: text('ai_description'),
+    aiDescriptionGeneratedAt: timestamp('ai_description_generated_at'),
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => ({

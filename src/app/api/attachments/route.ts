@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { emailAttachments, emails, emailAccounts } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, desc, sql } from 'drizzle-orm';
+import { isQualifiedAttachment } from '@/lib/attachments/filter';
 
 export async function GET(request: Request) {
   try {
@@ -18,6 +19,20 @@ export async function GET(request: Request) {
       );
     }
 
+    // Parse query parameters
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '25');
+    const offset = (page - 1) * limit;
+
+    // Validate pagination params
+    if (page < 1 || limit < 1 || limit > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid pagination parameters' },
+        { status: 400 }
+      );
+    }
+
     // Get user's email accounts
     const accounts = await db.query.emailAccounts.findMany({
       where: eq(emailAccounts.userId, user.id),
@@ -28,6 +43,9 @@ export async function GET(request: Request) {
         success: true,
         attachments: [],
         total: 0,
+        page,
+        limit,
+        totalPages: 0,
       });
     }
 
@@ -44,20 +62,41 @@ export async function GET(request: Request) {
         success: true,
         attachments: [],
         total: 0,
+        page,
+        limit,
+        totalPages: 0,
       });
     }
 
     const emailIds = userEmails.map((e) => e.id);
 
-    // Get all attachments for those emails
-    const attachments = await db.query.emailAttachments.findMany({
+    // Get total count of attachments (before filtering)
+    const allAttachments = await db.query.emailAttachments.findMany({
       where: inArray(emailAttachments.emailId, emailIds),
+      orderBy: [desc(emailAttachments.createdAt)],
     });
+
+    // Filter out non-qualified attachments (calendar invites, vcards, etc.)
+    const qualifiedAttachments = allAttachments.filter((att) =>
+      isQualifiedAttachment(att.contentType)
+    );
+
+    const total = qualifiedAttachments.length;
+    const totalPages = Math.ceil(total / limit);
+
+    // Paginate the filtered results
+    const paginatedAttachments = qualifiedAttachments.slice(
+      offset,
+      offset + limit
+    );
 
     return NextResponse.json({
       success: true,
-      attachments,
-      total: attachments.length,
+      attachments: paginatedAttachments,
+      total,
+      page,
+      limit,
+      totalPages,
     });
   } catch (error) {
     console.error('Error fetching attachments:', error);

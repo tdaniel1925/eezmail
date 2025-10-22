@@ -3,31 +3,22 @@
 import { useState, useEffect } from 'react';
 import {
   Search,
-  Grid3x3,
-  List,
   Download,
   Trash2,
   FileText,
-  Image as ImageIcon,
-  File,
-  FileSpreadsheet,
-  FileCode,
-  Film,
-  Music,
-  Archive as ArchiveIcon,
   Filter,
-  Calendar,
   SortAsc,
   SortDesc,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { AttachmentGrid } from '@/components/attachments/AttachmentGrid';
-import { AttachmentTable } from '@/components/attachments/AttachmentTable';
+import { AttachmentListView } from '@/components/attachments/AttachmentListView';
+import { PaginationControls } from '@/components/attachments/PaginationControls';
 import { AttachmentPreviewModal } from '@/components/attachments/AttachmentPreviewModal';
 import { toast } from 'sonner';
 import type { EmailAttachment } from '@/db/schema';
+import { generateMissingDescriptions } from '@/lib/attachments/actions';
 
-type ViewMode = 'grid' | 'table';
 type SortOption = 'date' | 'name' | 'size' | 'type';
 type FilterType =
   | 'all'
@@ -38,7 +29,6 @@ type FilterType =
   | 'archives';
 
 export default function AttachmentsPage(): JSX.Element {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [sortDesc, setSortDesc] = useState(true);
@@ -48,30 +38,67 @@ export default function AttachmentsPage(): JSX.Element {
     useState<EmailAttachment | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingDescriptions, setIsGeneratingDescriptions] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
+  // Fetch attachments
   useEffect(() => {
-    // Fetch real attachments from server
-    const fetchAttachments = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch('/api/attachments');
-        if (response.ok) {
-          const data = await response.json();
-          setAttachments(data.attachments || []);
-        } else {
-          console.error('Failed to fetch attachments');
-          setAttachments([]);
-        }
-      } catch (error) {
-        console.error('Error fetching attachments:', error);
-        setAttachments([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchAttachments();
-  }, []);
+  }, [currentPage, itemsPerPage]);
+
+  const fetchAttachments = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        `/api/attachments?page=${currentPage}&limit=${itemsPerPage}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAttachments(data.attachments || []);
+        setTotalItems(data.total || 0);
+        setTotalPages(data.totalPages || 0);
+      } else {
+        console.error('Failed to fetch attachments');
+        setAttachments([]);
+        toast.error('Failed to load attachments');
+      }
+    } catch (error) {
+      console.error('Error fetching attachments:', error);
+      setAttachments([]);
+      toast.error('Error loading attachments');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Generate AI descriptions for attachments without them
+  const handleGenerateDescriptions = async () => {
+    setIsGeneratingDescriptions(true);
+    try {
+      const result = await generateMissingDescriptions(20);
+      
+      if (result.success && result.generated > 0) {
+        toast.success(`Generated ${result.generated} descriptions`);
+        // Refresh to show new descriptions
+        await fetchAttachments();
+      } else if (result.generated === 0) {
+        toast.info('All attachments already have descriptions');
+      } else {
+        toast.error('Failed to generate descriptions');
+      }
+    } catch (error) {
+      console.error('Error generating descriptions:', error);
+      toast.error('Error generating descriptions');
+    } finally {
+      setIsGeneratingDescriptions(false);
+    }
+  };
 
   // Filter and sort attachments
   const filteredAttachments = attachments
@@ -135,7 +162,6 @@ export default function AttachmentsPage(): JSX.Element {
   const handleAttachmentClick = (attachment: EmailAttachment) => {
     setSelectedAttachment(attachment);
     setIsPreviewOpen(true);
-    // TODO: Trigger AI summary in sidebar
   };
 
   const handleDownload = (attachment: EmailAttachment) => {
@@ -157,7 +183,17 @@ export default function AttachmentsPage(): JSX.Element {
   };
 
   const totalSize = attachments.reduce((sum, att) => sum + att.size, 0);
-  const totalCount = attachments.length;
+
+  // Handle pagination changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
 
   return (
     <div className="flex h-screen flex-col bg-white dark:bg-gray-900">
@@ -170,38 +206,29 @@ export default function AttachmentsPage(): JSX.Element {
               Attachments
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {totalCount} files • {formatFileSize(totalSize)}
+              {totalItems} files • {formatFileSize(totalSize)}
             </p>
           </div>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'grid'
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-            )}
-            title="Grid view"
-          >
-            <Grid3x3 className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setViewMode('table')}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'table'
-                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30'
-                : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-            )}
-            title="Table view"
-          >
-            <List className="h-5 w-5" />
-          </button>
-        </div>
+        {/* Generate Descriptions Button */}
+        <button
+          onClick={handleGenerateDescriptions}
+          disabled={isGeneratingDescriptions}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isGeneratingDescriptions ? (
+            <>
+              <Sparkles className="h-4 w-4 animate-pulse" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Generate Descriptions
+            </>
+          )}
+        </button>
       </header>
 
       {/* Filters & Search */}
@@ -271,34 +298,27 @@ export default function AttachmentsPage(): JSX.Element {
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
           </div>
-        ) : filteredAttachments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <FileText className="h-16 w-16 text-gray-300 dark:text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No attachments found
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {searchQuery
-                ? 'Try adjusting your search or filters'
-                : 'Attachments from your emails will appear here'}
-            </p>
-          </div>
-        ) : viewMode === 'grid' ? (
-          <AttachmentGrid
-            attachments={filteredAttachments}
-            onAttachmentClick={handleAttachmentClick}
-            onDownload={handleDownload}
-            onDelete={handleDelete}
-          />
         ) : (
-          <AttachmentTable
+          <AttachmentListView
             attachments={filteredAttachments}
-            onAttachmentClick={handleAttachmentClick}
             onDownload={handleDownload}
             onDelete={handleDelete}
+            isGeneratingDescriptions={isGeneratingDescriptions}
           />
         )}
       </div>
+
+      {/* Pagination */}
+      {!isLoading && filteredAttachments.length > 0 && (
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          itemsPerPage={itemsPerPage}
+          totalItems={totalItems}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      )}
 
       {/* Preview Modal */}
       <AttachmentPreviewModal
