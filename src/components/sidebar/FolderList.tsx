@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import {
   Inbox,
   Reply,
-  ShieldQuestion,
   Newspaper,
   Send,
   FileText,
@@ -62,12 +61,6 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
 
   const primaryFolders = [
     { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCounts.inbox },
-    {
-      id: 'screener',
-      label: 'Screener',
-      icon: ShieldQuestion,
-      count: unreadCounts.screener,
-    },
     {
       id: 'newsfeed',
       label: 'News Feed',

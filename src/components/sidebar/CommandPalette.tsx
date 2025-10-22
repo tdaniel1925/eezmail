@@ -86,20 +86,6 @@ export function CommandPalette({
       },
     },
     {
-      id: 'nav-screener',
-      label: 'Screener',
-      description: 'Review uncertain emails',
-      icon: ShieldQuestion,
-      category: 'navigation',
-      keywords: ['screener', 'triage', 'review'],
-      action: () => {
-        setActiveFolder('screener');
-        router.push('/dashboard/screener');
-        addToRecent('nav-screener');
-        onClose();
-      },
-    },
-    {
       id: 'nav-newsfeed',
       label: 'News Feed',
       description: 'Newsletters and updates',
