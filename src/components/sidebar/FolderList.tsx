@@ -86,11 +86,36 @@ export function FolderList({
       
       if (result.success) {
         console.log('✅ Fetched server folders:', result.folders);
+        
+        // Filter out folders that are already shown in primary/standard sections
+        // to avoid duplicates (e.g., inbox, sent, drafts, trash, spam, archive)
+        const excludedTypes = ['inbox', 'sent', 'drafts', 'trash', 'spam', 'archive', 'starred'];
+        const excludedNames = ['inbox', 'sent', 'drafts', 'trash', 'spam', 'junk', 'archive', 'archived', 'starred', 'important', 'attachments'];
+        
+        const uniqueFolders = result.folders.filter(folder => {
+          const normalizedName = folder.name.toLowerCase();
+          const normalizedType = folder.type.toLowerCase();
+          
+          // Exclude if the type matches a hard-coded folder
+          if (excludedTypes.includes(normalizedType)) {
+            return false;
+          }
+          
+          // Exclude if the name matches a hard-coded folder
+          if (excludedNames.some(excluded => normalizedName.includes(excluded))) {
+            return false;
+          }
+          
+          return true;
+        });
+        
         // Convert folder names to title case
-        const titleCaseFolders = result.folders.map(folder => ({
+        const titleCaseFolders = uniqueFolders.map(folder => ({
           ...folder,
           name: toTitleCase(folder.name)
         }));
+        
+        console.log('📂 Unique server folders after filtering:', titleCaseFolders);
         setServerFolders(titleCaseFolders);
       } else {
         console.error('❌ Failed to fetch folders:', result.message);
