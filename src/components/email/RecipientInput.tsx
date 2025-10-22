@@ -4,10 +4,15 @@ import { useState, useRef, useEffect } from 'react';
 import { X, User, Users, Mail } from 'lucide-react';
 import {
   searchRecipientsAction,
-  isValidEmail,
   type ContactSearchResult,
   type GroupSearchResult,
 } from '@/lib/contacts/search-actions';
+
+// Validate email address format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
 
 interface RecipientInputProps {
   value: string;

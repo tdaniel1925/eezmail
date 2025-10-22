@@ -201,8 +201,9 @@ async function getRecentContacts(
 
 /**
  * Validate an email address format
+ * Note: This is a regular function, not a server action
  */
-export function isValidEmail(email: string): boolean {
+function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
