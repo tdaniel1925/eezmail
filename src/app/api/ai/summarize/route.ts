@@ -124,7 +124,7 @@ export async function POST(req: Request): Promise<Response> {
     if (!rawEmailBody || rawEmailBody.length < 50) {
       return NextResponse.json({
         success: true,
-        summary: emailSubject,
+        summary: `📧 ${emailSubject}` || 'Short email - check full message for details',
         message: 'Email too short to summarize',
       });
     }
@@ -133,9 +133,19 @@ export async function POST(req: Request): Promise<Response> {
     const emailBody = cleanEmailBody(rawEmailBody);
 
     if (!emailBody || emailBody.length < 50) {
+      // Try to use the raw body if cleaning removed too much
+      const fallbackBody = rawEmailBody.substring(0, 200).trim();
+      if (fallbackBody.length > 20) {
+        return NextResponse.json({
+          success: true,
+          summary: `${emailSubject}: ${fallbackBody}...`,
+          message: 'Using email preview',
+        });
+      }
+      
       return NextResponse.json({
         success: true,
-        summary: emailSubject,
+        summary: emailSubject || 'Check email for details',
         message: 'Email body empty after cleaning',
       });
     }
