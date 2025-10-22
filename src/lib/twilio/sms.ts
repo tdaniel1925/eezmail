@@ -1,0 +1,214 @@
+'use server';
+
+/**
+ * Twilio SMS Service
+ * Handles sending SMS messages
+ */
+
+import { getTwilioClientForUser } from './client-factory';
+import { validateE164PhoneNumber, formatPhoneNumber } from './client';
+import { checkRateLimit, logCommunicationUsage } from '@/lib/communication/rate-limiter';
+
+export interface SendSMSResult {
+  success: boolean;
+  messageSid?: string;
+  error?: string;
+  rateLimited?: boolean;
+}
+
+/**
+ * Send SMS to a single recipient
+ */
+export async function sendSMS(
+  userId: string,
+  to: string,
+  message: string,
+  contactId?: string
+): Promise<SendSMSResult> {
+  try {
+    // Check rate limit first
+    const rateCheck = await checkRateLimit(userId, 'sms');
+
+    if (!rateCheck.allowed) {
+      // Log rate limited attempt
+      await logCommunicationUsage(userId, 'sms', to, 'rate_limited', {
+        contactId,
+        messagePreview: message.substring(0, 50),
+        errorMessage: rateCheck.reason,
+      });
+
+      return {
+        success: false,
+        error: rateCheck.reason,
+        rateLimited: true,
+      };
+    }
+
+    // Format and validate phone number
+    const formattedTo = formatPhoneNumber(to);
+
+    if (!validateE164PhoneNumber(formattedTo)) {
+      return {
+        success: false,
+        error: `Invalid phone number format: ${to}. Must be in E.164 format (e.g., +14155552671)`,
+      };
+    }
+
+    // Get appropriate Twilio client
+    const { client, config, isCustom } = await getTwilioClientForUser(userId);
+
+    // Send SMS
+    const result = await client.messages.create({
+      body: message,
+      from: config.phoneNumber,
+      to: formattedTo,
+    });
+
+    // Calculate cost if using system Twilio
+    // Twilio charges ~$0.0075 per SMS in US, varies by country
+    const cost = isCustom ? undefined : '0.0075';
+
+    // Log successful send
+    await logCommunicationUsage(userId, 'sms', formattedTo, 'sent', {
+      contactId,
+      cost,
+      usedCustomTwilio: isCustom,
+      messagePreview: message.substring(0, 50),
+    });
+
+    console.log(`✅ SMS sent to ${formattedTo}: ${result.sid}`);
+
+    return {
+      success: true,
+      messageSid: result.sid,
+    };
+  } catch (error: any) {
+    console.error('SMS send error:', error);
+
+    // Log failed attempt
+    await logCommunicationUsage(userId, 'sms', to, 'failed', {
+      contactId,
+      messagePreview: message.substring(0, 50),
+      errorMessage: error.message || 'Unknown error',
+    });
+
+    return {
+      success: false,
+      error: error.message || 'Failed to send SMS',
+    };
+  }
+}
+
+/**
+ * Send SMS to multiple recipients (bulk send)
+ */
+export async function sendBulkSMS(
+  userId: string,
+  recipients: Array<{ phone: string; contactId?: string }>,
+  message: string
+): Promise<{
+  success: boolean;
+  results: Array<{
+    phone: string;
+    success: boolean;
+    error?: string;
+    messageSid?: string;
+  }>;
+  summary: {
+    total: number;
+    sent: number;
+    failed: number;
+    rateLimited: number;
+  };
+}> {
+  // Limit bulk sends to prevent abuse
+  if (recipients.length > 50) {
+    return {
+      success: false,
+      results: [],
+      summary: {
+        total: recipients.length,
+        sent: 0,
+        failed: recipients.length,
+        rateLimited: 0,
+      },
+    };
+  }
+
+  const results: Array<{
+    phone: string;
+    success: boolean;
+    error?: string;
+    messageSid?: string;
+  }> = [];
+
+  let sentCount = 0;
+  let failedCount = 0;
+  let rateLimitedCount = 0;
+
+  // Send to each recipient
+  for (const recipient of recipients) {
+    const result = await sendSMS(userId, recipient.phone, message, recipient.contactId);
+
+    results.push({
+      phone: recipient.phone,
+      success: result.success,
+      error: result.error,
+      messageSid: result.messageSid,
+    });
+
+    if (result.success) {
+      sentCount++;
+    } else if (result.rateLimited) {
+      rateLimitedCount++;
+      // Stop sending if rate limited
+      break;
+    } else {
+      failedCount++;
+    }
+
+    // Small delay between sends to avoid overwhelming Twilio API
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
+  return {
+    success: sentCount > 0,
+    results,
+    summary: {
+      total: recipients.length,
+      sent: sentCount,
+      failed: failedCount,
+      rateLimited: rateLimitedCount,
+    },
+  };
+}
+
+/**
+ * Get SMS delivery status from Twilio
+ */
+export async function getSMSStatus(
+  userId: string,
+  messageSid: string
+): Promise<{
+  success: boolean;
+  status?: string;
+  error?: string;
+}> {
+  try {
+    const { client } = await getTwilioClientForUser(userId);
+
+    const message = await client.messages(messageSid).fetch();
+
+    return {
+      success: true,
+      status: message.status,
+    };
+  } catch (error: any) {
+    console.error('Failed to get SMS status:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to get SMS status',
+    };
+  }
+}
+
