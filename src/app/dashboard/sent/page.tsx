@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { EmailList } from '@/components/email/EmailList';
-import { Send } from 'lucide-react';
 
 interface SentEmail {
   id: string;
@@ -73,36 +72,13 @@ export default function SentPage() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-              <Send className="h-5 w-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Sent
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {emails.length} {emails.length === 1 ? 'email' : 'emails'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Email List */}
-      <div className="flex-1 overflow-hidden">
-        <EmailList
-          emails={emails}
-          title="Sent"
-          isLoading={isLoading}
-          error={error || undefined}
-          onRefresh={handleRefresh}
-        />
-      </div>
-    </div>
+    <EmailList
+      emails={emails}
+      title="Sent"
+      isLoading={isLoading}
+      error={error || undefined}
+      onRefresh={handleRefresh}
+      isSyncing={isLoading}
+    />
   );
 }
