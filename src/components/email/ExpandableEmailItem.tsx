@@ -758,16 +758,18 @@ export function ExpandableEmailItem({
           <AnimatePresence>
             {showSummary && !isExpanded && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.2 }}
                 style={{
                   position: 'fixed',
-                  top: `${popupPosition.top}px`,
-                  left: `${popupPosition.left}px`,
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
                   zIndex: 99999,
-                  width: '320px',
+                  width: '420px',
+                  maxWidth: '90vw',
                   pointerEvents: 'none', // Prevent interfering with mouse events
                 }}
                 className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-blue-500/30 rounded-lg shadow-2xl p-4"
