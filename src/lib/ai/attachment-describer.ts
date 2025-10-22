@@ -3,8 +3,6 @@
  * Generates contextual descriptions for attachments using AI
  */
 
-'use server';
-
 import OpenAI from 'openai';
 import { getFileTypeLabel } from '../attachments/filter';
 
