@@ -478,20 +478,20 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
             <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  {/* Split Send Button */}
-                  <div className="relative inline-flex">
+                  {/* Split Send Button - Enhanced */}
+                  <div className="relative inline-flex shadow-md hover:shadow-lg transition-shadow">
                     <button
                       onClick={props.handleSend}
                       disabled={props.isSending}
-                      className="flex items-center space-x-2 rounded-l-md bg-[#FF4C5A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#FF3545] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex items-center space-x-2 rounded-l-md bg-gradient-to-r from-[#FF4C5A] to-[#FF3545] px-5 py-2.5 text-sm font-bold text-white transition-all hover:from-[#FF3545] hover:to-[#FF2838] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:from-[#FF4C5A] disabled:hover:to-[#FF3545]"
                     >
                       <Send className="h-4 w-4" />
-                      <span>{props.isSending ? 'Sending...' : 'Send'}</span>
+                      <span>{props.isSending ? 'Sending...' : 'Send Email'}</span>
                     </button>
                     <button
                       onClick={() => props.setShowSendMenu(!props.showSendMenu)}
                       disabled={props.isSending}
-                      className="rounded-r-md border-l border-white/20 bg-[#FF4C5A] px-2 py-2 text-white transition-colors hover:bg-[#FF3545] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-r-md border-l border-white/20 bg-gradient-to-r from-[#FF4C5A] to-[#FF3545] px-2 py-2.5 text-white transition-all hover:from-[#FF3545] hover:to-[#FF2838] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <svg
                         className="h-4 w-4"
@@ -626,12 +626,22 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                   </AnimatedButton>
                 </div>
 
-                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                  {/* Word Count */}
+                  {props.body && (
+                    <span className="flex items-center gap-1">
+                      <span className="font-medium">
+                        {props.body.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(Boolean).length}
+                      </span>
+                      <span>words</span>
+                    </span>
+                  )}
+                  {/* Save Status */}
                   {props.saveStatus === 'saving' && (
                     <span>Saving draft...</span>
                   )}
                   {props.saveStatus === 'saved' && (
-                    <span className="text-green-600">Draft saved</span>
+                    <span className="text-green-600 dark:text-green-400">Draft saved</span>
                   )}
                 </div>
               </div>
