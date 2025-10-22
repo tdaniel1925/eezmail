@@ -178,6 +178,11 @@ export class ImapService {
                     name: addr.name || '',
                   })) || [];
 
+                // Debug logging to track sender/recipient
+                console.log(`📧 IMAP Parse - Subject: "${parsed.subject}"`);
+                console.log(`   From: ${from.name} <${from.address}>`);
+                console.log(`   To: ${to.map(t => `${t.name} <${t.email}>`).join(', ')}`);
+
                 messages.push({
                   id: uid,
                   subject: parsed.subject || '(No Subject)',
