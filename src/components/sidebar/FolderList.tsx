@@ -25,14 +25,20 @@ import { useRouter } from 'next/navigation';
 import {
   markFolderAsRead,
   emptyFolder as emptyFolderAction,
+  getEmailFolders,
 } from '@/lib/folders/actions';
 import { createClient } from '@/lib/supabase/client';
+import { Folder } from 'lucide-react';
 
 interface FolderListProps {
   isCollapsed?: boolean;
+  currentAccountId?: string | null;
 }
 
-export function FolderList({ isCollapsed = false }: FolderListProps) {
+export function FolderList({
+  isCollapsed = false,
+  currentAccountId = null,
+}: FolderListProps) {
   const { activeFolder, setActiveFolder, unreadCounts } = useSidebarStore();
   const router = useRouter();
   const [contextMenuFolder, setContextMenuFolder] = useState<string | null>(
@@ -43,6 +49,15 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
     y: 0,
   });
   const [userId, setUserId] = useState<string | null>(null);
+  const [serverFolders, setServerFolders] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: string;
+      externalId: string;
+      unreadCount: number;
+    }>
+  >([]);
 
   // Get user ID on mount
   useEffect(() => {
@@ -57,6 +72,29 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
     };
     getUser();
   }, []);
+
+  // Fetch server folders when account changes
+  useEffect(() => {
+    const fetchFolders = async () => {
+      if (!currentAccountId) {
+        setServerFolders([]);
+        return;
+      }
+
+      console.log('📁 Fetching folders for account:', currentAccountId);
+      const result = await getEmailFolders({ accountId: currentAccountId });
+      
+      if (result.success) {
+        console.log('✅ Fetched server folders:', result.folders);
+        setServerFolders(result.folders);
+      } else {
+        console.error('❌ Failed to fetch folders:', result.message);
+        setServerFolders([]);
+      }
+    };
+
+    fetchFolders();
+  }, [currentAccountId]);
 
   const primaryFolders = [
     { id: 'inbox', label: 'Inbox', icon: Inbox, count: unreadCounts.inbox },
@@ -262,6 +300,90 @@ export function FolderList({ isCollapsed = false }: FolderListProps) {
 
       {/* Standard Folders */}
       <div className="space-y-1">{standardFolders.map(renderFolder)}</div>
+
+      {/* Server Folders (from email account) */}
+      {serverFolders.length > 0 && (
+        <>
+          {/* Divider */}
+          {!isCollapsed && (
+            <div className="my-4 border-t border-gray-200 dark:border-white/10" />
+          )}
+          {isCollapsed && (
+            <div className="my-3 h-px bg-gray-200 dark:bg-white/10" />
+          )}
+
+          {/* Section Label */}
+          {!isCollapsed && (
+            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 mb-2">
+              Email Folders
+            </p>
+          )}
+
+          {/* Server Folders List */}
+          <div className="space-y-1">
+            {serverFolders.map((folder) => {
+              const isActive = activeFolder === folder.name.toLowerCase();
+              const hasCount = folder.unreadCount > 0;
+
+              return (
+                <button
+                  key={folder.id}
+                  onClick={() => handleFolderClick(folder.name.toLowerCase())}
+                  onContextMenu={(e) => handleContextMenu(e, folder.name.toLowerCase())}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group relative',
+                    isActive
+                      ? 'bg-primary/10 text-primary border-l-2 border-primary'
+                      : 'hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 border-l-2 border-transparent',
+                    isCollapsed && 'justify-center px-2'
+                  )}
+                >
+                  <Folder size={18} className={cn(isActive && 'text-primary')} />
+
+                  {!isCollapsed && (
+                    <>
+                      <span className="flex-1 text-left text-sm font-medium">
+                        {folder.name}
+                      </span>
+                      <AnimatePresence>
+                        {hasCount && (
+                          <motion.span
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            className={cn(
+                              'flex items-center justify-center h-5 min-w-[20px] px-1.5 text-xs font-semibold rounded-full',
+                              isActive
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                            )}
+                          >
+                            {folder.unreadCount}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  )}
+
+                  {isCollapsed && hasCount && (
+                    <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 min-w-[16px] px-1 text-[10px] font-bold text-white bg-primary rounded-full border-2 border-white dark:border-gray-900">
+                      {folder.unreadCount}
+                    </span>
+                  )}
+
+                  {/* Tooltip for collapsed state */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                      {folder.name}
+                      {hasCount && ` (${folder.unreadCount})`}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       {/* Context Menu */}
       <AnimatePresence>

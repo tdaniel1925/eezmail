@@ -162,7 +162,7 @@ export function ModernSidebar({
         />
 
         {/* Folder List */}
-        <FolderList isCollapsed={isCollapsed} />
+        <FolderList isCollapsed={isCollapsed} currentAccountId={currentAccountId} />
 
         {/* Main Navigation - Contacts, Calendar, Tasks */}
         <div className="border-t border-gray-200 dark:border-white/10">

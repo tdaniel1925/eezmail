@@ -2,8 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emails, customFolders } from '@/db/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { emails, customFolders, emailFolders } from '@/db/schema';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 
 /**
  * Mark all emails in a folder as read
@@ -219,6 +219,55 @@ export async function getCustomFolders(): Promise<{
     };
   } catch (error) {
     console.error('Error in getCustomFolders:', error);
+    return { success: false, folders: [], message: 'Failed to fetch folders' };
+  }
+}
+
+/**
+ * Get email folders for a specific account
+ */
+export async function getEmailFolders(params: { accountId: string }): Promise<{
+  success: boolean;
+  folders: Array<{
+    id: string;
+    name: string;
+    type: string;
+    externalId: string;
+    unreadCount: number;
+  }>;
+  message?: string;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, folders: [], message: 'Unauthorized' };
+    }
+
+    // Fetch all folders for the account
+    const folders = await db.query.emailFolders.findMany({
+      where: and(
+        eq(emailFolders.accountId, params.accountId),
+        eq(emailFolders.userId, user.id)
+      ),
+      orderBy: (folders, { asc }) => [asc(folders.name)],
+    });
+
+    return {
+      success: true,
+      folders: folders.map((f) => ({
+        id: f.id,
+        name: f.name,
+        type: f.type,
+        externalId: f.externalId,
+        unreadCount: f.unreadCount ?? 0,
+      })),
+    };
+  } catch (error) {
+    console.error('Error in getEmailFolders:', error);
     return { success: false, folders: [], message: 'Failed to fetch folders' };
   }
 }
