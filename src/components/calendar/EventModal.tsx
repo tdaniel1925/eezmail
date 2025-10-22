@@ -5,6 +5,7 @@ import { X, MapPin, Users, Video, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createCalendarEvent, updateCalendarEvent } from '@/lib/calendar/calendar-actions';
 import { toast } from 'sonner';
+import { RecurrenceSelector } from './RecurrenceSelector';
 import type { CalendarEvent } from './types';
 
 interface EventModalProps {
@@ -36,6 +37,7 @@ export function EventModal({
   const [isVirtual, setIsVirtual] = useState(false);
   const [color, setColor] = useState<CalendarEvent['color']>('blue');
   const [isSaving, setIsSaving] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState<string | null>(null);
 
   useEffect(() => {
     if (event) {
@@ -102,6 +104,8 @@ export function EventModal({
         location: location || undefined,
         isVirtual,
         color,
+        isRecurring: !!recurrenceRule,
+        recurrenceRule: recurrenceRule || undefined,
       };
 
       const attendeeEmails = attendees
@@ -354,6 +358,7 @@ export function EventModal({
               ).map((c) => (
                 <button
                   key={c}
+                  type="button"
                   onClick={() => setColor(c)}
                   className={cn(
                     'w-10 h-10 rounded-full transition-all',
@@ -372,6 +377,13 @@ export function EventModal({
               ))}
             </div>
           </div>
+
+          {/* Recurrence */}
+          <RecurrenceSelector
+            value={recurrenceRule}
+            startDate={new Date(`${startDate}T${startTime}`)}
+            onChange={setRecurrenceRule}
+          />
         </div>
 
         {/* Footer */}

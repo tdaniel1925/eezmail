@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { EventModal } from './EventModal';
+import { WeekView } from './WeekView';
+import { DayView } from './DayView';
 import { UnifiedHeader } from '@/components/layout/UnifiedHeader';
 import {
   getCalendarEvents,
@@ -177,6 +179,15 @@ export function CalendarView({
   // Handle date click
   const handleDateClick = (date: Date): void => {
     setSelectedDate(date);
+    setIsEventModalOpen(true);
+  };
+
+  // Handle time slot click (for week/day views)
+  const handleTimeSlotClick = (date: Date, hour: number): void => {
+    const dateWithTime = new Date(date);
+    dateWithTime.setHours(hour, 0, 0, 0);
+    setSelectedDate(dateWithTime);
+    setIsEventModalOpen(true);
   };
 
   // Handle create event
@@ -391,25 +402,19 @@ export function CalendarView({
             </div>
           </div>
         ) : viewMode === 'week' ? (
-          <div className="text-center py-20">
-            <CalendarIcon
-              size={64}
-              className="mx-auto text-gray-400 dark:text-gray-600 mb-4"
-            />
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Week view coming soon!
-            </p>
-          </div>
+          <WeekView
+            currentDate={currentDate}
+            events={events}
+            onEventClick={handleEditEvent}
+            onTimeSlotClick={handleTimeSlotClick}
+          />
         ) : (
-          <div className="text-center py-20">
-            <Clock
-              size={64}
-              className="mx-auto text-gray-400 dark:text-gray-600 mb-4"
-            />
-            <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Day view coming soon!
-            </p>
-          </div>
+          <DayView
+            currentDate={currentDate}
+            events={events}
+            onEventClick={handleEditEvent}
+            onTimeSlotClick={handleTimeSlotClick}
+          />
         )}
       </div>
 
