@@ -193,23 +193,41 @@ export class ImapService {
                   `   To: ${to.map((t) => `${t.name} <${t.email}>`).join(', ')}`
                 );
 
-                // Fix: Extract name from email address if the display name doesn't match
-                // This handles cases where the sender's email client has wrong display name
+                // Fix: Extract name from email address if the display name is wrong
+                // This handles reply emails where sender's client copied recipient's name
                 let senderName = from.name || '';
                 const senderEmail = from.address || '';
-                
-                // If the display name contains the recipient's info (like "TRENT DANIEL")
-                // but the email is from someone else, extract name from email
+
+                // Check if this is a reply where the display name was incorrectly copied
+                // If sender email doesn't match the account user, but name matches account user
                 if (senderEmail && senderEmail !== this.config.user) {
-                  // Use the part before @ as fallback if name seems wrong
-                  const emailLocalPart = senderEmail.split('@')[0];
-                  // If name is empty or suspiciously different, use email-based name
-                  if (!senderName || senderName.toUpperCase().includes('TRENT')) {
+                  // Extract account username for comparison
+                  const accountLocalPart = this.config.user
+                    .split('@')[0]
+                    .toLowerCase();
+                  const senderNameLower = senderName.toLowerCase();
+
+                  // If the display name contains the account owner's name (like "TRENT DANIEL")
+                  // but email is from someone else, extract proper name from email address
+                  if (
+                    !senderName ||
+                    senderNameLower.includes(accountLocalPart) ||
+                    senderNameLower.includes('trent') ||
+                    senderNameLower.includes('daniel')
+                  ) {
+                    // Extract name from email: "ed.preble@..." -> "Ed Preble"
+                    const emailLocalPart = senderEmail.split('@')[0];
                     senderName = emailLocalPart
                       .split(/[._-]/)
-                      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                      .map(
+                        (part) =>
+                          part.charAt(0).toUpperCase() +
+                          part.slice(1).toLowerCase()
+                      )
                       .join(' ');
-                    console.log(`   ⚠️ Fixed sender name from "${from.name}" to "${senderName}"`);
+                    console.log(
+                      `   ⚠️ Fixed sender name from "${from.name}" to "${senderName}" (reply email fix)`
+                    );
                   }
                 }
 

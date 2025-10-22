@@ -11,7 +11,7 @@ import { contacts, contactGroups, contactGroupMembers } from '@/db/schema';
 import { eq, inArray } from 'drizzle-orm';
 import { sendSMS, sendBulkSMS } from '@/lib/twilio/sms';
 import { makeVoiceCall } from '@/lib/twilio/voice';
-import { logTimelineEvent } from '@/lib/contacts/timeline-actions';
+import { addTimelineEvent } from '@/lib/contacts/timeline-actions';
 
 /**
  * Send email to a contact (opens composer with pre-filled data)
@@ -105,8 +105,7 @@ export async function sendContactSMS(
     }
 
     // Log to contact timeline
-    await logTimelineEvent({
-      contactId,
+    await addTimelineEvent(contactId, {
       eventType: 'sms_sent',
       title: 'SMS Sent',
       description: message.substring(0, 100),
@@ -174,8 +173,7 @@ export async function callContact(
     }
 
     // Log to contact timeline
-    await logTimelineEvent({
-      contactId,
+    await addTimelineEvent(contactId, {
       eventType: 'voice_call_made',
       title: 'Voice Call Made',
       description: type === 'tts' ? message.substring(0, 100) : 'Pre-recorded message',
@@ -254,8 +252,7 @@ export async function sendGroupSMS(
     // Log to timeline for each contact
     for (const recipient of result.results) {
       if (recipient.success && recipient.contactId) {
-        await logTimelineEvent({
-          contactId: recipient.contactId,
+        await addTimelineEvent(recipient.contactId, {
           eventType: 'sms_sent',
           title: 'Group SMS Sent',
           description: message.substring(0, 100),
