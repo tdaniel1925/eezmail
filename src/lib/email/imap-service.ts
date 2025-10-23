@@ -26,6 +26,9 @@ export interface ImapMessage {
   bodyText?: string;
   hasAttachments: boolean;
   folderName: string;
+  // Threading headers
+  references?: string[];
+  inReplyTo?: string;
 }
 
 export class ImapService {
@@ -202,6 +205,17 @@ export class ImapService {
                   `   To: ${to.map((t) => `${t.name} <${t.email}>`).join(', ')}`
                 );
 
+                // Extract threading headers
+                const references = parsed.references
+                  ? Array.isArray(parsed.references)
+                    ? parsed.references
+                    : [parsed.references]
+                  : [];
+                const inReplyTo = parsed.inReplyTo || undefined;
+
+                console.log(`   References: ${references.join(', ') || 'none'}`);
+                console.log(`   In-Reply-To: ${inReplyTo || 'none'}`);
+
                 // Fix: Extract name from email address if the display name is wrong
                 // This handles reply emails where sender's client copied recipient's name
                 let senderName = from.name || '';
@@ -256,6 +270,9 @@ export class ImapService {
                   bodyText: parsed.text || undefined,
                   hasAttachments: (parsed.attachments?.length || 0) > 0,
                   folderName: mailbox,
+                  // Threading data
+                  references: references.length > 0 ? references : undefined,
+                  inReplyTo: inReplyTo,
                 });
               } catch (parseError) {
                 console.error('Error parsing message:', parseError);

@@ -12,6 +12,7 @@ import { logEmailReceived } from '@/lib/contacts/timeline-actions';
 import { findContactByEmail } from '@/lib/contacts/helpers';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
 import { embedEmail } from '@/lib/rag/embedding-pipeline';
+import { generateThreadId } from '@/lib/sync/threading-service';
 
 /**
  * Map folder name to email category
@@ -480,7 +481,7 @@ async function syncEmailsWithGraph(
       console.log(`📊 Using delta sync for ${folderName}`);
     } else {
       // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
-      currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderName}/messages/delta?$top=100&$select=id,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
+      currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderName}/messages/delta?$top=100&$select=id,conversationId,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
       console.log(`🔄 Performing initial delta sync for ${folderName}`);
     }
 
@@ -514,7 +515,9 @@ async function syncEmailsWithGraph(
           const emailData = {
             accountId,
             messageId: message.id,
-            threadId: message.id, // Microsoft Graph doesn't have separate thread IDs
+            threadId: message.conversationId
+              ? `microsoft-${message.conversationId}`
+              : message.id, // Fallback to messageId if conversationId not available
             subject: message.subject || '(No Subject)',
             snippet: message.bodyPreview || '',
             fromAddress: message.from?.emailAddress || {
@@ -1256,6 +1259,14 @@ async function syncImapFolderMessages(
         accountId,
         userId, // Add userId for direct user reference
         messageId: message.id,
+        threadId: generateThreadId({
+          messageId: message.id,
+          subject: message.subject,
+          references: message.references,
+          inReplyTo: message.inReplyTo,
+          from: message.from,
+          receivedAt: message.receivedAt,
+        }),
         subject: message.subject,
         fromAddress: message.from,
         toAddresses: message.to,
