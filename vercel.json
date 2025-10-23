@@ -15,11 +15,11 @@
     },
     {
       "path": "/api/cron/process-embeddings",
-      "schedule": "*/30 * * * * *"
+      "schedule": "*/30 * * * *"
     },
     {
       "path": "/api/cron/process-timeline-events",
-      "schedule": "*/30 * * * * *"
+      "schedule": "*/30 * * * *"
     }
   ]
 }
