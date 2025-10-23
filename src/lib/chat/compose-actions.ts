@@ -1,6 +1,7 @@
 'use server';
 
 import { OpenAI } from 'openai';
+import { composeWithPersonality } from '@/lib/ai/personalized-compose';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -8,8 +9,10 @@ const openai = new OpenAI({
 
 /**
  * Compose a new email with AI assistance
+ * Now uses personality learning to match user's writing style
  */
 export async function composeNewEmail(params: {
+  userId?: string; // Added userId for personality
   recipient: string;
   topic: string;
   context?: string;
@@ -21,6 +24,7 @@ export async function composeNewEmail(params: {
   subject?: string;
   body?: string;
   message: string;
+  personalityApplied?: boolean;
 }> {
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -30,6 +34,34 @@ export async function composeNewEmail(params: {
       };
     }
 
+    // If userId provided, use personalized composition
+    if (params.userId) {
+      console.log(`🎨 [Compose] Using personality learning for user: ${params.userId}`);
+      try {
+        const personalizedEmail = await composeWithPersonality({
+          userId: params.userId,
+          recipient: params.recipient,
+          topic: params.topic,
+          context: params.context,
+          tone: params.tone,
+          length: params.length === 'brief' ? 'short' : params.length === 'detailed' ? 'long' : 'medium',
+        });
+
+        return {
+          success: true,
+          recipient: params.recipient,
+          subject: personalizedEmail.subject,
+          body: personalizedEmail.body,
+          message: 'Email drafted in your personal writing style',
+          personalityApplied: true,
+        };
+      } catch (error) {
+        console.error('Error using personalized compose, falling back:', error);
+        // Fall through to generic composition
+      }
+    }
+
+    // Generic composition (fallback or no userId)
     const tone = params.tone || 'professional';
     const length = params.length || 'moderate';
 
@@ -102,6 +134,7 @@ Return as JSON with "subject" and "body" fields. Make it ${tone} and ${length}.`
       subject: parsed.subject,
       body: parsed.body,
       message: 'Email drafted successfully',
+      personalityApplied: false,
     };
   } catch (error) {
     console.error('Error composing email:', error);

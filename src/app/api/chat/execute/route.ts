@@ -98,9 +98,23 @@ export async function POST(req: Request): Promise<Response> {
         break;
 
       case 'send_email':
-        // TODO: Integrate with actual email sending service
-        message = `Email would be sent to ${args.to} with subject "${args.subject}"`;
-        result = { success: true, emailId: 'mock-id' };
+        const composeResult = await composeNewEmail({
+          userId: user.id, // Pass userId for personality
+          recipient: args.to,
+          topic: args.subject || args.topic,
+          context: args.body || args.context,
+          tone: args.tone,
+        });
+        
+        if (composeResult.success && composeResult.personalityApplied) {
+          message = `✨ Email drafted in your personal writing style. Ready to send to ${args.to}!`;
+        } else if (composeResult.success) {
+          message = `Email drafted and ready to send to ${args.to}`;
+        } else {
+          message = composeResult.message;
+        }
+        
+        result = composeResult;
         break;
 
       case 'reply_to_email':
