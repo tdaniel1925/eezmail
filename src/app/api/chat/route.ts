@@ -7,6 +7,15 @@ import {
   getUserContext,
   inferSearchScope,
 } from '@/lib/rag/omniscient-search';
+import {
+  addToConversationHistory,
+  storeSearchResults,
+  extractEntities,
+} from '@/lib/chat/context-manager';
+import {
+  parseAndResolveReferences,
+  containsReferences,
+} from '@/lib/chat/reference-resolver';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -47,6 +56,37 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const validatedData = chatSchema.parse(body);
+
+    // Get the user's last message
+    const lastUserMessage =
+      validatedData.messages.length > 0
+        ? validatedData.messages[validatedData.messages.length - 1].content
+        : '';
+
+    console.log(`🤖 [Chat API] User message: "${lastUserMessage}"`);
+
+    // Check if message contains references that need resolution
+    if (containsReferences(lastUserMessage)) {
+      console.log(`🔗 [Chat API] Message contains references, resolving...`);
+      const resolved = await parseAndResolveReferences(user.id, lastUserMessage);
+
+      if (resolved.needsClarification) {
+        // Return clarification prompt
+        return NextResponse.json({
+          success: true,
+          response: resolved.clarificationPrompt,
+          needsClarification: true,
+          timestamp: new Date().toISOString(),
+        });
+      }
+
+      // Update the last message with resolved references
+      if (validatedData.messages.length > 0) {
+        validatedData.messages[validatedData.messages.length - 1].content =
+          resolved.resolvedMessage;
+        console.log(`✅ [Chat API] Resolved message: "${resolved.resolvedMessage}"`);
+      }
+    }
 
     // Get comprehensive user context
     const userContext = await getUserContext(user.id);
