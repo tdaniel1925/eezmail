@@ -16,10 +16,47 @@ import {
 import { toast, confirmDialog } from '@/lib/toast';
 import type { EmailSignature } from '@/db/schema';
 
+// Signature templates for quick setup
+const SIGNATURE_TEMPLATES = [
+  {
+    name: 'Professional',
+    description: 'Formal business signature',
+    icon: '💼',
+    content: `Best regards,
+[Your Name]
+[Your Title]
+[Company Name]
+[Phone] | [Email]`,
+  },
+  {
+    name: 'Casual',
+    description: 'Friendly and informal',
+    icon: '✌️',
+    content: `Cheers,
+[Your Name]`,
+  },
+  {
+    name: 'Team',
+    description: 'Collaborative team signature',
+    icon: '👥',
+    content: `Thanks,
+The [Team Name] Team
+[Company Website]`,
+  },
+  {
+    name: 'Minimal',
+    description: 'Simple and clean',
+    icon: '✨',
+    content: `[Your Name]
+[Title]`,
+  },
+];
+
 export function SignaturesSettings(): JSX.Element {
   const [signatures, setSignatures] = useState<EmailSignature[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(true);
   const [editingSignature, setEditingSignature] =
     useState<EmailSignature | null>(null);
 
@@ -38,6 +75,20 @@ export function SignaturesSettings(): JSX.Element {
 
   const handleCreate = () => {
     setEditingSignature(null);
+    setShowModal(true);
+  };
+
+  const handleCreateFromTemplate = (template: typeof SIGNATURE_TEMPLATES[0]) => {
+    setEditingSignature({
+      id: '',
+      userId: '',
+      name: template.name,
+      content: template.content,
+      isDefault: false,
+      isEnabled: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as EmailSignature);
     setShowModal(true);
   };
 
@@ -108,6 +159,40 @@ export function SignaturesSettings(): JSX.Element {
           </Button>
         </div>
       </div>
+
+      {/* Quick Templates */}
+      {showTemplates && signatures.length === 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Quick Start Templates
+            </h3>
+            <button
+              onClick={() => setShowTemplates(false)}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              Hide
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {SIGNATURE_TEMPLATES.map((template) => (
+              <button
+                key={template.name}
+                onClick={() => handleCreateFromTemplate(template)}
+                className="text-left p-4 rounded-lg border-2 border-gray-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 transition-all group"
+              >
+                <div className="text-3xl mb-2">{template.icon}</div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-primary">
+                  {template.name}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {template.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Signatures List */}
       {signatures.length === 0 ? (

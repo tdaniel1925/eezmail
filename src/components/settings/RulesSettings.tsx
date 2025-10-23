@@ -63,10 +63,90 @@ const ACTION_OPTIONS = [
   { value: 'mark_as_spam', label: 'Mark as spam', needsValue: false },
 ];
 
+// Rule templates for quick setup
+const RULE_TEMPLATES = [
+  {
+    name: 'Move Newsletters to Folder',
+    description: 'Automatically organize newsletter subscriptions',
+    icon: '📰',
+    rule: {
+      name: 'Newsletters',
+      conditions: [
+        { field: 'subject', operator: 'contains', value: 'newsletter' },
+      ],
+      actions: [{ type: 'move_to_folder', value: 'Newsletters' }],
+      matchType: 'any' as const,
+    },
+  },
+  {
+    name: 'Archive Receipts',
+    description: 'Auto-archive order confirmations and receipts',
+    icon: '🧾',
+    rule: {
+      name: 'Receipts',
+      conditions: [
+        { field: 'subject', operator: 'contains', value: 'receipt' },
+        { field: 'subject', operator: 'contains', value: 'order confirmation' },
+      ],
+      actions: [{ type: 'archive', value: '' }],
+      matchType: 'any' as const,
+    },
+  },
+  {
+    name: 'Star Emails from Boss',
+    description: 'Never miss important emails from your manager',
+    icon: '⭐',
+    rule: {
+      name: 'VIP Emails',
+      conditions: [{ field: 'from', operator: 'contains', value: '' }],
+      actions: [{ type: 'star', value: '' }],
+      matchType: 'all' as const,
+    },
+  },
+  {
+    name: 'Auto-Delete Spam',
+    description: 'Delete emails from known spam sources',
+    icon: '🗑️',
+    rule: {
+      name: 'Auto-delete Spam',
+      conditions: [{ field: 'from', operator: 'contains', value: 'spam' }],
+      actions: [{ type: 'delete', value: '' }],
+      matchType: 'any' as const,
+    },
+  },
+  {
+    name: 'Mark Social Media as Read',
+    description: 'Auto-mark social notifications as read',
+    icon: '📱',
+    rule: {
+      name: 'Social Media',
+      conditions: [
+        { field: 'from', operator: 'contains', value: 'facebook.com' },
+        { field: 'from', operator: 'contains', value: 'twitter.com' },
+        { field: 'from', operator: 'contains', value: 'linkedin.com' },
+      ],
+      actions: [{ type: 'mark_as_read', value: '' }],
+      matchType: 'any' as const,
+    },
+  },
+  {
+    name: 'Organize Work Projects',
+    description: 'Move project emails to dedicated folder',
+    icon: '💼',
+    rule: {
+      name: 'Work Projects',
+      conditions: [{ field: 'subject', operator: 'contains', value: 'project' }],
+      actions: [{ type: 'move_to_folder', value: 'Projects' }],
+      matchType: 'any' as const,
+    },
+  },
+];
+
 export function RulesSettings(): JSX.Element {
   const [rules, setRules] = useState<EmailRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(true);
   const [editingRule, setEditingRule] = useState<EmailRule | null>(null);
 
   useEffect(() => {
@@ -84,6 +164,20 @@ export function RulesSettings(): JSX.Element {
 
   const handleCreate = () => {
     setEditingRule(null);
+    setShowModal(true);
+  };
+
+  const handleCreateFromTemplate = (template: typeof RULE_TEMPLATES[0]) => {
+    // Pre-fill the modal with template data
+    setEditingRule({
+      id: '', // Will be generated on save
+      userId: '',
+      ...template.rule,
+      isEnabled: true,
+      priority: rules.length,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as EmailRule);
     setShowModal(true);
   };
 
@@ -187,6 +281,40 @@ export function RulesSettings(): JSX.Element {
           </li>
         </ul>
       </div>
+
+      {/* Quick Templates */}
+      {showTemplates && rules.length === 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Quick Start Templates
+            </h3>
+            <button
+              onClick={() => setShowTemplates(false)}
+              className="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            >
+              Hide
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {RULE_TEMPLATES.map((template) => (
+              <button
+                key={template.name}
+                onClick={() => handleCreateFromTemplate(template)}
+                className="text-left p-4 rounded-lg border-2 border-gray-200 dark:border-white/10 hover:border-primary hover:bg-primary/5 transition-all group"
+              >
+                <div className="text-3xl mb-2">{template.icon}</div>
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-primary">
+                  {template.name}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {template.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Rules List */}
       {rules.length === 0 ? (
