@@ -8,6 +8,7 @@ import { categorizeIncomingEmail } from '@/lib/screener/email-categorizer';
 import { TokenManager } from '@/lib/email/token-manager';
 import { GmailService } from '@/lib/email/gmail-api';
 import { ImapService } from '@/lib/email/imap-service';
+import { imapConnectionPool } from '@/lib/email/imap-connection-pool';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
 import { generateThreadId } from '@/lib/sync/threading-service';
 import { withRateLimit, getAccountRateLimit } from '@/lib/sync/rate-limiter';
@@ -459,6 +460,33 @@ async function syncFoldersWithGraph(
 }
 
 /**
+ * Retry a function with exponential backoff
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T | null> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxRetries - 1) {
+        const delay = baseDelay * Math.pow(2, attempt);
+        console.log(`   ⏳ Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  console.error(`   ❌ Failed after ${maxRetries} attempts:`, lastError);
+  return null;
+}
+
+/**
  * Update sync progress in database
  */
 async function updateSyncProgress(
@@ -520,6 +548,14 @@ async function syncEmailsWithGraph(
 
     // Get rate limit config for this account
     const rateLimitConfig = await getAccountRateLimit(accountId, 'outlook');
+
+    // Set initial progress for this folder
+    await db
+      .update(emailAccounts)
+      .set({
+        syncStatus: 'syncing',
+      } as any)
+      .where(eq(emailAccounts.id, accountId));
 
     // Loop through all pages
     while (currentUrl) {
@@ -629,8 +665,8 @@ async function syncEmailsWithGraph(
           syncedCount++;
           totalSynced++;
 
-          // Update progress in database every 10 emails
-          if (totalSynced % 10 === 0) {
+          // Update progress in database every 5 emails for better UX
+          if (totalSynced % 5 === 0) {
             await updateSyncProgress(accountId, totalSynced);
           }
         } catch (error) {
@@ -1128,8 +1164,8 @@ async function syncGmailMessages(
           syncedCount++;
           totalSynced++;
 
-          // Update progress in database every 10 emails
-          if (totalSynced % 10 === 0) {
+          // Update progress in database every 5 emails for better UX
+          if (totalSynced % 5 === 0) {
             await updateSyncProgress(accountId, totalSynced);
           }
         } catch (emailError) {
@@ -1196,6 +1232,8 @@ async function syncWithImap(
   userId: string,
   syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
+  let imap: ImapService | null = null;
+
   try {
     console.log('📧 Syncing with IMAP...');
 
@@ -1210,15 +1248,14 @@ async function syncWithImap(
       );
     }
 
-    const imapConfig = {
-      user: account.imapUsername,
-      password: account.imapPassword, // TODO: Decrypt if encrypted
-      host: account.imapHost,
-      port: account.imapPort,
-      tls: account.imapUseSsl !== false,
-    };
-
-    const imap = new ImapService(imapConfig);
+    // Get connection from pool
+    imap = await imapConnectionPool.getConnection(
+      account.imapHost,
+      account.imapPort,
+      account.imapUsername,
+      account.imapPassword,
+      account.imapUseSsl !== false
+    );
 
     // Step 1: Sync mailboxes (folders)
     console.log('📁 Step 1: Syncing IMAP mailboxes...');
@@ -1266,10 +1303,28 @@ async function syncWithImap(
       }
     }
 
-    await imap.disconnect();
+    // Release connection back to pool
+    if (imap) {
+      imapConnectionPool.releaseConnection(
+        account.imapHost,
+        account.imapPort,
+        account.imapUsername
+      );
+    }
+
     console.log('✅ IMAP sync completed');
   } catch (error) {
     console.error('❌ IMAP sync failed:', error);
+
+    // Release connection on error
+    if (imap) {
+      imapConnectionPool.releaseConnection(
+        account.imapHost,
+        account.imapPort,
+        account.imapUsername
+      );
+    }
+
     throw error;
   }
 }
@@ -1289,6 +1344,16 @@ async function syncImapFolderMessages(
   const messages = await imap.fetchMessages(folderName, limit);
 
   console.log(`   📨 Found ${messages.length} messages in ${folderName}`);
+
+  // Set total count for progress tracking
+  await db
+    .update(emailAccounts)
+    .set({
+      syncTotal: messages.length,
+      syncProgress: 0,
+      syncStatus: 'syncing',
+    } as any)
+    .where(eq(emailAccounts.id, accountId));
 
   let syncedCount = 0;
   for (const message of messages) {
@@ -1406,6 +1471,11 @@ async function syncImapFolderMessages(
       }
 
       syncedCount++;
+
+      // Update progress every 5 emails for better UX
+      if (syncedCount % 5 === 0) {
+        await updateSyncProgress(accountId, syncedCount);
+      }
     } catch (emailError) {
       console.error(`Error syncing IMAP message ${message.id}:`, emailError);
     }
