@@ -2497,6 +2497,76 @@ export type NewContactTimelineQueueItem =
   typeof contactTimelineQueue.$inferInsert;
 
 // ============================================================================
+// NOTIFICATION CENTER TABLE
+// ============================================================================
+
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'success',
+  'error',
+  'warning',
+  'info',
+]);
+
+export const notificationCategoryEnum = pgEnum('notification_category', [
+  'email',
+  'sync',
+  'calendar',
+  'contact',
+  'task',
+  'system',
+  'account',
+  'settings',
+]);
+
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Content
+    type: notificationTypeEnum('type').notNull(),
+    category: notificationCategoryEnum('category').notNull(),
+    title: text('title').notNull(),
+    message: text('message'),
+
+    // Actions
+    actionUrl: text('action_url'),
+    actionLabel: text('action_label'),
+    secondaryActionUrl: text('secondary_action_url'),
+    secondaryActionLabel: text('secondary_action_label'),
+
+    // Metadata
+    metadata: jsonb('metadata').default({}).notNull(),
+    relatedEntityType: text('related_entity_type'),
+    relatedEntityId: uuid('related_entity_id'),
+
+    // State
+    isRead: boolean('is_read').default(false).notNull(),
+    isArchived: boolean('is_archived').default(false).notNull(),
+    expiresAt: timestamp('expires_at'),
+
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    readAt: timestamp('read_at'),
+    archivedAt: timestamp('archived_at'),
+  },
+  (table) => ({
+    userIdIdx: index('notifications_user_id_idx').on(table.userId),
+    createdAtIdx: index('notifications_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type Notification = typeof notifications.$inferSelect;
+export type NewNotification = typeof notifications.$inferInsert;
+export type NotificationType =
+  (typeof notificationTypeEnum.enumValues)[number];
+export type NotificationCategory =
+  (typeof notificationCategoryEnum.enumValues)[number];
+
+// ============================================================================
 // TABLE RELATIONS
 // Define relationships between tables for Drizzle's relational queries
 // ============================================================================

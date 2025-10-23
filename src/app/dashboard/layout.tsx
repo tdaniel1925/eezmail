@@ -12,6 +12,7 @@ import { AIAssistantPanel } from '@/components/ai/AIAssistantPanelNew';
 import { ReplyLaterProvider } from '@/contexts/ReplyLaterContext';
 import { ReplyLaterStackWrapper } from '@/components/email/ReplyLaterStackWrapper';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 export default async function DashboardLayout({
   children,
@@ -74,6 +75,9 @@ export default async function DashboardLayout({
 
               {/* Reply Later Stack (floating at bottom-center) */}
               <ReplyLaterStackWrapper />
+
+              {/* Notification Center Panel */}
+              <NotificationCenter />
             </div>
           </ReplyLaterProvider>
         </KeyboardShortcutsProvider>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface HeaderAction {
   id: string;
@@ -157,6 +158,9 @@ export function UnifiedHeader({
             </button>
           );
         })}
+
+        {/* Notification Bell */}
+        <NotificationBell />
 
         {/* Settings Dropdown */}
         {showSettings && (
