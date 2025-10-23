@@ -143,7 +143,6 @@ export function AIAssistantPanel(): JSX.Element {
       <PanelHeader
         isExpanded={isExpanded}
         onToggleExpand={() => setExpanded(!isExpanded)}
-        onClose={() => setVisible(false)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
