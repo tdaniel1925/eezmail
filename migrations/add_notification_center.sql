@@ -73,24 +73,40 @@ CREATE INDEX IF NOT EXISTS notifications_expires_at_idx ON notifications(expires
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own notifications
-CREATE POLICY notifications_select_own ON notifications
-  FOR SELECT
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY notifications_select_own ON notifications
+    FOR SELECT
+    USING (auth.uid() = user_id);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can update their own notifications (mark read, archive)
-CREATE POLICY notifications_update_own ON notifications
-  FOR UPDATE
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY notifications_update_own ON notifications
+    FOR UPDATE
+    USING (auth.uid() = user_id);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- Users can delete their own notifications
-CREATE POLICY notifications_delete_own ON notifications
-  FOR DELETE
-  USING (auth.uid() = user_id);
+DO $$ BEGIN
+  CREATE POLICY notifications_delete_own ON notifications
+    FOR DELETE
+    USING (auth.uid() = user_id);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- System can insert notifications for users
-CREATE POLICY notifications_insert_system ON notifications
-  FOR INSERT
-  WITH CHECK (true);
+DO $$ BEGIN
+  CREATE POLICY notifications_insert_system ON notifications
+    FOR INSERT
+    WITH CHECK (true);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 -- ============================================================================
 -- CLEANUP FUNCTION
