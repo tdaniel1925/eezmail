@@ -25,7 +25,8 @@ export async function createCalendarEvent(params: {
 }): Promise<{ success: boolean; eventId?: string; message: string }> {
   try {
     // Calculate end time if not provided (default 1 hour)
-    const endTime = params.endTime || new Date(params.startTime.getTime() + 60 * 60 * 1000);
+    const endTime =
+      params.endTime || new Date(params.startTime.getTime() + 60 * 60 * 1000);
 
     // Call real calendar event creation
     const result = await createEvent({
@@ -58,7 +59,8 @@ export async function createCalendarEvent(params: {
     console.error('Error creating calendar event:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to create event',
+      message:
+        error instanceof Error ? error.message : 'Failed to create event',
     };
   }
 }
@@ -99,7 +101,8 @@ export async function updateCalendarEvent(params: {
     console.error('Error updating calendar event:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to update event',
+      message:
+        error instanceof Error ? error.message : 'Failed to update event',
     };
   }
 }
@@ -126,7 +129,8 @@ export async function deleteCalendarEvent(params: {
     console.error('Error deleting calendar event:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to delete event',
+      message:
+        error instanceof Error ? error.message : 'Failed to delete event',
     };
   }
 }
@@ -158,7 +162,8 @@ export async function rescheduleEvent(params: {
     console.error('Error rescheduling event:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to reschedule event',
+      message:
+        error instanceof Error ? error.message : 'Failed to reschedule event',
     };
   }
 }
@@ -172,7 +177,8 @@ export async function searchCalendarEvents(params: {
 }): Promise<any[]> {
   try {
     const startDate = params.startDate || new Date();
-    const endDate = params.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const endDate =
+      params.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
 
     const result = await getCalendarEvents(startDate, endDate);
 
@@ -184,10 +190,11 @@ export async function searchCalendarEvents(params: {
     let events = result.events;
     if (params.query) {
       const query = params.query.toLowerCase();
-      events = events.filter((event: any) =>
-        event.title?.toLowerCase().includes(query) ||
-        event.description?.toLowerCase().includes(query) ||
-        event.location?.toLowerCase().includes(query)
+      events = events.filter(
+        (event: any) =>
+          event.title?.toLowerCase().includes(query) ||
+          event.description?.toLowerCase().includes(query) ||
+          event.location?.toLowerCase().includes(query)
       );
     }
 

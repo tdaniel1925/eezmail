@@ -38,7 +38,10 @@ import {
 } from '@/lib/folders/actions';
 
 // Rule creation
-import { createEmailRule, parseNaturalLanguageRule } from '@/lib/chat/rule-creator';
+import {
+  createEmailRule,
+  parseNaturalLanguageRule,
+} from '@/lib/chat/rule-creator';
 
 // Undo system
 import { undoAction } from '@/lib/chat/undo';
@@ -163,14 +166,18 @@ export async function POST(req: Request): Promise<Response> {
 
       // ========== CONTACT OPERATIONS ==========
       case 'search_contacts':
-        const contactSearchResult = await omniscientSearch(args.query, user.id, {
-          includeEmails: false,
-          includeContacts: true,
-          includeCalendar: false,
-          includeTasks: false,
-          includeSettings: false,
-          contactLimit: args.limit || 10,
-        });
+        const contactSearchResult = await omniscientSearch(
+          args.query,
+          user.id,
+          {
+            includeEmails: false,
+            includeContacts: true,
+            includeCalendar: false,
+            includeTasks: false,
+            includeSettings: false,
+            contactLimit: args.limit || 10,
+          }
+        );
         result = contactSearchResult.contacts;
         message = contactSearchResult.contacts.summary;
         break;
@@ -202,14 +209,18 @@ export async function POST(req: Request): Promise<Response> {
 
       // ========== CALENDAR OPERATIONS ==========
       case 'search_calendar':
-        const calendarSearchResult = await omniscientSearch(args.query, user.id, {
-          includeEmails: false,
-          includeContacts: false,
-          includeCalendar: true,
-          includeTasks: false,
-          includeSettings: false,
-          calendarLimit: args.limit || 10,
-        });
+        const calendarSearchResult = await omniscientSearch(
+          args.query,
+          user.id,
+          {
+            includeEmails: false,
+            includeContacts: false,
+            includeCalendar: true,
+            includeTasks: false,
+            includeSettings: false,
+            calendarLimit: args.limit || 10,
+          }
+        );
         result = calendarSearchResult.calendar;
         message = calendarSearchResult.calendar.summary;
         break;
