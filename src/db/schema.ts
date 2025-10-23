@@ -493,6 +493,12 @@ export const emailFolders = pgTable(
     type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
     parentId: uuid('parent_id'), // For nested folders
     unreadCount: integer('unread_count').default(0),
+    
+    // Per-folder sync tracking
+    syncCursor: text('sync_cursor'), // Delta link or page token for this folder
+    lastSyncAt: timestamp('last_sync_at'), // When this folder was last synced
+    syncStatus: text('sync_status').default('idle'), // 'idle', 'syncing', 'error'
+    
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -500,6 +506,7 @@ export const emailFolders = pgTable(
     accountExternalUnique: uniqueIndex(
       'email_folders_account_external_unique'
     ).on(table.accountId, table.externalId),
+    lastSyncAtIdx: index('email_folders_last_sync_at_idx').on(table.lastSyncAt),
   })
 );
 

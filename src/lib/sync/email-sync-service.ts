@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { emailAccounts, emails, emailFolders } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { categorizeIncomingEmail } from '@/lib/screener/email-categorizer';
 import { TokenManager } from '@/lib/email/token-manager';
@@ -330,38 +330,53 @@ async function syncWithMicrosoftGraph(
   try {
     console.log('📧 Syncing with Microsoft Graph API...');
 
-    // Step 1: Sync folders and get folder mapping
+    // Step 1: Sync folders and get folder list
     console.log('📁 Step 1: Syncing folders...');
-    const folderMapping = await syncFoldersWithGraph(
+    const folders = await syncFoldersWithGraph(
       account,
       accountId,
       userId,
       accessToken
     );
 
-    // Step 2: Sync inbox emails
-    console.log('📧 Step 2: Syncing inbox emails...');
-    await syncEmailsWithGraph(
-      account,
-      accountId,
-      userId,
-      folderMapping,
-      accessToken,
-      syncType,
-      'inbox' // Sync inbox folder
-    );
+    console.log(`📊 Found ${folders.length} folders to sync`);
 
-    // Step 3: Sync sent emails
-    console.log('📤 Step 3: Syncing sent emails...');
-    await syncEmailsWithGraph(
-      account,
-      accountId,
-      userId,
-      folderMapping,
-      accessToken,
-      syncType,
-      'sentitems' // Sync sent folder
-    );
+    // Step 2: Sync messages from ALL folders (not just inbox and sent)
+    console.log(`📧 Step 2: Syncing messages from ALL ${folders.length} folders...`);
+    
+    // Filter out system folders we don't want to sync (e.g., Deleted Items, Junk Email)
+    const foldersToSync = folders.filter((folder: any) => {
+      const normalizedName = folder.displayName.toLowerCase();
+      // Skip deleted/trash and junk/spam folders (they're synced separately if needed)
+      return (
+        folder.totalItemCount > 0 &&
+        !normalizedName.includes('deleted items') &&
+        !normalizedName.includes('conversation history') &&
+        !normalizedName.includes('sync issues')
+      );
+    });
+
+    console.log(`📂 Syncing ${foldersToSync.length} active folders`);
+
+    for (const folder of foldersToSync) {
+      try {
+        console.log(`📁 Syncing folder: ${folder.displayName} (${folder.totalItemCount} items)`);
+        
+        await syncEmailsWithGraph(
+          account,
+          accountId,
+          userId,
+          {}, // folderMapping not needed anymore
+          accessToken,
+          syncType,
+          folder.id, // External folder ID
+          normalizeFolderName(folder.displayName) // Normalized name
+        );
+      } catch (error) {
+        console.error(`❌ Failed to sync folder "${folder.displayName}":`, error);
+        // Continue with other folders even if one fails
+      }
+    }
 
     console.log('✅ Microsoft Graph sync completed');
   } catch (error) {
@@ -378,7 +393,7 @@ async function syncFoldersWithGraph(
   accountId: string,
   userId: string,
   accessToken: string
-): Promise<Record<string, string>> {
+): Promise<any[]> {
   try {
     const response = await fetch(
       'https://graph.microsoft.com/v1.0/me/mailFolders',
@@ -399,13 +414,9 @@ async function syncFoldersWithGraph(
 
     console.log(`📁 Found ${folders.length} folders`);
 
-    // Create folder mapping (folderId -> normalized folderName)
-    const folderMapping: Record<string, string> = {};
-
     // Insert or update folders in database
     for (const folder of folders) {
       const normalizedName = normalizeFolderName(folder.displayName);
-      folderMapping[folder.id] = normalizedName;
 
       await db
         .insert(emailFolders)
@@ -415,6 +426,7 @@ async function syncFoldersWithGraph(
           name: normalizedName,
           externalId: folder.id,
           type: mapFolderType(folder.displayName),
+          syncStatus: 'idle',
         })
         .onConflictDoUpdate({
           target: [emailFolders.accountId, emailFolders.externalId],
@@ -426,11 +438,11 @@ async function syncFoldersWithGraph(
     }
 
     console.log(`✅ Synced ${folders.length} folders`);
-    return folderMapping;
+    return folders;
   } catch (error) {
     console.error('Error syncing folders with Graph:', error);
-    // Return empty mapping if folder sync fails
-    return {};
+    // Return empty array if folder sync fails
+    return [];
   }
 }
 
@@ -460,29 +472,31 @@ async function syncEmailsWithGraph(
   folderMapping: Record<string, string> = {},
   accessToken: string,
   syncType: 'initial' | 'manual' | 'auto' = 'auto',
-  folderName: string = 'inbox' // inbox or sentitems
+  folderExternalId: string = 'inbox', // External folder ID from Microsoft
+  folderName: string = 'inbox' // Normalized folder name
 ) {
   try {
-    // Get the last sync cursor (deltaLink or skiptoken) if exists
-    const accountRecord = await db.query.emailAccounts.findFirst({
-      where: (accounts, { eq }) => eq(accounts.id, accountId),
+    // Get folder record to retrieve folder-specific sync cursor
+    const folderRecord = await db.query.emailFolders.findFirst({
+      where: (folders, { and, eq }) =>
+        and(
+          eq(folders.accountId, accountId),
+          eq(folders.externalId, folderExternalId)
+        ),
     });
 
-    // Use folder-specific sync cursor key
-    const cursorKey =
-      folderName === 'sentitems' ? 'sentSyncCursor' : 'syncCursor';
-    const deltaLink = (accountRecord as any)?.[cursorKey];
+    const deltaLink = folderRecord?.syncCursor;
 
     // Use delta query if we have a deltaLink, otherwise do initial sync
     let currentUrl: string | null;
     if (deltaLink && deltaLink.includes('delta')) {
       // Use the stored deltaLink for incremental sync
       currentUrl = deltaLink;
-      console.log(`📊 Using delta sync for ${folderName}`);
+      console.log(`📊 Using delta sync for folder "${folderName}" (${folderExternalId})`);
     } else {
       // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
-      currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderName}/messages/delta?$top=100&$select=id,conversationId,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
-      console.log(`🔄 Performing initial delta sync for ${folderName}`);
+      currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderExternalId}/messages/delta?$top=100&$select=id,conversationId,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
+      console.log(`🔄 Performing initial delta sync for folder "${folderName}" (${folderExternalId})`);
     }
 
     let totalSynced = 0;
@@ -615,30 +629,46 @@ async function syncEmailsWithGraph(
       }
     }
 
-    // Update sync cursor with final deltaLink
-    if (finalDeltaLink) {
-      const updateData: any = {
-        updatedAt: new Date(),
-      };
-
-      // Use folder-specific cursor key
-      if (folderName === 'sentitems') {
-        updateData.sentSyncCursor = finalDeltaLink;
-      } else {
-        updateData.syncCursor = finalDeltaLink;
-      }
-
+    // Update sync cursor with final deltaLink in the folder record
+    if (finalDeltaLink && folderRecord) {
       await db
-        .update(emailAccounts)
-        .set(updateData)
-        .where(eq(emailAccounts.id, accountId));
+        .update(emailFolders)
+        .set({
+          syncCursor: finalDeltaLink,
+          lastSyncAt: new Date(),
+          syncStatus: 'idle',
+          updatedAt: new Date(),
+        })
+        .where(eq(emailFolders.id, folderRecord.id));
 
-      console.log(`✅ Delta link saved for ${folderName}`);
+      console.log(`✅ Delta link saved for folder "${folderName}" (${folderExternalId})`);
     }
 
-    console.log(`✅ Synced ${totalSynced} emails from ${folderName}`);
+    console.log(`✅ Synced ${totalSynced} emails from folder "${folderName}"`);
   } catch (error) {
-    console.error(`Error syncing emails from ${folderName}:`, error);
+    console.error(`Error syncing emails from folder "${folderName}":`, error);
+    
+    // Mark folder as error if it exists
+    if (folderExternalId) {
+      const folderRecord = await db.query.emailFolders.findFirst({
+        where: (folders, { and, eq }) =>
+          and(
+            eq(folders.accountId, accountId),
+            eq(folders.externalId, folderExternalId)
+          ),
+      });
+      
+      if (folderRecord) {
+        await db
+          .update(emailFolders)
+          .set({
+            syncStatus: 'error',
+            updatedAt: new Date(),
+          })
+          .where(eq(emailFolders.id, folderRecord.id));
+      }
+    }
+    
     throw error;
   }
 }
