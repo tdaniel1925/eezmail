@@ -562,7 +562,7 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     <span>Template</span>
                   </button>
 
-                  {/* Dictate to AI Button - Voice to Full Email */}
+                  {/* AI Dictation Button - Converts speech to formatted email text */}
                   <button
                     onClick={props.handleDictationToggle}
                     className={`flex items-center space-x-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
@@ -570,7 +570,7 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50'
                     }`}
-                    title="Speak about your email and AI will write it for you"
+                    title="Speak naturally and AI will compose a professional email for you"
                   >
                     {props.isDictating ? (
                       <>
@@ -579,8 +579,8 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                       </>
                     ) : (
                       <>
-                        <Mic className="h-4 w-4" />
-                        <span>Dictate to AI</span>
+                        <Sparkles className="h-4 w-4" />
+                        <span>AI Dictation</span>
                       </>
                     )}
                   </button>
@@ -596,7 +596,7 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     disabled={!props.body}
                   />
 
-                  {/* Record Audio Button */}
+                  {/* Voice Message Button - Records audio to attach as file */}
                   <AnimatedButton
                     variant={
                       props.isRecordingVoiceMessage ? 'ripple' : 'particles'
@@ -614,15 +614,15 @@ export function EmailComposerModal(props: EmailComposerModalProps) {
                     className={`text-sm ${props.isRecordingVoiceMessage ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'}`}
                     title={
                       props.isRecordingVoiceMessage
-                        ? 'Stop recording audio message'
-                        : 'Record an audio message to attach to the email'
+                        ? 'Stop recording voice message'
+                        : 'Record a voice message to attach as an audio file (up to 5 minutes)'
                     }
                   >
                     {props.isUploadingVoice
                       ? 'Uploading...'
                       : props.isRecordingVoiceMessage
-                        ? 'Stop'
-                        : 'Record Audio'}
+                        ? 'Stop Recording'
+                        : 'Voice Message'}
                   </AnimatedButton>
                 </div>
 
