@@ -3,8 +3,6 @@
  * Detects meetings in emails and extracts details using AI
  */
 
-'use server';
-
 import OpenAI from 'openai';
 import { db } from '@/lib/db';
 import { emails } from '@/db/schema';
@@ -38,6 +36,8 @@ export async function detectMeetingInEmail(
   emailContent: string,
   subject?: string
 ): Promise<MeetingDetails> {
+  'use server';
+  
   const text = `Subject: ${subject || ''}\n\n${emailContent}`;
 
   // Quick keyword check first
@@ -168,6 +168,8 @@ export async function detectMeetingInEmailById(
   emailId: string,
   userId: string
 ): Promise<MeetingDetails> {
+  'use server';
+  
   try {
     const [email] = await db
       .select({
@@ -204,6 +206,8 @@ export async function generateCalendarEvent(
   description: string;
   location?: string;
 }> {
+  'use server';
+  
   // Parse date and time
   const title = meeting.title || emailSubject || 'Meeting';
   const description = meeting.agenda || 'Meeting scheduled via email';
