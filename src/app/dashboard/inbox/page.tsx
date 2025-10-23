@@ -46,7 +46,7 @@ function NoAccountsMessage() {
           </p>
         </div>
         <a
-          href="/dashboard/settings/accounts"
+          href="/dashboard/settings?tab=email-accounts"
           className="inline-flex items-center px-4 py-2 bg-[#FF4C5A] text-white rounded-lg hover:bg-[#FF4C5A]/90 transition-colors"
         >
           Connect Account
