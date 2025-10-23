@@ -1175,40 +1175,17 @@ async function syncWithImap(
 
     console.log(`✅ Synced ${mailboxes.length} IMAP mailboxes`);
 
-    // Step 2: Sync messages from INBOX
-    console.log('📧 Step 2: Syncing IMAP messages from INBOX...');
-    await syncImapFolderMessages(imap, 'INBOX', accountId, userId, syncType);
-
-    // Step 3: Sync messages from Sent folder
-    console.log('📤 Step 3: Syncing IMAP messages from Sent...');
-    // Try different possible Sent folder names
-    const sentFolderNames = [
-      'Sent',
-      'Sent Items',
-      'Sent Mail',
-      '[Gmail]/Sent Mail',
-    ];
-    let sentFolderSynced = false;
-
-    for (const sentFolder of sentFolderNames) {
+    // Step 2: Sync messages from ALL folders (not just INBOX and Sent)
+    console.log(`📧 Step 2: Syncing IMAP messages from ALL ${mailboxes.length} folders...`);
+    
+    for (const mailbox of mailboxes) {
       try {
-        await syncImapFolderMessages(
-          imap,
-          sentFolder,
-          accountId,
-          userId,
-          syncType
-        );
-        sentFolderSynced = true;
-        break; // Success, stop trying other names
+        console.log(`📂 Syncing folder: ${mailbox.name} (${mailbox.path})`);
+        await syncImapFolderMessages(imap, mailbox.path, accountId, userId, syncType);
       } catch (error) {
-        console.log(`📫 Sent folder "${sentFolder}" not found, trying next...`);
-        // Try next folder name
+        console.error(`❌ Failed to sync folder ${mailbox.name}:`, error);
+        // Continue with other folders even if one fails
       }
-    }
-
-    if (!sentFolderSynced) {
-      console.log('⚠️ Could not find Sent folder, skipping sent emails sync');
     }
 
     await imap.disconnect();
@@ -1229,7 +1206,11 @@ async function syncImapFolderMessages(
   userId: string,
   syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
-  const messages = await imap.fetchMessages(folderName, 50);
+  // Fetch ALL messages (no limit) for initial/manual sync, or recent 50 for auto-sync
+  const limit = (syncType === 'initial' || syncType === 'manual') ? 0 : 50;
+  const messages = await imap.fetchMessages(folderName, limit);
+  
+  console.log(`   📨 Found ${messages.length} messages in ${folderName}`);
 
   let syncedCount = 0;
   for (const message of messages) {

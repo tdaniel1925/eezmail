@@ -117,18 +117,18 @@ Respond in JSON format:
 
     try {
       const parsed = JSON.parse(response);
-      
+
       // Parse the start and end times
       let startTime: Date | undefined;
       let endTime: Date | undefined;
-      
+
       if (parsed.date && parsed.time) {
         try {
           // Combine date and time
           const timeStr = convertToTime24(parsed.time);
           const dateTimeStr = `${parsed.date}T${timeStr}`;
           startTime = new Date(dateTimeStr);
-          
+
           // Calculate end time
           const durationMinutes = parseDuration(parsed.duration) || 60;
           endTime = new Date(startTime.getTime() + durationMinutes * 60000);
@@ -136,7 +136,7 @@ Respond in JSON format:
           console.error('Error parsing meeting date/time:', e);
         }
       }
-      
+
       return {
         detected: parsed.detected || false,
         confidence: parsed.confidence || 0,

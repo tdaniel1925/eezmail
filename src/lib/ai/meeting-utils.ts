@@ -79,4 +79,3 @@ export function parseDuration(duration?: string): number | null {
 
   return minutes || null;
 }
-

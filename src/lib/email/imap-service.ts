@@ -136,10 +136,19 @@ export class ImapService {
             return resolve([]);
           }
 
-          // Fetch the last N messages
-          const start = Math.max(1, box.messages.total - limit + 1);
-          const end = box.messages.total;
-          const fetchRange = `${start}:${end}`;
+          // Fetch messages: if limit is 0, fetch ALL messages
+          let fetchRange: string;
+          if (limit === 0 || limit >= box.messages.total) {
+            // Fetch all messages
+            fetchRange = `1:${box.messages.total}`;
+            console.log(`   📥 Fetching ALL ${box.messages.total} messages from ${mailbox}`);
+          } else {
+            // Fetch the last N messages
+            const start = Math.max(1, box.messages.total - limit + 1);
+            const end = box.messages.total;
+            fetchRange = `${start}:${end}`;
+            console.log(`   📥 Fetching last ${limit} messages from ${mailbox}`);
+          }
 
           const fetch = imap.seq.fetch(fetchRange, {
             bodies: ['HEADER', 'TEXT'],
