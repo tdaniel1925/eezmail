@@ -170,7 +170,11 @@ function SettingsPageContent(): JSX.Element {
 
     switch (activeTab) {
       case 'account':
-        return <AccountSettings user={userData.user} />;
+        return <AccountSettings 
+          user={userData.user} 
+          emailAccounts={userData.emailAccounts}
+          defaultAccountId={userData.defaultAccountId}
+        />;
       case 'email-accounts':
         return <ConnectedAccounts accounts={userData.emailAccounts} />;
       case 'communication':
@@ -243,8 +247,8 @@ function SettingsPageContent(): JSX.Element {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-white dark:bg-black">
       {/* Left Sidebar - Settings Navigation */}
-      <aside className="w-[280px] flex-shrink-0 border-r border-gray-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md overflow-y-auto">
-        <div className="p-6">
+      <aside className="w-[280px] max-md:w-full max-md:border-b max-md:border-r-0 flex-shrink-0 border-r border-gray-200/80 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md overflow-y-auto">
+        <div className="p-6 max-md:p-4">
           {/* Back to Email Link */}
           <Link
             href="/dashboard/inbox"

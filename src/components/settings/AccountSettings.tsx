@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Lock, AlertTriangle } from 'lucide-react';
+import { User, Lock, AlertTriangle, Globe, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
@@ -14,9 +14,15 @@ import type { User as UserType } from '@/db/schema';
 
 interface AccountSettingsProps {
   user: UserType;
+  emailAccounts?: any[];
+  defaultAccountId?: string | null;
 }
 
-export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
+export function AccountSettings({ 
+  user, 
+  emailAccounts = [],
+  defaultAccountId 
+}: AccountSettingsProps): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -205,6 +211,91 @@ export function AccountSettings({ user }: AccountSettingsProps): JSX.Element {
             </Button>
           </div>
         </form>
+      </div>
+
+      {/* Preferences */}
+      <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <Globe className="h-5 w-5 text-gray-700 dark:text-white/70" />
+          <h3 className="font-semibold text-gray-900 dark:text-white">
+            Preferences
+          </h3>
+        </div>
+
+        <div className="space-y-4">
+          {/* Default Email Account */}
+          {emailAccounts.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Default Email Account
+              </label>
+              <select
+                value={defaultAccountId || ''}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                disabled
+              >
+                <option value="">Select default account</option>
+                {emailAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.email}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                This account will be used by default when composing new emails
+              </p>
+            </div>
+          )}
+
+          {/* Timezone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Timezone
+            </label>
+            <select
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+              disabled
+            >
+              <option>America/New_York (EST)</option>
+              <option>America/Chicago (CST)</option>
+              <option>America/Denver (MST)</option>
+              <option>America/Los_Angeles (PST)</option>
+              <option>Europe/London (GMT)</option>
+              <option>Europe/Paris (CET)</option>
+              <option>Asia/Tokyo (JST)</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Used for displaying email timestamps
+            </p>
+          </div>
+
+          {/* Language */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Language
+            </label>
+            <select
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+              disabled
+            >
+              <option>English (US)</option>
+              <option>English (UK)</option>
+              <option>Spanish</option>
+              <option>French</option>
+              <option>German</option>
+              <option>Japanese</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Application interface language
+            </p>
+          </div>
+
+          <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-900">
+            <p className="text-xs text-blue-900 dark:text-blue-100">
+              💡 Timezone and language settings will be available in a future update
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Password */}
