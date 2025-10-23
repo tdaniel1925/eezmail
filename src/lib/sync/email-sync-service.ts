@@ -8,12 +8,11 @@ import { categorizeIncomingEmail } from '@/lib/screener/email-categorizer';
 import { TokenManager } from '@/lib/email/token-manager';
 import { GmailService } from '@/lib/email/gmail-api';
 import { ImapService } from '@/lib/email/imap-service';
-import { logEmailReceived } from '@/lib/contacts/timeline-actions';
-import { findContactByEmail } from '@/lib/contacts/helpers';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
-import { embedEmail } from '@/lib/rag/embedding-pipeline';
 import { generateThreadId } from '@/lib/sync/threading-service';
 import { withRateLimit, getAccountRateLimit } from '@/lib/sync/rate-limiter';
+import { queueEmbeddingJob } from '@/lib/rag/embedding-queue';
+import { queueContactTimelineEvent } from '@/lib/contacts/timeline-queue';
 
 /**
  * Map folder name to email category
@@ -343,8 +342,10 @@ async function syncWithMicrosoftGraph(
     console.log(`📊 Found ${folders.length} folders to sync`);
 
     // Step 2: Sync messages from ALL folders (not just inbox and sent)
-    console.log(`📧 Step 2: Syncing messages from ALL ${folders.length} folders...`);
-    
+    console.log(
+      `📧 Step 2: Syncing messages from ALL ${folders.length} folders...`
+    );
+
     // Filter out system folders we don't want to sync (e.g., Deleted Items, Junk Email)
     const foldersToSync = folders.filter((folder: any) => {
       const normalizedName = folder.displayName.toLowerCase();
@@ -361,8 +362,10 @@ async function syncWithMicrosoftGraph(
 
     for (const folder of foldersToSync) {
       try {
-        console.log(`📁 Syncing folder: ${folder.displayName} (${folder.totalItemCount} items)`);
-        
+        console.log(
+          `📁 Syncing folder: ${folder.displayName} (${folder.totalItemCount} items)`
+        );
+
         await syncEmailsWithGraph(
           account,
           accountId,
@@ -374,7 +377,10 @@ async function syncWithMicrosoftGraph(
           normalizeFolderName(folder.displayName) // Normalized name
         );
       } catch (error) {
-        console.error(`❌ Failed to sync folder "${folder.displayName}":`, error);
+        console.error(
+          `❌ Failed to sync folder "${folder.displayName}":`,
+          error
+        );
         // Continue with other folders even if one fails
       }
     }
@@ -498,11 +504,15 @@ async function syncEmailsWithGraph(
     if (deltaLink && deltaLink.includes('delta')) {
       // Use the stored deltaLink for incremental sync
       currentUrl = deltaLink;
-      console.log(`📊 Using delta sync for folder "${folderName}" (${folderExternalId})`);
+      console.log(
+        `📊 Using delta sync for folder "${folderName}" (${folderExternalId})`
+      );
     } else {
       // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
       currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderExternalId}/messages/delta?$top=100&$select=id,conversationId,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
-      console.log(`🔄 Performing initial delta sync for folder "${folderName}" (${folderExternalId})`);
+      console.log(
+        `🔄 Performing initial delta sync for folder "${folderName}" (${folderExternalId})`
+      );
     }
 
     let totalSynced = 0;
@@ -655,13 +665,15 @@ async function syncEmailsWithGraph(
         })
         .where(eq(emailFolders.id, folderRecord.id));
 
-      console.log(`✅ Delta link saved for folder "${folderName}" (${folderExternalId})`);
+      console.log(
+        `✅ Delta link saved for folder "${folderName}" (${folderExternalId})`
+      );
     }
 
     console.log(`✅ Synced ${totalSynced} emails from folder "${folderName}"`);
   } catch (error) {
     console.error(`Error syncing emails from folder "${folderName}":`, error);
-    
+
     // Mark folder as error if it exists
     if (folderExternalId) {
       const folderRecord = await db.query.emailFolders.findFirst({
@@ -671,7 +683,7 @@ async function syncEmailsWithGraph(
             eq(folders.externalId, folderExternalId)
           ),
       });
-      
+
       if (folderRecord) {
         await db
           .update(emailFolders)
@@ -682,7 +694,7 @@ async function syncEmailsWithGraph(
           .where(eq(emailFolders.id, folderRecord.id));
       }
     }
-    
+
     throw error;
   }
 }
@@ -1092,31 +1104,24 @@ async function syncGmailMessages(
 
           const emailId = insertResult[0]?.id;
 
-          // Auto-log to contact timeline (don't block on errors)
-          try {
+          // Queue for background processing (non-blocking)
+          if (emailId) {
+            // Queue embedding generation (don't block sync)
+            queueEmbeddingJob(emailId, userId, 0).catch((error) =>
+              console.error(`Failed to queue embedding:`, error)
+            );
+
+            // Queue contact timeline event (don't block sync)
             const senderEmail = extractEmailAddress(emailData.fromAddress);
             if (senderEmail) {
-              const contactId = await findContactByEmail(senderEmail);
-              if (contactId) {
-                await logEmailReceived(
-                  contactId,
-                  emailData.subject,
-                  messageDetails.id
-                );
-              }
-            }
-          } catch (logError) {
-            // Don't block sync on logging errors
-            console.error(`Failed to log email to contact timeline:`, logError);
-          }
-
-          // Generate embedding for RAG (don't block on errors)
-          if (emailId) {
-            try {
-              await embedEmail(emailId);
-            } catch (embedError) {
-              // Don't block sync on embedding errors
-              console.error(`Failed to embed email:`, embedError);
+              queueContactTimelineEvent({
+                emailId,
+                userId,
+                senderEmail,
+                subject: emailData.subject,
+              }).catch((error) =>
+                console.error(`Failed to queue timeline event:`, error)
+              );
             }
           }
 
@@ -1241,12 +1246,20 @@ async function syncWithImap(
     console.log(`✅ Synced ${mailboxes.length} IMAP mailboxes`);
 
     // Step 2: Sync messages from ALL folders (not just INBOX and Sent)
-    console.log(`📧 Step 2: Syncing IMAP messages from ALL ${mailboxes.length} folders...`);
-    
+    console.log(
+      `📧 Step 2: Syncing IMAP messages from ALL ${mailboxes.length} folders...`
+    );
+
     for (const mailbox of mailboxes) {
       try {
         console.log(`📂 Syncing folder: ${mailbox.name} (${mailbox.path})`);
-        await syncImapFolderMessages(imap, mailbox.path, accountId, userId, syncType);
+        await syncImapFolderMessages(
+          imap,
+          mailbox.path,
+          accountId,
+          userId,
+          syncType
+        );
       } catch (error) {
         console.error(`❌ Failed to sync folder ${mailbox.name}:`, error);
         // Continue with other folders even if one fails
@@ -1272,9 +1285,9 @@ async function syncImapFolderMessages(
   syncType: 'initial' | 'manual' | 'auto' = 'auto'
 ) {
   // Fetch ALL messages (no limit) for initial/manual sync, or recent 50 for auto-sync
-  const limit = (syncType === 'initial' || syncType === 'manual') ? 0 : 50;
+  const limit = syncType === 'initial' || syncType === 'manual' ? 0 : 50;
   const messages = await imap.fetchMessages(folderName, limit);
-  
+
   console.log(`   📨 Found ${messages.length} messages in ${folderName}`);
 
   let syncedCount = 0;
@@ -1294,15 +1307,23 @@ async function syncImapFolderMessages(
           emailCategory = mapFolderToCategory('sent');
         } else if (normalizedFolder.includes('draft')) {
           emailCategory = mapFolderToCategory('drafts');
-        } else if (normalizedFolder.includes('trash') || normalizedFolder.includes('deleted')) {
+        } else if (
+          normalizedFolder.includes('trash') ||
+          normalizedFolder.includes('deleted')
+        ) {
           emailCategory = mapFolderToCategory('trash');
-        } else if (normalizedFolder.includes('spam') || normalizedFolder.includes('junk')) {
+        } else if (
+          normalizedFolder.includes('spam') ||
+          normalizedFolder.includes('junk')
+        ) {
           emailCategory = mapFolderToCategory('spam');
         } else {
           emailCategory = mapFolderToCategory('inbox'); // Default fallback
         }
         screenedBy = 'manual_sync';
-        console.log(`📬 ${syncType} sync - Email from "${folderName}" going to: ${emailCategory}`);
+        console.log(
+          `📬 ${syncType} sync - Email from "${folderName}" going to: ${emailCategory}`
+        );
       } else {
         // Auto-sync: use AI categorization
         emailCategory = await categorizeIncomingEmail(
@@ -1363,30 +1384,24 @@ async function syncImapFolderMessages(
 
       const emailId = insertResult[0]?.id;
 
-      // Auto-log to contact timeline (don't block on errors)
-      try {
+      // Queue for background processing (non-blocking)
+      if (emailId) {
+        // Queue embedding generation (don't block sync)
+        queueEmbeddingJob(emailId, userId, 0).catch((error) =>
+          console.error(`Failed to queue embedding:`, error)
+        );
+
+        // Queue contact timeline event (don't block sync)
         const senderEmail = extractEmailAddress(emailData.fromAddress);
         if (senderEmail) {
-          const contactId = await findContactByEmail(senderEmail);
-          if (contactId) {
-            await logEmailReceived(contactId, emailData.subject, message.id);
-          }
-        }
-      } catch (logError) {
-        // Don't block sync on logging errors
-        console.error(
-          `Failed to log IMAP email to contact timeline:`,
-          logError
-        );
-      }
-
-      // Generate embedding for RAG (don't block on errors)
-      if (emailId) {
-        try {
-          await embedEmail(emailId);
-        } catch (embedError) {
-          // Don't block sync on embedding errors
-          console.error(`Failed to embed IMAP email:`, embedError);
+          queueContactTimelineEvent({
+            emailId,
+            userId,
+            senderEmail,
+            subject: emailData.subject,
+          }).catch((error) =>
+            console.error(`Failed to queue timeline event:`, error)
+          );
         }
       }
 

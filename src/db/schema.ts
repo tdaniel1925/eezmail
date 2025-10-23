@@ -493,12 +493,12 @@ export const emailFolders = pgTable(
     type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
     parentId: uuid('parent_id'), // For nested folders
     unreadCount: integer('unread_count').default(0),
-    
+
     // Per-folder sync tracking
     syncCursor: text('sync_cursor'), // Delta link or page token for this folder
     lastSyncAt: timestamp('last_sync_at'), // When this folder was last synced
     syncStatus: text('sync_status').default('idle'), // 'idle', 'syncing', 'error'
-    
+
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
   },
@@ -1834,12 +1834,10 @@ export const reminderMethodEnum = pgEnum('reminder_method', [
   'sms',
 ]);
 
-export const externalCalendarProviderEnum = pgEnum('external_calendar_provider', [
-  'google',
-  'microsoft',
-  'apple',
-  'other',
-]);
+export const externalCalendarProviderEnum = pgEnum(
+  'external_calendar_provider',
+  ['google', 'microsoft', 'apple', 'other']
+);
 
 export const syncDirectionEnum = pgEnum('sync_direction', [
   'pull',
@@ -1885,7 +1883,9 @@ export const calendarEvents = pgTable(
 
     // Integration with Emails
     emailThreadId: text('email_thread_id'), // Link to email thread
-    emailId: uuid('email_id').references(() => emails.id, { onDelete: 'set null' }),
+    emailId: uuid('email_id').references(() => emails.id, {
+      onDelete: 'set null',
+    }),
 
     // External Calendar Integration
     externalEventId: text('external_event_id'), // Google/MS calendar event ID
@@ -1901,9 +1901,13 @@ export const calendarEvents = pgTable(
     userIdIdx: index('calendar_events_user_id_idx').on(table.userId),
     startTimeIdx: index('calendar_events_start_time_idx').on(table.startTime),
     endTimeIdx: index('calendar_events_end_time_idx').on(table.endTime),
-    emailThreadIdx: index('calendar_events_email_thread_idx').on(table.emailThreadId),
+    emailThreadIdx: index('calendar_events_email_thread_idx').on(
+      table.emailThreadId
+    ),
     emailIdIdx: index('calendar_events_email_id_idx').on(table.emailId),
-    externalEventIdx: index('calendar_events_external_id_idx').on(table.externalEventId),
+    externalEventIdx: index('calendar_events_external_id_idx').on(
+      table.externalEventId
+    ),
     typeIdx: index('calendar_events_type_idx').on(table.type),
     statusIdx: index('calendar_events_status_idx').on(table.status),
   })
@@ -1923,7 +1927,8 @@ export const calendarAttendees = pgTable(
 
     email: text('email').notNull(),
     name: text('name'),
-    responseStatus: attendeeResponseStatusEnum('response_status').default('pending'),
+    responseStatus:
+      attendeeResponseStatusEnum('response_status').default('pending'),
     isOrganizer: boolean('is_organizer').default(false),
     isOptional: boolean('is_optional').default(false),
 
@@ -1996,7 +2001,9 @@ export const externalCalendars = pgTable(
   (table) => ({
     userIdIdx: index('external_calendars_user_id_idx').on(table.userId),
     providerIdx: index('external_calendars_provider_idx').on(table.provider),
-    syncEnabledIdx: index('external_calendars_sync_enabled_idx').on(table.syncEnabled),
+    syncEnabledIdx: index('external_calendars_sync_enabled_idx').on(
+      table.syncEnabled
+    ),
   })
 );
 
@@ -2163,7 +2170,9 @@ export const communicationLimits = pgTable('communication_limits', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' })
     .unique(),
-  planType: communicationPlanTypeEnum('plan_type').default('personal').notNull(),
+  planType: communicationPlanTypeEnum('plan_type')
+    .default('personal')
+    .notNull(),
   smsPerMinute: integer('sms_per_minute').default(1).notNull(),
   smsPerHour: integer('sms_per_hour').default(10).notNull(),
   smsPerDay: integer('sms_per_day').default(100).notNull(),
@@ -2191,7 +2200,9 @@ export const communicationUsage = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     type: communicationTypeEnum('type').notNull(),
     recipientPhone: text('recipient_phone').notNull(),
-    contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'set null' }),
+    contactId: uuid('contact_id').references(() => contacts.id, {
+      onDelete: 'set null',
+    }),
     status: communicationStatusEnum('status').notNull(),
     cost: varchar('cost', { length: 20 }),
     usedCustomTwilio: boolean('used_custom_twilio').default(false).notNull(),
@@ -2200,7 +2211,10 @@ export const communicationUsage = pgTable(
     sentAt: timestamp('sent_at').defaultNow().notNull(),
   },
   (table) => ({
-    userTimeIdx: index('comm_usage_user_time_idx').on(table.userId, table.sentAt),
+    userTimeIdx: index('comm_usage_user_time_idx').on(
+      table.userId,
+      table.sentAt
+    ),
     userTypeIdx: index('comm_usage_user_type_idx').on(table.userId, table.type),
     statusIdx: index('comm_usage_status_idx').on(table.status),
     contactIdx: index('comm_usage_contact_idx').on(table.contactId),
@@ -2331,14 +2345,100 @@ export type WebhookSubscription = typeof webhookSubscriptions.$inferSelect;
 export type NewWebhookSubscription = typeof webhookSubscriptions.$inferInsert;
 
 export type CommunicationSettings = typeof communicationSettings.$inferSelect;
-export type NewCommunicationSettings = typeof communicationSettings.$inferInsert;
+export type NewCommunicationSettings =
+  typeof communicationSettings.$inferInsert;
 
 export type CommunicationLimits = typeof communicationLimits.$inferSelect;
 export type NewCommunicationLimits = typeof communicationLimits.$inferInsert;
 
 export type CommunicationUsage = typeof communicationUsage.$inferSelect;
 export type NewCommunicationUsage = typeof communicationUsage.$inferInsert;
-export type CommunicationType = (typeof communicationTypeEnum.enumValues)[number];
-export type CommunicationStatus = (typeof communicationStatusEnum.enumValues)[number];
-export type CommunicationPlanType = (typeof communicationPlanTypeEnum.enumValues)[number];
+export type CommunicationType =
+  (typeof communicationTypeEnum.enumValues)[number];
+export type CommunicationStatus =
+  (typeof communicationStatusEnum.enumValues)[number];
+export type CommunicationPlanType =
+  (typeof communicationPlanTypeEnum.enumValues)[number];
 
+// ============================================================================
+// EMBEDDING QUEUE TABLE (For background RAG processing)
+// ============================================================================
+
+export const embeddingQueueStatusEnum = pgEnum('embedding_queue_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+]);
+
+export const embeddingQueue = pgTable(
+  'embedding_queue',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: embeddingQueueStatusEnum('status').default('pending').notNull(),
+    priority: integer('priority').default(0).notNull(), // Higher = more important
+    attempts: integer('attempts').default(0).notNull(),
+    lastAttemptAt: timestamp('last_attempt_at'),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    processedAt: timestamp('processed_at'),
+  },
+  (table) => ({
+    statusIdx: index('embedding_queue_status_idx').on(table.status),
+    priorityIdx: index('embedding_queue_priority_idx').on(
+      table.priority,
+      table.createdAt
+    ),
+    userIdIdx: index('embedding_queue_user_id_idx').on(table.userId),
+  })
+);
+
+export type EmbeddingQueueItem = typeof embeddingQueue.$inferSelect;
+export type NewEmbeddingQueueItem = typeof embeddingQueue.$inferInsert;
+
+// ============================================================================
+// CONTACT TIMELINE QUEUE TABLE (For background contact logging)
+// ============================================================================
+
+export const timelineQueueStatusEnum = pgEnum('timeline_queue_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+]);
+
+export const contactTimelineQueue = pgTable(
+  'contact_timeline_queue',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    emailId: uuid('email_id')
+      .notNull()
+      .references(() => emails.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    senderEmail: text('sender_email').notNull(),
+    subject: text('subject').notNull(),
+    status: timelineQueueStatusEnum('status').default('pending').notNull(),
+    attempts: integer('attempts').default(0).notNull(),
+    lastAttemptAt: timestamp('last_attempt_at'),
+    errorMessage: text('error_message'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    processedAt: timestamp('processed_at'),
+  },
+  (table) => ({
+    statusIdx: index('timeline_queue_status_idx').on(table.status),
+    createdAtIdx: index('timeline_queue_created_at_idx').on(table.createdAt),
+    userIdIdx: index('timeline_queue_user_id_idx').on(table.userId),
+  })
+);
+
+export type ContactTimelineQueueItem = typeof contactTimelineQueue.$inferSelect;
+export type NewContactTimelineQueueItem =
+  typeof contactTimelineQueue.$inferInsert;
