@@ -13,6 +13,7 @@ import { findContactByEmail } from '@/lib/contacts/helpers';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
 import { embedEmail } from '@/lib/rag/embedding-pipeline';
 import { generateThreadId } from '@/lib/sync/threading-service';
+import { withRateLimit, getAccountRateLimit } from '@/lib/sync/rate-limiter';
 
 /**
  * Map folder name to email category
@@ -395,14 +396,19 @@ async function syncFoldersWithGraph(
   accessToken: string
 ): Promise<any[]> {
   try {
-    const response = await fetch(
-      'https://graph.microsoft.com/v1.0/me/mailFolders',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
+    // Get rate limit config for this account
+    const rateLimitConfig = await getAccountRateLimit(accountId, 'outlook');
+
+    const response = await withRateLimit(
+      `sync-folders-${accountId}`,
+      rateLimitConfig,
+      () =>
+        fetch('https://graph.microsoft.com/v1.0/me/mailFolders', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
     );
 
     if (!response.ok) {
@@ -502,14 +508,22 @@ async function syncEmailsWithGraph(
     let totalSynced = 0;
     let finalDeltaLink: string | null = null;
 
+    // Get rate limit config for this account
+    const rateLimitConfig = await getAccountRateLimit(accountId, 'outlook');
+
     // Loop through all pages
     while (currentUrl) {
-      const response = await fetch(currentUrl, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await withRateLimit(
+        `sync-${accountId}`,
+        rateLimitConfig,
+        () =>
+          fetch(currentUrl!, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+      );
 
       if (!response.ok) {
         throw new Error(`Microsoft Graph API error: ${response.statusText}`);
@@ -844,13 +858,18 @@ async function syncGmailLabels(
   accessToken: string
 ) {
   try {
-    const response = await fetch(
-      'https://gmail.googleapis.com/gmail/v1/users/me/labels',
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
+    // Get rate limit config for this account
+    const rateLimitConfig = await getAccountRateLimit(accountId, 'gmail');
+
+    const response = await withRateLimit(
+      `sync-labels-${accountId}`,
+      rateLimitConfig,
+      () =>
+        fetch('https://gmail.googleapis.com/gmail/v1/users/me/labels', {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
     );
 
     if (!response.ok) {
@@ -910,6 +929,9 @@ async function syncGmailMessages(
     let pageToken: string | undefined = accountRecord?.syncCursor || undefined;
     let totalSynced = 0;
 
+    // Get rate limit config for this account
+    const rateLimitConfig = await getAccountRateLimit(accountId, 'gmail');
+
     // Continue until no more pages
     while (true) {
       // Fetch messages from Gmail API - increased to 100 per batch
@@ -919,11 +941,16 @@ async function syncGmailMessages(
         url += `&pageToken=${encodeURIComponent(pageToken)}`;
       }
 
-      const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await withRateLimit(
+        `sync-messages-${accountId}`,
+        rateLimitConfig,
+        () =>
+          fetch(url, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          })
+      );
 
       if (!response.ok) {
         throw new Error(`Gmail API error: ${response.statusText}`);
@@ -942,13 +969,18 @@ async function syncGmailMessages(
       let syncedCount = 0;
       for (const message of messages) {
         try {
-          const detailsResponse = await fetch(
-            `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
+          const detailsResponse = await withRateLimit(
+            `sync-message-details-${accountId}`,
+            rateLimitConfig,
+            () =>
+              fetch(
+                `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                  },
+                }
+              )
           );
 
           if (!detailsResponse.ok) {
