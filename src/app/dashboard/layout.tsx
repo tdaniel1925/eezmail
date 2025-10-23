@@ -3,16 +3,48 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import dynamic from 'next/dynamic';
 import { AutoSyncStarter } from '@/components/sync/AutoSyncStarter';
 import { SidebarWrapper } from '@/components/sidebar/SidebarWrapper';
 import { SidebarDataLoader } from '@/components/sidebar/SidebarDataLoader';
 import { KeyboardShortcutsProvider } from '@/components/layout/KeyboardShortcutsProvider';
 import { ChatbotContextProvider } from '@/components/ai/ChatbotContext';
-import { AIAssistantPanel } from '@/components/ai/AIAssistantPanelNew';
 import { ReplyLaterProvider } from '@/contexts/ReplyLaterContext';
-import { ReplyLaterStackWrapper } from '@/components/email/ReplyLaterStackWrapper';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
-import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+
+// Lazy load heavy, non-critical components
+const AIAssistantPanel = dynamic(
+  () =>
+    import('@/components/ai/AIAssistantPanelNew').then(
+      (mod) => mod.AIAssistantPanel
+    ),
+  {
+    ssr: false,
+    loading: () => null, // No loading state needed
+  }
+);
+
+const ReplyLaterStackWrapper = dynamic(
+  () =>
+    import('@/components/email/ReplyLaterStackWrapper').then(
+      (mod) => mod.ReplyLaterStackWrapper
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const NotificationCenter = dynamic(
+  () =>
+    import('@/components/notifications/NotificationCenter').then(
+      (mod) => mod.NotificationCenter
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
 
 export default async function DashboardLayout({
   children,

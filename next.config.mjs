@@ -16,10 +16,45 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Disable webpack caching to avoid file sync conflicts
+  // Enable webpack caching for better performance
   webpack: (config, { isServer }) => {
-    config.cache = false;
+    // Re-enable caching for performance (was disabled for sync conflicts)
+    // config.cache = false; // REMOVED - hurts performance
     return config;
+  },
+  // Production optimizations
+  compiler: {
+    // Remove console logs in production
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  // Enable SWC minification
+  swcMinify: true,
+  // Optimize page data fetching
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  // Headers for better caching
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
 };
 

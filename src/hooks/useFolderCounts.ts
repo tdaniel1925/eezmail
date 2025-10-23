@@ -30,18 +30,23 @@ const fetcher = async (url: string): Promise<FolderCounts> => {
  *
  * Features:
  * - Automatic caching with SWR
- * - Auto-refresh every 30 seconds
+ * - Auto-refresh every 60 seconds
  * - Instant display from cache
  * - Background revalidation
+ * - Conditional fetching (can be disabled)
  */
-export function useFolderCounts() {
+export function useFolderCounts(enabled: boolean = true) {
   const { data, error, isLoading, mutate } = useSWR<FolderCounts>(
-    '/api/folders/counts',
+    enabled ? '/api/folders/counts' : null,
     fetcher,
     {
-      refreshInterval: 30000, // Refresh every 30 seconds
-      revalidateOnFocus: true,
-      dedupingInterval: 2000, // Dedupe requests within 2 seconds
+      refreshInterval: 60000, // Refresh every 60 seconds (reduced from 30s)
+      revalidateOnFocus: false, // Disabled - too aggressive
+      dedupingInterval: 5000, // Dedupe requests within 5 seconds (increased from 2s)
+      // Keep previous data while revalidating
+      keepPreviousData: true,
+      // Don't retry errors too aggressively
+      shouldRetryOnError: false,
     }
   );
 

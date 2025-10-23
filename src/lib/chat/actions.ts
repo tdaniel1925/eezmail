@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { emails, contacts, emailAccounts, customFolders } from '@/db/schema';
 import { eq, inArray, and, or, like, sql } from 'drizzle-orm';
 import { recordAction } from './undo';
+import { sendEmail } from '@/lib/email/send-email';
 
 /**
  * Create a contact from email information
@@ -130,19 +131,22 @@ export async function sendEmailAction(params: {
       return { success: false, error: 'No active email account found' };
     }
 
-    // TODO: Implement actual email sending via provider (Nylas/Gmail/Microsoft)
-    // For now, log the email details
-    console.log('Sending email:', {
-      from: account.emailAddress,
-      to: params.to,
-      cc: params.cc,
-      bcc: params.bcc,
+    // Actually send the email via SMTP/OAuth
+    const result = await sendEmail({
+      accountId: account.id,
+      to: params.to.split(',').map((e) => e.trim()),
+      cc: params.cc?.split(',').map((e) => e.trim()),
+      bcc: params.bcc?.split(',').map((e) => e.trim()),
       subject: params.subject,
       body: params.body,
       isHtml: params.isHtml ?? true,
-      attachmentCount: params.attachments?.length || 0,
-      scheduledFor: params.scheduledFor,
+      attachments: params.attachments,
+      replyToMessageId: undefined,
     });
+
+    if (!result.success) {
+      return { success: false, error: result.error };
+    }
 
     // If scheduled, store in scheduledEmails table (to be implemented)
     if (params.scheduledFor) {

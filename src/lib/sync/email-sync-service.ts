@@ -16,6 +16,9 @@ import { withRateLimit, getAccountRateLimit } from '@/lib/sync/rate-limiter';
 import { queueEmbeddingJob } from '@/lib/rag/embedding-queue';
 import { queueContactTimelineEvent } from '@/lib/contacts/timeline-queue';
 
+// Sync timeout - increased to 20 minutes for large mailboxes
+const SYNC_TIMEOUT = 20 * 60 * 1000; // 20 minutes
+
 /**
  * Map folder name to email category
  */
@@ -477,7 +480,9 @@ async function retryWithBackoff<T>(
       lastError = error as Error;
       if (attempt < maxRetries - 1) {
         const delay = baseDelay * Math.pow(2, attempt);
-        console.log(`   ⏳ Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
+        console.log(
+          `   ⏳ Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`
+        );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -1307,6 +1312,12 @@ async function syncWithImap(
 
     for (const mailbox of mailboxes) {
       try {
+        // Add 2-second delay between folders to avoid rate limiting (except for first folder)
+        if (mailboxes.indexOf(mailbox) > 0) {
+          console.log('⏳ Waiting 2 seconds to avoid rate limiting...');
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+
         console.log(`📂 Syncing folder: ${mailbox.name} (${mailbox.path})`);
         await syncImapFolderMessages(
           imap,

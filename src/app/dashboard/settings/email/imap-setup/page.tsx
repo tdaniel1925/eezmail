@@ -25,10 +25,15 @@ function IMAPSetupPageContent(): JSX.Element {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    // IMAP fields (for receiving)
     host: '',
     port: 993,
     secure: true,
     provider: provider,
+    // SMTP fields (for sending)
+    smtpHost: '',
+    smtpPort: 465,
+    smtpSecure: true,
   });
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -41,12 +46,19 @@ function IMAPSetupPageContent(): JSX.Element {
     const providerConfig =
       IMAP_PROVIDERS[selectedProvider as keyof typeof IMAP_PROVIDERS];
     if (providerConfig) {
+      // Derive SMTP host from IMAP host (replace "imap." with "smtp.")
+      const smtpHost = providerConfig.host.replace('imap.', 'smtp.');
+
       setFormData((prev) => ({
         ...prev,
         provider: selectedProvider,
         host: providerConfig.host,
         port: providerConfig.port,
         secure: providerConfig.secure,
+        // Auto-fill SMTP settings
+        smtpHost: smtpHost,
+        smtpPort: 465, // Standard SMTP SSL port
+        smtpSecure: true,
       }));
     }
   };
@@ -57,13 +69,20 @@ function IMAPSetupPageContent(): JSX.Element {
     setErrorMessage('');
 
     try {
+      // Add timeout to fetch request (35 seconds to allow server 30s timeout)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
+
       const response = await fetch('/api/email/imap/test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const result = await response.json();
 
@@ -77,8 +96,15 @@ function IMAPSetupPageContent(): JSX.Element {
       }
     } catch (error) {
       setConnectionStatus('error');
-      setErrorMessage('Network error occurred');
-      toast.error('Network error occurred');
+      if (error instanceof Error && error.name === 'AbortError') {
+        setErrorMessage('Connection timed out after 35 seconds');
+        toast.error(
+          'Connection timed out - check your credentials and server settings'
+        );
+      } else {
+        setErrorMessage('Network error occurred');
+        toast.error('Network error occurred');
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -116,8 +142,8 @@ function IMAPSetupPageContent(): JSX.Element {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50/50 dark:bg-black/50">
-      <div className="mx-auto max-w-2xl p-8">
+    <div className="h-full overflow-y-auto bg-gray-50/50 dark:bg-black/50">
+      <div className="mx-auto max-w-2xl p-8 pb-24">
         {/* Header */}
         <div className="mb-8">
           <Link
@@ -169,6 +195,7 @@ function IMAPSetupPageContent(): JSX.Element {
                   <SelectItem value="gmail">Gmail</SelectItem>
                   <SelectItem value="yahoo">Yahoo Mail</SelectItem>
                   <SelectItem value="icloud">iCloud Mail</SelectItem>
+                  <SelectItem value="fastmail">Fastmail</SelectItem>
                   <SelectItem value="custom">Custom IMAP</SelectItem>
                 </SelectContent>
               </Select>
@@ -259,13 +286,59 @@ function IMAPSetupPageContent(): JSX.Element {
               </div>
             </div>
 
+            {/* SMTP Settings Section */}
+            <div className="border-t border-gray-200 dark:border-white/10 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                SMTP Settings (For Sending Emails)
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="smtpHost">SMTP Host</Label>
+                  <Input
+                    id="smtpHost"
+                    value={formData.smtpHost}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        smtpHost: e.target.value,
+                      }))
+                    }
+                    placeholder="smtp.fastmail.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="smtpPort">SMTP Port</Label>
+                  <Input
+                    id="smtpPort"
+                    type="number"
+                    value={formData.smtpPort}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        smtpPort: parseInt(e.target.value),
+                      }))
+                    }
+                    placeholder="465"
+                    required
+                  />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-600 dark:text-white/60">
+                SMTP uses the same email and password as IMAP. Port 465 (SSL) or
+                587 (TLS) recommended.
+              </p>
+            </div>
+
             {/* Connection Status */}
             {connectionStatus !== 'idle' && (
               <div className="rounded-lg border p-4">
                 {connectionStatus === 'testing' && (
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
                     <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                    <span>Testing connection...</span>
+                    <span>
+                      Testing connection (this may take up to 30 seconds)...
+                    </span>
                   </div>
                 )}
                 {connectionStatus === 'success' && (
@@ -275,9 +348,26 @@ function IMAPSetupPageContent(): JSX.Element {
                   </div>
                 )}
                 {connectionStatus === 'error' && (
-                  <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>{errorMessage}</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>{errorMessage}</span>
+                    </div>
+                    {errorMessage.includes('Timed out') && (
+                      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p className="font-medium mb-1">Possible causes:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>
+                            Wrong password - make sure you're using an{' '}
+                            <strong>app password</strong>, not your regular
+                            password
+                          </li>
+                          <li>IMAP not enabled in your email settings</li>
+                          <li>Firewall blocking port {formData.port}</li>
+                          <li>Incorrect IMAP server settings</li>
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -292,7 +382,8 @@ function IMAPSetupPageContent(): JSX.Element {
                   isConnecting ||
                   !formData.email ||
                   !formData.password ||
-                  !formData.host
+                  !formData.host ||
+                  !formData.smtpHost
                 }
                 isLoading={isConnecting}
               >

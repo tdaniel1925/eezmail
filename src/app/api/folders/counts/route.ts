@@ -4,6 +4,9 @@ import { db } from '@/lib/db';
 import { emails, emailAccounts } from '@/db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 
+// Cache the response for 30 seconds to reduce database load
+export const revalidate = 30;
+
 /**
  * Batch API endpoint for folder counts
  * Returns counts for all folders in a single request
@@ -85,10 +88,17 @@ export async function GET(request: NextRequest) {
       replyQueue: Number(counts.reply_queue_count || 0),
     };
 
-    return NextResponse.json({
-      success: true,
-      counts: response,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        counts: response,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60',
+        },
+      }
+    );
   } catch (error) {
     console.error('❌ Error fetching folder counts:', error);
     return NextResponse.json(

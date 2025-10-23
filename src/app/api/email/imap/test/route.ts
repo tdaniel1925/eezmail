@@ -6,6 +6,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { IMAPService } from '@/lib/email/imap-service';
 
+// Set route timeout to 40 seconds
+export const maxDuration = 40;
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
@@ -25,6 +28,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       secure,
     });
 
+    // Create timeout promise (30 seconds)
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Connection test timed out after 30 seconds'));
+      }, 30000);
+    });
+
     // Test IMAP connection
     const imapService = new IMAPService({
       host,
@@ -34,7 +44,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       password,
     });
 
-    const isConnected = await imapService.testConnection();
+    // Race between connection test and timeout
+    const isConnected = await Promise.race([
+      imapService.testConnection(),
+      timeoutPromise,
+    ]);
 
     if (isConnected) {
       console.log('✅ IMAP connection successful');
@@ -48,10 +62,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
   } catch (error) {
     console.error('❌ IMAP test error:', error);
+
+    let errorMessage = 'Unknown error';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+
+      // Provide helpful error messages
+      if (errorMessage.includes('ENOTFOUND')) {
+        errorMessage = 'Server not found - check your IMAP host';
+      } else if (errorMessage.includes('ECONNREFUSED')) {
+        errorMessage = 'Connection refused - check port and firewall';
+      } else if (errorMessage.includes('Timed out')) {
+        errorMessage =
+          'Connection timed out - wrong password or IMAP not enabled';
+      } else if (errorMessage.includes('Invalid credentials')) {
+        errorMessage =
+          'Invalid credentials - use an app password, not your regular password';
+      }
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
       },
       { status: 500 }
     );

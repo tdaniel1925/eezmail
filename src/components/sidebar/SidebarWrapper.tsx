@@ -49,7 +49,7 @@ export function SidebarWrapper({ initialData }: SidebarWrapperProps) {
     loadLabels();
   }, [setCustomLabels]);
 
-  // Load folder counts on mount
+  // Load folder counts on mount (initial load only, SWR handles updates)
   useEffect(() => {
     async function loadCounts() {
       try {
@@ -75,10 +75,7 @@ export function SidebarWrapper({ initialData }: SidebarWrapperProps) {
       }
     }
     loadCounts();
-
-    // Refresh counts every 30 seconds
-    const interval = setInterval(loadCounts, 30000);
-    return () => clearInterval(interval);
+    // No interval - useFolderCounts hook will handle periodic updates
   }, [setUnreadCounts]);
 
   const handleAccountChange = (accountId: string) => {

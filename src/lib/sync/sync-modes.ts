@@ -29,6 +29,21 @@ export async function startRealtimeSync(
     clearInterval(existing.realtime);
   }
 
+  // Get account to determine provider-specific interval
+  const account = await db.query.emailAccounts.findFirst({
+    where: eq(emailAccounts.id, accountId),
+  });
+
+  // Set interval based on provider (IMAP/Yahoo need slower rate to avoid 451 errors)
+  const intervalMs =
+    account?.provider === 'imap' || account?.provider === 'yahoo'
+      ? 2 * 60 * 1000 // 2 minutes for IMAP (avoid rate limits)
+      : 30000; // 30 seconds for OAuth providers (fast)
+
+  console.log(
+    `⏱️  Setting real-time sync interval to ${intervalMs / 1000}s for ${account?.provider || 'unknown'} provider`
+  );
+
   const interval = setInterval(async () => {
     try {
       console.log(`🔄 Real-time sync for account: ${accountId}`);
@@ -36,7 +51,7 @@ export async function startRealtimeSync(
     } catch (error) {
       console.error('Real-time sync error:', error);
     }
-  }, 30000); // 30 seconds
+  }, intervalMs);
 
   // Store interval ID
   const intervals = activeSyncIntervals.get(accountId) || {};
@@ -76,6 +91,16 @@ export async function startHistoricalSync(
     clearInterval(existing.historical);
   }
 
+  // Set interval based on provider (IMAP/Yahoo need slower rate to avoid 451 errors)
+  const intervalMs =
+    account?.provider === 'imap' || account?.provider === 'yahoo'
+      ? 3 * 60 * 1000 // 3 minutes for IMAP (avoid rate limits)
+      : 60000; // 1 minute for OAuth providers
+
+  console.log(
+    `⏱️  Setting historical sync interval to ${intervalMs / 1000}s for ${account?.provider || 'unknown'} provider`
+  );
+
   const interval = setInterval(async () => {
     try {
       console.log(`📚 Historical sync for account: ${accountId}`);
@@ -101,7 +126,7 @@ export async function startHistoricalSync(
     } catch (error) {
       console.error('Historical sync error:', error);
     }
-  }, 60000); // 1 minute
+  }, intervalMs);
 
   // Store interval ID
   const intervals = activeSyncIntervals.get(accountId) || {};
@@ -185,9 +210,3 @@ export async function getSyncStatus(accountId: string): Promise<{
     hasHistoricalSync: !!intervals?.historical,
   };
 }
-
-
-
-
-
-

@@ -7,11 +7,15 @@ import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 
 export interface ImapConfig {
-  user: string;
+  username?: string;
+  user?: string;
   password: string;
   host: string;
   port: number;
-  tls: boolean;
+  tls?: boolean;
+  secure?: boolean;
+  connTimeout?: number;
+  authTimeout?: number;
 }
 
 export interface ImapMessage {
@@ -35,7 +39,18 @@ export class ImapService {
   private config: ImapConfig;
 
   constructor(config: ImapConfig) {
-    this.config = config;
+    // Normalize config for IMAP library
+    const normalizedConfig = {
+      user: config.username || config.user || '',
+      password: config.password,
+      host: config.host,
+      port: config.port,
+      tls: config.tls ?? config.secure ?? true,
+      // Increase timeouts to 30 seconds
+      connTimeout: config.connTimeout || 30000,
+      authTimeout: config.authTimeout || 30000,
+    };
+    this.config = normalizedConfig as ImapConfig;
   }
 
   /**
@@ -144,13 +159,17 @@ export class ImapService {
           if (limit === 0 || limit >= box.messages.total) {
             // Fetch all messages
             fetchRange = `1:${box.messages.total}`;
-            console.log(`   📥 Fetching ALL ${box.messages.total} messages from ${mailbox}`);
+            console.log(
+              `   📥 Fetching ALL ${box.messages.total} messages from ${mailbox}`
+            );
           } else {
             // Fetch the last N messages
             const start = Math.max(1, box.messages.total - limit + 1);
             const end = box.messages.total;
             fetchRange = `${start}:${end}`;
-            console.log(`   📥 Fetching last ${limit} messages from ${mailbox}`);
+            console.log(
+              `   📥 Fetching last ${limit} messages from ${mailbox}`
+            );
           }
 
           const fetch = imap.seq.fetch(fetchRange, {
@@ -213,7 +232,9 @@ export class ImapService {
                   : [];
                 const inReplyTo = parsed.inReplyTo || undefined;
 
-                console.log(`   References: ${references.join(', ') || 'none'}`);
+                console.log(
+                  `   References: ${references.join(', ') || 'none'}`
+                );
                 console.log(`   In-Reply-To: ${inReplyTo || 'none'}`);
 
                 // Fix: Extract name from email address if the display name is wrong

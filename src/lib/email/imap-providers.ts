@@ -33,4 +33,14 @@ export const IMAP_PROVIDERS = {
     port: 993,
     secure: true,
   },
+  fastmail: {
+    host: 'imap.fastmail.com',
+    port: 993,
+    secure: true,
+  },
+  custom: {
+    host: '',
+    port: 993,
+    secure: true,
+  },
 } as const;
