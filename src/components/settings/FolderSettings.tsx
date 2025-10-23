@@ -1,19 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, GripVertical, Check, X } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Check, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   createCustomFolder,
   deleteCustomFolder,
   reorderCustomFolders,
+  getCustomFolders,
 } from '@/lib/folders/actions';
 import { toast } from '@/lib/toast';
 import type { CustomFolder } from '@/db/schema';
 
 interface FolderSettingsProps {
   userId: string;
-  initialFolders: CustomFolder[];
 }
 
 const PRESET_COLORS = [
@@ -46,11 +46,9 @@ const PRESET_EMOJIS = [
   '🛠️',
 ];
 
-export function FolderSettings({
-  userId,
-  initialFolders,
-}: FolderSettingsProps): JSX.Element {
-  const [folders, setFolders] = useState<CustomFolder[]>(initialFolders);
+export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
+  const [folders, setFolders] = useState<CustomFolder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderIcon, setNewFolderIcon] = useState('📁');
@@ -58,9 +56,27 @@ export function FolderSettings({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
+  // Load custom folders on mount
   useEffect(() => {
-    setFolders(initialFolders);
-  }, [initialFolders]);
+    loadFolders();
+  }, []);
+
+  const loadFolders = async () => {
+    setIsLoading(true);
+    try {
+      const result = await getCustomFolders();
+      if (result.success && result.folders) {
+        setFolders(result.folders);
+      } else {
+        toast.error('Failed to load custom folders');
+      }
+    } catch (error) {
+      console.error('Error loading folders:', error);
+      toast.error('Failed to load custom folders');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleCreate = async (): Promise<void> => {
     if (!newFolderName.trim()) {
@@ -81,8 +97,8 @@ export function FolderSettings({
       setNewFolderName('');
       setNewFolderIcon('📁');
       setNewFolderColor('gray');
-      // Refresh page to get updated folders
-      window.location.reload();
+      // Reload folders using proper React state management
+      await loadFolders();
     } else {
       toast.error(result.error || 'Failed to create folder');
     }
@@ -101,9 +117,8 @@ export function FolderSettings({
 
     if (result.success) {
       toast.success('Folder deleted successfully');
-      setFolders(folders.filter((f) => f.id !== folderId));
-      // Refresh page to get updated folders
-      window.location.reload();
+      // Reload folders using proper React state management
+      await loadFolders();
     } else {
       toast.error(result.error || 'Failed to delete folder');
     }
@@ -156,7 +171,14 @@ export function FolderSettings({
         </p>
       </div>
 
-      {/* Create New Folder */}
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        </div>
+      ) : (
+        <>
+          {/* Create New Folder */}
       {!isCreating ? (
         <button
           onClick={() => setIsCreating(true)}
@@ -323,6 +345,8 @@ export function FolderSettings({
             No custom folders yet. Create one to get started!
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );

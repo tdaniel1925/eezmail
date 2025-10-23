@@ -22,7 +22,7 @@ class ImapConnectionPool {
   private connections: Map<string, PooledConnection> = new Map();
   private maxIdleTime: number = 5 * 60 * 1000; // 5 minutes
   private cleanupInterval: NodeJS.Timeout | null = null;
-  
+
   // Rate limiting to prevent FastMail "500 logins per 10 minutes" error
   private maxConnectionsPerAccount: number = 3; // Max 3 connections per account
   private connectionQueue: Map<string, ConnectionQueueItem[]> = new Map();
@@ -54,9 +54,9 @@ class ImapConnectionPool {
 
     // Get login timestamps for this user
     let timestamps = this.loginTimestamps.get(username) || [];
-    
+
     // Remove timestamps older than 10 minutes
-    timestamps = timestamps.filter(ts => ts > tenMinutesAgo);
+    timestamps = timestamps.filter((ts) => ts > tenMinutesAgo);
     this.loginTimestamps.set(username, timestamps);
 
     // Check if we're under the limit
@@ -113,8 +113,10 @@ class ImapConnectionPool {
     // Check active connections limit
     const activeConnections = this.countActiveConnections(key);
     if (activeConnections >= this.maxConnectionsPerAccount) {
-      console.log(`⏳ Max connections reached for ${username}@${host}, queuing...`);
-      
+      console.log(
+        `⏳ Max connections reached for ${username}@${host}, queuing...`
+      );
+
       // Queue this request
       return new Promise((resolve, reject) => {
         const queue = this.connectionQueue.get(key) || [];
@@ -130,18 +132,22 @@ class ImapConnectionPool {
 
     // Check rate limit before creating new connection
     if (!this.canCreateNewConnection(username)) {
-      const waitTime = Math.ceil((this.getOldestLoginAge(username) - 10 * 60 * 1000) / -1000);
+      const waitTime = Math.ceil(
+        (this.getOldestLoginAge(username) - 10 * 60 * 1000) / -1000
+      );
       console.warn(
         `⚠️  Rate limit approaching for ${username}@${host}. Wait ${waitTime}s before next login.`
       );
-      
+
       // Wait for rate limit window to pass
-      await new Promise(resolve => setTimeout(resolve, Math.max(waitTime * 1000, 1000)));
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.max(waitTime * 1000, 1000))
+      );
     }
 
     // Create new connection
     console.log(`🔌 Creating new IMAP connection for ${username}@${host}`);
-    
+
     try {
       const service = new ImapService({
         host,
@@ -163,7 +169,10 @@ class ImapConnectionPool {
 
       return service;
     } catch (error) {
-      console.error(`Failed to create IMAP connection for ${username}@${host}:`, error);
+      console.error(
+        `Failed to create IMAP connection for ${username}@${host}:`,
+        error
+      );
       throw error;
     }
   }
@@ -174,7 +183,7 @@ class ImapConnectionPool {
   private getOldestLoginAge(username: string): number {
     const timestamps = this.loginTimestamps.get(username) || [];
     if (timestamps.length === 0) return Infinity;
-    
+
     const oldest = Math.min(...timestamps);
     return Date.now() - oldest;
   }
@@ -182,11 +191,7 @@ class ImapConnectionPool {
   /**
    * Release a connection back to the pool
    */
-  releaseConnection(
-    host: string,
-    port: number,
-    username: string
-  ): void {
+  releaseConnection(host: string, port: number, username: string): void {
     const key = this.getConnectionKey(host, port, username);
     const connection = this.connections.get(key);
 
@@ -200,11 +205,13 @@ class ImapConnectionPool {
       if (queue && queue.length > 0) {
         const nextRequest = queue.shift();
         if (nextRequest) {
-          console.log(`📤 Processing queued connection request for ${username}@${host}`);
+          console.log(
+            `📤 Processing queued connection request for ${username}@${host}`
+          );
           connection.inUse = true;
           connection.loginCount++;
           nextRequest.resolve(connection.service);
-          
+
           // Update queue
           if (queue.length === 0) {
             this.connectionQueue.delete(key);
@@ -359,11 +366,15 @@ class ImapConnectionPool {
     const tenMinutesAgo = now - 10 * 60 * 1000;
 
     let timestamps = this.loginTimestamps.get(username) || [];
-    timestamps = timestamps.filter(ts => ts > tenMinutesAgo);
+    timestamps = timestamps.filter((ts) => ts > tenMinutesAgo);
 
     const loginsInLast10Min = timestamps.length;
-    const remainingLogins = Math.max(0, this.maxLoginsPerTenMinutes - loginsInLast10Min);
-    const oldestLoginAge = timestamps.length > 0 ? now - Math.min(...timestamps) : 0;
+    const remainingLogins = Math.max(
+      0,
+      this.maxLoginsPerTenMinutes - loginsInLast10Min
+    );
+    const oldestLoginAge =
+      timestamps.length > 0 ? now - Math.min(...timestamps) : 0;
     const isNearLimit = loginsInLast10Min > this.maxLoginsPerTenMinutes * 0.8; // 80% threshold
 
     return {
@@ -377,4 +388,3 @@ class ImapConnectionPool {
 
 // Export singleton instance
 export const imapConnectionPool = new ImapConnectionPool();
-

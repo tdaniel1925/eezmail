@@ -201,7 +201,7 @@ function SettingsPageContent(): JSX.Element {
       case 'email-accounts':
         return <ConnectedAccounts accounts={userData.emailAccounts} />;
       case 'folders':
-        return <FolderSettings userId={userData.user.id} initialFolders={[]} />;
+        return <FolderSettings userId={userData.user.id} />;
       case 'signatures':
         return <SignaturesSettings />;
       case 'rules':

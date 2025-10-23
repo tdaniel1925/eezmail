@@ -51,22 +51,18 @@ export function ConnectedAccounts({
     if (success === 'true' && email) {
       console.log('✅ Account connected successfully:', email);
       toast.success(
-        `✅ Account ${decodeURIComponent(email)} connected successfully! Refreshing...`,
+        `✅ Account ${decodeURIComponent(email)} connected successfully!`,
         {
           duration: 3000,
         }
       );
 
-      // Clean URL and force a hard reload to show the new account
-      setTimeout(() => {
-        window.history.replaceState(
-          {},
-          '',
-          '/dashboard/settings?tab=email-accounts'
-        );
-        // Use location.href for a true hard reload
-        window.location.href = '/dashboard/settings?tab=email-accounts';
-      }, 1500);
+      // Clean URL using proper React state management
+      window.history.replaceState(
+        {},
+        '',
+        '/dashboard/settings?tab=email-accounts'
+      );
     } else if (error) {
       console.error('❌ Connection error:', error);
       toast.error(`Failed to connect: ${decodeURIComponent(error)}`);
@@ -77,35 +73,6 @@ export function ConnectedAccounts({
         '/dashboard/settings?tab=email-accounts'
       );
     }
-
-    // TEMPORARILY DISABLE CLEANUP TO PREVENT REMOVING NEW ACCOUNTS
-    // let hasRunCleanup = false;
-    // async function cleanupAccounts() {
-    //   if (hasRunCleanup) return;
-    //   hasRunCleanup = true;
-    //
-    //   try {
-    //     const { cleanupEmailAccounts } = await import(
-    //       '@/lib/sync/cleanup-accounts'
-    //     );
-    //     const result = await cleanupEmailAccounts();
-    //     if (
-    //       result?.success &&
-    //       result?.deletedCount &&
-    //       result.deletedCount > 0
-    //     ) {
-    //       console.log(
-    //         `✅ Cleaned up ${result.deletedCount} problematic account(s)`
-    //       );
-    //       // Reload to show clean state
-    //       setTimeout(() => window.location.reload(), 1000);
-    //     }
-    //   } catch (error) {
-    //     console.error('Error cleaning up accounts:', error);
-    //     // Silently fail - not critical
-    //   }
-    // }
-    // cleanupAccounts();
   }, [searchParams]);
 
   const handleAddAccount = async (provider: string): Promise<void> => {
