@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import OpenAI from 'openai';
-import { omniscientSearch, getUserContext, inferSearchScope } from '@/lib/rag/omniscient-search';
+import {
+  omniscientSearch,
+  getUserContext,
+  inferSearchScope,
+} from '@/lib/rag/omniscient-search';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -48,12 +52,16 @@ export async function POST(request: NextRequest) {
     const userContext = await getUserContext(user.id);
 
     // Build enhanced system prompt
-    const systemPrompt = buildSystemPrompt(user.id, userContext, validatedData.context);
+    const systemPrompt = buildSystemPrompt(
+      user.id,
+      userContext,
+      validatedData.context
+    );
 
     // Prepare messages with system prompt
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: systemPrompt },
-      ...validatedData.messages.map(m => ({
+      ...validatedData.messages.map((m) => ({
         role: m.role as any,
         content: m.content,
       })),
@@ -83,11 +91,15 @@ export async function POST(request: NextRequest) {
       console.log(`📞 [Function Call] ${functionName}:`, functionArgs);
 
       // Check if function requires confirmation
-      const requiresConfirmation = isDestructiveAction(functionName, functionArgs);
+      const requiresConfirmation = isDestructiveAction(
+        functionName,
+        functionArgs
+      );
 
       return NextResponse.json({
         success: true,
-        response: message.content || `I want to ${functionName}. Should I proceed?`,
+        response:
+          message.content || `I want to ${functionName}. Should I proceed?`,
         functionCall: {
           name: functionName,
           arguments: functionArgs,
@@ -100,7 +112,8 @@ export async function POST(request: NextRequest) {
     // Regular text response
     return NextResponse.json({
       success: true,
-      response: message.content || 'I apologize, but I could not generate a response.',
+      response:
+        message.content || 'I apologize, but I could not generate a response.',
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -123,7 +136,11 @@ export async function POST(request: NextRequest) {
 /**
  * Build comprehensive system prompt with capabilities
  */
-function buildSystemPrompt(userId: string, userContext: string, requestContext: any): string {
+function buildSystemPrompt(
+  userId: string,
+  userContext: string,
+  requestContext: any
+): string {
   let prompt = `You are an omniscient AI assistant for an email management application. You have COMPLETE knowledge of the user's:
 - Emails (all folders, threads, attachments)
 - Contacts (names, companies, communication history)
@@ -276,9 +293,15 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
             query: { type: 'string', description: 'Search query' },
             from: { type: 'string', description: 'Filter by sender email' },
             to: { type: 'string', description: 'Filter by recipient email' },
-            dateFrom: { type: 'string', description: 'Start date (ISO string)' },
+            dateFrom: {
+              type: 'string',
+              description: 'Start date (ISO string)',
+            },
             dateTo: { type: 'string', description: 'End date (ISO string)' },
-            hasAttachments: { type: 'boolean', description: 'Only emails with attachments' },
+            hasAttachments: {
+              type: 'boolean',
+              description: 'Only emails with attachments',
+            },
             isUnread: { type: 'boolean', description: 'Only unread emails' },
             folder: { type: 'string', description: 'Specific folder name' },
             limit: { type: 'number', description: 'Max results', default: 10 },
@@ -298,8 +321,14 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
             to: { type: 'string', description: 'Recipient email address' },
             subject: { type: 'string', description: 'Email subject' },
             body: { type: 'string', description: 'Email body (HTML or text)' },
-            cc: { type: 'string', description: 'CC email addresses (comma-separated)' },
-            bcc: { type: 'string', description: 'BCC email addresses (comma-separated)' },
+            cc: {
+              type: 'string',
+              description: 'CC email addresses (comma-separated)',
+            },
+            bcc: {
+              type: 'string',
+              description: 'BCC email addresses (comma-separated)',
+            },
           },
           required: ['to', 'subject', 'body'],
         },
@@ -315,7 +344,11 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           properties: {
             emailId: { type: 'string', description: 'ID of email to reply to' },
             body: { type: 'string', description: 'Reply body' },
-            replyAll: { type: 'boolean', description: 'Reply to all recipients', default: false },
+            replyAll: {
+              type: 'boolean',
+              description: 'Reply to all recipients',
+              default: false,
+            },
           },
           required: ['emailId', 'body'],
         },
@@ -389,7 +422,10 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
               items: { type: 'string' },
               description: 'Array of email IDs',
             },
-            star: { type: 'boolean', description: 'true to star, false to unstar' },
+            star: {
+              type: 'boolean',
+              description: 'true to star, false to unstar',
+            },
           },
           required: ['emailIds', 'star'],
         },
@@ -408,7 +444,10 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
               items: { type: 'string' },
               description: 'Array of email IDs',
             },
-            read: { type: 'boolean', description: 'true for read, false for unread' },
+            read: {
+              type: 'boolean',
+              description: 'true for read, false for unread',
+            },
           },
           required: ['emailIds', 'read'],
         },
@@ -420,7 +459,8 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
       type: 'function',
       function: {
         name: 'search_contacts',
-        description: 'Search for contacts by name, email, company, or other fields',
+        description:
+          'Search for contacts by name, email, company, or other fields',
         parameters: {
           type: 'object',
           properties: {
@@ -455,7 +495,8 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
       type: 'function',
       function: {
         name: 'get_contact_details',
-        description: 'Get full details of a contact including communication history',
+        description:
+          'Get full details of a contact including communication history',
         parameters: {
           type: 'object',
           properties: {
@@ -476,7 +517,10 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           type: 'object',
           properties: {
             query: { type: 'string', description: 'Search query' },
-            startDate: { type: 'string', description: 'Start date (ISO string)' },
+            startDate: {
+              type: 'string',
+              description: 'Start date (ISO string)',
+            },
             endDate: { type: 'string', description: 'End date (ISO string)' },
             limit: { type: 'number', description: 'Max results', default: 10 },
           },
@@ -493,7 +537,10 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           type: 'object',
           properties: {
             title: { type: 'string', description: 'Event title' },
-            startTime: { type: 'string', description: 'Start time (ISO string)' },
+            startTime: {
+              type: 'string',
+              description: 'Start time (ISO string)',
+            },
             endTime: { type: 'string', description: 'End time (ISO string)' },
             location: { type: 'string', description: 'Event location' },
             description: { type: 'string', description: 'Event description' },
@@ -518,7 +565,11 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           type: 'object',
           properties: {
             query: { type: 'string', description: 'Search query' },
-            includeCompleted: { type: 'boolean', description: 'Include completed tasks', default: false },
+            includeCompleted: {
+              type: 'boolean',
+              description: 'Include completed tasks',
+              default: false,
+            },
             limit: { type: 'number', description: 'Max results', default: 10 },
           },
           required: ['query'],
@@ -573,7 +624,8 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           properties: {
             description: {
               type: 'string',
-              description: 'Natural language rule description (e.g., "move all newsletters to Reading folder")',
+              description:
+                'Natural language rule description (e.g., "move all newsletters to Reading folder")',
             },
           },
           required: ['description'],
