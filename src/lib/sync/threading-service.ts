@@ -4,8 +4,6 @@
  * Uses RFC 5322 headers (References, In-Reply-To) and subject-based fallback
  */
 
-'use server';
-
 import { createHash } from 'crypto';
 
 export interface EmailThreadingData {
