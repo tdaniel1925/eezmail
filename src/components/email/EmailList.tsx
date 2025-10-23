@@ -626,12 +626,12 @@ export function EmailList({
               className="text-lg font-medium mb-2"
               style={{ color: 'var(--text-primary)' }}
             >
-              No emails here
+              Nothing to see here
             </p>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {searchQuery
                 ? 'No emails match your search'
-                : 'Your inbox is empty'}
+                : 'No emails in this folder'}
             </p>
           </div>
         ) : (
