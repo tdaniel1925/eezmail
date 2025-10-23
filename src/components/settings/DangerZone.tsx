@@ -148,18 +148,39 @@ export function DangerZone(): JSX.Element {
             <h3 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
               Danger Zone
             </h3>
-            <p className="text-sm text-red-700 dark:text-red-300 mb-4">
-              This will permanently delete all your data including:
+            <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+              <strong>⚠️ This will permanently delete ALL your data:</strong>
             </p>
-            <ul className="text-sm text-red-700 dark:text-red-300 mb-4 space-y-1 list-disc list-inside">
-              <li>All emails and email threads</li>
-              <li>All contacts and calendar events</li>
-              <li>All email accounts and connections</li>
-              <li>All settings, rules, and signatures</li>
+            <ul className="text-sm text-red-700 dark:text-red-300 mb-4 space-y-1 ml-4">
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">📧</span>
+                <span>All emails, attachments, and email threads</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">👥</span>
+                <span>All contacts, contact groups, and timeline events</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">📅</span>
+                <span>All calendar events, reminders, and attendees</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">📬</span>
+                <span>All email accounts and connection settings</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="mt-0.5">⚙️</span>
+                <span>All settings, rules, signatures, and custom folders</span>
+              </li>
             </ul>
-            <p className="text-sm text-green-700 dark:text-green-300 mb-4 font-semibold">
-              ✓ Your user account and login will be preserved
-            </p>
+            <div className="bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-800 rounded-lg p-3 mb-4">
+              <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+                ✓ Your user account and login credentials will be preserved
+              </p>
+              <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                You can reconnect email accounts and start fresh after wiping data
+              </p>
+            </div>
             <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
               <p className="text-sm font-semibold text-red-900 dark:text-red-100 mb-2">
                 ⚠️ This action cannot be undone!

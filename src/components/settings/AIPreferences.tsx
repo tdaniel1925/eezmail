@@ -101,28 +101,25 @@ export function AIPreferences({
             >
               <option value="traditional">Traditional (Inbox + Folders)</option>
               <option value="hey">
-                Hey Mode (Inbox + NewsFeed + Receipts)
+                Hey Mode (Imbox + Feed + Paper Trail)
               </option>
               <option value="hybrid">Hybrid (Best of Both)</option>
             </select>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Choose how you want to organize your emails
-            </p>
           </div>
 
-          <div className="mt-4 p-4 bg-gray-50/50 dark:bg-white/5 rounded-lg">
-            <p className="text-sm text-gray-700 dark:text-white/80 font-medium mb-2">
-              {data.emailMode === 'traditional' && 'Traditional Mode'}
-              {data.emailMode === 'hey' && 'Hey Mode (Recommended)'}
-              {data.emailMode === 'hybrid' && 'Hybrid Mode'}
+          <div className="mt-4 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-900">
+            <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-2">
+              {data.emailMode === 'traditional' && '📧 Traditional Mode'}
+              {data.emailMode === 'hey' && '✨ Hey Mode (AI-Powered)'}
+              {data.emailMode === 'hybrid' && '🔀 Hybrid Mode'}
             </p>
-            <p className="text-xs text-gray-600 dark:text-white/60">
+            <p className="text-xs text-blue-800 dark:text-blue-200">
               {data.emailMode === 'traditional' &&
-                'Classic inbox with folders and labels. All emails go to inbox by default.'}
+                'Classic email experience with inbox and custom folders. All emails go to inbox, you manually organize them.'}
               {data.emailMode === 'hey' &&
-                'Screen new senders and route emails to Inbox (approved), NewsFeed (newsletters), or Receipts (transactions).'}
+                'AI automatically sorts emails into Imbox (important), Feed (updates), and Paper Trail (receipts). Inspired by Hey.com.'}
               {data.emailMode === 'hybrid' &&
-                'Combines inbox with Hey-style screening for new senders.'}
+                'Get both! AI suggestions for sorting, but you maintain final control with traditional folders.'}
             </p>
           </div>
         </div>

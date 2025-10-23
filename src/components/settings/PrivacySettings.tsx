@@ -87,7 +87,7 @@ export function PrivacySettings({
                   Block email trackers
                 </div>
                 <div className="text-sm text-gray-600 dark:text-white/60">
-                  Prevent senders from tracking when you open emails
+                  Blocks invisible tracking pixels that monitor when and how many times you open emails
                 </div>
               </div>
               <Switch
@@ -104,7 +104,7 @@ export function PrivacySettings({
                   Strip UTM parameters
                 </div>
                 <div className="text-sm text-gray-600 dark:text-white/60">
-                  Remove tracking parameters from links
+                  Removes tracking codes from links (utm_source, utm_campaign, etc.) to prevent ad tracking
                 </div>
               </div>
               <Switch
@@ -115,11 +115,12 @@ export function PrivacySettings({
               />
             </div>
 
-            <div className="p-4 bg-gray-50/50 dark:bg-white/5 rounded-lg">
-              <p className="text-xs text-gray-700 dark:text-white/80">
-                <strong>Note:</strong> Email trackers use invisible pixels to
-                monitor when you open emails. Blocking them helps protect your
-                privacy.
+            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-900">
+              <p className="text-xs text-blue-900 dark:text-blue-100 font-medium mb-1">
+                🛡️ How tracking protection works
+              </p>
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                Marketers embed invisible 1x1 pixel images in emails. When you open the email, the pixel loads from their server, telling them you opened it, your location, device type, and more. We block these pixels to protect your privacy.
               </p>
             </div>
           </div>
