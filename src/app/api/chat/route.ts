@@ -16,6 +16,12 @@ import {
   parseAndResolveReferences,
   containsReferences,
 } from '@/lib/chat/reference-resolver';
+import {
+  parseCommand as parseNLU,
+  isMultiStepCommand,
+  validateDependencies,
+  estimateExecutionTime,
+} from '@/lib/chat/command-parser';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -64,6 +70,34 @@ export async function POST(request: NextRequest) {
         : '';
 
     console.log(`🤖 [Chat API] User message: "${lastUserMessage}"`);
+
+    // Check for multi-step commands first
+    if (isMultiStepCommand(lastUserMessage)) {
+      console.log(`🔄 [Chat API] Detected multi-step command, parsing...`);
+      const parsedIntent = await parseNLU(lastUserMessage, user.id);
+
+      if (parsedIntent.isMultiStep) {
+        // Validate dependencies
+        const validation = validateDependencies(parsedIntent);
+        if (!validation.valid) {
+          return NextResponse.json({
+            success: false,
+            response: `Multi-step command has errors: ${validation.errors.join(', ')}`,
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        // Return multi-step execution plan for confirmation
+        const estimatedTime = estimateExecutionTime(parsedIntent);
+        return NextResponse.json({
+          success: true,
+          response: `I'll execute this ${parsedIntent.complexity} command in ${parsedIntent.estimatedSteps} steps (estimated ${estimatedTime}s). Proceed?`,
+          multiStepCommand: parsedIntent,
+          requiresConfirmation: true,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    }
 
     // Check if message contains references that need resolution
     if (containsReferences(lastUserMessage)) {
@@ -697,6 +731,367 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
         parameters: {
           type: 'object',
           properties: {},
+        },
+      },
+    },
+
+    // ==== ADDITIONAL 20 TOOLS ====
+    {
+      type: 'function',
+      function: {
+        name: 'forward_email',
+        description: 'Forward an email to someone',
+        parameters: {
+          type: 'object',
+          properties: {
+            emailId: { type: 'string', description: 'Email ID to forward' },
+            to: { type: 'string', description: 'Recipient email address' },
+            note: {
+              type: 'string',
+              description: 'Optional note to include',
+            },
+          },
+          required: ['emailId', 'to'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'update_contact',
+        description: 'Update contact details',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID' },
+            displayName: { type: 'string', description: 'Display name' },
+            email: { type: 'string', description: 'Email address' },
+            phone: { type: 'string', description: 'Phone number' },
+            company: { type: 'string', description: 'Company name' },
+            notes: { type: 'string', description: 'Notes' },
+          },
+          required: ['contactId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'delete_contact',
+        description: 'Delete a contact (requires confirmation)',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID to delete' },
+          },
+          required: ['contactId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_contact_timeline',
+        description: 'Get communication history with a contact',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID' },
+            limit: { type: 'number', description: 'Max events', default: 20 },
+          },
+          required: ['contactId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'send_sms_to_contact',
+        description: 'Send SMS to a contact via Twilio',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID' },
+            message: { type: 'string', description: 'SMS message' },
+          },
+          required: ['contactId', 'message'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'add_contact_note',
+        description: 'Add a note to a contact',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID' },
+            note: { type: 'string', description: 'Note text' },
+          },
+          required: ['contactId', 'note'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'tag_contact',
+        description: 'Add or remove tags from a contact',
+        parameters: {
+          type: 'object',
+          properties: {
+            contactId: { type: 'string', description: 'Contact ID' },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Tags to add/remove',
+            },
+            action: {
+              type: 'string',
+              enum: ['add', 'remove'],
+              description: 'Add or remove tags',
+            },
+          },
+          required: ['contactId', 'tags', 'action'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'reschedule_event',
+        description: 'Change event time',
+        parameters: {
+          type: 'object',
+          properties: {
+            eventId: { type: 'string', description: 'Event ID' },
+            newStartTime: {
+              type: 'string',
+              description: 'New start time (ISO string)',
+            },
+            newEndTime: {
+              type: 'string',
+              description: 'New end time (ISO string)',
+            },
+          },
+          required: ['eventId', 'newStartTime'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'add_attendee',
+        description: 'Add attendee to calendar event',
+        parameters: {
+          type: 'object',
+          properties: {
+            eventId: { type: 'string', description: 'Event ID' },
+            attendeeEmail: { type: 'string', description: 'Attendee email' },
+            attendeeName: {
+              type: 'string',
+              description: 'Attendee name (optional)',
+            },
+          },
+          required: ['eventId', 'attendeeEmail'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'set_reminder',
+        description: 'Set reminder for calendar event',
+        parameters: {
+          type: 'object',
+          properties: {
+            eventId: { type: 'string', description: 'Event ID' },
+            minutesBefore: {
+              type: 'number',
+              description: 'Minutes before event',
+            },
+            method: {
+              type: 'string',
+              enum: ['email', 'notification'],
+              description: 'Reminder method',
+            },
+          },
+          required: ['eventId', 'minutesBefore'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'complete_task',
+        description: 'Mark task as completed',
+        parameters: {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string', description: 'Task ID' },
+          },
+          required: ['taskId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'update_task',
+        description: 'Update task details',
+        parameters: {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string', description: 'Task ID' },
+            title: { type: 'string', description: 'Task title' },
+            description: { type: 'string', description: 'Task description' },
+            dueDate: { type: 'string', description: 'Due date (ISO string)' },
+            priority: {
+              type: 'string',
+              enum: ['low', 'medium', 'high'],
+              description: 'Task priority',
+            },
+          },
+          required: ['taskId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'delete_task',
+        description: 'Delete a task (requires confirmation)',
+        parameters: {
+          type: 'object',
+          properties: {
+            taskId: { type: 'string', description: 'Task ID to delete' },
+          },
+          required: ['taskId'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'list_rules',
+        description: 'Show all email rules',
+        parameters: {
+          type: 'object',
+          properties: {
+            includeDisabled: {
+              type: 'boolean',
+              description: 'Include disabled rules',
+              default: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'toggle_rule',
+        description: 'Enable or disable an email rule',
+        parameters: {
+          type: 'object',
+          properties: {
+            ruleId: { type: 'string', description: 'Rule ID' },
+            enabled: { type: 'boolean', description: 'Enable or disable' },
+          },
+          required: ['ruleId', 'enabled'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'update_settings',
+        description: 'Update user settings',
+        parameters: {
+          type: 'object',
+          properties: {
+            settingKey: { type: 'string', description: 'Setting key' },
+            settingValue: { type: 'string', description: 'Setting value' },
+          },
+          required: ['settingKey', 'settingValue'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_user_stats',
+        description: 'Get user analytics and statistics',
+        parameters: {
+          type: 'object',
+          properties: {
+            timeRange: {
+              type: 'string',
+              enum: ['day', 'week', 'month', 'year', 'all'],
+              description: 'Time range for stats',
+              default: 'month',
+            },
+          },
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'find_pattern',
+        description: 'Detect patterns in emails or user behavior',
+        parameters: {
+          type: 'object',
+          properties: {
+            patternType: {
+              type: 'string',
+              enum: ['email_frequency', 'response_time', 'common_senders', 'topics'],
+              description: 'Type of pattern to find',
+            },
+            timeRange: {
+              type: 'string',
+              description: 'Time range to analyze',
+              default: '30days',
+            },
+          },
+          required: ['patternType'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'get_proactive_suggestions',
+        description: 'Get AI-generated proactive suggestions',
+        parameters: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number', description: 'Max suggestions', default: 5 },
+            actionableOnly: {
+              type: 'boolean',
+              description: 'Only actionable suggestions',
+              default: true,
+            },
+          },
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'snooze_email',
+        description: 'Add email to reply later list',
+        parameters: {
+          type: 'object',
+          properties: {
+            emailId: { type: 'string', description: 'Email ID' },
+            until: {
+              type: 'string',
+              description: 'Snooze until (ISO string)',
+            },
+          },
+          required: ['emailId'],
         },
       },
     },

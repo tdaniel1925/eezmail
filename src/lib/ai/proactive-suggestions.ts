@@ -1,326 +1,360 @@
-/**
- * Proactive AI Suggestions Engine
- * Analyzes user's email patterns and generates proactive suggestions
- */
-
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emails, contacts } from '@/db/schema';
-import { sql, and, eq, lt, gte, desc } from 'drizzle-orm';
-import OpenAI from 'openai';
+import { emails, contacts, emailAccounts, calendarEvents } from '@/db/schema';
+import { eq, desc, and, gte, lte, isNull, sql } from 'drizzle-orm';
+import { getWritingStyleProfile } from './user-profile';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+/**
+ * Proactive Intelligence Service
+ * Analyzes user patterns and generates smart suggestions
+ */
 
 export interface ProactiveSuggestion {
   id: string;
   type:
-    | 'unreplied'
-    | 'meeting'
+    | 'reply_reminder'
+    | 'meeting_prep'
     | 'follow_up'
-    | 'vip_waiting'
-    | 'deadline'
-    | 'attachment_request';
+    | 'priority_email'
+    | 'pattern_insight'
+    | 'time_suggestion';
   priority: 'high' | 'medium' | 'low';
+  title: string;
   message: string;
-  action: string;
-  emailId?: string;
-  metadata?: Record<string, any>;
+  actionable: boolean;
+  action?: {
+    type: string;
+    parameters: Record<string, any>;
+  };
   createdAt: Date;
+  expiresAt?: Date;
 }
 
 /**
  * Generate proactive suggestions for a user
- * This runs as a background job (cron) every hour
  */
 export async function generateProactiveSuggestions(
   userId: string
 ): Promise<ProactiveSuggestion[]> {
+  console.log(`🔮 [Proactive] Generating suggestions for user: ${userId}`);
+
   const suggestions: ProactiveSuggestion[] = [];
 
   try {
-    // 1. Check for unreplied emails from VIPs
-    const unreplied = await getUnrepliedEmailsFromVIPs(userId);
-    if (unreplied.length > 0) {
-      unreplied.forEach((email) => {
-        suggestions.push({
-          id: `unreplied-${email.id}`,
-          type: 'unreplied',
-          priority: 'high',
-          message: `You haven't replied to ${email.senderName || email.senderEmail} from ${formatDate(email.receivedAt)}`,
-          action: 'reply',
-          emailId: email.id,
-          metadata: { sender: email.senderEmail },
-          createdAt: new Date(),
-        });
-      });
-    }
+    // Get user's profile for pattern analysis
+    const profile = await getWritingStyleProfile(userId);
 
-    // 2. Detect meetings without calendar events
-    const meetingEmails = await detectMeetingEmails(userId);
-    meetingEmails.forEach((email) => {
-      suggestions.push({
-        id: `meeting-${email.id}`,
-        type: 'meeting',
-        priority: 'medium',
-        message: `"${email.subject}" mentions a meeting but no calendar event found`,
-        action: 'create_event',
-        emailId: email.id,
-        metadata: { subject: email.subject },
-        createdAt: new Date(),
-      });
+    // 1. Reply reminders (emails needing response)
+    const replyReminders = await checkForPendingReplies(userId, profile);
+    suggestions.push(...replyReminders);
+
+    // 2. Meeting prep suggestions
+    const meetingPrep = await checkUpcomingMeetings(userId);
+    suggestions.push(...meetingPrep);
+
+    // 3. Follow-up reminders
+    const followUps = await checkFollowUpNeeded(userId);
+    suggestions.push(...followUps);
+
+    // 4. Priority emails from important contacts
+    const priorityEmails = await checkPriorityEmails(userId, profile);
+    suggestions.push(...priorityEmails);
+
+    // 5. Pattern insights
+    const patterns = await analyzeUserPatterns(userId, profile);
+    suggestions.push(...patterns);
+
+    // Sort by priority
+    suggestions.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
+      return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
 
-    // 3. Check for emails requiring follow-up
-    const followUpEmails = await getEmailsNeedingFollowUp(userId);
-    followUpEmails.forEach((email) => {
-      suggestions.push({
-        id: `followup-${email.id}`,
-        type: 'follow_up',
-        priority: 'medium',
-        message: `Follow up on "${email.subject}" from ${formatDate(email.receivedAt)}`,
-        action: 'follow_up',
-        emailId: email.id,
-        createdAt: new Date(),
-      });
-    });
-
-    // 4. Detect VIPs waiting for response (> 24 hours)
-    const vipWaiting = await getVIPsWaitingForResponse(userId);
-    vipWaiting.forEach((email) => {
-      suggestions.push({
-        id: `vip-${email.id}`,
-        type: 'vip_waiting',
-        priority: 'high',
-        message: `VIP ${email.senderName || email.senderEmail} is waiting for your response (${getDaysAgo(email.receivedAt)} days)`,
-        action: 'reply',
-        emailId: email.id,
-        metadata: { daysWaiting: getDaysAgo(email.receivedAt) },
-        createdAt: new Date(),
-      });
-    });
-
-    // 5. Detect deadline-related emails
-    const deadlineEmails = await detectDeadlineEmails(userId);
-    deadlineEmails.forEach((email) => {
-      suggestions.push({
-        id: `deadline-${email.id}`,
-        type: 'deadline',
-        priority: 'high',
-        message: `Email "${email.subject}" mentions a deadline`,
-        action: 'review',
-        emailId: email.id,
-        createdAt: new Date(),
-      });
-    });
-
-    console.log(
-      `✨ Generated ${suggestions.length} proactive suggestions for user ${userId}`
-    );
-
-    // Sort by priority (high first)
-    return suggestions.sort((a, b) => {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
+    console.log(`✨ [Proactive] Generated ${suggestions.length} suggestions`);
+    return suggestions.slice(0, 10); // Return top 10
   } catch (error) {
-    console.error('Error generating proactive suggestions:', error);
+    console.error(`❌ [Proactive] Error generating suggestions:`, error);
     return [];
   }
 }
 
 /**
- * Get unreplied emails from VIP contacts (last 7 days)
+ * Check for emails needing replies
  */
-async function getUnrepliedEmailsFromVIPs(userId: string) {
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+async function checkForPendingReplies(
+  userId: string,
+  profile: any
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
 
-  const results = await db.execute(sql`
-    SELECT DISTINCT ON (e.sender_email)
-      e.id,
-      e.subject,
-      e.sender_email as "senderEmail",
-      e.sender_name as "senderName",
-      e.received_at as "receivedAt"
-    FROM emails e
-    INNER JOIN contacts c ON c.email = e.sender_email AND c.user_id = ${userId}
-    WHERE e.account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      AND e.is_read = true
-      AND e.is_trashed = false
-      AND e.received_at >= ${sevenDaysAgo.toISOString()}
-      AND c.is_vip = true
-      AND NOT EXISTS (
-        SELECT 1 FROM emails replies
-        WHERE replies.in_reply_to = e.message_id
-          AND replies.account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
+  // Get user's email account IDs
+  const accounts = await db.query.emailAccounts.findMany({
+    where: eq(emailAccounts.userId, userId),
+    columns: { id: true },
+  });
+
+  if (accounts.length === 0) return suggestions;
+
+  // Get recent unread emails from frequent contacts
+  const recentUnread = await db.query.emails.findMany({
+    where: and(
+      eq(emails.accountId, accounts[0].id),
+      eq(emails.isRead, false),
+      eq(emails.folder, 'inbox'),
+      gte(emails.receivedAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) // Last 7 days
+    ),
+    orderBy: [desc(emails.receivedAt)],
+    limit: 50,
+  });
+
+  // Check if sender is a frequent contact
+  const frequentContacts = profile?.frequentContacts || [];
+  const avgResponseTime = profile?.responseTimeAvg || 60; // minutes
+
+  for (const email of recentUnread) {
+    const isFrequentContact = frequentContacts.includes(email.fromAddress);
+    const hoursSinceReceived =
+      (Date.now() - new Date(email.receivedAt).getTime()) / (1000 * 60 * 60);
+
+    // If from frequent contact and past usual response time
+    if (isFrequentContact && hoursSinceReceived * 60 > avgResponseTime * 2) {
+      suggestions.push({
+        id: `reply-${email.id}`,
+        type: 'reply_reminder',
+        priority: 'high',
+        title: `Reply to ${email.fromName || email.fromAddress}`,
+        message: `You usually reply within ${avgResponseTime} minutes, but this email has been waiting ${Math.round(hoursSinceReceived)} hours.`,
+        actionable: true,
+        action: {
+          type: 'compose_reply',
+          parameters: { emailId: email.id },
+        },
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      });
+    }
+  }
+
+  return suggestions.slice(0, 3); // Top 3 reply reminders
+}
+
+/**
+ * Check for upcoming meetings needing preparation
+ */
+async function checkUpcomingMeetings(
+  userId: string
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
+
+  // Get meetings in the next 2 hours
+  const upcoming = await db.query.calendarEvents.findMany({
+    where: and(
+      eq(calendarEvents.userId, userId),
+      gte(calendarEvents.startTime, new Date()),
+      lte(
+        calendarEvents.startTime,
+        new Date(Date.now() + 2 * 60 * 60 * 1000) // Next 2 hours
       )
-    ORDER BY e.sender_email, e.received_at DESC
-    LIMIT 5
-  `);
+    ),
+    orderBy: [calendarEvents.startTime],
+    limit: 5,
+  });
 
-  return results.rows.map((row: any) => ({
-    id: row.id,
-    subject: row.subject || '(No subject)',
-    senderEmail: row.senderEmail,
-    senderName: row.senderName,
-    receivedAt: new Date(row.receivedAt),
-  }));
+  for (const meeting of upcoming) {
+    const minutesUntil =
+      (new Date(meeting.startTime).getTime() - Date.now()) / (1000 * 60);
+
+    suggestions.push({
+      id: `meeting-prep-${meeting.id}`,
+      type: 'meeting_prep',
+      priority: minutesUntil < 30 ? 'high' : 'medium',
+      title: `Meeting in ${Math.round(minutesUntil)} minutes`,
+      message: `"${meeting.title}" starts soon. Want to see related emails?`,
+      actionable: true,
+      action: {
+        type: 'search_meeting_context',
+        parameters: { eventId: meeting.id, title: meeting.title },
+      },
+      createdAt: new Date(),
+      expiresAt: new Date(meeting.startTime),
+    });
+  }
+
+  return suggestions;
 }
 
 /**
- * Detect emails that mention meetings (using AI)
+ * Check for emails needing follow-up
  */
-async function detectMeetingEmails(userId: string): Promise<
-  Array<{
-    id: string;
-    subject: string;
-    bodyText: string;
-    receivedAt: Date;
-  }>
-> {
-  const threeDaysAgo = new Date();
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+async function checkFollowUpNeeded(
+  userId: string
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
 
-  // Get recent emails
-  const results = await db.execute(sql`
-    SELECT id, subject, body_text, received_at
-    FROM emails
-    WHERE account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      AND is_trashed = false
-      AND received_at >= ${threeDaysAgo.toISOString()}
-      AND (
-        LOWER(subject) LIKE '%meeting%'
-        OR LOWER(subject) LIKE '%call%'
-        OR LOWER(subject) LIKE '%schedule%'
-        OR LOWER(body_text) LIKE '%meeting%'
-        OR LOWER(body_text) LIKE '%call%'
-      )
-    LIMIT 10
-  `);
+  // Get user's sent emails from last 14 days
+  const accounts = await db.query.emailAccounts.findMany({
+    where: eq(emailAccounts.userId, userId),
+    columns: { id: true },
+  });
 
-  // TODO: In production, use AI to parse meeting details more accurately
-  // For now, return emails with meeting keywords
-  return results.rows.slice(0, 3).map((row: any) => ({
-    id: row.id,
-    subject: row.subject || '(No subject)',
-    bodyText: row.body_text || '',
-    receivedAt: new Date(row.received_at),
-  }));
+  if (accounts.length === 0) return suggestions;
+
+  const sentEmails = await db.query.emails.findMany({
+    where: and(
+      eq(emails.accountId, accounts[0].id),
+      eq(emails.folder, 'sent'),
+      gte(emails.receivedAt, new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)) // Last 14 days
+    ),
+    orderBy: [desc(emails.receivedAt)],
+    limit: 20,
+  });
+
+  // Check for sent emails with no reply after 5 days
+  for (const sentEmail of sentEmails) {
+    const daysSinceSent =
+      (Date.now() - new Date(sentEmail.receivedAt).getTime()) /
+      (1000 * 60 * 60 * 24);
+
+    if (daysSinceSent >= 5 && daysSinceSent <= 10) {
+      // Check if there's been a reply (simplified - would need thread checking)
+      suggestions.push({
+        id: `follow-up-${sentEmail.id}`,
+        type: 'follow_up',
+        priority: 'medium',
+        title: `Follow up with ${sentEmail.toAddress}`,
+        message: `No response to "${sentEmail.subject}" sent ${Math.round(daysSinceSent)} days ago.`,
+        actionable: true,
+        action: {
+          type: 'compose_follow_up',
+          parameters: { originalEmailId: sentEmail.id },
+        },
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  return suggestions.slice(0, 2); // Top 2 follow-ups
 }
 
 /**
- * Get emails marked for follow-up
+ * Check for priority emails
  */
-async function getEmailsNeedingFollowUp(userId: string) {
-  const results = await db.execute(sql`
-    SELECT id, subject, received_at
-    FROM emails
-    WHERE account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      AND needs_reply = true
-      AND is_trashed = false
-      AND is_read = true
-    ORDER BY received_at DESC
-    LIMIT 5
-  `);
+async function checkPriorityEmails(
+  userId: string,
+  profile: any
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
 
-  return results.rows.map((row: any) => ({
-    id: row.id,
-    subject: row.subject || '(No subject)',
-    receivedAt: new Date(row.received_at),
-  }));
+  const accounts = await db.query.emailAccounts.findMany({
+    where: eq(emailAccounts.userId, userId),
+    columns: { id: true },
+  });
+
+  if (accounts.length === 0) return suggestions;
+
+  const frequentContacts = profile?.frequentContacts || [];
+
+  // Get unread emails from top contacts
+  const priorityUnread = await db.query.emails.findMany({
+    where: and(
+      eq(emails.accountId, accounts[0].id),
+      eq(emails.isRead, false),
+      eq(emails.folder, 'inbox')
+    ),
+    orderBy: [desc(emails.receivedAt)],
+    limit: 100,
+  });
+
+  let count = 0;
+  for (const email of priorityUnread) {
+    if (frequentContacts.includes(email.fromAddress)) {
+      count++;
+    }
+  }
+
+  if (count > 0) {
+    suggestions.push({
+      id: `priority-emails`,
+      type: 'priority_email',
+      priority: count >= 3 ? 'high' : 'medium',
+      title: `${count} unread from important contacts`,
+      message: `You have ${count} unread email(s) from your frequent contacts.`,
+      actionable: true,
+      action: {
+        type: 'show_priority_emails',
+        parameters: { contacts: frequentContacts },
+      },
+      createdAt: new Date(),
+    });
+  }
+
+  return suggestions;
 }
 
 /**
- * Get VIPs waiting for response (> 24 hours)
+ * Analyze user patterns and provide insights
  */
-async function getVIPsWaitingForResponse(userId: string) {
-  const oneDayAgo = new Date();
-  oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+async function analyzeUserPatterns(
+  userId: string,
+  profile: any
+): Promise<ProactiveSuggestion[]> {
+  const suggestions: ProactiveSuggestion[] = [];
 
-  const results = await db.execute(sql`
-    SELECT DISTINCT ON (e.sender_email)
-      e.id,
-      e.subject,
-      e.sender_email as "senderEmail",
-      e.sender_name as "senderName",
-      e.received_at as "receivedAt"
-    FROM emails e
-    INNER JOIN contacts c ON c.email = e.sender_email AND c.user_id = ${userId}
-    WHERE e.account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      AND e.is_read = true
-      AND e.is_trashed = false
-      AND e.received_at <= ${oneDayAgo.toISOString()}
-      AND c.is_vip = true
-      AND NOT EXISTS (
-        SELECT 1 FROM emails replies
-        WHERE replies.in_reply_to = e.message_id
-          AND replies.account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      )
-    ORDER BY e.sender_email, e.received_at ASC
-    LIMIT 5
-  `);
+  if (!profile) return suggestions;
 
-  return results.rows.map((row: any) => ({
-    id: row.id,
-    subject: row.subject || '(No subject)',
-    senderEmail: row.senderEmail,
-    senderName: row.senderName,
-    receivedAt: new Date(row.receivedAt),
-  }));
+  // Analyze active hours
+  const activeHours = profile.activeHours;
+  const currentHour = new Date().getHours();
+
+  if (activeHours?.start && activeHours?.end) {
+    // If outside active hours
+    if (currentHour < activeHours.start || currentHour > activeHours.end) {
+      suggestions.push({
+        id: `time-insight`,
+        type: 'time_suggestion',
+        priority: 'low',
+        title: 'Outside your usual work hours',
+        message: `You typically work between ${activeHours.start}:00 and ${activeHours.end}:00. Take a break! 😊`,
+        actionable: false,
+        createdAt: new Date(),
+      });
+    }
+  }
+
+  // Pattern: If user analyzed emails show a trend
+  if (profile.totalEmailsAnalyzed >= 20) {
+    suggestions.push({
+      id: `pattern-insight`,
+      type: 'pattern_insight',
+      priority: 'low',
+      title: 'Your email patterns',
+      message: `You typically write ${profile.avgEmailLength}-word emails in a ${profile.preferredTone} tone. Your most common topics: ${profile.commonTopics.slice(0, 3).join(', ')}.`,
+      actionable: false,
+      createdAt: new Date(),
+    });
+  }
+
+  return suggestions;
 }
 
 /**
- * Detect emails mentioning deadlines
+ * Get actionable suggestions only
  */
-async function detectDeadlineEmails(userId: string) {
-  const results = await db.execute(sql`
-    SELECT id, subject, body_text, received_at
-    FROM emails
-    WHERE account_id IN (SELECT id FROM email_accounts WHERE user_id = ${userId})
-      AND is_trashed = false
-      AND is_read = false
-      AND (
-        LOWER(subject) LIKE '%deadline%'
-        OR LOWER(subject) LIKE '%due date%'
-        OR LOWER(subject) LIKE '%urgent%'
-        OR LOWER(body_text) LIKE '%deadline%'
-        OR LOWER(body_text) LIKE '%due by%'
-      )
-    ORDER BY received_at DESC
-    LIMIT 5
-  `);
-
-  return results.rows.slice(0, 3).map((row: any) => ({
-    id: row.id,
-    subject: row.subject || '(No subject)',
-    bodyText: row.body_text || '',
-    receivedAt: new Date(row.received_at),
-  }));
+export async function getActionableSuggestions(
+  userId: string
+): Promise<ProactiveSuggestion[]> {
+  const all = await generateProactiveSuggestions(userId);
+  return all.filter((s) => s.actionable);
 }
 
 /**
- * Helper: Format date as relative time
+ * Get suggestions by type
  */
-function formatDate(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return 'today';
-  if (diffDays === 1) return 'yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString();
-}
-
-/**
- * Helper: Get days ago
- */
-function getDaysAgo(date: Date): number {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+export async function getSuggestionsByType(
+  userId: string,
+  type: ProactiveSuggestion['type']
+): Promise<ProactiveSuggestion[]> {
+  const all = await generateProactiveSuggestions(userId);
+  return all.filter((s) => s.type === type);
 }
