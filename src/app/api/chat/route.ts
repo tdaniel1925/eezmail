@@ -2,20 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import OpenAI from 'openai';
-import {
-  omniscientSearch,
-  getUserContext,
-  inferSearchScope,
-} from '@/lib/rag/omniscient-search';
+import { omniscientSearch, getUserContext } from '@/lib/rag/omniscient-search';
+import { inferSearchScope } from '@/lib/rag/search-utils';
 import {
   addToConversationHistory,
   storeSearchResults,
-  extractEntities,
 } from '@/lib/chat/context-manager';
-import {
-  parseAndResolveReferences,
-  containsReferences,
-} from '@/lib/chat/reference-resolver';
+import { extractEntities } from '@/lib/chat/context-utils';
+import { parseAndResolveReferences } from '@/lib/chat/reference-resolver';
+import { containsReferences } from '@/lib/chat/reference-utils';
 import {
   parseCommand as parseNLU,
   isMultiStepCommand,
@@ -102,7 +97,10 @@ export async function POST(request: NextRequest) {
     // Check if message contains references that need resolution
     if (containsReferences(lastUserMessage)) {
       console.log(`🔗 [Chat API] Message contains references, resolving...`);
-      const resolved = await parseAndResolveReferences(user.id, lastUserMessage);
+      const resolved = await parseAndResolveReferences(
+        user.id,
+        lastUserMessage
+      );
 
       if (resolved.needsClarification) {
         // Return clarification prompt
@@ -118,7 +116,9 @@ export async function POST(request: NextRequest) {
       if (validatedData.messages.length > 0) {
         validatedData.messages[validatedData.messages.length - 1].content =
           resolved.resolvedMessage;
-        console.log(`✅ [Chat API] Resolved message: "${resolved.resolvedMessage}"`);
+        console.log(
+          `✅ [Chat API] Resolved message: "${resolved.resolvedMessage}"`
+        );
       }
     }
 
@@ -1046,7 +1046,12 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
           properties: {
             patternType: {
               type: 'string',
-              enum: ['email_frequency', 'response_time', 'common_senders', 'topics'],
+              enum: [
+                'email_frequency',
+                'response_time',
+                'common_senders',
+                'topics',
+              ],
               description: 'Type of pattern to find',
             },
             timeRange: {
@@ -1067,7 +1072,11 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
         parameters: {
           type: 'object',
           properties: {
-            limit: { type: 'number', description: 'Max suggestions', default: 5 },
+            limit: {
+              type: 'number',
+              description: 'Max suggestions',
+              default: 5,
+            },
             actionableOnly: {
               type: 'boolean',
               description: 'Only actionable suggestions',

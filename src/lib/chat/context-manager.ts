@@ -76,7 +76,7 @@ export async function addToConversationHistory(
   entities?: Array<{ type: string; id: string; name: string }>
 ): Promise<void> {
   const context = await getConversationContext(userId);
-  
+
   // Add to history (keep last 20 messages)
   context.conversationHistory.push({
     role,
@@ -92,7 +92,7 @@ export async function addToConversationHistory(
   // Update pronoun references based on entities
   if (entities && entities.length > 0) {
     const lastEntity = entities[entities.length - 1];
-    
+
     // Update pronoun references
     if (lastEntity.type === 'contact') {
       context.pronounReferences.set('him', lastEntity);
@@ -127,12 +127,16 @@ export async function resolveReference(
   const context = await getConversationContext(userId);
   const lowerRef = reference.toLowerCase().trim();
 
-  console.log(`🔍 [Context] Resolving reference: "${reference}" for user ${userId}`);
+  console.log(
+    `🔍 [Context] Resolving reference: "${reference}" for user ${userId}`
+  );
 
   // Direct pronoun resolution
   if (context.pronounReferences.has(lowerRef)) {
     const resolved = context.pronounReferences.get(lowerRef)!;
-    console.log(`✅ [Context] Resolved "${reference}" to ${resolved.type} ${resolved.id}`);
+    console.log(
+      `✅ [Context] Resolved "${reference}" to ${resolved.type} ${resolved.id}`
+    );
     return resolved;
   }
 
@@ -156,7 +160,10 @@ export async function resolveReference(
   }
 
   // Check last search results
-  if ((lowerRef === 'it' || lowerRef === 'those' || lowerRef === 'them') && context.lastSearchResults) {
+  if (
+    (lowerRef === 'it' || lowerRef === 'those' || lowerRef === 'them') &&
+    context.lastSearchResults
+  ) {
     return {
       type: context.lastSearchResults.type,
       id: context.lastSearchResults.ids[0], // Return first result
@@ -212,25 +219,33 @@ export async function getEntityDetails(
         const email = await db.query.emails.findFirst({
           where: eq(emails.id, id),
         });
-        return email ? { id, name: email.subject || 'Untitled', type: 'email' } : null;
+        return email
+          ? { id, name: email.subject || 'Untitled', type: 'email' }
+          : null;
 
       case 'contact':
         const contact = await db.query.contacts.findFirst({
           where: eq(contacts.id, id),
         });
-        return contact ? { id, name: contact.displayName || 'Unknown', type: 'contact' } : null;
+        return contact
+          ? { id, name: contact.displayName || 'Unknown', type: 'contact' }
+          : null;
 
       case 'event':
         const event = await db.query.calendarEvents.findFirst({
           where: eq(calendarEvents.id, id),
         });
-        return event ? { id, name: event.title || 'Untitled Event', type: 'event' } : null;
+        return event
+          ? { id, name: event.title || 'Untitled Event', type: 'event' }
+          : null;
 
       case 'task':
         const task = await db.query.tasks.findFirst({
           where: eq(tasks.id, id),
         });
-        return task ? { id, name: task.title || 'Untitled Task', type: 'task' } : null;
+        return task
+          ? { id, name: task.title || 'Untitled Task', type: 'task' }
+          : null;
 
       default:
         return null;
@@ -248,59 +263,3 @@ export async function clearContext(userId: string): Promise<void> {
   contextStore.delete(userId);
   console.log(`🗑️ [Context] Cleared for user ${userId}`);
 }
-
-/**
- * Extract entities from a message
- */
-export function extractEntities(
-  message: string,
-  searchResults?: any
-): Array<{ type: string; id: string; name: string }> {
-  const entities: Array<{ type: string; id: string; name: string }> = [];
-
-  // If we have search results, extract entities from them
-  if (searchResults) {
-    if (searchResults.emails?.results?.length > 0) {
-      searchResults.emails.results.forEach((email: any) => {
-        entities.push({
-          type: 'email',
-          id: email.id,
-          name: email.subject || 'Untitled',
-        });
-      });
-    }
-
-    if (searchResults.contacts?.results?.length > 0) {
-      searchResults.contacts.results.forEach((contact: any) => {
-        entities.push({
-          type: 'contact',
-          id: contact.id,
-          name: contact.displayName || 'Unknown',
-        });
-      });
-    }
-
-    if (searchResults.calendar?.results?.length > 0) {
-      searchResults.calendar.results.forEach((event: any) => {
-        entities.push({
-          type: 'event',
-          id: event.id,
-          name: event.title || 'Untitled Event',
-        });
-      });
-    }
-
-    if (searchResults.tasks?.results?.length > 0) {
-      searchResults.tasks.results.forEach((task: any) => {
-        entities.push({
-          type: 'task',
-          id: task.id,
-          name: task.title || 'Untitled Task',
-        });
-      });
-    }
-  }
-
-  return entities;
-}
-

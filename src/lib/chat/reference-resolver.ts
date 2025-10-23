@@ -51,10 +51,10 @@ export async function parseAndResolveReferences(
     if (matches) {
       for (const match of matches) {
         const resolved = await resolveReference(userId, match);
-        
+
         if (resolved) {
           const details = await getEntityDetails(resolved.type, resolved.id);
-          
+
           if (details) {
             references.push({
               originalText: match,
@@ -70,7 +70,9 @@ export async function parseAndResolveReferences(
               `"${details.name}"`
             );
 
-            console.log(`✅ [Reference Resolver] "${match}" → ${details.name} (${resolved.type})`);
+            console.log(
+              `✅ [Reference Resolver] "${match}" → ${details.name} (${resolved.type})`
+            );
           }
         } else {
           // Could not resolve - may need clarification
@@ -91,21 +93,6 @@ export async function parseAndResolveReferences(
 }
 
 /**
- * Check if message contains references that need resolution
- */
-export function containsReferences(message: string): boolean {
-  const referencePatterns = [
-    /\b(it|this|that)\b/i,
-    /\b(him|her|them|his|hers|their)\b/i,
-    /\b(that email|the email|this email)\b/i,
-    /\b(that meeting|the meeting|this meeting)\b/i,
-    /\b(that task|the task|this task)\b/i,
-  ];
-
-  return referencePatterns.some(pattern => pattern.test(message));
-}
-
-/**
  * Suggest concrete rephrasing of ambiguous references
  */
 export async function suggestClarification(
@@ -114,18 +101,27 @@ export async function suggestClarification(
 ): Promise<string[]> {
   const suggestions: string[] = [];
 
-  if (message.toLowerCase().includes('it') || message.toLowerCase().includes('this')) {
+  if (
+    message.toLowerCase().includes('it') ||
+    message.toLowerCase().includes('this')
+  ) {
     suggestions.push('Did you mean the last email I found?');
     suggestions.push('Are you referring to the recent meeting?');
     suggestions.push('Do you mean the task we just discussed?');
   }
 
-  if (message.toLowerCase().includes('him') || message.toLowerCase().includes('her')) {
+  if (
+    message.toLowerCase().includes('him') ||
+    message.toLowerCase().includes('her')
+  ) {
     suggestions.push('Which contact are you referring to?');
-    suggestions.push('Could you specify the person\'s name?');
+    suggestions.push("Could you specify the person's name?");
   }
 
-  if (message.toLowerCase().includes('them') || message.toLowerCase().includes('those')) {
+  if (
+    message.toLowerCase().includes('them') ||
+    message.toLowerCase().includes('those')
+  ) {
     suggestions.push('Are you referring to the search results?');
     suggestions.push('Do you mean all the emails I found?');
   }
@@ -151,50 +147,68 @@ export async function parseCommand(
   message: string
 ): Promise<ParsedCommand | null> {
   // First resolve references
-  const { resolvedMessage, references } = await parseAndResolveReferences(userId, message);
+  const { resolvedMessage, references } = await parseAndResolveReferences(
+    userId,
+    message
+  );
 
   const lower = resolvedMessage.toLowerCase();
 
   // Email actions
-  if (lower.includes('move') && references.some(r => r.resolvedType === 'email')) {
-    const emailRef = references.find(r => r.resolvedType === 'email');
+  if (
+    lower.includes('move') &&
+    references.some((r) => r.resolvedType === 'email')
+  ) {
+    const emailRef = references.find((r) => r.resolvedType === 'email');
     // Extract folder name
     const folderMatch = lower.match(/to\s+([a-z]+)/);
     return {
       action: 'move_emails',
-      target: emailRef ? {
-        type: emailRef.resolvedType,
-        id: emailRef.resolvedId,
-        name: emailRef.resolvedName || '',
-      } : undefined,
+      target: emailRef
+        ? {
+            type: emailRef.resolvedType,
+            id: emailRef.resolvedId,
+            name: emailRef.resolvedName || '',
+          }
+        : undefined,
       parameters: {
         folder: folderMatch ? folderMatch[1] : 'archive',
       },
     };
   }
 
-  if (lower.includes('delete') && references.some(r => r.resolvedType === 'email')) {
-    const emailRef = references.find(r => r.resolvedType === 'email');
+  if (
+    lower.includes('delete') &&
+    references.some((r) => r.resolvedType === 'email')
+  ) {
+    const emailRef = references.find((r) => r.resolvedType === 'email');
     return {
       action: 'delete_emails',
-      target: emailRef ? {
-        type: emailRef.resolvedType,
-        id: emailRef.resolvedId,
-        name: emailRef.resolvedName || '',
-      } : undefined,
+      target: emailRef
+        ? {
+            type: emailRef.resolvedType,
+            id: emailRef.resolvedId,
+            name: emailRef.resolvedName || '',
+          }
+        : undefined,
       parameters: {},
     };
   }
 
-  if (lower.includes('email') && references.some(r => r.resolvedType === 'contact')) {
-    const contactRef = references.find(r => r.resolvedType === 'contact');
+  if (
+    lower.includes('email') &&
+    references.some((r) => r.resolvedType === 'contact')
+  ) {
+    const contactRef = references.find((r) => r.resolvedType === 'contact');
     return {
       action: 'send_email',
-      target: contactRef ? {
-        type: contactRef.resolvedType,
-        id: contactRef.resolvedId,
-        name: contactRef.resolvedName || '',
-      } : undefined,
+      target: contactRef
+        ? {
+            type: contactRef.resolvedType,
+            id: contactRef.resolvedId,
+            name: contactRef.resolvedName || '',
+          }
+        : undefined,
       parameters: {
         recipient: contactRef?.resolvedName,
       },
@@ -203,4 +217,3 @@ export async function parseCommand(
 
   return null;
 }
-

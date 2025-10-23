@@ -8,7 +8,7 @@ import {
 import { omniscientSearch } from '@/lib/rag/omniscient-search';
 import { composeNewEmail } from '@/lib/chat/compose-actions';
 import { createCalendarEvent } from '@/lib/calendar/calendar-actions';
-import { createContact } from '@/lib/contacts/contact-actions';
+import { createContact } from '@/lib/chat/contact-actions';
 import { createTask } from '@/lib/tasks/actions';
 import { createFolder } from '@/lib/folders/actions';
 import { db } from '@/lib/db';
@@ -226,4 +226,3 @@ async function executeAction(
       throw new Error(`Unknown action: ${action}`);
   }
 }
-

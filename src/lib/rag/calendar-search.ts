@@ -41,7 +41,7 @@ export async function searchCalendarSemanticRAG(
     }
 
     // Add text search conditions
-    const textConditions = searchTerms.map(term =>
+    const textConditions = searchTerms.map((term) =>
       or(
         ilike(calendarEvents.title, `%${term}%`),
         ilike(calendarEvents.description, `%${term}%`),
@@ -67,7 +67,7 @@ export async function searchCalendarSemanticRAG(
     }
 
     // Score and rank events
-    const scoredEvents = events.map(event => {
+    const scoredEvents = events.map((event) => {
       const searchText = [
         event.title,
         event.description,
@@ -79,7 +79,7 @@ export async function searchCalendarSemanticRAG(
         .toLowerCase();
 
       let score = 0;
-      searchTerms.forEach(term => {
+      searchTerms.forEach((term) => {
         if (searchText.includes(term)) {
           score += 1;
         }
@@ -209,65 +209,3 @@ function generateCalendarSummary(events: any[], query: string): string {
 
   return `Found ${events.length} events:\n${summaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
 }
-
-/**
- * Parse natural language date/time expressions
- */
-export function parseNaturalDateTime(input: string): {
-  startDate?: Date;
-  endDate?: Date;
-} {
-  const now = new Date();
-  const lower = input.toLowerCase();
-
-  // Today
-  if (lower.includes('today')) {
-    const start = new Date(now);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }
-
-  // Tomorrow
-  if (lower.includes('tomorrow')) {
-    const start = new Date(now);
-    start.setDate(start.getDate() + 1);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }
-
-  // This week
-  if (lower.includes('this week')) {
-    const start = new Date(now);
-    start.setDate(start.getDate() - start.getDay());
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }
-
-  // Next week
-  if (lower.includes('next week')) {
-    const start = new Date(now);
-    start.setDate(start.getDate() - start.getDay() + 7);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-    end.setHours(23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }
-
-  // This month
-  if (lower.includes('this month')) {
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-    return { startDate: start, endDate: end };
-  }
-
-  return {};
-}
-

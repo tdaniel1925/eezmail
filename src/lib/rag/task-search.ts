@@ -2,7 +2,17 @@
 
 import { db } from '@/lib/db';
 import { tasks } from '@/db/schema';
-import { eq, and, or, ilike, desc, gte, lte, isNull, isNotNull } from 'drizzle-orm';
+import {
+  eq,
+  and,
+  or,
+  ilike,
+  desc,
+  gte,
+  lte,
+  isNull,
+  isNotNull,
+} from 'drizzle-orm';
 
 /**
  * Semantic search over tasks
@@ -42,11 +52,8 @@ export async function searchTasksSemanticRAG(
     }
 
     // Add text search conditions
-    const textConditions = searchTerms.map(term =>
-      or(
-        ilike(tasks.title, `%${term}%`),
-        ilike(tasks.description, `%${term}%`)
-      )
+    const textConditions = searchTerms.map((term) =>
+      or(ilike(tasks.title, `%${term}%`), ilike(tasks.description, `%${term}%`))
     );
 
     whereConditions.push(or(...textConditions));
@@ -63,14 +70,14 @@ export async function searchTasksSemanticRAG(
     }
 
     // Score and rank tasks
-    const scoredTasks = foundTasks.map(task => {
+    const scoredTasks = foundTasks.map((task) => {
       const searchText = [task.title, task.description]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
 
       let score = 0;
-      searchTerms.forEach(term => {
+      searchTerms.forEach((term) => {
         if (searchText.includes(term)) {
           score += 1;
         }
@@ -91,7 +98,8 @@ export async function searchTasksSemanticRAG(
       // Boost for upcoming due dates
       if (task.dueDate) {
         const daysUntilDue = Math.floor(
-          (new Date(task.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+          (new Date(task.dueDate).getTime() - Date.now()) /
+            (1000 * 60 * 60 * 24)
         );
         if (daysUntilDue >= 0 && daysUntilDue <= 7) {
           score += 2; // Due within a week
@@ -230,25 +238,3 @@ function generateTaskSummary(tasks: any[], query: string): string {
 
   return `Found ${tasks.length} tasks:\n${summaries.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
 }
-
-/**
- * Parse natural language task priorities
- */
-export function parseTaskPriority(input: string): 'high' | 'medium' | 'low' | undefined {
-  const lower = input.toLowerCase();
-
-  if (lower.includes('urgent') || lower.includes('critical') || lower.includes('high priority')) {
-    return 'high';
-  }
-
-  if (lower.includes('medium') || lower.includes('normal')) {
-    return 'medium';
-  }
-
-  if (lower.includes('low priority') || lower.includes('when possible')) {
-    return 'low';
-  }
-
-  return undefined;
-}
-

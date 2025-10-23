@@ -1,8 +1,14 @@
 'use server';
 
 import { buildContextForQuery } from './context';
-import { searchContactsSemanticRAG, getContactCommunicationContext } from './contact-search';
-import { searchCalendarSemanticRAG, getUpcomingEventsContext } from './calendar-search';
+import {
+  searchContactsSemanticRAG,
+  getContactCommunicationContext,
+} from './contact-search';
+import {
+  searchCalendarSemanticRAG,
+  getUpcomingEventsContext,
+} from './calendar-search';
 import { searchTasksSemanticRAG, getTaskContext } from './task-search';
 import {
   searchSettingsRAG,
@@ -80,30 +86,35 @@ export async function omniscientSearch(
   console.log(`🔍 [Omniscient Search] Query: "${query}" for user: ${userId}`);
 
   // Execute all searches in parallel for speed
-  const [emailResults, contactResults, calendarResults, taskResults, settingsResults] =
-    await Promise.all([
-      opts.includeEmails
-        ? buildContextForQuery(query, userId, opts.emailLimit)
-        : Promise.resolve({ results: [], summary: '', totalFound: 0 }),
-      opts.includeContacts
-        ? searchContactsSemanticRAG(query, userId, opts.contactLimit)
-        : Promise.resolve({ contacts: [], summary: '', totalFound: 0 }),
-      opts.includeCalendar
-        ? searchCalendarSemanticRAG(query, userId, { limit: opts.calendarLimit })
-        : Promise.resolve({ events: [], summary: '', totalFound: 0 }),
-      opts.includeTasks
-        ? searchTasksSemanticRAG(query, userId, { limit: opts.taskLimit })
-        : Promise.resolve({ tasks: [], summary: '', totalFound: 0 }),
-      opts.includeSettings
-        ? searchSettingsRAG(query, userId)
-        : Promise.resolve({
-            rules: [],
-            signatures: [],
-            folders: [],
-            settings: null,
-            summary: '',
-          }),
-    ]);
+  const [
+    emailResults,
+    contactResults,
+    calendarResults,
+    taskResults,
+    settingsResults,
+  ] = await Promise.all([
+    opts.includeEmails
+      ? buildContextForQuery(query, userId, opts.emailLimit)
+      : Promise.resolve({ results: [], summary: '', totalFound: 0 }),
+    opts.includeContacts
+      ? searchContactsSemanticRAG(query, userId, opts.contactLimit)
+      : Promise.resolve({ contacts: [], summary: '', totalFound: 0 }),
+    opts.includeCalendar
+      ? searchCalendarSemanticRAG(query, userId, { limit: opts.calendarLimit })
+      : Promise.resolve({ events: [], summary: '', totalFound: 0 }),
+    opts.includeTasks
+      ? searchTasksSemanticRAG(query, userId, { limit: opts.taskLimit })
+      : Promise.resolve({ tasks: [], summary: '', totalFound: 0 }),
+    opts.includeSettings
+      ? searchSettingsRAG(query, userId)
+      : Promise.resolve({
+          rules: [],
+          signatures: [],
+          folders: [],
+          settings: null,
+          summary: '',
+        }),
+  ]);
 
   // Calculate total results
   const totalResults =
@@ -186,8 +197,10 @@ export async function getUserContext(userId: string): Promise<string> {
   ].filter(Boolean);
 
   const fullContext = contextParts.join('\n');
-  
-  console.log(`✅ [User Context] Built ${contextParts.length} context sections`);
+
+  console.log(
+    `✅ [User Context] Built ${contextParts.length} context sections`
+  );
 
   return fullContext || 'No additional context available.';
 }
@@ -206,25 +219,37 @@ function buildOverallSummary(
   const sections: string[] = [];
 
   if (emails.totalFound > 0) {
-    sections.push(`${emails.totalFound} email${emails.totalFound === 1 ? '' : 's'}`);
+    sections.push(
+      `${emails.totalFound} email${emails.totalFound === 1 ? '' : 's'}`
+    );
   }
 
   if (contacts.totalFound > 0) {
-    sections.push(`${contacts.totalFound} contact${contacts.totalFound === 1 ? '' : 's'}`);
+    sections.push(
+      `${contacts.totalFound} contact${contacts.totalFound === 1 ? '' : 's'}`
+    );
   }
 
   if (calendar.totalFound > 0) {
-    sections.push(`${calendar.totalFound} event${calendar.totalFound === 1 ? '' : 's'}`);
+    sections.push(
+      `${calendar.totalFound} event${calendar.totalFound === 1 ? '' : 's'}`
+    );
   }
 
   if (tasks.totalFound > 0) {
-    sections.push(`${tasks.totalFound} task${tasks.totalFound === 1 ? '' : 's'}`);
+    sections.push(
+      `${tasks.totalFound} task${tasks.totalFound === 1 ? '' : 's'}`
+    );
   }
 
   const settingsCount =
-    settings.rules.length + settings.signatures.length + settings.folders.length;
+    settings.rules.length +
+    settings.signatures.length +
+    settings.folders.length;
   if (settingsCount > 0) {
-    sections.push(`${settingsCount} setting${settingsCount === 1 ? '' : 's'}/rule${settingsCount === 1 ? '' : 's'}`);
+    sections.push(
+      `${settingsCount} setting${settingsCount === 1 ? '' : 's'}/rule${settingsCount === 1 ? '' : 's'}`
+    );
   }
 
   if (sections.length === 0) {
@@ -233,96 +258,3 @@ function buildOverallSummary(
 
   return `Found ${sections.join(', ')} matching "${query}".`;
 }
-
-/**
- * Determine what to search based on query intent
- * This helps optimize search performance
- */
-export function inferSearchScope(query: string): OmniscientSearchOptions {
-  const lower = query.toLowerCase();
-
-  // Email-specific queries
-  if (
-    lower.includes('email') ||
-    lower.includes('message') ||
-    lower.includes('sent') ||
-    lower.includes('inbox')
-  ) {
-    return {
-      includeEmails: true,
-      includeContacts: false,
-      includeCalendar: false,
-      includeTasks: false,
-      includeSettings: false,
-    };
-  }
-
-  // Contact-specific queries
-  if (
-    lower.includes('contact') ||
-    lower.includes('person') ||
-    lower.includes('phone') ||
-    lower.includes('address')
-  ) {
-    return {
-      includeEmails: false,
-      includeContacts: true,
-      includeCalendar: false,
-      includeTasks: false,
-      includeSettings: false,
-    };
-  }
-
-  // Calendar-specific queries
-  if (
-    lower.includes('meeting') ||
-    lower.includes('event') ||
-    lower.includes('calendar') ||
-    lower.includes('schedule')
-  ) {
-    return {
-      includeEmails: false,
-      includeContacts: false,
-      includeCalendar: true,
-      includeTasks: false,
-      includeSettings: false,
-    };
-  }
-
-  // Task-specific queries
-  if (lower.includes('task') || lower.includes('todo') || lower.includes('remind')) {
-    return {
-      includeEmails: false,
-      includeContacts: false,
-      includeCalendar: false,
-      includeTasks: true,
-      includeSettings: false,
-    };
-  }
-
-  // Settings-specific queries
-  if (
-    lower.includes('setting') ||
-    lower.includes('rule') ||
-    lower.includes('signature') ||
-    lower.includes('folder')
-  ) {
-    return {
-      includeEmails: false,
-      includeContacts: false,
-      includeCalendar: false,
-      includeTasks: false,
-      includeSettings: true,
-    };
-  }
-
-  // Default: search everything
-  return {
-    includeEmails: true,
-    includeContacts: true,
-    includeCalendar: true,
-    includeTasks: true,
-    includeSettings: true,
-  };
-}
-
