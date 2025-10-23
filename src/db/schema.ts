@@ -11,6 +11,7 @@ import {
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 // ============================================================================
 // ENUMS
@@ -2494,3 +2495,36 @@ export const contactTimelineQueue = pgTable(
 export type ContactTimelineQueueItem = typeof contactTimelineQueue.$inferSelect;
 export type NewContactTimelineQueueItem =
   typeof contactTimelineQueue.$inferInsert;
+
+// ============================================================================
+// TABLE RELATIONS
+// Define relationships between tables for Drizzle's relational queries
+// ============================================================================
+
+// Calendar Event Relations
+export const calendarEventsRelations = relations(calendarEvents, ({ many }) => ({
+  attendees: many(calendarAttendees),
+  reminders: many(calendarReminders),
+}));
+
+// Calendar Attendee Relations
+export const calendarAttendeesRelations = relations(
+  calendarAttendees,
+  ({ one }) => ({
+    event: one(calendarEvents, {
+      fields: [calendarAttendees.eventId],
+      references: [calendarEvents.id],
+    }),
+  })
+);
+
+// Calendar Reminder Relations
+export const calendarRemindersRelations = relations(
+  calendarReminders,
+  ({ one }) => ({
+    event: one(calendarEvents, {
+      fields: [calendarReminders.eventId],
+      references: [calendarEvents.id],
+    }),
+  })
+);
