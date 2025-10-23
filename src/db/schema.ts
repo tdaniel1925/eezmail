@@ -2097,6 +2097,55 @@ export const userPreferences = pgTable('user_preferences', {
 });
 
 // ============================================================================
+// USER AI PROFILES TABLE
+// Stores learned writing style and communication patterns
+// ============================================================================
+
+export const userAIProfiles = pgTable('user_ai_profiles', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .unique()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  // Writing style analysis
+  writingStyle: jsonb('writing_style').$type<{
+    tone?: string;
+    formality?: string;
+    wordChoicePatterns?: string[];
+  }>(),
+  commonPhrases: text('common_phrases').array().default([]),
+  vocabularyLevel: text('vocabulary_level').default('moderate'),
+  avgEmailLength: integer('avg_email_length').default(200),
+  greetingStyle: text('greeting_style').default('Hi'),
+  closingStyle: text('closing_style').default('Best'),
+
+  // Communication patterns
+  responseTimeAvg: integer('response_time_avg').default(60), // minutes
+  activeHours: jsonb('active_hours').$type<{
+    start?: number;
+    end?: number;
+  }>(),
+  preferredTone: text('preferred_tone').default('professional'),
+  emojiUsage: boolean('emoji_usage').default(false),
+
+  // Behavioral patterns
+  frequentContacts: text('frequent_contacts').array().default([]),
+  commonTopics: text('common_topics').array().default([]),
+  meetingFrequency: jsonb('meeting_frequency').$type<Record<string, any>>(),
+
+  // AI preferences
+  learnedPreferences: jsonb('learned_preferences').$type<Record<string, any>>(),
+
+  // Analysis metadata
+  lastAnalyzedAt: timestamp('last_analyzed_at').defaultNow(),
+  totalEmailsAnalyzed: integer('total_emails_analyzed').default(0),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
 // WEBHOOK SUBSCRIPTIONS TABLE
 // ============================================================================
 
@@ -2340,6 +2389,9 @@ export type NewLabelAssignment = typeof labelAssignments.$inferInsert;
 
 export type UserPreference = typeof userPreferences.$inferSelect;
 export type NewUserPreference = typeof userPreferences.$inferInsert;
+
+export type UserAIProfile = typeof userAIProfiles.$inferSelect;
+export type NewUserAIProfile = typeof userAIProfiles.$inferInsert;
 
 export type WebhookSubscription = typeof webhookSubscriptions.$inferSelect;
 export type NewWebhookSubscription = typeof webhookSubscriptions.$inferInsert;
