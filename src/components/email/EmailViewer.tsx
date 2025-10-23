@@ -14,6 +14,9 @@ import {
   Download,
   Sparkles,
   GitBranch,
+  Folder,
+  Tag,
+  Printer,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Email } from '@/db/schema';
@@ -24,6 +27,7 @@ import { toast } from 'sonner';
 import { useChatbotContext } from '@/components/ai/ChatbotContext';
 import { useReplyLater } from '@/contexts/ReplyLaterContext';
 import { ThreadTimeline } from './ThreadTimeline';
+import { MoveToFolderMenu } from './MoveToFolderMenu';
 
 interface EmailViewerProps {
   email: Email | null;
@@ -44,7 +48,10 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
   const [customDate, setCustomDate] = useState('');
   const [customTime, setCustomTime] = useState('');
   const [showThreadTimeline, setShowThreadTimeline] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+  const [showMoveToFolder, setShowMoveToFolder] = useState(false);
   const replyLaterRef = useRef<HTMLDivElement>(null);
+  const moreOptionsRef = useRef<HTMLDivElement>(null);
 
   // Set current email context when viewing
   useEffect(() => {
@@ -213,14 +220,20 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
       ) {
         setShowReplyLaterPicker(false);
       }
+      if (
+        moreOptionsRef.current &&
+        !moreOptionsRef.current.contains(event.target as Node)
+      ) {
+        setShowMoreOptions(false);
+      }
     }
 
-    if (showReplyLaterPicker) {
+    if (showReplyLaterPicker || showMoreOptions) {
       document.addEventListener('mousedown', handleClickOutside);
       return () =>
         document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showReplyLaterPicker]);
+  }, [showReplyLaterPicker, showMoreOptions]);
 
   const handleAIReply = async (): Promise<void> => {
     if (!email) return;
@@ -264,6 +277,92 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     } finally {
       setIsGeneratingReply(false);
     }
+  };
+
+  const handlePrint = (): void => {
+    if (!email) return;
+
+    // Create a print-friendly version
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Please allow popups to print this email');
+      return;
+    }
+
+    const senderName = email.fromAddress.name || email.fromAddress.email;
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${email.subject || '(No subject)'}</title>
+        <style>
+          body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+          }
+          .subject {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+          }
+          .metadata {
+            font-size: 14px;
+            color: #666;
+          }
+          .content {
+            line-height: 1.6;
+          }
+          @media print {
+            body {
+              padding: 0;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="subject">${email.subject || '(No subject)'}</div>
+          <div class="metadata">
+            <div><strong>From:</strong> ${senderName} &lt;${email.fromAddress.email}&gt;</div>
+            <div><strong>To:</strong> ${email.toAddresses.map((a) => a.email).join(', ')}</div>
+            ${
+              email.ccAddresses && email.ccAddresses.length > 0
+                ? `<div><strong>CC:</strong> ${email.ccAddresses.map((a) => a.email).join(', ')}</div>`
+                : ''
+            }
+            <div><strong>Date:</strong> ${format(new Date(email.receivedAt), 'PPpp')}</div>
+          </div>
+        </div>
+        <div class="content">
+          ${renderedHtml || email.bodyText || '(No content)'}
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
+
+  const handleMoveToFolder = (): void => {
+    setShowMoveToFolder(true);
+    setShowMoreOptions(false);
+  };
+
+  const handleRefresh = (): void => {
+    // Trigger a refresh of the email list
+    window.location.reload();
   };
 
   const senderName = email.fromAddress.name || email.fromAddress.email;
@@ -450,18 +549,70 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
           </button>
           <button
             type="button"
-            onClick={() => {
-              // TODO: Implement more options menu (labels, folders, print, etc.)
-              toast.info('More options coming soon!');
-            }}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 dark:text-white/70 transition-all duration-200 hover:bg-gray-100/80 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white"
+            onClick={() => setShowMoreOptions(!showMoreOptions)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-700 dark:text-white/70 transition-all duration-200 hover:bg-gray-100/80 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white relative"
             aria-label="More options"
             title="More options"
           >
             <MoreVertical className="h-4 w-4" />
           </button>
+
+          {/* More Options Dropdown */}
+          {showMoreOptions && (
+            <div
+              ref={moreOptionsRef}
+              className="absolute right-0 top-12 z-50 w-56 rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200/80 dark:border-white/10 overflow-hidden"
+            >
+              <div className="py-1">
+                <button
+                  type="button"
+                  onClick={handleMoveToFolder}
+                  className="w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 text-gray-700 dark:text-white/70"
+                >
+                  <Folder className="h-4 w-4" />
+                  <span>Move to folder</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toast.info('Labels feature coming soon!');
+                    setShowMoreOptions(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 text-gray-700 dark:text-white/70"
+                >
+                  <Tag className="h-4 w-4" />
+                  <span>Add label</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handlePrint();
+                    setShowMoreOptions(false);
+                  }}
+                  className="w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-3 text-gray-700 dark:text-white/70"
+                >
+                  <Printer className="h-4 w-4" />
+                  <span>Print</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Move to Folder Modal */}
+      {showMoveToFolder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="relative">
+            <MoveToFolderMenu
+              emailId={email.id}
+              currentFolderId={email.customFolderId}
+              onClose={() => setShowMoveToFolder(false)}
+              onMoved={handleRefresh}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Email Content */}
       <div className="flex-1 overflow-y-auto">

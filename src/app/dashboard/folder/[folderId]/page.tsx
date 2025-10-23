@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { EmailList } from '@/components/email/EmailList';
 import type { Email, CustomFolder } from '@/db/schema';
+import { toast } from 'sonner';
 
 interface FolderPageProps {
   params: Promise<{ folderId: string }>;
@@ -15,26 +16,38 @@ export default function FolderPage({ params }: FolderPageProps): JSX.Element {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch folder details and emails from database
-    // For now, use mock data
     const loadData = async (): Promise<void> => {
-      setIsLoading(true);
+      try {
+        setIsLoading(true);
 
-      // Mock folder data
-      const mockFolder: CustomFolder = {
-        id: folderId,
-        userId: '1',
-        name: 'Loading...',
-        icon: '📁',
-        color: 'gray',
-        sortOrder: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+        // Fetch folder details and emails from API
+        const response = await fetch(
+          `/api/email/folder/${folderId}?limit=50&offset=0`
+        );
 
-      setFolder(mockFolder);
-      setEmails([]);
-      setIsLoading(false);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to fetch folder data');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          setFolder(data.folder);
+          setEmails(data.emails);
+        } else {
+          throw new Error('Failed to fetch folder data');
+        }
+      } catch (error) {
+        console.error('Error loading folder:', error);
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to load folder'
+        );
+        setFolder(null);
+        setEmails([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadData();
@@ -43,7 +56,7 @@ export default function FolderPage({ params }: FolderPageProps): JSX.Element {
   return (
     <EmailList
       emails={emails}
-      title={folder?.name || 'Custom Folder'}
+      title={folder ? `${folder.icon} ${folder.name}` : 'Custom Folder'}
       isLoading={isLoading}
     />
   );
