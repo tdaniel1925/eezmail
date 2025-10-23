@@ -3,8 +3,6 @@
  * Prevents exceeding provider API limits (Gmail, Outlook, Nylas)
  */
 
-'use server';
-
 // In-memory rate limit tracking (in production, use Redis)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
