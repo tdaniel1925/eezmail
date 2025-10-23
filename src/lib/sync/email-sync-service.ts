@@ -11,6 +11,7 @@ import { ImapService } from '@/lib/email/imap-service';
 import { imapConnectionPool } from '@/lib/email/imap-connection-pool';
 import { extractEmailAddress } from '@/lib/contacts/email-utils';
 import { generateThreadId } from '@/lib/sync/threading-service';
+import { checkForDuplicate } from '@/lib/sync/duplicate-detector';
 import { withRateLimit, getAccountRateLimit } from '@/lib/sync/rate-limiter';
 import { queueEmbeddingJob } from '@/lib/rag/embedding-queue';
 import { queueContactTimelineEvent } from '@/lib/contacts/timeline-queue';
@@ -609,6 +610,23 @@ async function syncEmailsWithGraph(
               folderMapping[message.parentFolderId] || 'inbox'
             ), // Use normalized folder mapping or default to inbox
           };
+
+          // Check for duplicates using fuzzy matching
+          const duplicateCheck = await checkForDuplicate({
+            messageId: emailData.messageId,
+            subject: emailData.subject,
+            fromAddress: emailData.fromAddress,
+            receivedAt: emailData.receivedAt,
+            bodyPreview: emailData.snippet,
+            accountId: emailData.accountId,
+          });
+
+          if (duplicateCheck.isDuplicate && duplicateCheck.confidence >= 0.85) {
+            console.log(
+              `⏭️  Skipping duplicate: ${emailData.subject} (${duplicateCheck.reason}, confidence: ${Math.round(duplicateCheck.confidence * 100)}%)`
+            );
+            continue; // Skip this email
+          }
 
           // Insert email first
           const [insertedEmail] = await db
