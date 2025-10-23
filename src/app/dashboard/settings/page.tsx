@@ -24,10 +24,11 @@ import { cn } from '@/lib/utils';
 import { AccountSettings } from '@/components/settings/AccountSettings';
 import { AIPreferences } from '@/components/settings/AIPreferences';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
-import { AppearanceSettings } from '@/components/settings/AppearanceSettings';
+import { DisplaySettings } from '@/components/settings/DisplaySettings';
 import { BillingSettings } from '@/components/settings/BillingSettings';
 import { PrivacySettings } from '@/components/settings/PrivacySettings';
 import { ConnectedAccounts } from '@/components/settings/ConnectedAccounts';
+import { CommunicationSettings } from '@/components/settings/CommunicationSettings';
 import { FolderSettings } from '@/components/settings/FolderSettings';
 import { SignaturesSettings } from '@/components/settings/SignaturesSettings';
 import { RulesSettings } from '@/components/settings/RulesSettings';
@@ -39,17 +40,13 @@ import { useSettingsData } from '@/hooks/useSettingsData';
 type SettingsTab =
   | 'account'
   | 'email-accounts'
-  | 'folders'
-  | 'signatures'
-  | 'rules'
-  | 'ai-preferences'
-  | 'voice-messages'
+  | 'communication'
+  | 'organization'
+  | 'ai-voice'
+  | 'display'
   | 'notifications'
-  | 'appearance'
-  | 'billing'
   | 'security'
-  | 'help'
-  | 'danger-zone';
+  | 'advanced';
 
 interface TabConfig {
   id: SettingsTab;
@@ -63,79 +60,55 @@ const tabs: TabConfig[] = [
     id: 'account',
     label: 'Account',
     icon: User,
-    description: 'Manage your profile and account settings',
+    description: 'Profile, password, and preferences',
   },
   {
     id: 'email-accounts',
     label: 'Email Accounts',
     icon: Mail,
-    description: 'Connect and manage your email accounts',
+    description: 'Connect and manage email accounts',
   },
   {
-    id: 'folders',
-    label: 'Custom Folders',
-    icon: Folder,
-    description: 'Create and manage custom email folders',
-  },
-  {
-    id: 'signatures',
-    label: 'Signatures',
-    icon: FileSignature,
-    description: 'Create and manage email signatures',
-  },
-  {
-    id: 'rules',
-    label: 'Rules',
-    icon: Filter,
-    description: 'Set up email filters and automation',
-  },
-  {
-    id: 'ai-preferences',
-    label: 'AI Preferences',
-    icon: Sparkles,
-    description: 'Configure AI screening and smart features',
-  },
-  {
-    id: 'voice-messages',
-    label: 'Voice Messages',
+    id: 'communication',
+    label: 'Communication',
     icon: Mic,
-    description: 'Configure voice recording and playback settings',
+    description: 'SMS, voice messages, and Twilio',
+  },
+  {
+    id: 'organization',
+    label: 'Organization',
+    icon: Folder,
+    description: 'Folders, signatures, and rules',
+  },
+  {
+    id: 'ai-voice',
+    label: 'AI & Voice',
+    icon: Sparkles,
+    description: 'AI features and voice settings',
+  },
+  {
+    id: 'display',
+    label: 'Display',
+    icon: Palette,
+    description: 'Theme, layout, and typography',
   },
   {
     id: 'notifications',
     label: 'Notifications',
     icon: Bell,
-    description: 'Manage notification preferences',
-  },
-  {
-    id: 'appearance',
-    label: 'Appearance',
-    icon: Palette,
-    description: 'Customize theme and display settings',
-  },
-  {
-    id: 'billing',
-    label: 'Billing',
-    icon: CreditCard,
-    description: 'Manage subscription and payment methods',
+    description: 'Alerts and notification preferences',
   },
   {
     id: 'security',
-    label: 'Security',
+    label: 'Privacy & Security',
     icon: Shield,
-    description: 'Privacy and security settings',
+    description: 'Privacy, tracking, and data',
   },
   {
-    id: 'help',
-    label: 'Help',
-    icon: HelpCircle,
-    description: 'Get help and learn more',
-  },
-  {
-    id: 'danger-zone',
-    label: 'Danger Zone',
-    icon: AlertTriangle,
-    description: 'Advanced: Reset data or delete account',
+    id: 'advanced',
+    label: 'Advanced',
+    icon: SettingsIcon,
+    description: 'Billing, help, and danger zone',
   },
 ];
 
@@ -200,35 +173,44 @@ function SettingsPageContent(): JSX.Element {
         return <AccountSettings user={userData.user} />;
       case 'email-accounts':
         return <ConnectedAccounts accounts={userData.emailAccounts} />;
-      case 'folders':
-        return <FolderSettings userId={userData.user.id} />;
-      case 'signatures':
-        return <SignaturesSettings />;
-      case 'rules':
-        return <RulesSettings />;
-      case 'ai-preferences':
+      case 'communication':
+        return <CommunicationSettings />;
+      case 'organization':
         return (
-          <AIPreferences
+          <div className="space-y-8">
+            <FolderSettings userId={userData.user.id} />
+            <div className="border-t border-gray-200 dark:border-white/10 pt-8">
+              <SignaturesSettings />
+            </div>
+            <div className="border-t border-gray-200 dark:border-white/10 pt-8">
+              <RulesSettings />
+            </div>
+          </div>
+        );
+      case 'ai-voice':
+        return (
+          <div className="space-y-8">
+            <AIPreferences
+              settings={userData.settings}
+              accountId={userData.defaultAccountId || ''}
+            />
+            <div className="border-t border-gray-200 dark:border-white/10 pt-8">
+              <VoiceSettings />
+            </div>
+          </div>
+        );
+      case 'display':
+        return (
+          <DisplaySettings
             settings={userData.settings}
             accountId={userData.defaultAccountId || ''}
           />
         );
-      case 'voice-messages':
-        return <VoiceSettings />;
       case 'notifications':
         return (
           <NotificationSettings
             settings={userData.settings}
             accountId={userData.defaultAccountId || ''}
-          />
-        );
-      case 'appearance':
-        return <AppearanceSettings />;
-      case 'billing':
-        return (
-          <BillingSettings
-            user={userData.user}
-            subscription={userData.subscription}
           />
         );
       case 'security':
@@ -238,10 +220,21 @@ function SettingsPageContent(): JSX.Element {
             accountId={userData.defaultAccountId || ''}
           />
         );
-      case 'help':
-        return <HelpCenter />;
-      case 'danger-zone':
-        return <DangerZone />;
+      case 'advanced':
+        return (
+          <div className="space-y-8">
+            <BillingSettings
+              user={userData.user}
+              subscription={userData.subscription}
+            />
+            <div className="border-t border-gray-200 dark:border-white/10 pt-8">
+              <HelpCenter />
+            </div>
+            <div className="border-t border-gray-200 dark:border-white/10 pt-8">
+              <DangerZone />
+            </div>
+          </div>
+        );
       default:
         return null;
     }
