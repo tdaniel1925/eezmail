@@ -41,10 +41,10 @@ function levenshteinDistance(str1: string, str2: string): number {
  */
 function calculateSimilarity(str1: string, str2: string): number {
   if (!str1 || !str2) return 0;
-  
+
   const distance = levenshteinDistance(str1.toLowerCase(), str2.toLowerCase());
   const maxLength = Math.max(str1.length, str2.length);
-  
+
   return maxLength === 0 ? 1 : 1 - distance / maxLength;
 }
 
@@ -64,7 +64,10 @@ function normalizeSubject(subject: string): string {
 /**
  * Normalize email address for comparison
  */
-function normalizeEmail(email: string): string {
+function normalizeEmail(email: string | undefined | null): string {
+  if (!email) {
+    return '';
+  }
   return email.toLowerCase().trim();
 }
 
@@ -132,9 +135,7 @@ export async function checkForDuplicate(
       const reasons: string[] = [];
 
       // Check sender email (exact match required for fuzzy check)
-      if (
-        normalizeEmail(candidate.fromAddress.email) !== normalizedFromEmail
-      ) {
+      if (normalizeEmail(candidate.fromAddress.email) !== normalizedFromEmail) {
         continue; // Different sender, skip
       }
 
@@ -239,4 +240,3 @@ export async function markAsDuplicate(
     } as any)
     .where(eq(emails.id, emailId));
 }
-

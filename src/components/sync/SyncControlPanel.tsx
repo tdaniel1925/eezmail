@@ -10,13 +10,10 @@ import {
   Clock,
   XCircle,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  syncEmailAccount,
-  getSyncStatus,
-  cancelSync,
-} from '@/lib/sync/email-sync-service';
+import { syncEmailAccount } from '@/lib/settings/email-actions';
 import { toast } from '@/lib/toast';
 
 interface SyncControlPanelProps {
@@ -31,39 +28,67 @@ export function SyncControlPanel({
   const [status, setStatus] = useState<'idle' | 'syncing' | 'active' | 'error'>(
     'idle'
   );
+  const [syncProgress, setSyncProgress] = useState(0);
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
   const [emailCount, setEmailCount] = useState(0);
   const [folderCount, setFolderCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // Poll for status updates
+  // Poll for status updates with visibility detection
   useEffect(() => {
-    loadStatus();
+    let interval: NodeJS.Timeout;
 
-    // Poll every 3 seconds when syncing, every 10 seconds otherwise
-    const interval = setInterval(
-      () => {
+    const poll = () => {
+      // Only poll if document is visible
+      if (document.visibilityState === 'visible') {
         loadStatus();
-      },
-      status === 'syncing' ? 3000 : 10000
-    );
+      }
+    };
 
-    return () => clearInterval(interval);
+    const startPolling = () => {
+      poll(); // Initial load
+      clearInterval(interval);
+      // Poll frequently while syncing to show real-time updates
+      const frequency = status === 'syncing' ? 2000 : 10000; // 2s when syncing, 10s when idle
+      interval = setInterval(poll, frequency);
+    };
+
+    startPolling();
+
+    // Restart polling when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        startPolling();
+      } else {
+        clearInterval(interval);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [accountId, status]);
 
   const loadStatus = async () => {
     try {
-      const result = await getSyncStatus(accountId);
-      if (result && 'success' in result && result.success && 'data' in result) {
+      // Call the new API endpoint for sync status
+      const response = await fetch(`/api/email/sync?accountId=${accountId}`);
+      const result = await response.json();
+
+      if (result.success && result.data) {
         setStatus(result.data.status as any);
+        setSyncProgress(result.data.syncProgress || 0);
         setLastSyncAt(
           result.data.lastSyncAt ? new Date(result.data.lastSyncAt) : null
         );
-        setEmailCount(result.data.emailCount);
-        setFolderCount(result.data.folderCount);
+        setEmailCount(result.data.emailCount || 0);
+        setFolderCount(result.data.folderCount || 0);
         setError(result.data.lastSyncError);
-      } else if (result && 'error' in result) {
+      } else if (result.error) {
         console.error('Failed to load sync status:', result.error);
       }
     } catch (err) {
@@ -88,20 +113,6 @@ export function SyncControlPanel({
       toast.error('Failed to start sync');
     } finally {
       setIsSyncing(false);
-    }
-  };
-
-  const handleCancel = async () => {
-    try {
-      const result = await cancelSync(accountId);
-      if (result.success) {
-        toast.success('Sync cancelled');
-        setStatus('active');
-      } else {
-        toast.error(result.error || 'Failed to cancel sync');
-      }
-    } catch (err) {
-      toast.error('Failed to cancel sync');
     }
   };
 
@@ -163,38 +174,87 @@ export function SyncControlPanel({
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="text-center p-4 rounded-lg bg-white/60 dark:bg-white/5">
-          <Mail className="h-6 w-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+      {/* Stats Grid - Mobile Responsive */}
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
+        <div className="text-center p-3 sm:p-4 rounded-lg bg-white/60 dark:bg-white/5">
+          <Mail className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-blue-600 dark:text-blue-400" />
+          <div className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-none tracking-tight">
             {emailCount.toLocaleString()}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <div className="text-[0.6875rem] uppercase tracking-wider font-medium text-gray-600 dark:text-gray-400 mt-1">
             Emails Synced
           </div>
         </div>
 
-        <div className="text-center p-4 rounded-lg bg-white/60 dark:bg-white/5">
-          <Folder className="h-6 w-6 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="text-center p-3 sm:p-4 rounded-lg bg-white/60 dark:bg-white/5">
+          <Folder className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-purple-600 dark:text-purple-400" />
+          <div className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-none tracking-tight">
             {folderCount}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <div className="text-[0.6875rem] uppercase tracking-wider font-medium text-gray-600 dark:text-gray-400 mt-1">
             Folders
           </div>
         </div>
 
-        <div className="text-center p-4 rounded-lg bg-white/60 dark:bg-white/5">
-          <Clock className="h-6 w-6 mx-auto mb-2 text-green-600 dark:text-green-400" />
-          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+        <div className="text-center p-3 sm:p-4 rounded-lg bg-white/60 dark:bg-white/5">
+          <Clock className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-2 text-green-600 dark:text-green-400" />
+          <div
+            className="text-sm font-semibold text-gray-900 dark:text-white cursor-help"
+            suppressHydrationWarning
+            title={
+              lastSyncAt
+                ? new Date(lastSyncAt).toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true,
+                  })
+                : 'Never synced'
+            }
+          >
             {formatTimeAgo(lastSyncAt)}
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <div className="text-[0.6875rem] uppercase tracking-wider font-medium text-gray-600 dark:text-gray-400 mt-1">
             Last Sync
           </div>
         </div>
       </div>
+
+      {/* Empty State for Zero Emails */}
+      {emailCount === 0 && status === 'active' && lastSyncAt && (
+        <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="font-medium text-amber-900 dark:text-amber-100 text-sm">
+                No emails found in this account
+              </p>
+              <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                This is normal for newly created accounts. If you&apos;re
+                expecting emails:
+              </p>
+              <ul className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-300 list-disc list-inside">
+                <li>Check if you&apos;re logged into the correct account</li>
+                <li>Verify folder settings (some folders may be excluded)</li>
+                <li>Wait a few minutes and sync again</li>
+              </ul>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                onClick={handleSync}
+              >
+                <RefreshCw className="h-3 w-3 mr-1.5" />
+                Sync Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -218,50 +278,64 @@ export function SyncControlPanel({
         <div className="mb-4 p-4 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-              Syncing your emails...
+              {syncProgress === 0
+                ? 'Initializing sync...'
+                : `Syncing your emails... ${syncProgress}%`}
             </p>
             <Loader2 className="h-4 w-4 text-blue-600 dark:text-blue-400 animate-spin" />
           </div>
-          <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-full h-2 overflow-hidden">
-            <div className="h-full bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse w-3/4" />
+          <div className="w-full bg-blue-100 dark:bg-blue-900/30 rounded-full h-3 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-500 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${syncProgress === 0 ? 10 : syncProgress}%` }}
+            />
           </div>
-          <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-            This may take a few minutes depending on your mailbox size
-          </p>
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              {emailCount === 0 && folderCount === 0 && syncProgress === 0 ? (
+                <>Connecting to Microsoft Graph API...</>
+              ) : (
+                <>
+                  {emailCount.toLocaleString()} emails synced • {folderCount}{' '}
+                  folders
+                </>
+              )}
+            </p>
+            <p className="text-xs font-semibold text-blue-800 dark:text-blue-200">
+              {syncProgress === 0
+                ? 'Connecting...'
+                : syncProgress < 10
+                  ? 'Fetching folders...'
+                  : syncProgress < 90
+                    ? 'Syncing folders...'
+                    : syncProgress < 100
+                      ? 'Finalizing...'
+                      : 'Complete!'}
+            </p>
+          </div>
         </div>
       )}
 
       {/* Action Buttons */}
       <div className="flex gap-3">
-        {status === 'syncing' ? (
-          <Button
-            onClick={handleCancel}
-            variant="ghost"
-            className="flex-1 border border-gray-300 dark:border-white/20"
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Cancel Sync
-          </Button>
-        ) : (
-          <Button
-            onClick={handleSync}
-            disabled={isSyncing}
-            variant="primary"
-            className="flex-1"
-          >
-            {isSyncing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Starting...
-              </>
-            ) : (
-              <>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sync Now
-              </>
-            )}
-          </Button>
-        )}
+        <Button
+          onClick={handleSync}
+          disabled={isSyncing || status === 'syncing'}
+          variant="primary"
+          className="flex-1"
+        >
+          {isSyncing || status === 'syncing' ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Syncing...
+            </>
+          ) : (
+            <>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Sync Now
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Info */}

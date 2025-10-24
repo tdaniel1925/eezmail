@@ -117,6 +117,9 @@ function IMAPSetupPageContent(): JSX.Element {
     }
 
     try {
+      setIsConnecting(true);
+
+      // Step 1: Save the account
       const response = await fetch('/api/email/imap/save', {
         method: 'POST',
         headers: {
@@ -131,13 +134,53 @@ function IMAPSetupPageContent(): JSX.Element {
       const result = await response.json();
 
       if (result.success) {
-        toast.success('IMAP account saved successfully!');
-        window.location.href = '/dashboard/settings?tab=email-accounts';
+        const accountId = result.accountId;
+
+        toast.success('✅ Account saved successfully!');
+
+        // Step 2: Trigger initial email sync
+        toast.info('📥 Starting email sync...');
+
+        try {
+          const syncResponse = await fetch('/api/email/sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              accountId,
+              initialSync: true,
+            }),
+          });
+
+          const syncResult = await syncResponse.json();
+
+          if (syncResult.success) {
+            toast.success('🎉 Email sync started! Loading your emails...');
+          } else {
+            toast.warning(
+              'Account saved, but sync failed to start. Try refreshing.'
+            );
+          }
+        } catch (syncError) {
+          console.error('Sync error:', syncError);
+          toast.warning(
+            'Account saved, but sync failed to start. Try refreshing.'
+          );
+        }
+
+        // Redirect after a brief delay to show messages
+        setTimeout(() => {
+          window.location.href = '/dashboard/inbox';
+        }, 2000);
       } else {
         toast.error(result.error || 'Failed to save account');
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error saving account:', err);
       toast.error('Failed to save account');
+    } finally {
+      setIsConnecting(false);
     }
   };
 
@@ -191,12 +234,12 @@ function IMAPSetupPageContent(): JSX.Element {
                   <SelectValue placeholder="Select your email provider" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="outlook">Microsoft Outlook</SelectItem>
-                  <SelectItem value="gmail">Gmail</SelectItem>
-                  <SelectItem value="yahoo">Yahoo Mail</SelectItem>
+                  <SelectItem value="Outlook">Microsoft Outlook</SelectItem>
+                  <SelectItem value="GGmail">Gmail</SelectItem>
+                  <SelectItem value="Yahoo">Yahoo Mail</SelectItem>
                   <SelectItem value="icloud">iCloud Mail</SelectItem>
-                  <SelectItem value="fastmail">Fastmail</SelectItem>
-                  <SelectItem value="custom">Custom IMAP</SelectItem>
+                  <SelectItem value="Fastmail">Fastmail</SelectItem>
+                  <SelectItem value="Custom">Custom IMAP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -358,7 +401,7 @@ function IMAPSetupPageContent(): JSX.Element {
                         <p className="font-medium mb-1">Possible causes:</p>
                         <ul className="list-disc list-inside space-y-1 text-xs">
                           <li>
-                            Wrong password - make sure you're using an{' '}
+                            Wrong password - make sure you&apos;re using an{' '}
                             <strong>app password</strong>, not your regular
                             password
                           </li>
@@ -376,7 +419,7 @@ function IMAPSetupPageContent(): JSX.Element {
             {/* Action Buttons */}
             <div className="flex gap-3">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={handleTestConnection}
                 disabled={
                   isConnecting ||

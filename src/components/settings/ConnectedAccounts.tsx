@@ -22,6 +22,7 @@ import { toast, confirmDialog } from '@/lib/toast';
 import { AccountStatusCard } from './AccountStatusCard';
 import { SyncControlPanel } from '@/components/sync/SyncControlPanel';
 import { useSearchParams } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface ConnectedAccountsProps {
   accounts: EmailAccount[];
@@ -40,6 +41,17 @@ export function ConnectedAccounts({
   const [expandedAccountId, setExpandedAccountId] = useState<string | null>(
     null
   );
+  const [accountStats, setAccountStats] = useState<
+    Record<string, { emailCount: number; folderCount: number }>
+  >({});
+  const [bulkSyncMode, setBulkSyncMode] = useState<'parallel' | 'sequential'>(
+    'parallel'
+  );
+  const [bulkSyncProgress, setBulkSyncProgress] = useState<{
+    total: number;
+    syncing: number;
+    completed: number;
+  }>({ total: 0, syncing: 0, completed: 0 });
 
   // Show success message when account is connected and clean URL
   useEffect(() => {
@@ -74,6 +86,63 @@ export function ConnectedAccounts({
       );
     }
   }, [searchParams]);
+
+  // Load stats for all accounts
+  useEffect(() => {
+    const loadStats = async () => {
+      const stats: Record<string, any> = {};
+      for (const account of accounts) {
+        try {
+          const response = await fetch(
+            `/api/email/sync?accountId=${account.id}`
+          );
+          const result = await response.json();
+          if (result.success && result.data) {
+            stats[account.id] = {
+              emailCount: result.data.emailCount || 0,
+              folderCount: result.data.folderCount || 0,
+            };
+          }
+        } catch (err) {
+          console.error('Failed to load stats for', account.id, err);
+        }
+      }
+      setAccountStats(stats);
+    };
+
+    if (accounts.length > 0) {
+      loadStats();
+    }
+  }, [accounts]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // Cmd/Ctrl + K: Open add account modal
+      if (modKey && e.key === 'k') {
+        e.preventDefault();
+        setShowAddModal(true);
+      }
+
+      // Cmd/Ctrl + S: Sync current or all
+      if (modKey && e.key === 's') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          // Cmd/Ctrl + Shift + S: Sync all
+          handleSyncAll();
+        } else if (expandedAccountId) {
+          // Cmd/Ctrl + S: Sync current expanded account
+          handleSync(expandedAccountId);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [expandedAccountId]);
 
   const handleAddAccount = async (provider: string): Promise<void> => {
     console.log(
@@ -179,6 +248,47 @@ export function ConnectedAccounts({
     }
   };
 
+  const handleSyncAll = async (): Promise<void> => {
+    const accountsToSync = accounts.filter((a) => a.status !== 'syncing');
+
+    setBulkSyncProgress({
+      total: accountsToSync.length,
+      syncing: 0,
+      completed: 0,
+    });
+
+    try {
+      if (bulkSyncMode === 'parallel') {
+        // Sync all in parallel
+        const promises = accountsToSync.map((account) =>
+          syncEmailAccount(account.id)
+        );
+        await Promise.allSettled(promises);
+      } else {
+        // Sync sequentially
+        for (const account of accountsToSync) {
+          setBulkSyncProgress((prev) => ({
+            ...prev,
+            syncing: prev.syncing + 1,
+          }));
+          await syncEmailAccount(account.id);
+          setBulkSyncProgress((prev) => ({
+            ...prev,
+            syncing: prev.syncing - 1,
+            completed: prev.completed + 1,
+          }));
+        }
+      }
+
+      toast.success('All accounts synced successfully!');
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      toast.error('Some accounts failed to sync');
+    } finally {
+      setBulkSyncProgress({ total: 0, syncing: 0, completed: 0 });
+    }
+  };
+
   const getProviderIcon = (provider: string): string => {
     const icons: Record<string, string> = {
       gmail: '📧',
@@ -246,82 +356,129 @@ export function ConnectedAccounts({
             </Button>
           </div>
         ) : (
-          <div className="space-y-6">
-            {accounts.map((account) => (
-              <div key={account.id} className="space-y-4">
-                <AccountStatusCard
-                  accountId={account.id}
-                  emailAddress={account.emailAddress || 'Unknown'}
-                  provider={account.provider}
-                  status={
-                    account.status as
-                      | 'active'
-                      | 'syncing'
-                      | 'error'
-                      | 'disconnected'
-                  }
-                  lastSyncAt={account.lastSyncAt}
-                  syncProgress={account.syncProgress ?? undefined}
-                  syncTotal={account.syncTotal ?? undefined}
-                  errorMessage={account.errorMessage ?? undefined}
-                  isDefault={account.isDefault ?? false}
-                  onReconnect={() =>
-                    handleReconnect(account.provider, account.id)
-                  }
-                />
+          <>
+            {/* Bulk Sync Banner */}
+            {accounts.length > 1 && (
+              <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                        {bulkSyncProgress.total > 0
+                          ? `Syncing ${bulkSyncProgress.syncing} of ${bulkSyncProgress.total} accounts`
+                          : `Manage ${accounts.length} connected accounts`}
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                        {accounts.filter((a) => a.status === 'syncing').length}{' '}
+                        currently syncing
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={bulkSyncMode}
+                      onChange={(e) =>
+                        setBulkSyncMode(
+                          e.target.value as 'parallel' | 'sequential'
+                        )
+                      }
+                      className="text-xs px-2 py-1 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                    >
+                      <option value="parallel">Parallel (faster)</option>
+                      <option value="sequential">Sequential (safer)</option>
+                    </select>
+                    <Button
+                      size="sm"
+                      onClick={handleSyncAll}
+                      disabled={accounts.every((a) => a.status === 'syncing')}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1.5" />
+                      Sync All
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-                <div className="flex items-center justify-between px-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
+            {/* Keyboard shortcuts hint */}
+            <div className="mb-4 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono border border-gray-300 dark:border-gray-700">
+                  {typeof navigator !== 'undefined' &&
+                  navigator.platform.includes('Mac')
+                    ? '⌘'
+                    : 'Ctrl'}
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono border border-gray-300 dark:border-gray-700">
+                  K
+                </kbd>
+                <span>Add account</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono border border-gray-300 dark:border-gray-700">
+                  {typeof navigator !== 'undefined' &&
+                  navigator.platform.includes('Mac')
+                    ? '⌘'
+                    : 'Ctrl'}
+                </kbd>
+                <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono border border-gray-300 dark:border-gray-700">
+                  S
+                </kbd>
+                <span>Sync</span>
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {accounts.map((account) => (
+                <div key={account.id} className="space-y-4">
+                  <AccountStatusCard
+                    accountId={account.id}
+                    emailAddress={account.emailAddress || 'Unknown'}
+                    provider={account.provider}
+                    status={
+                      account.status as
+                        | 'active'
+                        | 'syncing'
+                        | 'error'
+                        | 'disconnected'
+                    }
+                    lastSyncAt={account.lastSyncAt}
+                    syncProgress={account.syncProgress ?? undefined}
+                    syncTotal={account.syncTotal ?? undefined}
+                    errorMessage={account.errorMessage ?? undefined}
+                    isDefault={account.isDefault ?? false}
+                    emailCount={accountStats[account.id]?.emailCount}
+                    folderCount={accountStats[account.id]?.folderCount}
+                    isExpanded={expandedAccountId === account.id}
+                    onToggleExpand={() =>
                       setExpandedAccountId(
                         expandedAccountId === account.id ? null : account.id
                       )
                     }
-                    className="text-primary hover:text-primary-600"
-                  >
-                    {expandedAccountId === account.id
-                      ? '▼ Hide Sync Control'
-                      : '▶ Show Sync Control'}
-                  </Button>
+                    onSetDefault={() => handleSetDefault(account.id)}
+                    onSync={() => handleSync(account.id)}
+                    onReconnect={() =>
+                      handleReconnect(account.provider, account.id)
+                    }
+                    onRemove={() => handleRemove(account.id)}
+                    onRetry={() => handleSync(account.id)}
+                    onTroubleshoot={() =>
+                      window.open('/help/troubleshoot-sync', '_blank')
+                    }
+                  />
 
-                  <div className="flex items-center gap-2">
-                    {!account.isDefault && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSetDefault(account.id)}
-                      >
-                        Set as Default
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemove(account.id)}
-                      isLoading={removingAccountId === account.id}
-                      disabled={removingAccountId === account.id}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Remove
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Sync Control Panel - Expandable */}
-                {expandedAccountId === account.id && (
-                  <div className="px-4 pt-2 pb-4">
+                  {/* Only show sync control panel when expanded */}
+                  {expandedAccountId === account.id && (
                     <SyncControlPanel
                       accountId={account.id}
                       emailAddress={account.emailAddress || 'Unknown'}
                     />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -361,21 +518,27 @@ export function ConnectedAccounts({
           {[
             {
               id: 'microsoft',
-              name: 'Microsoft / Outlook (Graph API)',
+              name: 'Microsoft / Outlook',
               icon: '📮',
-              description: 'Direct Microsoft integration',
+              description: 'Outlook.com, Office 365, Hotmail',
+              badge: 'Recommended',
+              recommended: true,
             },
             {
               id: 'gmail',
-              name: 'Gmail (Gmail API)',
+              name: 'Gmail',
               icon: '📧',
-              description: 'Direct Google integration',
+              description: 'Google Workspace, personal Gmail',
+              badge: 'Recommended',
+              recommended: true,
             },
             {
               id: 'imap',
-              name: 'IMAP (Universal)',
+              name: 'Other Email',
               icon: '📨',
-              description: 'Works with any email provider',
+              description: 'Yahoo, iCloud, AOL, custom providers',
+              badge: null,
+              recommended: false,
             },
           ].map((provider) => (
             <button
@@ -385,14 +548,26 @@ export function ConnectedAccounts({
                 setShowAddModal(false);
                 handleAddAccount(provider.id);
               }}
-              className="w-full flex items-start gap-3 p-4 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 hover:bg-gray-50/80 dark:hover:bg-white/10 transition-all"
+              className={cn(
+                'w-full flex items-start gap-3 p-4 rounded-lg border transition-all',
+                provider.recommended
+                  ? 'border-primary/30 bg-primary/5 hover:bg-primary/10 ring-1 ring-primary/20'
+                  : 'border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 hover:bg-gray-50/80 dark:hover:bg-white/10'
+              )}
             >
               <span className="text-2xl mt-1">{provider.icon}</span>
               <div className="flex-1 text-left">
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {provider.name}
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {provider.name}
+                  </span>
+                  {provider.badge && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded-full">
+                      {provider.badge}
+                    </span>
+                  )}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-white/60">
+                <div className="text-sm text-gray-600 dark:text-white/60 mt-0.5">
                   {provider.description}
                 </div>
               </div>

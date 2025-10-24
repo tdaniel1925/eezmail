@@ -40,9 +40,9 @@ export function useFolderCounts(enabled: boolean = true) {
     enabled ? '/api/folders/counts' : null,
     fetcher,
     {
-      refreshInterval: 60000, // Refresh every 60 seconds (reduced from 30s)
+      refreshInterval: 300000, // Refresh every 5 minutes (increased from 60s for performance)
       revalidateOnFocus: false, // Disabled - too aggressive
-      dedupingInterval: 5000, // Dedupe requests within 5 seconds (increased from 2s)
+      dedupingInterval: 10000, // Dedupe requests within 10 seconds (increased from 5s)
       // Keep previous data while revalidating
       keepPreviousData: true,
       // Don't retry errors too aggressively

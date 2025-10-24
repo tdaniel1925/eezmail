@@ -23,10 +23,20 @@ export async function getUserSettingsData() {
       };
     }
 
-    // Fetch user from database
-    const user = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.id, authUser.id),
-    });
+    // Fetch all data in parallel for better performance
+    const [user, emailAccountsData, subscription] = await Promise.all([
+      db.query.users.findFirst({
+        where: (users, { eq }) => eq(users.id, authUser.id),
+      }),
+      db.query.emailAccounts.findMany({
+        where: (accounts, { eq }) => eq(accounts.userId, authUser.id),
+        orderBy: (accounts, { desc }) => [desc(accounts.isDefault)],
+      }),
+      db.query.subscriptions.findFirst({
+        where: (subscriptions, { eq }) => eq(subscriptions.userId, authUser.id),
+        orderBy: (subscriptions, { desc }) => [desc(subscriptions.createdAt)],
+      }),
+    ]);
 
     if (!user) {
       return {
@@ -36,17 +46,10 @@ export async function getUserSettingsData() {
       };
     }
 
-    // Fetch email accounts
-    const emailAccounts = await db.query.emailAccounts.findMany({
-      where: (accounts, { eq }) => eq(accounts.userId, authUser.id),
-      orderBy: (accounts, { desc }) => [desc(accounts.isDefault)],
-    });
+    const emailAccounts = emailAccountsData || [];
 
-    console.log('🔍 Fetched email accounts from database:', {
-      userId: authUser.id,
-      accountsCount: emailAccounts.length,
-      accounts: emailAccounts,
-    });
+    // Log only count, not full account objects
+    console.log(`📧 Loaded ${emailAccounts.length} email account(s)`);
 
     // Fetch email settings for the default account
     const defaultAccount =
@@ -59,12 +62,6 @@ export async function getUserSettingsData() {
           eq(emailSettings.accountId, defaultAccount.id),
       });
     }
-
-    // Fetch subscription
-    const subscription = await db.query.subscriptions.findFirst({
-      where: (subscriptions, { eq }) => eq(subscriptions.userId, authUser.id),
-      orderBy: (subscriptions, { desc }) => [desc(subscriptions.createdAt)],
-    });
 
     return {
       success: true,

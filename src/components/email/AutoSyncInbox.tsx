@@ -3,7 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { EmailList } from './EmailList';
 import { useAutoSync } from '@/hooks/useAutoSync';
-import { useInboxEmails } from '@/hooks/useInboxEmails';
+import { useInfiniteEmails } from '@/hooks/useInfiniteEmails';
 
 interface AutoSyncInboxProps {
   accountId: string;
@@ -14,17 +14,26 @@ export function AutoSyncInbox({
   accountId,
   title = 'Inbox',
 }: AutoSyncInboxProps) {
-  // Use SWR for cached email fetching with aggressive revalidation
-  const { emails, isLoading, isValidating, error, refresh } = useInboxEmails({
-    limit: 25,
-    enabled: true,
+  // Use infinite scroll hook for loading all emails
+  const {
+    emails,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    loadMore,
+    error,
+    refresh,
+  } = useInfiniteEmails({
+    pageSize: 50, // Load 50 emails per batch (reduced from 100 for better performance)
+    category: 'inbox',
+    accountId,
   });
 
-  // Auto-sync in background
+  // Auto-sync in background (DISABLED for performance)
   const { isSyncing, lastSyncAt, syncCount, triggerSync } = useAutoSync({
     accountId,
-    intervalMs: 180000, // 3 minutes
-    enabled: true,
+    intervalMs: 600000, // 10 minutes (increased from 3 minutes)
+    enabled: false, // DISABLED - use manual sync only
     initialSync: false,
   });
 
@@ -33,7 +42,7 @@ export function AutoSyncInbox({
     if (syncCount > 0) {
       // Trigger immediate cache revalidation for instant UI update
       refresh();
-      console.log('🔄 Cache refreshed after sync completion');
+      console.log('🔄 Emails refreshed after sync completion');
     }
   }, [syncCount, refresh]);
 
@@ -57,9 +66,12 @@ export function AutoSyncInbox({
       title={title}
       isLoading={isLoading}
       error={error || undefined}
-      isSyncing={isSyncing || isValidating}
+      isSyncing={isSyncing || isLoadingMore}
       lastSyncAt={lastSyncAt}
       onRefresh={handleRefresh}
+      hasMore={hasMore}
+      isLoadingMore={isLoadingMore}
+      onLoadMore={loadMore}
     />
   );
 }

@@ -54,6 +54,10 @@ interface EmailListProps {
   lastSyncAt?: Date;
   onRefresh?: () => void;
   newEmailsCount?: number;
+  // Infinite scroll props
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 export function EmailList({
@@ -65,6 +69,9 @@ export function EmailList({
   lastSyncAt,
   onRefresh,
   newEmailsCount = 0,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
 }: EmailListProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
@@ -82,6 +89,10 @@ export function EmailList({
   const [userId, setUserId] = useState<string | null>(null);
   const emailRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
+  // Infinite scroll observer
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+
   // Get user ID on mount
   useEffect(() => {
     const getUser = async () => {
@@ -95,6 +106,34 @@ export function EmailList({
     };
     getUser();
   }, []);
+
+  // Infinite scroll: Intersection Observer
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const target = entries[0];
+        if (target.isIntersecting && hasMore && !isLoadingMore) {
+          console.log('📜 Loading more emails...');
+          onLoadMore();
+        }
+      },
+      {
+        root: scrollContainerRef.current,
+        rootMargin: '200px', // Start loading 200px before reaching bottom
+        threshold: 0.1,
+      }
+    );
+
+    if (loadMoreTriggerRef.current) {
+      observer.observe(loadMoreTriggerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, isLoadingMore, onLoadMore]);
 
   // Use search results if available, otherwise use filtered local emails
   const displayEmails =
@@ -589,7 +628,7 @@ export function EmailList({
       )}
 
       {/* Email List Container */}
-      <div className="flex-1 overflow-y-auto">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div
             className="flex h-64 items-center justify-center"
@@ -635,28 +674,65 @@ export function EmailList({
             </p>
           </div>
         ) : (
-          displayEmails.map((email) => (
-            <div
-              key={email.id}
-              ref={(el) => {
-                emailRefs.current[email.id] = el;
-              }}
-            >
-              <ExpandableEmailItem
-                email={email}
-                isExpanded={expandedEmailId === email.id}
-                isSelected={selectedEmails.has(email.id)}
-                onToggle={() => {
-                  setExpandedEmailId(
-                    expandedEmailId === email.id ? null : email.id
-                  );
+          <>
+            {displayEmails.map((email) => (
+              <div
+                key={email.id}
+                ref={(el) => {
+                  emailRefs.current[email.id] = el;
                 }}
-                onSelect={() => toggleEmailSelection(email.id)}
-                onAction={handleEmailAction}
-                onNavigateToEmail={handleNavigateToEmail}
-              />
-            </div>
-          ))
+              >
+                <ExpandableEmailItem
+                  email={email}
+                  isExpanded={expandedEmailId === email.id}
+                  isSelected={selectedEmails.has(email.id)}
+                  onToggle={() => {
+                    setExpandedEmailId(
+                      expandedEmailId === email.id ? null : email.id
+                    );
+                  }}
+                  onSelect={() => toggleEmailSelection(email.id)}
+                  onAction={handleEmailAction}
+                  onOpenComposer={(mode, emailId) => {
+                    setComposerMode(mode);
+                    setComposerEmailId(emailId);
+                    setIsComposerOpen(true);
+                  }}
+                  onNavigateToEmail={handleNavigateToEmail}
+                />
+              </div>
+            ))}
+
+            {/* Load More Trigger for Infinite Scroll */}
+            {hasMore && (
+              <div
+                ref={loadMoreTriggerRef}
+                className="flex items-center justify-center py-8"
+              >
+                {isLoadingMore ? (
+                  <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading more emails...</span>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500 dark:text-gray-500">
+                    Scroll for more
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* End of List Indicator */}
+            {!hasMore && displayEmails.length > 0 && (
+              <div className="flex items-center justify-center py-6 text-sm text-gray-500 dark:text-gray-500">
+                <div className="flex items-center gap-2">
+                  <div className="h-px w-12 bg-gray-300 dark:bg-gray-700" />
+                  <span>You've reached the end</span>
+                  <div className="h-px w-12 bg-gray-300 dark:bg-gray-700" />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

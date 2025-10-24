@@ -263,6 +263,21 @@ export async function syncInBackground(
       .where(eq(emailAccounts.id, accountId));
 
     console.log('✅ Background sync completed for account:', accountId);
+
+    // Recalculate folder counts to ensure 100% accuracy
+    console.log('📊 Recalculating folder counts for accuracy...');
+    const { recalculateFolderCounts } = await import(
+      '@/lib/folders/recalculate-counts'
+    );
+    const recalcResult = await recalculateFolderCounts(accountId);
+    if (recalcResult.success) {
+      console.log(`✅ Updated ${recalcResult.foldersUpdated} folder counts`);
+    } else {
+      console.error(
+        '⚠️ Failed to recalculate folder counts:',
+        recalcResult.error
+      );
+    }
   } catch (error) {
     console.error('❌ Background sync failed:', error);
 
@@ -534,9 +549,13 @@ async function syncEmailsWithGraph(
     const deltaLink = folderRecord?.syncCursor;
 
     // Use delta query if we have a deltaLink, otherwise do initial sync
+    // IMPORTANT: For initial/manual sync, ALWAYS do full sync (ignore delta link)
     let currentUrl: string | null;
-    if (deltaLink && deltaLink.includes('delta')) {
-      // Use the stored deltaLink for incremental sync
+    const shouldUseDeltaSync =
+      deltaLink && deltaLink.includes('delta') && syncType === 'auto';
+
+    if (shouldUseDeltaSync) {
+      // Use the stored deltaLink for incremental sync (auto-sync only)
       currentUrl = deltaLink;
       console.log(
         `📊 Using delta sync for folder "${folderName}" (${folderExternalId})`
@@ -544,9 +563,16 @@ async function syncEmailsWithGraph(
     } else {
       // Initial sync or fallback to full sync with delta token - increased to 100 emails per batch
       currentUrl = `https://graph.microsoft.com/v1.0/me/mailFolders/${folderExternalId}/messages/delta?$top=100&$select=id,conversationId,subject,from,receivedDateTime,isRead,bodyPreview,hasAttachments,parentFolderId`;
-      console.log(
-        `🔄 Performing initial delta sync for folder "${folderName}" (${folderExternalId})`
-      );
+
+      if (syncType === 'initial' || syncType === 'manual') {
+        console.log(
+          `🔄 Performing FULL initial sync for folder "${folderName}" - syncing ALL ${folderRecord?.messageCount || 'unknown'} emails (${folderExternalId})`
+        );
+      } else {
+        console.log(
+          `🔄 Performing initial delta sync for folder "${folderName}" (${folderExternalId})`
+        );
+      }
     }
 
     let totalSynced = 0;

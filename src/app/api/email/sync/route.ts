@@ -1,22 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
-import { emailAccounts } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { z } from 'zod';
+import { triggerSync, getSyncStatus } from '@/lib/sync/sync-orchestrator';
 
-// Validation schema for email sync request
-const syncEmailSchema = z.object({
-  accountId: z.string().optional(),
-  limit: z.number().min(1).max(100).optional().default(50),
-  offset: z.number().min(0).optional().default(0),
-  unreadOnly: z.boolean().optional().default(false),
-  folderId: z.string().optional(),
-});
-
+/**
+ * Manually trigger email sync
+ * POST /api/email/sync
+ * Body: { accountId: string }
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Authenticate user
     const supabase = await createClient();
     const {
       data: { user },
@@ -26,62 +18,95 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Parse and validate request body
     const body = await request.json();
-    const validatedData = syncEmailSchema.parse(body);
+    const { accountId } = body;
 
-    // Get user's email account
-    let account;
-    if (validatedData.accountId) {
-      account = await db.query.emailAccounts.findFirst({
-        where: eq(emailAccounts.id, validatedData.accountId),
-      });
-    } else {
-      const accounts = await db.query.emailAccounts.findMany({
-        where: eq(emailAccounts.userId, user.id),
-      });
-      account = accounts.find((a) => a.status === 'active');
-    }
-
-    if (!account) {
+    if (!accountId) {
       return NextResponse.json(
-        { error: 'No active email account found' },
+        { error: 'accountId is required' },
         { status: 400 }
       );
     }
 
-    // TODO: Implement actual email sync via provider (Nylas/Gmail/Microsoft)
-    // For now, return mock sync results
-    console.log('Syncing emails:', {
-      accountId: account.id,
-      limit: validatedData.limit,
-      offset: validatedData.offset,
-      unreadOnly: validatedData.unreadOnly,
-      folderId: validatedData.folderId,
+    console.log(`🔄 API sync request for account: ${accountId}`);
+
+    // Trigger sync via orchestrator
+    const syncResult = await triggerSync({
+      accountId,
+      userId: user.id,
+      trigger: 'manual',
     });
 
-    // Mock sync results
-    const syncResults = {
-      success: true,
-      synced: Math.floor(Math.random() * 10) + 1, // Random number of emails synced
-      total: validatedData.limit,
-      nextCursor: validatedData.offset + validatedData.limit,
-      hasMore: Math.random() > 0.5, // Random boolean
-    };
-
-    return NextResponse.json(syncResults);
-  } catch (error) {
-    console.error('Error syncing emails:', error);
-
-    if (error instanceof z.ZodError) {
+    if (!syncResult.success) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: syncResult.error || 'Failed to start sync' },
         { status: 400 }
       );
     }
 
+    console.log(`✅ Sync triggered via API - Run ID: ${syncResult.runId}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Sync started successfully',
+      runId: syncResult.runId,
+    });
+  } catch (error) {
+    console.error('❌ Error in sync API:', error);
     return NextResponse.json(
-      { error: 'Failed to sync emails' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to trigger sync',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * Get sync status for an account
+ * GET /api/email/sync?accountId=xxx
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const accountId = searchParams.get('accountId');
+
+    if (!accountId) {
+      return NextResponse.json(
+        { error: 'accountId is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get status via orchestrator
+    const statusResult = await getSyncStatus(accountId, user.id);
+
+    if (!statusResult.success) {
+      return NextResponse.json(
+        { error: statusResult.error || 'Failed to get status' },
+        { status: 404 }
+      );
+    }
+
+    // Return the full result (with success flag and data)
+    return NextResponse.json(statusResult);
+  } catch (error) {
+    console.error('❌ Error getting sync status:', error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to get sync status',
+      },
       { status: 500 }
     );
   }

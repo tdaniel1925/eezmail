@@ -124,7 +124,9 @@ export async function POST(req: Request): Promise<Response> {
     if (!rawEmailBody || rawEmailBody.length < 50) {
       return NextResponse.json({
         success: true,
-        summary: `📧 ${emailSubject}` || 'Short email - check full message for details',
+        summary:
+          `📧 ${emailSubject}` ||
+          'Short email - check full message for details',
         message: 'Email too short to summarize',
       });
     }
@@ -142,7 +144,7 @@ export async function POST(req: Request): Promise<Response> {
           message: 'Using email preview',
         });
       }
-      
+
       return NextResponse.json({
         success: true,
         summary: emailSubject || 'Check email for details',
@@ -152,20 +154,20 @@ export async function POST(req: Request): Promise<Response> {
 
     // Call OpenAI to generate summary (optimized for maximum speed)
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // Fastest model
+      model: 'gpt-4o-mini', // Faster and cheaper than gpt-3.5-turbo
       messages: [
         {
           role: 'system',
-          content: `Summarize this email in 1-2 brief sentences. Focus only on the main point and any action items.`,
+          content: `Summarize in 1 sentence. Be concise.`,
         },
         {
           role: 'user',
-          content: `Subject: ${emailSubject}\n\n${emailBody.substring(0, 1500)}`, // Reduced from 2000 for speed
+          content: `Subject: ${emailSubject}\n\n${emailBody.substring(0, 800)}`, // Further reduced for speed
         },
       ],
-      temperature: 0.5, // Slightly higher for faster generation
-      max_tokens: 100, // Reduced from 150 for speed
-      top_p: 0.9, // Slightly lower for faster, more focused responses
+      temperature: 0.3, // Lower for faster, more deterministic output
+      max_tokens: 60, // Reduced for speed (1 sentence)
+      top_p: 0.8, // Lower for faster generation
     });
 
     const summary = response.choices[0]?.message?.content;

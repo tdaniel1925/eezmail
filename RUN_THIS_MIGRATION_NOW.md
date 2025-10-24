@@ -64,4 +64,3 @@ The performance issues were partially caused by **missing Row Level Security pol
 **File:** `RESTORE_MISSING_FEATURES_RLS.sql`  
 **Estimated Time:** < 1 minute  
 **Risk Level:** Low (creates policies, doesn't modify data)
-

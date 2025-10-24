@@ -318,6 +318,8 @@ export const emailAccounts = pgTable(
     errorCount: integer('error_count').default(0),
     consecutiveErrors: integer('consecutive_errors').default(0),
     syncPriority: text('sync_priority').default('normal'), // high, normal, low
+    initialSyncCompleted: boolean('initial_sync_completed').default(false), // Track if initial sync finished
+    gmailHistoryId: text('gmail_history_id'), // Gmail History API cursor
 
     // Settings
     signature: text('signature'),
@@ -493,6 +495,7 @@ export const emailFolders = pgTable(
     externalId: text('external_id').notNull(),
     type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
     parentId: uuid('parent_id'), // For nested folders
+    messageCount: integer('message_count').default(0), // Total messages in folder
     unreadCount: integer('unread_count').default(0),
 
     // Per-folder sync tracking
@@ -2561,8 +2564,7 @@ export const notifications = pgTable(
 
 export type Notification = typeof notifications.$inferSelect;
 export type NewNotification = typeof notifications.$inferInsert;
-export type NotificationType =
-  (typeof notificationTypeEnum.enumValues)[number];
+export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 export type NotificationCategory =
   (typeof notificationCategoryEnum.enumValues)[number];
 
@@ -2572,10 +2574,13 @@ export type NotificationCategory =
 // ============================================================================
 
 // Calendar Event Relations
-export const calendarEventsRelations = relations(calendarEvents, ({ many }) => ({
-  attendees: many(calendarAttendees),
-  reminders: many(calendarReminders),
-}));
+export const calendarEventsRelations = relations(
+  calendarEvents,
+  ({ many }) => ({
+    attendees: many(calendarAttendees),
+    reminders: many(calendarReminders),
+  })
+);
 
 // Calendar Attendee Relations
 export const calendarAttendeesRelations = relations(

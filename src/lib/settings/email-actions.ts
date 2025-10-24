@@ -243,57 +243,41 @@ export async function syncEmailAccount(accountId: string) {
       return { success: false, error: 'Account not found' };
     }
 
-    console.log('🔵 Starting sync for account:', accountId);
-    console.log('✅ User authenticated:', user.id);
-    console.log('✅ Account found:', account.emailAddress);
+    console.log('🔵 Manual sync requested');
+    console.log('   Account:', account.emailAddress);
+    console.log('   Provider:', account.provider);
 
-    // Check if account has access token for Microsoft Graph
-    if (!account.accessToken) {
-      return { success: false, error: 'No access token available for sync' };
+    // Trigger sync via orchestrator
+    const { triggerSync } = await import('@/lib/sync/sync-orchestrator');
+    const syncResult = await triggerSync({
+      accountId,
+      userId: user.id,
+      trigger: 'manual',
+    });
+
+    if (!syncResult.success) {
+      return {
+        success: false,
+        error: syncResult.error || 'Failed to start sync',
+      };
     }
 
-    console.log('✅ Access token available for provider:', account.provider);
-
-    // Update sync status to syncing
-    await db
-      .update(emailAccounts)
-      .set({
-        status: 'syncing',
-        lastSyncAt: new Date(),
-      } as Partial<typeof emailAccounts.$inferInsert>)
-      .where(eq(emailAccounts.id, accountId));
-
-    // Import and trigger the actual sync service
-    const { syncInBackground } = await import('@/lib/sync/email-sync-service');
-
-    // Start background sync
-    console.log('🔄 Starting manual sync for account:', accountId);
-    // Get valid access token for sync
-    const tokenResult = await TokenManager.getValidAccessToken(accountId);
-    await syncInBackground(
-      accountId,
-      account,
-      user.id,
-      tokenResult.accessToken,
-      'manual' // Manual sync - bypass screener
-    );
+    console.log('✅ Sync started successfully');
+    console.log(`   Run ID: ${syncResult.runId}`);
 
     revalidatePath('/dashboard/settings');
     revalidatePath('/dashboard/inbox');
 
-    return { success: true, message: 'Sync completed' };
+    return {
+      success: true,
+      message: 'Sync started successfully',
+      runId: syncResult.runId,
+    };
   } catch (error) {
-    console.error('Error syncing email account:', error);
-
-    // Update account status to show error
-    await db
-      .update(emailAccounts)
-      .set({
-        status: 'active',
-        lastSyncError: error instanceof Error ? error.message : 'Unknown error',
-      } as Partial<typeof emailAccounts.$inferInsert>)
-      .where(eq(emailAccounts.id, accountId));
-
-    return { success: false, error: 'Failed to sync account' };
+    console.error('❌ Error triggering manual sync:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to start sync',
+    };
   }
 }

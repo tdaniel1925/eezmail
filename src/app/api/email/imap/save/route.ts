@@ -49,7 +49,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userId,
     });
 
-    // Save IMAP account to database
+    // Save IMAP account to database with full IMAP configuration
     const [inserted] = await db
       .insert(emailAccounts)
       .values({
@@ -60,9 +60,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         displayName: email.split('@')[0],
         accessToken: password, // Store password as access token for IMAP
         status: 'active',
-        // Store IMAP settings in a JSON field if available
-        // For now, we'll store the host in the displayName or create a custom field
-      })
+        // Store IMAP settings for sync service
+        imapHost: host,
+        imapPort: port,
+        imapUsername: email,
+        imapPassword: password,
+        imapUseSsl: secure !== false, // Default to true
+      } as any)
       .returning();
 
     console.log('✅ IMAP account saved successfully:', inserted);

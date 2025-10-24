@@ -1,47 +1,26 @@
 'use client';
 
 /**
- * Auto Sync Starter
- * Automatically starts dual-mode sync for all user accounts on mount
+ * Auto Sync Starter - DISABLED
+ * Old dual-mode sync system replaced by Inngest
+ * Sync is now triggered via Inngest events from OAuth callback and manual sync button
  */
-
-import { useEffect, useState } from 'react';
-import { startDualModeSync } from '@/lib/sync/sync-modes';
 
 interface AutoSyncStarterProps {
   accounts: Array<{ id: string; emailAddress: string }>;
 }
 
 export function AutoSyncStarter({ accounts }: AutoSyncStarterProps): null {
-  const [hasStarted, setHasStarted] = useState(false);
+  // OLD SYNC SYSTEM DISABLED - Now using Inngest for reliable, durable sync
+  // Sync is triggered via:
+  // 1. OAuth callback (src/app/api/auth/microsoft/callback/route.ts)
+  // 2. Manual sync button (src/lib/settings/email-actions.ts)
+  // 3. Inngest scheduler (future)
 
-  useEffect(() => {
-    if (hasStarted || accounts.length === 0) return;
+  console.log(
+    `ℹ️  AutoSyncStarter: Old sync system disabled. Using Inngest for ${accounts.length} account(s)`
+  );
 
-    console.log(`🚀 Auto-starting sync for ${accounts.length} account(s)`);
-
-    // Start sync for all accounts
-    accounts.forEach(async (account) => {
-      try {
-        await startDualModeSync(account.id);
-        console.log(`✅ Dual-mode sync started for: ${account.emailAddress}`);
-      } catch (error) {
-        console.error(
-          `Failed to start sync for ${account.emailAddress}:`,
-          error
-        );
-      }
-    });
-
-    setHasStarted(true);
-  }, [accounts, hasStarted]);
-
-  // This component doesn't render anything
+  // This component doesn't render anything and no longer starts sync
   return null;
 }
-
-
-
-
-
-

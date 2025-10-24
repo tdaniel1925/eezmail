@@ -37,6 +37,7 @@ interface ExpandableEmailItemProps {
   onSelect?: () => void;
   onAction?: (action: string, emailId: string) => void;
   onNavigateToEmail?: (emailId: string) => void;
+  onOpenComposer?: (mode: 'reply' | 'forward', emailId: string) => void;
   className?: string;
 }
 
@@ -48,6 +49,7 @@ export function ExpandableEmailItem({
   onSelect,
   onAction,
   onNavigateToEmail,
+  onOpenComposer,
   className,
 }: ExpandableEmailItemProps): JSX.Element {
   const { setCurrentEmail } = useChatbotContext();
@@ -71,6 +73,11 @@ export function ExpandableEmailItem({
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Inline notification for AI reply buttons
+  const [inlineNotification, setInlineNotification] = useState<string | null>(
+    null
+  );
 
   // Fetch thread count if email has a threadId
   useEffect(() => {
@@ -332,7 +339,7 @@ export function ExpandableEmailItem({
   const senderName =
     email.fromAddress?.name || email.fromAddress?.email || 'Unknown';
   const initials = getSenderInitials(senderName);
-  const timeAgo = getTimeAgo(email.sentAt || email.createdAt);
+  const timeAgo = getTimeAgo(email.receivedAt || email.createdAt);
 
   return (
     <div
@@ -413,6 +420,7 @@ export function ExpandableEmailItem({
             <span
               className="text-xs flex-shrink-0 transition-colors"
               style={{ color: 'var(--text-tertiary)' }}
+              suppressHydrationWarning
             >
               {timeAgo}
             </span>
@@ -625,14 +633,14 @@ export function ExpandableEmailItem({
               <Forward className="h-3.5 w-3.5" />
               Forward
             </button>
-            
+
             {/* Add to Calendar Button - AI-powered meeting detection */}
-            <AddToCalendarButton 
-              emailId={email.id} 
+            <AddToCalendarButton
+              emailId={email.id}
               userId={email.userId}
               className="ml-auto mr-2"
             />
-            
+
             <button
               type="button"
               onClick={() => handleAction('delete')}
@@ -773,13 +781,12 @@ export function ExpandableEmailItem({
                 transition={{ duration: 0.2 }}
                 style={{
                   position: 'fixed',
-                  top: '40%',
+                  top: '20%',
                   left: '50%',
                   transform: 'translate(-50%, -50%)',
                   zIndex: 99999,
-                  width: '420px',
+                  width: '500px',
                   maxWidth: '90vw',
-                  pointerEvents: 'none', // Prevent interfering with mouse events
                 }}
                 className="bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg border border-blue-500/30 rounded-lg shadow-2xl p-4"
               >
@@ -822,12 +829,116 @@ export function ExpandableEmailItem({
 
                   {summary && !isLoadingSummary && (
                     <>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+                      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                         {summary}
                       </p>
+
+                      {/* AI Reply Buttons */}
+                      <div className="mb-3 space-y-2 pointer-events-auto">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3" />
+                          Quick AI Replies
+                        </p>
+
+                        {/* Inline Notification */}
+                        {inlineNotification && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md text-xs text-blue-700 dark:text-blue-300"
+                          >
+                            {inlineNotification}
+                          </motion.div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInlineNotification(
+                                'Opening composer with professional reply...'
+                              );
+                              setTimeout(() => {
+                                setShowSummary(false);
+                                setInlineNotification(null);
+                                if (onOpenComposer) {
+                                  onOpenComposer('reply', email.id);
+                                }
+                              }, 800);
+                            }}
+                            className="px-3 py-2.5 text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-blue-200/50 dark:border-blue-800/50"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                Professional Reply
+                              </div>
+                              <div className="text-[10px] opacity-75">
+                                Formal, concise response
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInlineNotification(
+                                'Opening composer with quick acknowledgment...'
+                              );
+                              setTimeout(() => {
+                                setShowSummary(false);
+                                setInlineNotification(null);
+                                if (onOpenComposer) {
+                                  onOpenComposer('reply', email.id);
+                                }
+                              }, 800);
+                            }}
+                            className="px-3 py-2.5 text-xs bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-green-200/50 dark:border-green-800/50"
+                          >
+                            <CheckSquare className="w-3.5 h-3.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                Quick Acknowledgment
+                              </div>
+                              <div className="text-[10px] opacity-75">
+                                Brief confirmation
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInlineNotification(
+                                'Opening composer with detailed response...'
+                              );
+                              setTimeout(() => {
+                                setShowSummary(false);
+                                setInlineNotification(null);
+                                if (onOpenComposer) {
+                                  onOpenComposer('reply', email.id);
+                                }
+                              }, 800);
+                            }}
+                            className="px-3 py-2.5 text-xs bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-purple-200/50 dark:border-purple-800/50"
+                          >
+                            <Reply className="w-3.5 h-3.5 flex-shrink-0" />
+                            <div className="flex-1">
+                              <div className="font-medium">
+                                Detailed Response
+                              </div>
+                              <div className="text-[10px] opacity-75">
+                                Comprehensive answer
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                         <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                          💡 Click email for full details
+                          💡 Click email for full details or custom reply
                         </p>
                       </div>
                     </>
