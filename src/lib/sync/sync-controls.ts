@@ -1,16 +1,15 @@
 'use server';
 
 /**
- * Sync Control Functions
- * - Pause/Resume sync
- * - Set sync priority
- * - Manual sync triggers
+ * Sync Control Functions - NOW USING INNGEST
+ * This file is deprecated but kept for backward compatibility
+ * All syncing now happens through Inngest functions
  */
 
 import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { syncEmailAccount } from './email-sync-service';
+import { triggerSync } from './sync-orchestrator';
 import { stopAllSync, startDualModeSync } from './sync-modes';
 
 /**
@@ -114,6 +113,15 @@ export async function triggerManualSync(accountId: string): Promise<{
   try {
     console.log(`🔄 Manual sync triggered for account: ${accountId}`);
 
+    // Get account to get userId
+    const account = await db.query.emailAccounts.findFirst({
+      where: eq(emailAccounts.id, accountId),
+    });
+
+    if (!account) {
+      return { success: false, error: 'Account not found' };
+    }
+
     // Set status to syncing
     await db
       .update(emailAccounts)
@@ -123,12 +131,20 @@ export async function triggerManualSync(accountId: string): Promise<{
       } as any)
       .where(eq(emailAccounts.id, accountId));
 
-    // Perform manual sync
-    const result = await syncEmailAccount(accountId, 'manual');
+    // Trigger sync via Inngest
+    const result = await triggerSync({
+      accountId,
+      userId: account.userId,
+      trigger: 'manual',
+    });
+
+    if (!result.success) {
+      throw new Error(result.error || 'Sync failed');
+    }
 
     return {
       success: true,
-      syncedCount: result?.syncedCount || 0,
+      syncedCount: 0, // Inngest handles this async
     };
   } catch (error) {
     console.error('Error in manual sync:', error);
@@ -212,9 +228,3 @@ export async function resetSyncProgress(
     };
   }
 }
-
-
-
-
-
-

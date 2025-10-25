@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 /**
  * Microsoft Graph Webhook Handler
  * Receives notifications for mailbox changes
- * 
+ *
  * Setup required:
  * 1. Create subscription via Microsoft Graph API
  * 2. Verify the webhook endpoint
@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const notifications = body.value || [];
 
-    console.log(`📬 Microsoft push notifications received: ${notifications.length}`);
+    console.log(
+      `📬 Microsoft push notifications received: ${notifications.length}`
+    );
 
     for (const notification of notifications) {
       const changeType = notification.changeType; // 'created', 'updated', 'deleted'
@@ -57,7 +59,9 @@ export async function POST(request: NextRequest) {
       }
 
       // Queue sync for this account
-      console.log(`🔄 Triggering sync for account ${accountId} (${changeType})`);
+      console.log(
+        `🔄 Triggering sync for account ${accountId} (${changeType})`
+      );
       queueMicrosoftSync(accountId, (account as any).userId, changeType);
     }
 
@@ -65,7 +69,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error processing Microsoft push notification:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Webhook processing failed' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Webhook processing failed',
+      },
       { status: 500 }
     );
   }
@@ -82,14 +89,18 @@ async function queueMicrosoftSync(
   // Queue the sync with a small delay
   setTimeout(async () => {
     try {
-      // Import sync service
-      const { syncEmailAccount } = await import('@/lib/sync/email-sync-service');
+      // Import sync orchestrator (now using Inngest)
+      const { triggerSync } = await import('@/lib/sync/sync-orchestrator');
 
-      await syncEmailAccount(accountId, userId, 'auto');
+      await triggerSync({
+        accountId,
+        userId,
+        trigger: 'webhook',
+      });
 
-      console.log(`✅ Microsoft sync completed for account ${accountId}`);
+      console.log(`✅ Microsoft sync queued for account ${accountId}`);
     } catch (error) {
-      console.error('Error in queued Microsoft sync:', error);
+      console.error('Error queuing Microsoft sync:', error);
     }
   }, 2000); // 2 second delay to batch rapid changes
 }
@@ -113,7 +124,7 @@ export async function renewMicrosoftSubscription(
       {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -132,4 +143,3 @@ export async function renewMicrosoftSubscription(
     throw error;
   }
 }
-

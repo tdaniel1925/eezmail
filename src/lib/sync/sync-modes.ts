@@ -1,15 +1,15 @@
 'use server';
 
 /**
- * Dual-Mode Sync System
- * - Real-time sync: Every 30 seconds for new emails
- * - Historical sync: Every minute until all emails are synced
+ * Dual-Mode Sync System - NOW USING INNGEST
+ * This file is deprecated but kept for backward compatibility
+ * All syncing now happens through Inngest functions
  */
 
 import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { syncEmailAccount } from './email-sync-service';
+import { triggerSync } from './sync-orchestrator';
 
 // Store active sync intervals globally
 const activeSyncIntervals = new Map<
@@ -47,7 +47,17 @@ export async function startRealtimeSync(
   const interval = setInterval(async () => {
     try {
       console.log(`🔄 Real-time sync for account: ${accountId}`);
-      await syncEmailAccount(accountId, 'auto');
+      // Get account to pass userId
+      const account = await db.query.emailAccounts.findFirst({
+        where: eq(emailAccounts.id, accountId),
+      });
+      if (account) {
+        await triggerSync({
+          accountId,
+          userId: account.userId,
+          trigger: 'auto',
+        });
+      }
     } catch (error) {
       console.error('Real-time sync error:', error);
     }
@@ -104,24 +114,44 @@ export async function startHistoricalSync(
   const interval = setInterval(async () => {
     try {
       console.log(`📚 Historical sync for account: ${accountId}`);
-      const result = await syncEmailAccount(accountId, 'manual');
+      // Get account to pass userId
+      const account = await db.query.emailAccounts.findFirst({
+        where: eq(emailAccounts.id, accountId),
+      });
 
-      // Stop if complete
-      if (result?.isComplete) {
-        clearInterval(interval);
+      if (account) {
+        await triggerSync({
+          accountId,
+          userId: account.userId,
+          trigger: 'manual',
+        });
 
-        // Remove from active intervals
-        const intervals = activeSyncIntervals.get(accountId);
-        if (intervals) {
-          delete intervals.historical;
-          if (Object.keys(intervals).length === 0) {
-            activeSyncIntervals.delete(accountId);
-          } else {
-            activeSyncIntervals.set(accountId, intervals);
+        // Check if complete
+        const updatedAccount = await db.query.emailAccounts.findFirst({
+          where: eq(emailAccounts.id, accountId),
+        });
+
+        const isComplete =
+          updatedAccount?.syncStatus === 'success' &&
+          (updatedAccount?.syncProgress || 0) >= 100;
+
+        // Stop if complete
+        if (isComplete) {
+          clearInterval(interval);
+
+          // Remove from active intervals
+          const intervals = activeSyncIntervals.get(accountId);
+          if (intervals) {
+            delete intervals.historical;
+            if (Object.keys(intervals).length === 0) {
+              activeSyncIntervals.delete(accountId);
+            } else {
+              activeSyncIntervals.set(accountId, intervals);
+            }
           }
-        }
 
-        console.log(`✅ Historical sync completed for account: ${accountId}`);
+          console.log(`✅ Historical sync completed for account: ${accountId}`);
+        }
       }
     } catch (error) {
       console.error('Historical sync error:', error);
