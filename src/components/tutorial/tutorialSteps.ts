@@ -14,7 +14,7 @@ export const firstTimeOnboardingSteps: TutorialStep[] = [
     id: 'welcome',
     title: 'Welcome to Imbox!',
     description:
-      'Let\'s take a quick 2-minute tour to help you get started. You can skip this anytime and revisit it from Settings → Help.',
+      "Let's take a quick 2-minute tour to help you get started. You can skip this anytime and revisit it from Settings → Help.",
     targetSelector: '[data-tutorial="main-content"]',
     position: 'center',
   },
@@ -174,7 +174,7 @@ export const emailActionsTutorialSteps: TutorialStep[] = [
     id: 'reply-later',
     title: 'Reply Later',
     description:
-      'Schedule emails to reply to later. They'll appear in your Reply Later queue at the bottom of the screen.',
+      "Schedule emails to reply to later. They'll appear in your Reply Later queue at the bottom of the screen.",
     targetSelector: '[data-tutorial="reply-later-button"]',
     position: 'top',
   },
