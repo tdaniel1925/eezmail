@@ -171,13 +171,36 @@ export function AttachmentListView({
               {/* File Type & Size */}
               <div className="col-span-2 flex items-center gap-2">
                 <Icon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                <div className="flex flex-col">
+                <div className="flex flex-col gap-1">
                   <span className="text-sm text-gray-900 dark:text-gray-100 font-medium">
                     {typeLabel}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatFileSize(attachment.size)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {formatFileSize(attachment.size)}
+                    </span>
+                    {/* Download Status Badge */}
+                    {attachment.downloadStatus === 'completed' && attachment.storageUrl && (
+                      <span className="px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-medium rounded">
+                        ✓ Saved
+                      </span>
+                    )}
+                    {attachment.downloadStatus === 'pending' && (
+                      <span className="px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-[10px] font-medium rounded">
+                        Pending
+                      </span>
+                    )}
+                    {attachment.downloadStatus === 'downloading' && (
+                      <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-medium rounded animate-pulse">
+                        ⬇️
+                      </span>
+                    )}
+                    {attachment.downloadStatus === 'failed' && (
+                      <span className="px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-medium rounded">
+                        Failed
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
