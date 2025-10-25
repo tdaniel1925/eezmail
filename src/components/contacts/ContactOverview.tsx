@@ -405,31 +405,6 @@ export function ContactOverview({
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
-              // Get the primary email from the contact details
-              const primaryEmail = contactDetails.emails.find(
-                (e) => e.isPrimary
-              )?.email;
-              if (primaryEmail) {
-                // Dispatch event to open email composer
-                window.dispatchEvent(
-                  new CustomEvent('open-email-composer', {
-                    detail: {
-                      to: primaryEmail,
-                      mode: 'compose',
-                    },
-                  })
-                );
-                toast.success(`Opening email composer to ${primaryEmail}`);
-              } else {
-                toast.error('No email address found for this contact');
-              }
-            }}
-            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Send Email
-          </button>
-          <button
-            onClick={() => {
               // TODO: Implement calendar integration
               toast.info('Calendar integration coming soon!');
             }}
