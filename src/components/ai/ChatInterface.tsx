@@ -304,7 +304,7 @@ export function ChatInterface(): JSX.Element {
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex h-full flex-col">
       <h3 className="border-b border-gray-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:text-gray-400">
         AI Chat
       </h3>
@@ -316,11 +316,8 @@ export function ChatInterface(): JSX.Element {
         </div>
       )}
 
-      {/* Messages */}
-      <div
-        className="flex-1 space-y-3 overflow-y-auto p-4"
-        style={{ maxHeight: '400px' }}
-      >
+      {/* Messages - Now takes all available space */}
+      <div className="flex-1 space-y-3 overflow-y-auto p-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -424,11 +421,10 @@ export function ChatInterface(): JSX.Element {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input - Fixed at bottom with larger textarea */}
       <div className="border-t border-gray-200 p-3 dark:border-gray-700">
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
+        <div className="flex items-end space-x-2">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
@@ -437,34 +433,37 @@ export function ChatInterface(): JSX.Element {
                 handleSend();
               }
             }}
-            placeholder="Ask me anything..."
-            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            placeholder="Ask me anything... (Press Enter to send, Shift+Enter for new line)"
+            rows={3}
+            className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:bg-gray-800 dark:text-white"
             disabled={isTyping}
           />
-          <button
-            onClick={toggleVoiceInput}
-            className={cn(
-              'rounded-md p-2 transition-colors',
-              isListening
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
-            )}
-            title={isListening ? 'Stop listening' : 'Voice input'}
-          >
-            {isListening ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </button>
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isTyping}
-            className="rounded-md bg-primary p-2 text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
-            title="Send"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+          <div className="flex flex-col space-y-1">
+            <button
+              onClick={toggleVoiceInput}
+              className={cn(
+                'rounded-md p-2 transition-colors',
+                isListening
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800'
+              )}
+              title={isListening ? 'Stop listening' : 'Voice input'}
+            >
+              {isListening ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isTyping}
+              className="rounded-md bg-primary p-2 text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+              title="Send message"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
