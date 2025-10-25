@@ -1,10 +1,18 @@
 import { getUsers } from '@/lib/admin/users';
 import { UserManagementTable } from '@/components/admin/UserManagementTable';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage({
   searchParams,
 }: {
-  searchParams: { page?: string; search?: string; tier?: string; status?: string };
+  searchParams: {
+    page?: string;
+    search?: string;
+    tier?: string;
+    status?: string;
+  };
 }) {
   const page = parseInt(searchParams.page || '1');
   const search = searchParams.search;
@@ -43,4 +51,3 @@ export default async function AdminUsersPage({
     </div>
   );
 }
-

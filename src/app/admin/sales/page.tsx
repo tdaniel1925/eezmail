@@ -3,6 +3,9 @@ import { SalesMetrics } from '@/components/admin/SalesMetrics';
 import { RevenueBreakdown } from '@/components/admin/RevenueBreakdown';
 import { TopCustomers } from '@/components/admin/TopCustomers';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminSalesPage() {
   const [statsResult, revenueResult] = await Promise.all([
     getDashboardStats(),
@@ -36,4 +39,3 @@ export default async function AdminSalesPage() {
     </div>
   );
 }
-

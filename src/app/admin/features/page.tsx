@@ -1,5 +1,8 @@
 import { FeaturesManager } from '@/components/admin/FeaturesManager';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminFeaturesPage() {
   return (
     <div className="space-y-8">
@@ -16,4 +19,3 @@ export default async function AdminFeaturesPage() {
     </div>
   );
 }
-

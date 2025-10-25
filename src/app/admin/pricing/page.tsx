@@ -1,6 +1,9 @@
 import { getPricingTiers } from '@/lib/admin/pricing-actions';
 import { DynamicPricingManager } from '@/components/admin/DynamicPricingManager';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPricingPage() {
   const result = await getPricingTiers();
 

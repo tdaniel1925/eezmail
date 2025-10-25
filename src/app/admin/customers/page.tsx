@@ -1,6 +1,9 @@
 import { getUsers } from '@/lib/admin/users';
 import { CustomerManagementTable } from '@/components/admin/CustomerManagementTable';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminCustomersPage({
   searchParams,
 }: {
@@ -11,14 +14,14 @@ export default async function AdminCustomersPage({
   const tier = searchParams.tier;
 
   // Only show paying customers (exclude free tier)
-  const result = await getUsers({ 
-    page, 
-    search, 
+  const result = await getUsers({
+    page,
+    search,
     tier: tier || undefined,
   });
 
   // Filter to paying customers only
-  const payingCustomers = result.users?.filter(u => u.tier !== 'free') || [];
+  const payingCustomers = result.users?.filter((u) => u.tier !== 'free') || [];
 
   return (
     <div className="space-y-6">
@@ -50,4 +53,3 @@ export default async function AdminCustomersPage({
     </div>
   );
 }
-

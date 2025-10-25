@@ -1,6 +1,9 @@
 import { getDiscountCodes } from '@/lib/admin/discount-actions';
 import { DiscountManager } from '@/components/admin/DiscountManager';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPromotionsPage() {
   const result = await getDiscountCodes();
 

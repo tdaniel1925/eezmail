@@ -1,16 +1,25 @@
-import { getDashboardStats, getSubscriptionStats, getRevenueData, getRecentSignups } from '@/lib/admin/stats';
+import {
+  getDashboardStats,
+  getSubscriptionStats,
+  getRevenueData,
+  getRecentSignups,
+} from '@/lib/admin/stats';
 import { StatsOverview } from '@/components/admin/StatsOverview';
 import { SubscriptionChart } from '@/components/admin/SubscriptionChart';
 import { RevenueChart } from '@/components/admin/RevenueChart';
 import { RecentSignups } from '@/components/admin/RecentSignups';
 
+// Force dynamic rendering for admin pages that require auth
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
-  const [statsResult, subscriptionResult, revenueResult, signupsResult] = await Promise.all([
-    getDashboardStats(),
-    getSubscriptionStats(),
-    getRevenueData(),
-    getRecentSignups(),
-  ]);
+  const [statsResult, subscriptionResult, revenueResult, signupsResult] =
+    await Promise.all([
+      getDashboardStats(),
+      getSubscriptionStats(),
+      getRevenueData(),
+      getRecentSignups(),
+    ]);
 
   return (
     <div className="space-y-8">
@@ -49,4 +58,3 @@ export default async function AdminDashboardPage() {
     </div>
   );
 }
-

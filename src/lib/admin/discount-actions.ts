@@ -13,9 +13,15 @@ import { eq, desc, and, or, lte, gte, isNull, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
+// Lazy initialization of Stripe to avoid build-time errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2024-11-20.acacia',
+  });
+}
 
 /**
  * Get all discount codes
@@ -148,6 +154,7 @@ export async function createDiscountCode(data: {
     // Create Stripe coupon if requested
     if (data.createStripeCoupon) {
       try {
+        const stripe = getStripeClient();
         const coupon = await stripe.coupons.create({
           name: data.name,
           ...(data.discountType === 'percentage'
@@ -404,4 +411,3 @@ export async function getDiscountCodeStats(codeId: string): Promise<{
     return { success: false, error: error.message };
   }
 }
-
