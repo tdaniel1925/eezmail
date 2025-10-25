@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Mail,
   Phone,
@@ -12,6 +12,7 @@ import {
   Users,
   Tag as TagIcon,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Contact } from './ContactDetailModal';
@@ -30,6 +31,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+interface ContactDetails {
+  emails: Array<{ email: string; type: string; isPrimary: boolean }>;
+  phones: Array<{ phone: string; type: string; isPrimary: boolean }>;
+  addresses: Array<{
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    type: string;
+  }>;
+  socialLinks: Array<{ platform: string; url: string }>;
+}
 
 interface ContactOverviewProps {
   contact: Contact & {
@@ -50,46 +65,67 @@ export function ContactOverview({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     contact.tags?.map((t) => t.id) || []
   );
-  // Mock data - replace with real data from API
-  const contactDetails = {
-    emails: [
-      { email: 'john.doe@example.com', type: 'work', isPrimary: true },
-      { email: 'john.personal@gmail.com', type: 'personal', isPrimary: false },
-    ],
-    phones: [
-      { phone: '+1 (555) 123-4567', type: 'work', isPrimary: true },
-      { phone: '+1 (555) 987-6543', type: 'mobile', isPrimary: false },
-    ],
-    addresses: [
-      {
-        street: '123 Main St',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94105',
-        country: 'USA',
-        type: 'work',
-      },
-    ],
-    socialLinks: [
-      { platform: 'linkedin', url: 'https://linkedin.com/in/johndoe' },
-      { platform: 'twitter', url: 'https://twitter.com/johndoe' },
-    ],
-  };
+  const [contactDetails, setContactDetails] = useState<ContactDetails>({
+    emails: [],
+    phones: [],
+    addresses: [],
+    socialLinks: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch real contact data from API
+  useEffect(() => {
+    async function fetchContactDetails() {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/contacts/${contact.id}/details`);
+        if (!response.ok) throw new Error('Failed to fetch contact details');
+        
+        const data = await response.json();
+        setContactDetails({
+          emails: data.emails || [],
+          phones: data.phones || [],
+          addresses: data.addresses || [],
+          socialLinks: data.socialLinks || [],
+        });
+      } catch (error) {
+        console.error('Error fetching contact details:', error);
+        toast.error('Failed to load contact details');
+        // Set empty arrays as fallback
+        setContactDetails({
+          emails: [],
+          phones: [],
+          addresses: [],
+          socialLinks: [],
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchContactDetails();
+  }, [contact.id]);
 
   return (
     <div className="space-y-6">
-      {/* Communication Actions */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Quick Actions
-        </h3>
-        <CommunicationActions
-          contactId={contact.id}
-          phone={contactDetails.phones[0]?.phone}
-          email={contactDetails.emails[0]?.email}
-          contactName={contact.displayName || `${contact.firstName} ${contact.lastName}`}
-        />
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          {/* Communication Actions */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Quick Actions
+            </h3>
+            <CommunicationActions
+              contactId={contact.id}
+              phone={contactDetails.phones[0]?.phone}
+              email={contactDetails.emails[0]?.email}
+              contactName={contact.displayName || `${contact.firstName} ${contact.lastName}`}
+            />
+          </div>
 
       {/* Basic Info */}
       <div>
@@ -103,23 +139,29 @@ export function ContactOverview({
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
               Email Addresses
             </p>
-            {contactDetails.emails.map((email, idx) => (
-              <div key={idx} className="flex items-center gap-2 py-2">
-                <Mail className="h-4 w-4 text-gray-400" />
-                <a
-                  href={`mailto:${email.email}`}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {email.email}
-                </a>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({email.type})
-                </span>
-                {email.isPrimary && (
-                  <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                )}
-              </div>
-            ))}
+            {contactDetails.emails.length > 0 ? (
+              contactDetails.emails.map((email, idx) => (
+                <div key={idx} className="flex items-center gap-2 py-2">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  <a
+                    href={`mailto:${email.email}`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {email.email}
+                  </a>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ({email.type})
+                  </span>
+                  {email.isPrimary && (
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                No email addresses
+              </p>
+            )}
           </div>
 
           {/* Phones */}
@@ -127,23 +169,29 @@ export function ContactOverview({
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
               Phone Numbers
             </p>
-            {contactDetails.phones.map((phone, idx) => (
-              <div key={idx} className="flex items-center gap-2 py-2">
-                <Phone className="h-4 w-4 text-gray-400" />
-                <a
-                  href={`tel:${phone.phone}`}
-                  className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary"
-                >
-                  {phone.phone}
-                </a>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  ({phone.type})
-                </span>
-                {phone.isPrimary && (
-                  <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
-                )}
-              </div>
-            ))}
+            {contactDetails.phones.length > 0 ? (
+              contactDetails.phones.map((phone, idx) => (
+                <div key={idx} className="flex items-center gap-2 py-2">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  <a
+                    href={`tel:${phone.phone}`}
+                    className="text-sm text-gray-700 dark:text-gray-300 hover:text-primary"
+                  >
+                    {phone.phone}
+                  </a>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ({phone.type})
+                  </span>
+                  {phone.isPrimary && (
+                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+                No phone numbers
+              </p>
+            )}
           </div>
 
           {/* Company Info */}
@@ -419,6 +467,8 @@ export function ContactOverview({
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

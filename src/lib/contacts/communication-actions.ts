@@ -7,8 +7,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { contacts, contactGroups, contactGroupMembers } from '@/db/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { contacts, contactGroups, contactGroupMembers, contactEmails, contactPhones } from '@/db/schema';
+import { eq, inArray, and } from 'drizzle-orm';
 import { sendSMS, sendBulkSMS } from '@/lib/twilio/sms';
 import { makeVoiceCall } from '@/lib/twilio/voice';
 import { addTimelineEvent } from '@/lib/contacts/timeline-actions';
@@ -41,10 +41,22 @@ export async function prepareContactEmail(contactId: string): Promise<{
       return { success: false, error: 'Contact not found' };
     }
 
-    // Get primary email from contact
-    // Note: This is simplified - you'd need to parse the actual email fields
-    const email = contact.email || '';
-    const name = contact.displayName || `${contact.firstName} ${contact.lastName}`;
+    // Get primary email from contactEmails table
+    const emailRecord = await db.query.contactEmails.findFirst({
+      where: and(
+        eq(contactEmails.contactId, contactId),
+        eq(contactEmails.isPrimary, true)
+      ),
+    }) || await db.query.contactEmails.findFirst({
+      where: eq(contactEmails.contactId, contactId),
+    });
+
+    if (!emailRecord || !emailRecord.email) {
+      return { success: false, error: 'Contact has no email address' };
+    }
+
+    const email = emailRecord.email;
+    const name = contact.displayName || `${contact.firstName || ''} ${contact.lastName || ''}`;
 
     return {
       success: true,
@@ -87,12 +99,21 @@ export async function sendContactSMS(
       return { success: false, error: 'Contact not found' };
     }
 
-    // Get phone number (simplified - you'd need to parse phone fields)
-    const phone = contact.phone || '';
+    // Get primary phone number from contactPhones table
+    const phoneRecord = await db.query.contactPhones.findFirst({
+      where: and(
+        eq(contactPhones.contactId, contactId),
+        eq(contactPhones.isPrimary, true)
+      ),
+    }) || await db.query.contactPhones.findFirst({
+      where: eq(contactPhones.contactId, contactId),
+    });
 
-    if (!phone) {
+    if (!phoneRecord || !phoneRecord.phone) {
       return { success: false, error: 'Contact has no phone number' };
     }
+
+    const phone = phoneRecord.phone;
 
     // Send SMS via Twilio
     const result = await sendSMS(user.id, phone, message, contactId);
@@ -156,7 +177,17 @@ export async function callContact(
       return { success: false, error: 'Contact not found' };
     }
 
-    const phone = contact.phone || '';
+    // Get primary phone number from contactPhones table
+    const phoneRecord = await db.query.contactPhones.findFirst({
+      where: and(
+        eq(contactPhones.contactId, contactId),
+        eq(contactPhones.isPrimary, true)
+      ),
+    }) || await db.query.contactPhones.findFirst({
+      where: eq(contactPhones.contactId, contactId),
+    });
+
+    const phone = phoneRecord?.phone || '';
 
     if (!phone) {
       return { success: false, error: 'Contact has no phone number' };
