@@ -111,7 +111,12 @@ export function ChatInterface(): JSX.Element {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: input.trim(),
+          messages: [
+            {
+              role: 'user',
+              content: input.trim(),
+            },
+          ],
           context: {
             currentEmail: currentEmail
               ? {
@@ -120,7 +125,7 @@ export function ChatInterface(): JSX.Element {
                   from: currentEmail.fromAddress?.email,
                 }
               : null,
-            currentFolder,
+            currentFolder: currentFolder || 'inbox',
           },
         }),
       });
@@ -129,14 +134,31 @@ export function ChatInterface(): JSX.Element {
 
       const data = await response.json();
 
-      const assistantMessage: Message = {
-        id: Date.now().toString() + '-assistant',
-        role: 'assistant',
-        content: data.reply || 'Sorry, I could not process that request.',
-        timestamp: new Date(),
-      };
+      // Check if AI wants to call a function
+      if (data.functionCall) {
+        const { name, arguments: args } = data.functionCall;
 
-      setMessages((prev) => [...prev, assistantMessage]);
+        // For now, inform the user what function would be called
+        // In a full implementation, you'd execute the function and show results
+        const assistantMessage: Message = {
+          id: Date.now().toString() + '-assistant',
+          role: 'assistant',
+          content: `I found your request! I would use the "${name}" function with these parameters: ${JSON.stringify(args, null, 2)}.\n\nFunction execution is currently being implemented. For now, you can use the email search bar or filters to find emails from Andy.`,
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        // Regular text response
+        const assistantMessage: Message = {
+          id: Date.now().toString() + '-assistant',
+          role: 'assistant',
+          content: data.response || 'Sorry, I could not process that request.',
+          timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
     } catch (error) {
       console.error('Chat error:', error);
       toast.error('Failed to get response. Please try again.');

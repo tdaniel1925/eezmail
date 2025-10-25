@@ -14,10 +14,14 @@ export function NotificationBell() {
   // Fetch notifications on mount
   useEffect(() => {
     async function loadNotifications() {
-      const result = await getNotifications({ limit: 50 });
-      if (result.success && result.notifications) {
-        setNotifications(result.notifications);
-        setUnreadCount(result.unreadCount || 0);
+      try {
+        const result = await getNotifications({ limit: 50 });
+        if (result && result.success && result.notifications) {
+          setNotifications(result.notifications);
+          setUnreadCount(result.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
       }
     }
     loadNotifications();
@@ -26,10 +30,14 @@ export function NotificationBell() {
   // Poll for new notifications every 30 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
-      const result = await getNotifications({ limit: 50 });
-      if (result.success && result.notifications) {
-        setNotifications(result.notifications);
-        setUnreadCount(result.unreadCount || 0);
+      try {
+        const result = await getNotifications({ limit: 50 });
+        if (result && result.success && result.notifications) {
+          setNotifications(result.notifications);
+          setUnreadCount(result.unreadCount || 0);
+        }
+      } catch (error) {
+        console.error('Error polling notifications:', error);
       }
     }, 30000); // 30 seconds
 
@@ -56,4 +64,3 @@ export function NotificationBell() {
     </Button>
   );
 }
-

@@ -12,23 +12,8 @@ import { eq } from 'drizzle-orm';
 import { renderToBuffer } from '@react-pdf/renderer';
 import InvoiceTemplate from '@/components/invoices/InvoiceTemplate';
 
-// Add invoices table to schema first
-export const invoicesTable = {
-  id: 'uuid',
-  userId: 'uuid',
-  organizationId: 'uuid',
-  invoiceNumber: 'string',
-  amount: 'decimal',
-  status: 'string', // 'pending', 'paid', 'failed'
-  type: 'string', // 'top_up', 'subscription'
-  stripeInvoiceId: 'string',
-  squareInvoiceId: 'string',
-  pdfUrl: 'string',
-  items: 'jsonb',
-  billingDetails: 'jsonb',
-  createdAt: 'timestamp',
-  paidAt: 'timestamp',
-};
+// Note: invoicesTable schema definition moved to @/db/schema.ts
+// Cannot export non-function values from "use server" files
 
 // ============================================================================
 // INVOICE GENERATION

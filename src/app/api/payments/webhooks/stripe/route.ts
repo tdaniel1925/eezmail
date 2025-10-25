@@ -7,11 +7,16 @@ import { eq } from 'drizzle-orm';
 import { addBalance } from '@/lib/billing/pricing';
 import { addAIBalance } from '@/lib/billing/ai-pricing';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
+// Allow build without Stripe key (will fail at runtime if actually used)
+const stripe = new Stripe(
+  process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder_key_for_build',
+  {
+    apiVersion: '2024-11-20.acacia',
+  }
+);
 
 export async function POST(req: Request) {
   try {
@@ -20,10 +25,7 @@ export async function POST(req: Request) {
 
     if (!signature) {
       console.error('❌ No Stripe signature found');
-      return NextResponse.json(
-        { error: 'No signature' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No signature' }, { status: 400 });
     }
 
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
@@ -44,10 +46,7 @@ export async function POST(req: Request) {
       );
     } catch (err) {
       console.error('❌ Webhook signature verification failed:', err);
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
     console.log(`📦 Stripe webhook received: ${event.type}`);
@@ -128,7 +127,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       return;
     }
 
-    console.log(`💰 Processing top-up: $${amount} for ${type} (user: ${userId})`);
+    console.log(
+      `💰 Processing top-up: $${amount} for ${type} (user: ${userId})`
+    );
 
     // Add balance to user account
     if (type === 'sms') {
@@ -168,7 +169,9 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
       return;
     }
 
-    console.log(`✅ Subscription updated for user ${user.id}: ${subscription.status}`);
+    console.log(
+      `✅ Subscription updated for user ${user.id}: ${subscription.status}`
+    );
 
     // TODO: Update customer_subscriptions table
     // TODO: Reset SMS/AI usage counters if new period
@@ -201,7 +204,9 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 
 async function handleInvoicePayment(invoice: Stripe.Invoice) {
   try {
-    console.log(`✅ Invoice paid: ${invoice.id}, amount: $${(invoice.amount_paid / 100).toFixed(2)}`);
+    console.log(
+      `✅ Invoice paid: ${invoice.id}, amount: $${(invoice.amount_paid / 100).toFixed(2)}`
+    );
 
     // TODO: Generate and store PDF invoice
     // TODO: Send invoice email to customer
@@ -209,4 +214,3 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     console.error('❌ Error handling invoice payment:', error);
   }
 }
-

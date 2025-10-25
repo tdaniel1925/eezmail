@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { Client, Environment } from 'square';
 import { db } from '@/db';
@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import { addBalance } from '@/lib/billing/pricing';
 import { addAIBalance } from '@/lib/billing/ai-pricing';
 
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
@@ -16,10 +17,7 @@ export async function POST(req: Request) {
 
     if (!signature) {
       console.error('❌ No Square signature found');
-      return NextResponse.json(
-        { error: 'No signature' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No signature' }, { status: 400 });
     }
 
     if (!process.env.SQUARE_WEBHOOK_SIGNATURE_KEY) {
@@ -76,7 +74,7 @@ async function handlePaymentCompleted(payment: any) {
   try {
     const userId = payment.reference_id || payment.order_id;
     const amount = parseFloat(payment.amount_money.amount) / 100;
-    
+
     // Get metadata from order
     // const type = ...
     // const userId = ...
@@ -124,4 +122,3 @@ async function handleOrderUpdate(order: any) {
     console.error('❌ Error handling order update:', error);
   }
 }
-
