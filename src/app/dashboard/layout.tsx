@@ -57,6 +57,17 @@ const ProactiveSuggestions = dynamic(
   }
 );
 
+const TutorialManager = dynamic(
+  () =>
+    import('@/components/tutorial/TutorialManager').then(
+      (mod) => mod.TutorialManager
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -124,6 +135,9 @@ export default async function DashboardLayout({
 
               {/* Proactive Suggestions (AI Insights) */}
               <ProactiveSuggestions />
+
+              {/* Tutorial Manager for first-time users */}
+              <TutorialManager userId={user.id} />
             </div>
           </ReplyLaterProvider>
         </KeyboardShortcutsProvider>

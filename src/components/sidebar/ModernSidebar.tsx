@@ -97,6 +97,7 @@ export function ModernSidebar({
         style={{
           width: isCollapsed ? 80 : width,
         }}
+        data-tutorial="sidebar"
       >
         {/* Header with Collapse Button - 64px height to match other columns */}
         <div className="relative flex h-16 items-center border-b border-gray-200 bg-white px-4 dark:border-gray-700 dark:bg-gray-800">
