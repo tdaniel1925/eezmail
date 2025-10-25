@@ -6,7 +6,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { users, organizations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';

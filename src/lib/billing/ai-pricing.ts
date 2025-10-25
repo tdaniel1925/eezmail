@@ -3,7 +3,7 @@
  * Tracks OpenAI/AI usage and billing
  */
 
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import {
   users,
   organizations,

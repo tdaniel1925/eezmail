@@ -6,7 +6,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { Client, Environment } from 'square';

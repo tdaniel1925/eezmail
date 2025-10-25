@@ -3,7 +3,7 @@
  * Multi-tenant SaaS with flexible pricing
  */
 
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { 
   users, 
   organizations, 

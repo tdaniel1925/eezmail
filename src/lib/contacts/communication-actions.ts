@@ -5,7 +5,7 @@
 
 'use server';
 
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { contacts, contactEmails, contactPhones } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendSMS } from '@/lib/twilio/sms';
