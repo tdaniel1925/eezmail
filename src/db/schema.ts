@@ -823,6 +823,20 @@ export const emailSettings = pgTable('email_settings', {
     .notNull(),
   bulkEmailDetection: boolean('bulk_email_detection').default(true).notNull(),
 
+  // Attachment auto-download settings
+  downloadAttachmentsAtSync: boolean('download_attachments_at_sync')
+    .default(true)
+    .notNull(),
+  maxAutoDownloadSizeMB: integer('max_auto_download_size_mb')
+    .default(10)
+    .notNull(), // Max file size to auto-download (MB)
+  autoDownloadDaysBack: integer('auto_download_days_back')
+    .default(30)
+    .notNull(), // Only auto-download from emails received in last N days
+  downloadAllAttachments: boolean('download_all_attachments')
+    .default(false)
+    .notNull(), // Override: download ALL attachments regardless of size/age
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

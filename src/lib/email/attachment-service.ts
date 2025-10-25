@@ -11,7 +11,7 @@
  */
 
 import { db } from '@/lib/db';
-import { emailAttachments } from '@/db/schema';
+import { emailAttachments, emailSettings, emails } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 
@@ -73,6 +73,71 @@ function sanitizeFilename(filename: string): string {
     .replace(/[^a-zA-Z0-9.-]/g, '_') // Replace special chars with underscore
     .replace(/_{2,}/g, '_') // Replace multiple underscores with single
     .substring(0, 255); // Limit length
+}
+
+/**
+ * Check if attachment should be auto-downloaded based on settings
+ */
+async function shouldAutoDownload(
+  accountId: string,
+  attachmentSizeBytes: number,
+  emailReceivedAt: Date,
+  provider: 'gmail' | 'outlook' | 'imap'
+): Promise<boolean> {
+  // IMAP always downloads immediately (we have the content already)
+  if (provider === 'imap') {
+    return true;
+  }
+
+  try {
+    // Get settings for this account
+    const settings = await db.query.emailSettings.findFirst({
+      where: eq(emailSettings.accountId, accountId),
+    });
+
+    if (!settings) {
+      // Default behavior if no settings: auto-download recent small files
+      const sizeMB = attachmentSizeBytes / (1024 * 1024);
+      const daysAgo =
+        (Date.now() - emailReceivedAt.getTime()) / (1000 * 60 * 60 * 24);
+      return sizeMB <= 10 && daysAgo <= 30;
+    }
+
+    // Check if auto-download is enabled
+    if (!settings.downloadAttachmentsAtSync) {
+      return false;
+    }
+
+    // Override: download all attachments
+    if (settings.downloadAllAttachments) {
+      return true;
+    }
+
+    // Check size limit
+    const sizeMB = attachmentSizeBytes / (1024 * 1024);
+    if (sizeMB > settings.maxAutoDownloadSizeMB) {
+      console.log(
+        `⏭️ Skipping auto-download: file too large (${sizeMB.toFixed(1)}MB > ${settings.maxAutoDownloadSizeMB}MB)`
+      );
+      return false;
+    }
+
+    // Check age limit
+    const daysAgo =
+      (Date.now() - emailReceivedAt.getTime()) / (1000 * 60 * 60 * 24);
+    if (daysAgo > settings.autoDownloadDaysBack) {
+      console.log(
+        `⏭️ Skipping auto-download: email too old (${daysAgo.toFixed(0)} days > ${settings.autoDownloadDaysBack} days)`
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error checking auto-download settings:', error);
+    // Fail safe: don't auto-download if settings check fails
+    return false;
+  }
 }
 
 /**
@@ -211,7 +276,8 @@ export async function processEmailAttachments(
         }
       }
     } else {
-      // For Gmail/Outlook, save metadata only (download on-demand later)
+      // For Gmail/Outlook, check if we should auto-download
+      // Save metadata first
       await saveAttachmentMetadata({
         emailId,
         accountId,
@@ -221,6 +287,55 @@ export async function processEmailAttachments(
         emailReceivedAt,
         attachments: attachmentMetadata,
       });
+
+      // Then check each attachment for auto-download
+      for (const attMeta of attachmentMetadata) {
+        const shouldDownload = await shouldAutoDownload(
+          accountId,
+          attMeta.size,
+          emailReceivedAt,
+          provider
+        );
+
+        if (shouldDownload && attMeta.providerAttachmentId) {
+          console.log(
+            `⬇️ Auto-downloading ${attMeta.filename} (${(attMeta.size / (1024 * 1024)).toFixed(1)}MB)`
+          );
+
+          try {
+            // Find the attachment record we just created
+            const attachmentRecord = await db.query.emailAttachments.findFirst({
+              where: and(
+                eq(emailAttachments.emailId, emailId),
+                eq(emailAttachments.originalFilename, attMeta.filename)
+              ),
+            });
+
+            if (attachmentRecord) {
+              // Trigger download (this will be async, won't block sync)
+              downloadAndStore({
+                attachmentId: attachmentRecord.id,
+                provider,
+                messageId: message.id || message.messageId || '',
+                providerAttachmentId: attMeta.providerAttachmentId,
+                accessToken: undefined, // Will be fetched from account
+              }).catch((error) => {
+                console.error(
+                  `Failed to auto-download ${attMeta.filename}:`,
+                  error
+                );
+                // Don't throw - continue with other attachments
+              });
+            }
+          } catch (error) {
+            console.error(
+              `Error setting up auto-download for ${attMeta.filename}:`,
+              error
+            );
+            // Continue with next attachment
+          }
+        }
+      }
     }
 
     console.log(`✅ Saved ${attachmentMetadata.length} attachment(s) metadata`);
@@ -329,23 +444,46 @@ export async function downloadAndStore(
       .set({ downloadStatus: 'downloading', updatedAt: new Date() })
       .where(eq(emailAttachments.id, params.attachmentId));
 
+    // If access token not provided, fetch from account
+    let accessToken = params.accessToken;
+    if (!accessToken && (params.provider === 'gmail' || params.provider === 'outlook')) {
+      const email = await db.query.emails.findFirst({
+        where: eq(emails.id, attachment.emailId),
+        with: {
+          account: true,
+        },
+      });
+
+      if (email?.account) {
+        accessToken = email.account.accessToken || undefined;
+      }
+
+      if (!accessToken) {
+        await db
+          .update(emailAttachments)
+          .set({ downloadStatus: 'failed', updatedAt: new Date() })
+          .where(eq(emailAttachments.id, params.attachmentId));
+        return { success: false, error: 'No access token available' };
+      }
+    }
+
     // Download from provider
     let buffer: Buffer | null = null;
 
     if (
       params.provider === 'gmail' &&
-      params.accessToken &&
+      accessToken &&
       params.providerAttachmentId
     ) {
       buffer = await downloadFromGmail(
         params.messageId,
         params.providerAttachmentId,
-        params.accessToken
+        accessToken
       );
-    } else if (params.provider === 'outlook' && params.accessToken) {
+    } else if (params.provider === 'outlook' && accessToken) {
       buffer = await downloadFromMicrosoftGraph(
         params.messageId,
-        params.accessToken
+        accessToken
       );
     } else if (params.provider === 'imap' && params.imapConfig) {
       buffer = await downloadFromImap(
