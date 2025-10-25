@@ -5,7 +5,7 @@
 
 'use server';
 
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import {
   users,
   organizations,
@@ -422,4 +422,3 @@ export async function updateGlobalAIRate(
     };
   }
 }
-

@@ -6,7 +6,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { Client, Environment } from 'square';
@@ -20,9 +20,10 @@ function getSquareClient(): Client {
     }
     squareClient = new Client({
       accessToken: process.env.SQUARE_ACCESS_TOKEN!,
-      environment: process.env.NODE_ENV === 'production' 
-        ? Environment.Production 
-        : Environment.Sandbox,
+      environment:
+        process.env.NODE_ENV === 'production'
+          ? Environment.Production
+          : Environment.Sandbox,
     });
   }
   return squareClient;
@@ -136,9 +137,7 @@ export async function createSquarePayment(
 // SQUARE SUBSCRIPTIONS
 // ============================================================================
 
-export async function createSquareSubscription(
-  planId: string
-): Promise<{
+export async function createSquareSubscription(planId: string): Promise<{
   success: boolean;
   subscriptionId?: string;
   error?: string;
@@ -192,7 +191,8 @@ export async function createSquareSubscription(
 
     return {
       success: false,
-      error: 'Square subscriptions require catalog setup. Please use one-time payments for now.',
+      error:
+        'Square subscriptions require catalog setup. Please use one-time payments for now.',
     };
   } catch (error) {
     console.error('❌ Error creating Square subscription:', error);
@@ -202,4 +202,3 @@ export async function createSquareSubscription(
     };
   }
 }
-

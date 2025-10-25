@@ -5,7 +5,7 @@
 
 'use server';
 
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import {
   communicationLogs,
   aiTransactions,
@@ -27,9 +27,24 @@ export async function getRevenueAnalytics(
 ): Promise<{
   success: boolean;
   data?: {
-    daily: Array<{ date: string; smsRevenue: number; aiRevenue: number; total: number }>;
-    weekly: Array<{ week: string; smsRevenue: number; aiRevenue: number; total: number }>;
-    monthly: Array<{ month: string; smsRevenue: number; aiRevenue: number; total: number }>;
+    daily: Array<{
+      date: string;
+      smsRevenue: number;
+      aiRevenue: number;
+      total: number;
+    }>;
+    weekly: Array<{
+      week: string;
+      smsRevenue: number;
+      aiRevenue: number;
+      total: number;
+    }>;
+    monthly: Array<{
+      month: string;
+      smsRevenue: number;
+      aiRevenue: number;
+      total: number;
+    }>;
     totals: {
       smsRevenue: number;
       aiRevenue: number;
@@ -77,14 +92,24 @@ export async function getRevenueAnalytics(
     // Merge daily data
     const dailyMap = new Map();
     dailyRevenue.forEach((d) => {
-      dailyMap.set(d.date, { date: d.date, smsRevenue: Number(d.smsRevenue), aiRevenue: 0, total: 0 });
+      dailyMap.set(d.date, {
+        date: d.date,
+        smsRevenue: Number(d.smsRevenue),
+        aiRevenue: 0,
+        total: 0,
+      });
     });
     dailyAI.forEach((d) => {
-      const existing = dailyMap.get(d.date) || { date: d.date, smsRevenue: 0, aiRevenue: 0, total: 0 };
+      const existing = dailyMap.get(d.date) || {
+        date: d.date,
+        smsRevenue: 0,
+        aiRevenue: 0,
+        total: 0,
+      };
       existing.aiRevenue = Number(d.aiRevenue);
       dailyMap.set(d.date, existing);
     });
-    
+
     const daily = Array.from(dailyMap.values()).map((d) => ({
       ...d,
       total: d.smsRevenue + d.aiRevenue,
@@ -145,9 +170,7 @@ export async function getRevenueAnalytics(
 // TOP CUSTOMERS BY USAGE
 // ============================================================================
 
-export async function getTopCustomersByUsage(
-  limit: number = 10
-): Promise<{
+export async function getTopCustomersByUsage(limit: number = 10): Promise<{
   success: boolean;
   data?: Array<{
     id: string;
@@ -200,7 +223,7 @@ export async function getTopCustomersByUsage(
     for (const sms of topSMS) {
       const targetId = sms.organizationId || sms.userId;
       const type = sms.organizationId ? 'organization' : 'individual';
-      
+
       if (!customerMap.has(targetId)) {
         let name = '';
         if (type === 'organization') {
@@ -337,10 +360,12 @@ export async function getChurnAnalysis(): Promise<{
       .select({ count: sql<number>`count(*)` })
       .from(organizations);
 
-    const totalCustomers = Number(totalUsers[0]?.count || 0) + Number(totalOrgs[0]?.count || 0);
+    const totalCustomers =
+      Number(totalUsers[0]?.count || 0) + Number(totalOrgs[0]?.count || 0);
     const activeCustomers = activeUsers.length + activeOrgs.length;
     const inactiveCustomers = totalCustomers - activeCustomers;
-    const churnRate = totalCustomers > 0 ? (inactiveCustomers / totalCustomers) * 100 : 0;
+    const churnRate =
+      totalCustomers > 0 ? (inactiveCustomers / totalCustomers) * 100 : 0;
 
     return {
       success: true,
@@ -411,9 +436,10 @@ export async function getUsageTrends(days: number = 30): Promise<{
 
     const currentSMSCount = Number(currentSMS[0]?.count || 0);
     const previousSMSCount = Number(previousSMS[0]?.count || 0);
-    const smsGrowth = previousSMSCount > 0
-      ? ((currentSMSCount - previousSMSCount) / previousSMSCount) * 100
-      : 0;
+    const smsGrowth =
+      previousSMSCount > 0
+        ? ((currentSMSCount - previousSMSCount) / previousSMSCount) * 100
+        : 0;
 
     return {
       success: true,
@@ -432,4 +458,3 @@ export async function getUsageTrends(days: number = 30): Promise<{
     };
   }
 }
-

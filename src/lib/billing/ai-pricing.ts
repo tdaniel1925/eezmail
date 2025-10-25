@@ -3,7 +3,7 @@
  * Tracks OpenAI/AI usage and billing
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import {
   users,
   organizations,
@@ -221,7 +221,8 @@ export async function chargeAI(
 
     if (
       subscription &&
-      subscription.aiTokensUsedCurrentPeriod < subscription.aiTokensIncludedInPlan
+      subscription.aiTokensUsedCurrentPeriod <
+        subscription.aiTokensIncludedInPlan
     ) {
       const tokensRemaining =
         subscription.aiTokensIncludedInPlan -
@@ -678,4 +679,3 @@ async function getActiveSMSTrial(
   // Placeholder for now
   return null;
 }
-

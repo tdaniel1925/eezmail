@@ -5,7 +5,7 @@
 
 'use server';
 
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import { contacts, contactEmails, contactPhones } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendSMS } from '@/lib/twilio/sms';
@@ -76,7 +76,9 @@ export async function sendContactSMS(
       };
     }
 
-    console.log(`✅ SMS charged: $${chargeResult.amount} from ${chargeResult.chargedFrom}`);
+    console.log(
+      `✅ SMS charged: $${chargeResult.amount} from ${chargeResult.chargedFrom}`
+    );
 
     // Send SMS via Twilio
     const result = await sendSMS(phone, message);
@@ -84,7 +86,10 @@ export async function sendContactSMS(
     if (!result.success) {
       // Refund the charge if SMS failed
       // TODO: Implement refund logic
-      console.error('❌ SMS failed to send, but already charged:', result.error);
+      console.error(
+        '❌ SMS failed to send, but already charged:',
+        result.error
+      );
       return { success: false, error: result.error };
     }
 
@@ -120,9 +125,7 @@ export async function sendContactSMS(
 // EMAIL
 // ============================================================================
 
-export async function prepareContactEmail(
-  contactId: string
-): Promise<{
+export async function prepareContactEmail(contactId: string): Promise<{
   success: boolean;
   email?: string;
   name?: string;

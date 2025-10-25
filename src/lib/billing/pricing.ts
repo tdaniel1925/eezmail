@@ -3,10 +3,10 @@
  * Multi-tenant SaaS with flexible pricing
  */
 
-import { db } from '@/lib/db';
-import { 
-  users, 
-  organizations, 
+import { db } from '@/db';
+import {
+  users,
+  organizations,
   organizationMembers,
   pricingOverrides,
   trialCredits,
@@ -35,7 +35,9 @@ export async function getSMSRate(userId: string): Promise<number> {
     if (!user) throw new Error('User not found');
 
     const targetId = user.organizationId || userId;
-    const targetType: 'organization' | 'user' = user.organizationId ? 'organization' : 'user';
+    const targetType: 'organization' | 'user' = user.organizationId
+      ? 'organization'
+      : 'user';
 
     // 2. Check for active pricing override
     const now = new Date();
@@ -54,7 +56,9 @@ export async function getSMSRate(userId: string): Promise<number> {
     });
 
     if (override) {
-      console.log(`💰 Using pricing override for ${targetType} ${targetId}: $${override.smsRate}`);
+      console.log(
+        `💰 Using pricing override for ${targetType} ${targetId}: $${override.smsRate}`
+      );
       return Number(override.smsRate);
     }
 
@@ -77,30 +81,37 @@ export async function getSMSRate(userId: string): Promise<number> {
         subscription.smsUsedCurrentPeriod < subscription.smsIncludedInPlan &&
         subscription.smsIncludedInPlan > 0
       ) {
-        console.log(`💰 SMS included in plan (${subscription.smsUsedCurrentPeriod}/${subscription.smsIncludedInPlan})`);
+        console.log(
+          `💰 SMS included in plan (${subscription.smsUsedCurrentPeriod}/${subscription.smsIncludedInPlan})`
+        );
         return 0; // Free (included in plan)
       }
 
       // Use overage rate
       if (subscription.plan?.overageRate) {
-        console.log(`💰 Using plan overage rate: $${subscription.plan.overageRate}`);
+        console.log(
+          `💰 Using plan overage rate: $${subscription.plan.overageRate}`
+        );
         return Number(subscription.plan.overageRate);
       }
     }
 
     // 4. Check tier-based pricing
     const tierRates: Record<string, number> = {
-      standard: 0.0100,
+      standard: 0.01,
       volume: 0.0085,
       enterprise: 0.0075,
-      partner: 0.0050,
+      partner: 0.005,
     };
 
-    const tier = targetType === 'organization'
-      ? (await db.query.organizations.findFirst({
-          where: eq(organizations.id, targetId),
-        }))?.pricingTier
-      : user.pricingTier;
+    const tier =
+      targetType === 'organization'
+        ? (
+            await db.query.organizations.findFirst({
+              where: eq(organizations.id, targetId),
+            })
+          )?.pricingTier
+        : user.pricingTier;
 
     if (tier && tierRates[tier]) {
       console.log(`💰 Using tier rate (${tier}): $${tierRates[tier]}`);
@@ -112,12 +123,12 @@ export async function getSMSRate(userId: string): Promise<number> {
       where: eq(platformSettings.key, 'sms_pricing_default'),
     });
 
-    const defaultRate = defaultSetting?.value?.rate || 0.0100;
+    const defaultRate = defaultSetting?.value?.rate || 0.01;
     console.log(`💰 Using global default rate: $${defaultRate}`);
     return Number(defaultRate);
   } catch (error) {
     console.error('❌ Error getting SMS rate:', error);
-    return 0.0100; // Fallback to $0.01
+    return 0.01; // Fallback to $0.01
   }
 }
 
@@ -154,11 +165,18 @@ export async function chargeSMS(
     });
 
     if (!user) {
-      return { success: false, chargedFrom: 'failed', amount: 0, error: 'User not found' };
+      return {
+        success: false,
+        chargedFrom: 'failed',
+        amount: 0,
+        error: 'User not found',
+      };
     }
 
     const billedTo = user.organizationId || userId;
-    const billedToType: 'organization' | 'user' = user.organizationId ? 'organization' : 'user';
+    const billedToType: 'organization' | 'user' = user.organizationId
+      ? 'organization'
+      : 'user';
 
     console.log(`💳 Billing SMS ($${cost}) to ${billedToType}: ${billedTo}`);
 
@@ -182,22 +200,35 @@ export async function chargeSMS(
         await db
           .update(organizations)
           .set({
-            trialCreditsUsed: (Number(org?.trialCreditsUsed || 0) + cost).toFixed(2),
+            trialCreditsUsed: (
+              Number(org?.trialCreditsUsed || 0) + cost
+            ).toFixed(2),
           })
           .where(eq(organizations.id, billedTo));
       } else {
         await db
           .update(users)
           .set({
-            trialCreditsUsed: (Number(user.trialCreditsUsed || 0) + cost).toFixed(2),
+            trialCreditsUsed: (
+              Number(user.trialCreditsUsed || 0) + cost
+            ).toFixed(2),
           })
           .where(eq(users.id, billedTo));
       }
 
-      console.log(`✅ Charged $${cost} from trial credits. Remaining: $${newBalance.toFixed(2)}`);
+      console.log(
+        `✅ Charged $${cost} from trial credits. Remaining: $${newBalance.toFixed(2)}`
+      );
 
       // Log the transaction
-      await logSMSTransaction(userId, billedTo, billedToType, cost, 'trial', metadata);
+      await logSMSTransaction(
+        userId,
+        billedTo,
+        billedToType,
+        cost,
+        'trial',
+        metadata
+      );
 
       return {
         success: true,
@@ -230,9 +261,18 @@ export async function chargeSMS(
         })
         .where(eq(customerSubscriptions.id, subscription.id));
 
-      console.log(`✅ SMS included in plan (${subscription.smsUsedCurrentPeriod + 1}/${subscription.smsIncludedInPlan})`);
+      console.log(
+        `✅ SMS included in plan (${subscription.smsUsedCurrentPeriod + 1}/${subscription.smsIncludedInPlan})`
+      );
 
-      await logSMSTransaction(userId, billedTo, billedToType, cost, 'subscription', metadata);
+      await logSMSTransaction(
+        userId,
+        billedTo,
+        billedToType,
+        cost,
+        'subscription',
+        metadata
+      );
 
       return {
         success: true,
@@ -260,9 +300,18 @@ export async function chargeSMS(
         })
         .where(eq(users.id, billedTo));
 
-      console.log(`✅ Charged $${cost} from user balance. Remaining: $${newBalance.toFixed(2)}`);
+      console.log(
+        `✅ Charged $${cost} from user balance. Remaining: $${newBalance.toFixed(2)}`
+      );
 
-      await logSMSTransaction(userId, billedTo, billedToType, cost, 'balance', metadata);
+      await logSMSTransaction(
+        userId,
+        billedTo,
+        billedToType,
+        cost,
+        'balance',
+        metadata
+      );
 
       return {
         success: true,
@@ -274,9 +323,18 @@ export async function chargeSMS(
 
     // 5. For organizations, bill via Stripe/Square (future implementation)
     // For now, just log and mark as charged
-    console.log(`✅ Charged $${cost} to organization ${billedTo} (will bill via Stripe/Square)`);
+    console.log(
+      `✅ Charged $${cost} to organization ${billedTo} (will bill via Stripe/Square)`
+    );
 
-    await logSMSTransaction(userId, billedTo, billedToType, cost, 'balance', metadata);
+    await logSMSTransaction(
+      userId,
+      billedTo,
+      billedToType,
+      cost,
+      'balance',
+      metadata
+    );
 
     return {
       success: true,
@@ -368,7 +426,9 @@ export async function grantTrialCredits(
         .where(eq(users.id, targetId));
     }
 
-    console.log(`✅ Granted $${amount} trial credits to ${targetType} ${targetId} for ${durationDays} days`);
+    console.log(
+      `✅ Granted $${amount} trial credits to ${targetType} ${targetId} for ${durationDays} days`
+    );
 
     return { success: true, trialId: trial.id };
   } catch (error) {
@@ -451,7 +511,9 @@ export async function addBalance(
       })
       .where(eq(users.id, userId));
 
-    console.log(`✅ Added $${amount} to user ${userId}. New balance: $${newBalance.toFixed(2)}`);
+    console.log(
+      `✅ Added $${amount} to user ${userId}. New balance: $${newBalance.toFixed(2)}`
+    );
 
     return { success: true, newBalance };
   } catch (error) {
@@ -466,9 +528,7 @@ export async function addBalance(
 /**
  * Get balance for user or organization
  */
-export async function getBalance(
-  userId: string
-): Promise<{
+export async function getBalance(userId: string): Promise<{
   balance: number;
   trialCredits: number;
   subscriptionSMSRemaining: number;
@@ -490,7 +550,9 @@ export async function getBalance(
       };
     }
 
-    const billingTarget: 'user' | 'organization' = user.organizationId ? 'organization' : 'user';
+    const billingTarget: 'user' | 'organization' = user.organizationId
+      ? 'organization'
+      : 'user';
     const billingTargetId = user.organizationId || userId;
 
     // Get trial credits
@@ -508,7 +570,10 @@ export async function getBalance(
     });
 
     const subscriptionSMSRemaining = subscription
-      ? Math.max(0, subscription.smsIncludedInPlan - subscription.smsUsedCurrentPeriod)
+      ? Math.max(
+          0,
+          subscription.smsIncludedInPlan - subscription.smsUsedCurrentPeriod
+        )
       : 0;
 
     // Get balance
@@ -532,4 +597,3 @@ export async function getBalance(
     };
   }
 }
-

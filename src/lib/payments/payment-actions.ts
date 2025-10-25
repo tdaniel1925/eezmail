@@ -6,7 +6,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
+import { db } from '@/db';
 import { users, organizations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
@@ -105,7 +105,9 @@ export async function createStripeCheckoutSession(
       },
     });
 
-    console.log(`✅ Created Stripe checkout session for $${amount} ${type} top-up`);
+    console.log(
+      `✅ Created Stripe checkout session for $${amount} ${type} top-up`
+    );
 
     return {
       success: true,
@@ -125,9 +127,7 @@ export async function createStripeCheckoutSession(
 // SUBSCRIPTION MANAGEMENT
 // ============================================================================
 
-export async function createStripeSubscription(
-  planId: string
-): Promise<{
+export async function createStripeSubscription(planId: string): Promise<{
   success: boolean;
   sessionId?: string;
   url?: string;
@@ -208,7 +208,9 @@ export async function createStripeSubscription(
       },
     });
 
-    console.log(`✅ Created Stripe subscription session for plan: ${plan.name}`);
+    console.log(
+      `✅ Created Stripe subscription session for plan: ${plan.name}`
+    );
 
     return {
       success: true,
@@ -308,4 +310,3 @@ export async function getPaymentHistory(): Promise<{
     };
   }
 }
-

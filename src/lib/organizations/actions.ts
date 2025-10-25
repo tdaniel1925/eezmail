@@ -6,12 +6,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/lib/db';
-import {
-  organizations,
-  organizationMembers,
-  users,
-} from '@/db/schema';
+import { db } from '@/db';
+import { organizations, organizationMembers, users } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 
 // ============================================================================
@@ -40,7 +36,10 @@ export async function createOrganization(data: {
     // Create slug from name if not provided
     const slug =
       data.slug ||
-      data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      data.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
     // Check if slug is taken
     const existing = await db.query.organizations.findFirst({
@@ -165,7 +164,10 @@ export async function addMember(
       ),
     });
 
-    if (!currentMember || !['owner', 'admin'].includes(currentMember.role || '')) {
+    if (
+      !currentMember ||
+      !['owner', 'admin'].includes(currentMember.role || '')
+    ) {
       return { success: false, error: 'Permission denied' };
     }
 
@@ -210,7 +212,9 @@ export async function addMember(
       })
       .where(eq(users.id, targetUser.id));
 
-    console.log(`✅ Added ${email} as ${role} to organization ${organizationId}`);
+    console.log(
+      `✅ Added ${email} as ${role} to organization ${organizationId}`
+    );
 
     return { success: true };
   } catch (error) {
@@ -247,7 +251,10 @@ export async function removeMember(
       ),
     });
 
-    if (!currentMember || !['owner', 'admin'].includes(currentMember.role || '')) {
+    if (
+      !currentMember ||
+      !['owner', 'admin'].includes(currentMember.role || '')
+    ) {
       return { success: false, error: 'Permission denied' };
     }
 
@@ -276,7 +283,9 @@ export async function removeMember(
         .where(eq(users.id, targetMember.userId));
     }
 
-    console.log(`✅ Removed member ${memberId} from organization ${organizationId}`);
+    console.log(
+      `✅ Removed member ${memberId} from organization ${organizationId}`
+    );
 
     return { success: true };
   } catch (error) {
@@ -322,7 +331,10 @@ export async function updateMemberRole(
       ),
     });
 
-    if (!currentMember || !['owner', 'admin'].includes(currentMember.role || '')) {
+    if (
+      !currentMember ||
+      !['owner', 'admin'].includes(currentMember.role || '')
+    ) {
       return { success: false, error: 'Permission denied' };
     }
 
@@ -420,7 +432,12 @@ export async function getOrganizationMembers(organizationId: string): Promise<{
 function getRolePermissions(role: string): string[] {
   switch (role) {
     case 'owner':
-      return ['manage_members', 'manage_billing', 'view_all', 'manage_settings'];
+      return [
+        'manage_members',
+        'manage_billing',
+        'view_all',
+        'manage_settings',
+      ];
     case 'admin':
       return ['manage_members', 'view_all'];
     case 'manager':
@@ -431,4 +448,3 @@ function getRolePermissions(role: string): string[] {
       return [];
   }
 }
-
