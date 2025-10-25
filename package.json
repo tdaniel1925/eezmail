@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "cross-env NODE_OPTIONS=--dns-result-order=ipv4first next dev -p 3000",
     "dev:safe": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
@@ -87,6 +87,7 @@
     "@typescript-eslint/eslint-plugin": "^8.14.0",
     "@typescript-eslint/parser": "^8.14.0",
     "autoprefixer": "^10.4.20",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.28.1",
     "eslint": "^8.57.1",

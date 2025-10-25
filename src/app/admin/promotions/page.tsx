@@ -1,19 +1,21 @@
-import { PromotionsManager } from '@/components/admin/PromotionsManager';
+import { getDiscountCodes } from '@/lib/admin/discount-actions';
+import { DiscountManager } from '@/components/admin/DiscountManager';
 
 export default async function AdminPromotionsPage() {
+  const result = await getDiscountCodes();
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Promotion Codes
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Create and manage promotional discount codes
-        </p>
-      </div>
+      {/* Discount Manager */}
+      {result.success && result.codes && (
+        <DiscountManager initialCodes={result.codes} />
+      )}
 
-      <PromotionsManager />
+      {!result.success && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-700 dark:text-red-400">{result.error}</p>
+        </div>
+      )}
     </div>
   );
 }
-

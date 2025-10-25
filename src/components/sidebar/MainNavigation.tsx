@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Users, Calendar, CheckSquare, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { OnboardingNavLink } from './OnboardingNavLink';
 
 interface MainNavigationProps {
   isCollapsed?: boolean;
@@ -95,6 +96,9 @@ export function MainNavigation({
           </Link>
         );
       })}
+
+      {/* Onboarding Link */}
+      {!isCollapsed && <OnboardingNavLink />}
     </nav>
   );
 }

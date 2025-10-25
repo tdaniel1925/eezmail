@@ -141,7 +141,23 @@ export async function GET(request: NextRequest) {
       console.error('❌ Failed to trigger sync:', syncResult.error);
     }
 
-    // Redirect to inbox with syncing status
+    // Check if first-time user and redirect to onboarding
+    const { getOnboardingProgress, updateOnboardingProgress } = await import(
+      '@/lib/onboarding/actions'
+    );
+    const progress = await getOnboardingProgress(user.id);
+
+    if (!progress.emailConnected) {
+      // Mark email as connected
+      await updateOnboardingProgress(user.id, { emailConnected: true });
+
+      // Redirect to onboarding
+      return NextResponse.redirect(
+        new URL('/dashboard/onboarding?from=oauth', request.url)
+      );
+    }
+
+    // Returning user - redirect to inbox with syncing status
     return NextResponse.redirect(
       new URL(
         `/dashboard/inbox?syncing=${inserted[0].id}&email=${encodeURIComponent(email)}`,

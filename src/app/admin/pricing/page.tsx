@@ -1,6 +1,9 @@
-import { PricingManager } from '@/components/admin/PricingManager';
+import { getPricingTiers } from '@/lib/admin/pricing-actions';
+import { DynamicPricingManager } from '@/components/admin/DynamicPricingManager';
 
 export default async function AdminPricingPage() {
+  const result = await getPricingTiers();
+
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -9,13 +12,21 @@ export default async function AdminPricingPage() {
           Pricing Management
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Manage subscription tiers and pricing
+          Create and manage subscription tiers, pricing, and features
+          dynamically
         </p>
       </div>
 
-      {/* Pricing Manager */}
-      <PricingManager />
+      {/* Dynamic Pricing Manager */}
+      {result.success && result.tiers && (
+        <DynamicPricingManager initialTiers={result.tiers} />
+      )}
+
+      {!result.success && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-red-700 dark:text-red-400">{result.error}</p>
+        </div>
+      )}
     </div>
   );
 }
-

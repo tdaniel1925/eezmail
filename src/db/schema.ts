@@ -10,6 +10,7 @@ import {
   integer,
   index,
   uniqueIndex,
+  decimal,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -1037,10 +1038,6 @@ export const contactGroups = pgTable(
     userIdIdx: index('idx_contact_groups_user_id').on(table.userId),
     nameIdx: index('idx_contact_groups_name').on(table.name),
     isFavoriteIdx: index('idx_contact_groups_is_favorite').on(table.isFavorite),
-    userNameIdx: uniqueIndex('idx_contact_groups_user_name').on(
-      table.userId,
-      table.name
-    ),
   })
 );
 
@@ -1090,10 +1087,6 @@ export const contactTags = pgTable(
   (table) => ({
     userIdIdx: index('idx_contact_tags_user_id').on(table.userId),
     nameIdx: index('idx_contact_tags_name').on(table.name),
-    userNameIdx: uniqueIndex('idx_contact_tags_user_name').on(
-      table.userId,
-      table.name
-    ),
   })
 );
 
@@ -2417,6 +2410,79 @@ export type CommunicationPlanType =
   (typeof communicationPlanTypeEnum.enumValues)[number];
 
 // ============================================================================
+// ONBOARDING TABLES
+// ============================================================================
+
+// Onboarding Progress Tracking
+export const onboardingProgress = pgTable('onboarding_progress', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
+
+  // Phase 1: Essential Setup (required)
+  emailConnected: boolean('email_connected').default(false).notNull(),
+  signatureConfigured: boolean('signature_configured').default(false).notNull(),
+  profileCompleted: boolean('profile_completed').default(false).notNull(),
+
+  // Phase 2: Quick Wins (recommended)
+  aiReplyTried: boolean('ai_reply_tried').default(false).notNull(),
+  smartInboxViewed: boolean('smart_inbox_viewed').default(false).notNull(),
+  keyboardShortcutsLearned: boolean('keyboard_shortcuts_learned')
+    .default(false)
+    .notNull(),
+
+  // Phase 3: Power User (optional)
+  contactsExplored: boolean('contacts_explored').default(false).notNull(),
+  automationCreated: boolean('automation_created').default(false).notNull(),
+  voiceFeatureTried: boolean('voice_feature_tried').default(false).notNull(),
+  chatbotUsed: boolean('chatbot_used').default(false).notNull(),
+
+  // Meta
+  currentPhase: integer('current_phase').default(1).notNull(), // 1, 2, or 3
+  onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
+  completedAt: timestamp('completed_at'),
+  lastViewedStep: text('last_viewed_step'),
+  dismissedOnboarding: boolean('dismissed_onboarding').default(false).notNull(),
+
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Professional achievements (no cartoon badges)
+export const onboardingAchievements = pgTable('onboarding_achievements', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  achievementId: text('achievement_id').notNull(), // 'first-email', 'ai-explorer', etc.
+  achievementName: text('achievement_name').notNull(),
+  achievementDescription: text('achievement_description'),
+  unlockedAt: timestamp('unlocked_at').defaultNow().notNull(),
+
+  // Professional metadata (no cartoon icons)
+  category: text('category').notNull(), // 'setup', 'productivity', 'advanced'
+});
+
+// Tutorial views and completions
+export const onboardingTutorials = pgTable('onboarding_tutorials', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+
+  tutorialId: text('tutorial_id').notNull(), // 'ai-reply-intro', 'smart-inbox-tour', etc.
+  started: boolean('started').default(false).notNull(),
+  completed: boolean('completed').default(false).notNull(),
+
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  timeSpentSeconds: integer('time_spent_seconds').default(0),
+});
+
+// ============================================================================
 // EMBEDDING QUEUE TABLE (For background RAG processing)
 // ============================================================================
 
@@ -2568,6 +2634,14 @@ export type NotificationType = (typeof notificationTypeEnum.enumValues)[number];
 export type NotificationCategory =
   (typeof notificationCategoryEnum.enumValues)[number];
 
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
+export type NewOnboardingProgress = typeof onboardingProgress.$inferInsert;
+export type OnboardingAchievement = typeof onboardingAchievements.$inferSelect;
+export type NewOnboardingAchievement =
+  typeof onboardingAchievements.$inferInsert;
+export type OnboardingTutorial = typeof onboardingTutorials.$inferSelect;
+export type NewOnboardingTutorial = typeof onboardingTutorials.$inferInsert;
+
 // ============================================================================
 // TABLE RELATIONS
 // Define relationships between tables for Drizzle's relational queries
@@ -2600,6 +2674,147 @@ export const calendarRemindersRelations = relations(
     event: one(calendarEvents, {
       fields: [calendarReminders.eventId],
       references: [calendarEvents.id],
+    }),
+  })
+);
+
+// ============================================================================
+// DYNAMIC PRICING MANAGEMENT
+// ============================================================================
+
+// Pricing Tiers Table
+export const pricingTiers = pgTable('pricing_tiers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  price: decimal('price', { precision: 10, scale: 2 }),
+  interval: text('interval').notNull().default('month'),
+  isActive: boolean('is_active').default(true),
+  isHighlighted: boolean('is_highlighted').default(false),
+  isCustom: boolean('is_custom').default(false),
+  stripeProductId: text('stripe_product_id'),
+  stripePriceId: text('stripe_price_id'),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Tier Features Table
+export const tierFeatures = pgTable(
+  'tier_features',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tierId: uuid('tier_id')
+      .notNull()
+      .references(() => pricingTiers.id, { onDelete: 'cascade' }),
+    featureKey: text('feature_key').notNull(),
+    featureName: text('feature_name').notNull(),
+    featureValue: integer('feature_value').notNull(),
+    featureType: text('feature_type').default('limit'),
+    isVisible: boolean('is_visible').default(true),
+    sortOrder: integer('sort_order').default(0),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => ({
+    tierFeatureIdx: uniqueIndex('tier_feature_unique_idx').on(
+      table.tierId,
+      table.featureKey
+    ),
+  })
+);
+
+// Discount Codes Table
+export const discountCodes = pgTable('discount_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull(),
+  description: text('description'),
+  discountType: text('discount_type').notNull(),
+  discountValue: decimal('discount_value', {
+    precision: 10,
+    scale: 2,
+  }).notNull(),
+  appliesTo: text('applies_to').notNull().default('all'),
+  appliesToTierId: uuid('applies_to_tier_id').references(
+    () => pricingTiers.id,
+    { onDelete: 'set null' }
+  ),
+  maxRedemptions: integer('max_redemptions'),
+  currentRedemptions: integer('current_redemptions').default(0),
+  maxRedemptionsPerUser: integer('max_redemptions_per_user').default(1),
+  startsAt: timestamp('starts_at'),
+  expiresAt: timestamp('expires_at'),
+  isActive: boolean('is_active').default(true),
+  stripeCouponId: text('stripe_coupon_id'),
+  createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Discount Redemptions Table
+export const discountRedemptions = pgTable(
+  'discount_redemptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    discountCodeId: uuid('discount_code_id')
+      .notNull()
+      .references(() => discountCodes.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id').notNull(),
+    subscriptionId: uuid('subscription_id'),
+    redeemedAt: timestamp('redeemed_at').defaultNow(),
+  },
+  (table) => ({
+    uniqueRedemption: uniqueIndex('discount_redemption_unique_idx').on(
+      table.discountCodeId,
+      table.userId
+    ),
+  })
+);
+
+// Type exports for dynamic pricing
+export type PricingTier = typeof pricingTiers.$inferSelect;
+export type NewPricingTier = typeof pricingTiers.$inferInsert;
+export type TierFeature = typeof tierFeatures.$inferSelect;
+export type NewTierFeature = typeof tierFeatures.$inferInsert;
+export type DiscountCode = typeof discountCodes.$inferSelect;
+export type NewDiscountCode = typeof discountCodes.$inferInsert;
+export type DiscountRedemption = typeof discountRedemptions.$inferSelect;
+export type NewDiscountRedemption = typeof discountRedemptions.$inferInsert;
+
+// Pricing Tier Relations
+export const pricingTiersRelations = relations(pricingTiers, ({ many }) => ({
+  features: many(tierFeatures),
+  discountCodes: many(discountCodes),
+}));
+
+// Tier Feature Relations
+export const tierFeaturesRelations = relations(tierFeatures, ({ one }) => ({
+  tier: one(pricingTiers, {
+    fields: [tierFeatures.tierId],
+    references: [pricingTiers.id],
+  }),
+}));
+
+// Discount Code Relations
+export const discountCodesRelations = relations(
+  discountCodes,
+  ({ one, many }) => ({
+    tier: one(pricingTiers, {
+      fields: [discountCodes.appliesToTierId],
+      references: [pricingTiers.id],
+    }),
+    redemptions: many(discountRedemptions),
+  })
+);
+
+// Discount Redemption Relations
+export const discountRedemptionsRelations = relations(
+  discountRedemptions,
+  ({ one }) => ({
+    discountCode: one(discountCodes, {
+      fields: [discountRedemptions.discountCodeId],
+      references: [discountCodes.id],
     }),
   })
 );
