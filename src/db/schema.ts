@@ -2936,3 +2936,296 @@ export const organizationMembersRelations = relations(
 export const usersRelations = relations(users, ({ one, many }) => ({
   organizationMembership: many(organizationMembers),
 }));
+
+// ============================================================================
+// BILLING & ADMIN TABLES
+// ============================================================================
+
+// Platform Admins - Your team who manages the platform
+export const platformAdmins = pgTable(
+  'platform_admins',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 20 }).default('admin'),
+    permissions: jsonb('permissions').default({
+      view_all: true,
+      manage_pricing: true,
+      manage_organizations: true,
+    }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('platform_admins_user_idx').on(table.userId),
+  })
+);
+
+// Platform Settings - Global configuration
+export const platformSettings = pgTable('platform_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  key: varchar('key', { length: 100 }).notNull().unique(),
+  value: jsonb('value').notNull(),
+  description: text('description'),
+  updatedBy: uuid('updated_by').references(() => users.id),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// SMS Pricing Overrides - Custom pricing per customer
+export const pricingOverrides = pgTable(
+  'pricing_overrides',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    smsRate: decimal('sms_rate', { precision: 6, scale: 4 }).notNull(),
+    effectiveFrom: timestamp('effective_from').defaultNow().notNull(),
+    effectiveUntil: timestamp('effective_until'),
+    reason: text('reason'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgIdx: index('pricing_overrides_org_idx').on(table.organizationId),
+    userIdx: index('pricing_overrides_user_idx').on(table.userId),
+  })
+);
+
+// AI Pricing Overrides - Custom AI pricing per customer
+export const aiPricingOverrides = pgTable(
+  'ai_pricing_overrides',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    ratePer1kTokens: decimal('rate_per_1k_tokens', { precision: 8, scale: 6 }).notNull(),
+    effectiveFrom: timestamp('effective_from').defaultNow().notNull(),
+    effectiveUntil: timestamp('effective_until'),
+    reason: text('reason'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgIdx: index('ai_pricing_overrides_org_idx').on(table.organizationId),
+    userIdx: index('ai_pricing_overrides_user_idx').on(table.userId),
+  })
+);
+
+// SMS Trial Credits
+export const trialCredits = pgTable(
+  'trial_credits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    creditAmount: decimal('credit_amount', { precision: 10, scale: 2 }).notNull(),
+    durationDays: integer('duration_days').notNull(),
+    status: varchar('status', { length: 20 }).default('active'),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    remainingBalance: decimal('remaining_balance', { precision: 10, scale: 2 }),
+    grantedBy: uuid('granted_by').references(() => users.id),
+    reason: text('reason'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgIdx: index('trial_credits_org_idx').on(table.organizationId),
+    userIdx: index('trial_credits_user_idx').on(table.userId),
+    statusIdx: index('trial_credits_status_idx').on(table.status),
+  })
+);
+
+// AI Trial Credits
+export const aiTrialCredits = pgTable(
+  'ai_trial_credits',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    creditAmount: decimal('credit_amount', { precision: 10, scale: 2 }).notNull(),
+    tokensIncluded: integer('tokens_included'),
+    durationDays: integer('duration_days').notNull(),
+    status: varchar('status', { length: 20 }).default('active'),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    remainingBalance: decimal('remaining_balance', { precision: 10, scale: 2 }),
+    tokensUsed: integer('tokens_used').default(0),
+    grantedBy: uuid('granted_by').references(() => users.id),
+    reason: text('reason'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgIdx: index('ai_trial_credits_org_idx').on(table.organizationId),
+    userIdx: index('ai_trial_credits_user_idx').on(table.userId),
+    statusIdx: index('ai_trial_credits_status_idx').on(table.status),
+  })
+);
+
+// Subscription Plans
+export const subscriptionPlans = pgTable('subscription_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull(),
+  planType: varchar('plan_type', { length: 50 }).notNull(),
+  monthlyPrice: decimal('monthly_price', { precision: 10, scale: 2 }).notNull(),
+  smsIncluded: integer('sms_included').default(0),
+  aiTokensIncluded: integer('ai_tokens_included').default(0),
+  overageRate: decimal('overage_rate', { precision: 6, scale: 4 }),
+  features: jsonb('features').default([]),
+  maxUsers: integer('max_users'),
+  isActive: boolean('is_active').default(true),
+  isPublic: boolean('is_public').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Customer Subscriptions
+export const customerSubscriptions = pgTable(
+  'customer_subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    planId: uuid('plan_id')
+      .notNull()
+      .references(() => subscriptionPlans.id),
+    status: varchar('status', { length: 20 }).default('active'),
+    currentPeriodStart: timestamp('current_period_start').notNull(),
+    currentPeriodEnd: timestamp('current_period_end').notNull(),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+    smsUsedCurrentPeriod: integer('sms_used_current_period').default(0),
+    smsIncludedInPlan: integer('sms_included_in_plan').default(0),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+    squareSubscriptionId: varchar('square_subscription_id', { length: 255 }),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orgIdx: index('customer_subs_org_idx').on(table.organizationId),
+    userIdx: index('customer_subs_user_idx').on(table.userId),
+    statusIdx: index('customer_subs_status_idx').on(table.status),
+  })
+);
+
+// Invoices
+export const invoices = pgTable('invoices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').references(() => organizations.id, {
+    onDelete: 'cascade',
+  }),
+  invoiceNumber: varchar('invoice_number', { length: 100 }).notNull().unique(),
+  amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
+  status: varchar('status', { length: 20 }).notNull(), // 'pending', 'paid', 'failed'
+  type: varchar('type', { length: 50 }).notNull(), // 'top_up', 'subscription'
+  stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
+  squareInvoiceId: varchar('square_invoice_id', { length: 255 }),
+  pdfUrl: text('pdf_url'),
+  items: jsonb('items').notNull(),
+  billingDetails: jsonb('billing_details').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  paidAt: timestamp('paid_at'),
+});
+
+// Communication Logs - SMS/Email tracking with billing
+export const communicationLogs = pgTable(
+  'communication_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    type: varchar('type', { length: 50 }).notNull(), // 'sms_sent', 'sms_received', 'email_sent'
+    direction: varchar('direction', { length: 20 }), // 'inbound', 'outbound'
+    from: varchar('from', { length: 255 }),
+    to: varchar('to', { length: 255 }),
+    subject: text('subject'),
+    message: text('message'),
+    status: varchar('status', { length: 50 }), // 'sent', 'delivered', 'failed'
+    provider: varchar('provider', { length: 50 }), // 'twilio', 'sendgrid', etc.
+    providerId: varchar('provider_id', { length: 255 }),
+    billedTo: varchar('billed_to', { length: 20 }), // 'user', 'organization'
+    cost: decimal('cost', { precision: 6, scale: 4 }),
+    billingStatus: varchar('billing_status', { length: 20 }).default('pending'),
+    metadata: jsonb('metadata'),
+    timestamp: timestamp('timestamp').defaultNow().notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('comm_logs_user_idx').on(table.userId),
+    orgIdx: index('comm_logs_org_idx').on(table.organizationId),
+    typeIdx: index('comm_logs_type_idx').on(table.type),
+    timestampIdx: index('comm_logs_timestamp_idx').on(table.timestamp),
+    billingStatusIdx: index('comm_logs_billing_status_idx').on(table.billingStatus),
+  })
+);
+
+// AI Transactions - AI usage tracking with billing
+export const aiTransactions = pgTable(
+  'ai_transactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'cascade',
+    }),
+    operationType: varchar('operation_type', { length: 50 }).notNull(), // 'summarize', 'reply', 'classify', etc.
+    model: varchar('model', { length: 100 }), // 'gpt-4', 'claude-3', etc.
+    promptTokens: integer('prompt_tokens').notNull(),
+    completionTokens: integer('completion_tokens').notNull(),
+    totalTokens: integer('total_tokens').notNull(),
+    cost: decimal('cost', { precision: 8, scale: 6 }).notNull(),
+    billedTo: varchar('billed_to', { length: 20 }), // 'user', 'organization'
+    metadata: jsonb('metadata'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('ai_transactions_user_idx').on(table.userId),
+    orgIdx: index('ai_transactions_org_idx').on(table.organizationId),
+    typeIdx: index('ai_transactions_type_idx').on(table.operationType),
+    createdAtIdx: index('ai_transactions_created_at_idx').on(table.createdAt),
+  })
+);
+
+// Type exports for billing tables
+export type PlatformAdmin = typeof platformAdmins.$inferSelect;
+export type NewPlatformAdmin = typeof platformAdmins.$inferInsert;
+export type PlatformSetting = typeof platformSettings.$inferSelect;
+export type NewPlatformSetting = typeof platformSettings.$inferInsert;
+export type PricingOverride = typeof pricingOverrides.$inferSelect;
+export type NewPricingOverride = typeof pricingOverrides.$inferInsert;
+export type AIPricingOverride = typeof aiPricingOverrides.$inferSelect;
+export type NewAIPricingOverride = typeof aiPricingOverrides.$inferInsert;
+export type TrialCredit = typeof trialCredits.$inferSelect;
+export type NewTrialCredit = typeof trialCredits.$inferInsert;
+export type AITrialCredit = typeof aiTrialCredits.$inferSelect;
+export type NewAITrialCredit = typeof aiTrialCredits.$inferInsert;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type NewSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type CustomerSubscription = typeof customerSubscriptions.$inferSelect;
+export type NewCustomerSubscription = typeof customerSubscriptions.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;
+export type CommunicationLog = typeof communicationLogs.$inferSelect;
+export type NewCommunicationLog = typeof communicationLogs.$inferInsert;
+export type AITransaction = typeof aiTransactions.$inferSelect;
+export type NewAITransaction = typeof aiTransactions.$inferInsert;
