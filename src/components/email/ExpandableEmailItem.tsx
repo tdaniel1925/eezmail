@@ -79,6 +79,87 @@ export function ExpandableEmailItem({
     null
   );
 
+  // Custom reply prompt state
+  const [showCustomReply, setShowCustomReply] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState('');
+
+  // Helper function to generate AI reply
+  const handleAIReply = async (
+    replyType: 'professional' | 'acknowledge' | 'detailed' | 'custom'
+  ) => {
+    try {
+      console.log('🤖 Generating AI reply:', { replyType, emailId: email.id });
+
+      setInlineNotification(
+        replyType === 'custom'
+          ? 'Generating custom reply...'
+          : `Generating ${replyType} reply...`
+      );
+
+      // Call API to generate reply
+      const response = await fetch('/api/ai/generate-reply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailId: email.id,
+          replyType,
+          customPrompt: replyType === 'custom' ? customPrompt : undefined,
+        }),
+      });
+
+      console.log('📡 API response status:', response.status);
+
+      if (!response.ok) {
+        throw new Error('Failed to generate reply');
+      }
+
+      const data = await response.json();
+
+      console.log('📦 API response data:', {
+        success: data.success,
+        hasReply: !!data.reply,
+      });
+
+      if (!data.success || !data.reply) {
+        throw new Error('Invalid response from AI');
+      }
+
+      // Store the generated reply in localStorage FIRST (before opening composer)
+      const storageKey = `ai-reply-${email.id}`;
+      const storageData = {
+        reply: data.reply,
+        subject: data.subject,
+        timestamp: Date.now(),
+      };
+
+      localStorage.setItem(storageKey, JSON.stringify(storageData));
+      console.log('💾 Stored AI reply in localStorage:', {
+        key: storageKey,
+        replyLength: data.reply.length,
+      });
+
+      // Wait a moment to show the notification, then open composer
+      setTimeout(() => {
+        setShowSummary(false);
+        setInlineNotification(null);
+        setShowCustomReply(false);
+        setCustomPrompt('');
+
+        // Open composer with AI-generated reply
+        console.log('📧 Opening composer for email:', email.id);
+        if (onOpenComposer) {
+          onOpenComposer('reply', email.id);
+        }
+      }, 800);
+    } catch (error) {
+      console.error('Error generating AI reply:', error);
+      setInlineNotification('❌ Failed to generate reply. Please try again.');
+      setTimeout(() => {
+        setInlineNotification(null);
+      }, 3000);
+    }
+  };
+
   // Fetch thread count if email has a threadId
   useEffect(() => {
     if (email.threadId) {
@@ -856,16 +937,7 @@ export function ExpandableEmailItem({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setInlineNotification(
-                                'Opening composer with professional reply...'
-                              );
-                              setTimeout(() => {
-                                setShowSummary(false);
-                                setInlineNotification(null);
-                                if (onOpenComposer) {
-                                  onOpenComposer('reply', email.id);
-                                }
-                              }, 800);
+                              handleAIReply('professional');
                             }}
                             className="px-3 py-2.5 text-xs bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-blue-200/50 dark:border-blue-800/50"
                           >
@@ -875,7 +947,7 @@ export function ExpandableEmailItem({
                                 Professional Reply
                               </div>
                               <div className="text-[10px] opacity-75">
-                                Formal, concise response
+                                Formal, concise response (100-150 words)
                               </div>
                             </div>
                           </button>
@@ -883,16 +955,7 @@ export function ExpandableEmailItem({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setInlineNotification(
-                                'Opening composer with quick acknowledgment...'
-                              );
-                              setTimeout(() => {
-                                setShowSummary(false);
-                                setInlineNotification(null);
-                                if (onOpenComposer) {
-                                  onOpenComposer('reply', email.id);
-                                }
-                              }, 800);
+                              handleAIReply('acknowledge');
                             }}
                             className="px-3 py-2.5 text-xs bg-green-50 hover:bg-green-100 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-green-200/50 dark:border-green-800/50"
                           >
@@ -902,7 +965,7 @@ export function ExpandableEmailItem({
                                 Quick Acknowledgment
                               </div>
                               <div className="text-[10px] opacity-75">
-                                Brief confirmation
+                                Brief confirmation (50-75 words)
                               </div>
                             </div>
                           </button>
@@ -910,16 +973,7 @@ export function ExpandableEmailItem({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setInlineNotification(
-                                'Opening composer with detailed response...'
-                              );
-                              setTimeout(() => {
-                                setShowSummary(false);
-                                setInlineNotification(null);
-                                if (onOpenComposer) {
-                                  onOpenComposer('reply', email.id);
-                                }
-                              }, 800);
+                              handleAIReply('detailed');
                             }}
                             className="px-3 py-2.5 text-xs bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-purple-200/50 dark:border-purple-800/50"
                           >
@@ -929,10 +983,66 @@ export function ExpandableEmailItem({
                                 Detailed Response
                               </div>
                               <div className="text-[10px] opacity-75">
-                                Comprehensive answer
+                                Comprehensive answer (250-400 words)
                               </div>
                             </div>
                           </button>
+
+                          {/* Custom Reply Button */}
+                          {!showCustomReply ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowCustomReply(true);
+                              }}
+                              className="px-3 py-2.5 text-xs bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/30 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 rounded-md transition-all hover:scale-[1.02] text-left flex items-center gap-2 border border-orange-200/50 dark:border-orange-800/50"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                              <div className="flex-1">
+                                <div className="font-medium">Custom Reply</div>
+                                <div className="text-[10px] opacity-75">
+                                  Type your own instructions
+                                </div>
+                              </div>
+                            </button>
+                          ) : (
+                            <div className="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-md border border-orange-200/50 dark:border-orange-800/50">
+                              <textarea
+                                value={customPrompt}
+                                onChange={(e) =>
+                                  setCustomPrompt(e.target.value)
+                                }
+                                placeholder="Examples: 'Make it friendly and casual', 'Focus on timeline and availability', 'Emphasize our AI expertise'"
+                                className="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded border border-orange-300 dark:border-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                                rows={2}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (customPrompt.trim()) {
+                                      handleAIReply('custom');
+                                    }
+                                  }}
+                                  disabled={!customPrompt.trim()}
+                                  className="flex-1 px-2 py-1 text-xs bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 text-white rounded transition-colors"
+                                >
+                                  Generate
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowCustomReply(false);
+                                    setCustomPrompt('');
+                                  }}
+                                  className="px-2 py-1 text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 

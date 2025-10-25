@@ -38,6 +38,12 @@ export default function RootLayout({
               richColors
               closeButton
               theme="system"
+              toastOptions={{
+                style: {
+                  animation: 'none',
+                },
+                className: 'sonner-toast-no-animation',
+              }}
             />
           </SWRProvider>
         </ThemeProvider>

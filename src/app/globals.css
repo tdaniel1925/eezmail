@@ -407,3 +407,33 @@
     box-shadow: 0 6px 20px rgba(255, 76, 90, 0.6);
   }
 }
+
+/* Toast notification inline appearance (no slide-in animation) */
+[data-sonner-toast] {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+.sonner-toast-no-animation {
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Override Sonner's default enter/exit animations */
+[data-sonner-toast][data-mounted='true'] {
+  animation: none !important;
+}
+
+[data-sonner-toast][data-removed='true'] {
+  animation: fadeOut 0.2s ease-out !important;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

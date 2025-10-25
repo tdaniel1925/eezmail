@@ -194,6 +194,43 @@ export function EmailComposer({
       if (replyToEmailId) {
         setIsLoadingEmailData(true);
         try {
+          // Check for AI-generated reply FIRST
+          const aiReplyKey = `ai-reply-${replyToEmailId}`;
+          const stored = localStorage.getItem(aiReplyKey);
+          let aiReplyData = null;
+
+          console.log('🔍 Checking for AI reply:', {
+            aiReplyKey,
+            found: !!stored,
+          });
+
+          if (stored) {
+            try {
+              const {
+                reply,
+                subject: aiSubject,
+                timestamp,
+              } = JSON.parse(stored);
+
+              // Only use if generated in the last 5 minutes
+              if (Date.now() - timestamp < 5 * 60 * 1000) {
+                aiReplyData = { reply, subject: aiSubject };
+                console.log('✅ Found valid AI reply:', {
+                  reply: reply.substring(0, 50) + '...',
+                  aiSubject,
+                });
+              } else {
+                console.log('⚠️ AI reply expired');
+              }
+
+              // Clean up
+              localStorage.removeItem(aiReplyKey);
+            } catch (error) {
+              console.error('Error parsing AI reply:', error);
+            }
+          }
+
+          // Now fetch the original email data
           const { getEmailForReply } = await import(
             '@/lib/email/email-actions'
           );
@@ -201,10 +238,100 @@ export function EmailComposer({
 
           if (result.success && result.data) {
             setTo(result.data.to);
-            setSubject(result.data.subject);
-            setBody(result.data.body);
+
+            // Set subject (use AI subject if available)
+            setSubject(aiReplyData?.subject || result.data.subject);
+
+            // Combine AI reply + quoted text
+            let finalBody = result.data.body;
+            if (aiReplyData) {
+              // Convert AI reply plain text to HTML paragraphs with proper spacing
+              let aiReplyText = aiReplyData.reply.trim();
+
+              // Split by any newlines (single or double) to get all lines
+              const lines = aiReplyText
+                .split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0);
+
+              // Detect greeting pattern (Hi/Hello/Hey followed by name and comma)
+              const greetingPattern = /^(Hi|Hello|Hey|Dear)\s+.+,$/i;
+
+              // Detect closing pattern (Best/Thanks/Regards followed by comma)
+              const closingPattern =
+                /^(Best|Thanks|Thank you|Regards|Kind regards|Warm regards|Sincerely|Looking forward).*(,|!)$/i;
+
+              const htmlParts: string[] = [];
+              let currentParagraph: string[] = [];
+
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const isGreeting = greetingPattern.test(line);
+                const isClosing = closingPattern.test(line);
+
+                if (isGreeting) {
+                  // Greeting gets its own paragraph
+                  if (currentParagraph.length > 0) {
+                    htmlParts.push(`<p>${currentParagraph.join(' ')}</p>`);
+                    currentParagraph = [];
+                  }
+                  htmlParts.push(`<p>${line}</p>`);
+                } else if (isClosing) {
+                  // Close any current paragraph first
+                  if (currentParagraph.length > 0) {
+                    htmlParts.push(`<p>${currentParagraph.join(' ')}</p>`);
+                    currentParagraph = [];
+                  }
+                  // Closing gets its own paragraph
+                  htmlParts.push(`<p>${line}</p>`);
+                } else {
+                  // Regular content line
+                  currentParagraph.push(line);
+
+                  // Check if this completes a sentence (ends with . ! ?)
+                  if (/[.!?]$/.test(line)) {
+                    // Look ahead - if next line doesn't look like continuation, close paragraph
+                    const nextLine = lines[i + 1];
+                    const isNextGreeting =
+                      nextLine && greetingPattern.test(nextLine);
+                    const isNextClosing =
+                      nextLine && closingPattern.test(nextLine);
+
+                    // Close paragraph if: no next line, next is greeting/closing, or we have 2-3 sentences
+                    const sentenceCount =
+                      currentParagraph.join(' ').split(/[.!?]/).length - 1;
+                    if (
+                      !nextLine ||
+                      isNextGreeting ||
+                      isNextClosing ||
+                      sentenceCount >= 2
+                    ) {
+                      htmlParts.push(`<p>${currentParagraph.join(' ')}</p>`);
+                      currentParagraph = [];
+                    }
+                  }
+                }
+              }
+
+              // Close any remaining paragraph
+              if (currentParagraph.length > 0) {
+                htmlParts.push(`<p>${currentParagraph.join(' ')}</p>`);
+              }
+
+              // Join paragraphs with empty <p></p> tags for visual spacing
+              const aiReplyHtml = htmlParts.join('<p></p>');
+
+              // Format: AI reply HTML + quoted text (already in HTML)
+              finalBody = `${aiReplyHtml}${result.data.body}`;
+              console.log(
+                '✅ Pre-filled composer with AI reply above quoted text'
+              );
+              console.log('📝 Generated HTML paragraphs:', htmlParts.length);
+            }
+
+            setBody(finalBody);
             if (editorRef.current) {
-              editorRef.current.commands.setContent(result.data.body);
+              editorRef.current.commands.setContent(finalBody);
             }
           } else {
             toast.error(result.error || 'Failed to load email');

@@ -14,7 +14,10 @@ import {
 } from '@/lib/notifications/actions';
 import type { NotificationCategory } from '@/db/schema';
 
-const categories: { value: 'all' | 'unread' | NotificationCategory; label: string }[] = [
+const categories: {
+  value: 'all' | 'unread' | NotificationCategory;
+  label: string;
+}[] = [
   { value: 'all', label: 'All' },
   { value: 'unread', label: 'Unread' },
   { value: 'email', label: 'Email' },
@@ -44,7 +47,9 @@ export function NotificationCenter() {
       if (
         panelRef.current &&
         !panelRef.current.contains(event.target as Node) &&
-        !(event.target as HTMLElement).closest('button[aria-label*="Notifications"]')
+        !(event.target as HTMLElement).closest(
+          'button[aria-label*="Notifications"]'
+        )
       ) {
         setIsOpen(false);
       }
@@ -52,7 +57,8 @@ export function NotificationCenter() {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen, setIsOpen]);
 
@@ -112,7 +118,7 @@ export function NotificationCenter() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-background shadow-2xl sm:w-[450px]"
+            className="fixed right-0 top-0 z-50 flex h-full w-full flex-col border-l border-border bg-background shadow-2xl sm:w-[450px] pl-1"
           >
             {/* Header */}
             <div className="border-b border-border p-4">
@@ -212,4 +218,3 @@ export function NotificationCenter() {
     </AnimatePresence>
   );
 }
-
