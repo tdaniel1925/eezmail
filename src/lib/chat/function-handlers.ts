@@ -59,14 +59,17 @@ export async function searchEmailsHandler(
       );
     }
 
-    // Filter by sender
+    // Filter by sender - search in both name and email fields of JSONB
     if (args.from) {
       conditions.push(
-        like(sql`CAST(${emails.fromAddress} AS TEXT)`, `%${args.from}%`)
+        or(
+          like(sql`${emails.fromAddress}->>'email'`, `%${args.from}%`),
+          like(sql`${emails.fromAddress}->>'name'`, `%${args.from}%`)
+        )!
       );
     }
 
-    // Filter by recipient
+    // Filter by recipient - search in JSONB array
     if (args.to) {
       conditions.push(
         like(sql`CAST(${emails.toAddresses} AS TEXT)`, `%${args.to}%`)

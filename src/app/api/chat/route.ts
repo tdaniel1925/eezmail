@@ -360,12 +360,12 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
       function: {
         name: 'search_emails',
         description:
-          'Search for emails using semantic search. Supports filters like from, to, date range, has attachments, etc.',
+          'Search for emails using semantic search. Supports filters like from, to, date range, has attachments, etc. When searching by sender, use the "from" parameter with partial matches (e.g., "stripe" instead of guessing the email address).',
         parameters: {
           type: 'object',
           properties: {
-            query: { type: 'string', description: 'Search query' },
-            from: { type: 'string', description: 'Filter by sender email' },
+            query: { type: 'string', description: 'Search query to match in subject or body' },
+            from: { type: 'string', description: 'Filter by sender name or email (partial match). Use "stripe" instead of "noreply@stripe.com"' },
             to: { type: 'string', description: 'Filter by recipient email' },
             dateFrom: {
               type: 'string',
