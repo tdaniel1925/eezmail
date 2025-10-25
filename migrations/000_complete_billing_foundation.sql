@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS organizations (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_organizations_slug ON organizations(slug);
-CREATE INDEX idx_organizations_trial ON organizations(is_trial);
+CREATE INDEX IF NOT EXISTS idx_organizations_slug ON organizations(slug);
+CREATE INDEX IF NOT EXISTS idx_organizations_trial ON organizations(is_trial);
 
 -- Organization Members (links users to organizations)
 CREATE TABLE IF NOT EXISTS organization_members (
@@ -50,9 +50,9 @@ CREATE TABLE IF NOT EXISTS organization_members (
   UNIQUE(organization_id, user_id)
 );
 
-CREATE INDEX idx_org_members_org ON organization_members(organization_id);
-CREATE INDEX idx_org_members_user ON organization_members(user_id);
-CREATE INDEX idx_org_members_role ON organization_members(role);
+CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(organization_id);
+CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_org_members_role ON organization_members(role);
 
 -- ============================================================================
 -- PLATFORM ADMINISTRATION
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS platform_admins (
   updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_platform_admins_user ON platform_admins(user_id);
+CREATE INDEX IF NOT EXISTS idx_platform_admins_user ON platform_admins(user_id);
 
 -- Global Platform Settings
 CREATE TABLE IF NOT EXISTS platform_settings (
@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS pricing_overrides (
   )
 );
 
-CREATE INDEX idx_pricing_overrides_org ON pricing_overrides(organization_id);
-CREATE INDEX idx_pricing_overrides_user ON pricing_overrides(user_id);
+CREATE INDEX IF NOT EXISTS idx_pricing_overrides_org ON pricing_overrides(organization_id);
+CREATE INDEX IF NOT EXISTS idx_pricing_overrides_user ON pricing_overrides(user_id);
 
 -- SMS Trial Credits
 CREATE TABLE IF NOT EXISTS trial_credits (
@@ -131,9 +131,9 @@ CREATE TABLE IF NOT EXISTS trial_credits (
   )
 );
 
-CREATE INDEX idx_trial_credits_org ON trial_credits(organization_id);
-CREATE INDEX idx_trial_credits_user ON trial_credits(user_id);
-CREATE INDEX idx_trial_credits_status ON trial_credits(status);
+CREATE INDEX IF NOT EXISTS idx_trial_credits_org ON trial_credits(organization_id);
+CREATE INDEX IF NOT EXISTS idx_trial_credits_user ON trial_credits(user_id);
+CREATE INDEX IF NOT EXISTS idx_trial_credits_status ON trial_credits(status);
 
 -- ============================================================================
 -- AI BILLING
@@ -156,8 +156,8 @@ CREATE TABLE IF NOT EXISTS ai_pricing_overrides (
   )
 );
 
-CREATE INDEX idx_ai_pricing_overrides_org ON ai_pricing_overrides(organization_id);
-CREATE INDEX idx_ai_pricing_overrides_user ON ai_pricing_overrides(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_pricing_overrides_org ON ai_pricing_overrides(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ai_pricing_overrides_user ON ai_pricing_overrides(user_id);
 
 -- AI Trial Credits
 CREATE TABLE IF NOT EXISTS ai_trial_credits (
@@ -181,9 +181,9 @@ CREATE TABLE IF NOT EXISTS ai_trial_credits (
   )
 );
 
-CREATE INDEX idx_ai_trial_credits_org ON ai_trial_credits(organization_id);
-CREATE INDEX idx_ai_trial_credits_user ON ai_trial_credits(user_id);
-CREATE INDEX idx_ai_trial_credits_status ON ai_trial_credits(status);
+CREATE INDEX IF NOT EXISTS idx_ai_trial_credits_org ON ai_trial_credits(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ai_trial_credits_user ON ai_trial_credits(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_trial_credits_status ON ai_trial_credits(status);
 
 -- ============================================================================
 -- SUBSCRIPTION PLANS
@@ -261,9 +261,9 @@ CREATE TABLE IF NOT EXISTS customer_subscriptions (
   )
 );
 
-CREATE INDEX idx_customer_subs_org ON customer_subscriptions(organization_id);
-CREATE INDEX idx_customer_subs_user ON customer_subscriptions(user_id);
-CREATE INDEX idx_customer_subs_status ON customer_subscriptions(status);
+CREATE INDEX IF NOT EXISTS idx_customer_subs_org ON customer_subscriptions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_customer_subs_user ON customer_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_customer_subs_status ON customer_subscriptions(status);
 
 -- ============================================================================
 -- USAGE TRACKING
@@ -292,11 +292,11 @@ CREATE TABLE IF NOT EXISTS communication_logs (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_comm_logs_user ON communication_logs(user_id);
-CREATE INDEX idx_comm_logs_org ON communication_logs(organization_id);
-CREATE INDEX idx_comm_logs_type ON communication_logs(type);
-CREATE INDEX idx_comm_logs_billing_status ON communication_logs(billing_status);
-CREATE INDEX idx_comm_logs_timestamp ON communication_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_comm_logs_user ON communication_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_comm_logs_org ON communication_logs(organization_id);
+CREATE INDEX IF NOT EXISTS idx_comm_logs_type ON communication_logs(type);
+CREATE INDEX IF NOT EXISTS idx_comm_logs_billing_status ON communication_logs(billing_status);
+CREATE INDEX IF NOT EXISTS idx_comm_logs_timestamp ON communication_logs(timestamp);
 
 -- AI Transactions
 CREATE TABLE IF NOT EXISTS ai_transactions (
@@ -324,10 +324,10 @@ CREATE TABLE IF NOT EXISTS ai_transactions (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_transactions_user ON ai_transactions(user_id);
-CREATE INDEX idx_ai_transactions_org ON ai_transactions(organization_id);
-CREATE INDEX idx_ai_transactions_feature ON ai_transactions(feature);
-CREATE INDEX idx_ai_transactions_created ON ai_transactions(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_transactions_user ON ai_transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_transactions_org ON ai_transactions(organization_id);
+CREATE INDEX IF NOT EXISTS idx_ai_transactions_feature ON ai_transactions(feature);
+CREATE INDEX IF NOT EXISTS idx_ai_transactions_created ON ai_transactions(created_at);
 
 -- ============================================================================
 -- ENHANCE USERS TABLE
