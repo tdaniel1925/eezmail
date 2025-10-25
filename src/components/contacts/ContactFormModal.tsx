@@ -155,7 +155,10 @@ export function ContactFormModal({
       !displayName &&
       emails.every((e) => !e.email)
     ) {
-      setStatusMessage({ type: 'error', text: 'Please provide at least a name or email address' });
+      setStatusMessage({
+        type: 'error',
+        text: 'Please provide at least a name or email address',
+      });
       return;
     }
 
@@ -164,13 +167,16 @@ export function ContactFormModal({
     const validPhones = phones.filter((p) => p.phone.trim());
 
     if (validEmails.length === 0 && !firstName && !lastName && !displayName) {
-      setStatusMessage({ type: 'error', text: 'Please provide at least one piece of contact information' });
+      setStatusMessage({
+        type: 'error',
+        text: 'Please provide at least one piece of contact information',
+      });
       return;
     }
 
     setIsSubmitting(true);
     setStatusMessage(null);
-    
+
     try {
       await onSave({
         firstName,
@@ -189,11 +195,13 @@ export function ContactFormModal({
         tags: [],
       });
 
-      setStatusMessage({ 
-        type: 'success', 
-        text: contact ? '✅ Contact updated successfully!' : '✅ Contact created successfully!' 
+      setStatusMessage({
+        type: 'success',
+        text: contact
+          ? '✅ Contact updated successfully!'
+          : '✅ Contact created successfully!',
       });
-      
+
       // Auto-close after 1.5 seconds
       setTimeout(() => {
         onClose();

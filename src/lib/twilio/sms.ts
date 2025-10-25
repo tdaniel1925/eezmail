@@ -63,11 +63,24 @@ export async function sendSMS(
     // Get appropriate Twilio client
     const { client, config, isCustom } = await getTwilioClientForUser(userId);
 
-    // Send SMS
+    // Build status callback URL for delivery tracking
+    const callbackUrl = process.env.NEXT_PUBLIC_APP_URL 
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/status-callback`
+      : undefined;
+
+    // Send SMS with status callback
     const result = await client.messages.create({
       body: message,
       from: config.phoneNumber,
       to: formattedTo,
+      ...(callbackUrl && { statusCallback: callbackUrl }),
+    });
+
+    console.log('📤 SMS sent with delivery tracking:', {
+      messageSid: result.sid,
+      to: formattedTo,
+      status: result.status,
+      hasCallback: !!callbackUrl,
     });
 
     // Calculate cost if using system Twilio

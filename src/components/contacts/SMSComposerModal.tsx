@@ -55,13 +55,49 @@ export function SMSComposerModal({
       const result = await sendContactSMS(contactId, message);
 
       if (result.success) {
-        setStatusMessage({ type: 'success', text: `✅ SMS sent successfully to ${recipientName}!` });
+        setStatusMessage({ 
+          type: 'success', 
+          text: `✅ SMS sent successfully to ${recipientName}! Delivery status will be tracked.` 
+        });
         setMessage('');
-        // Auto-close after 2 seconds
+        
+        // Check delivery status after 5 seconds
+        if (result.messageSid) {
+          setTimeout(async () => {
+            try {
+              const statusResponse = await fetch(`/api/twilio/sms-status/${result.messageSid}`);
+              const statusData = await statusResponse.json();
+              
+              if (statusData.success) {
+                const status = statusData.status;
+                if (status === 'delivered') {
+                  setStatusMessage({ 
+                    type: 'success', 
+                    text: `✅ SMS delivered to ${recipientName}!` 
+                  });
+                } else if (status === 'failed' || status === 'undelivered') {
+                  setStatusMessage({ 
+                    type: 'error', 
+                    text: `❌ SMS failed to deliver: ${statusData.errorMessage || 'Unknown error'}` 
+                  });
+                } else {
+                  setStatusMessage({ 
+                    type: 'success', 
+                    text: `📤 SMS ${status} - waiting for delivery confirmation...` 
+                  });
+                }
+              }
+            } catch (error) {
+              console.error('Error checking SMS status:', error);
+            }
+          }, 5000);
+        }
+        
+        // Auto-close after 3 seconds if delivered
         setTimeout(() => {
           onClose();
           setStatusMessage(null);
-        }, 2000);
+        }, 3000);
       } else {
         setStatusMessage({ type: 'error', text: result.error || 'Failed to send SMS' });
       }

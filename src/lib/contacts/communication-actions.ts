@@ -125,7 +125,7 @@ export async function sendContactSMS(
       };
     }
 
-    // Log to contact timeline
+    // Log to contact timeline with enhanced metadata
     await addTimelineEvent(contactId, {
       eventType: 'sms_sent',
       title: 'SMS Sent',
@@ -133,6 +133,9 @@ export async function sendContactSMS(
       metadata: {
         messageSid: result.messageSid,
         phone,
+        messageLength: message.length,
+        deliveryStatus: 'queued', // Initial status
+        sentAt: new Date(),
       },
     });
 
