@@ -242,6 +242,12 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
     toast.loading('Generating AI reply...', { id: 'ai-reply' });
 
     try {
+      // Extract sender name with better fallback
+      const senderName = 
+        email.fromAddress.name || 
+        email.fromAddress.email?.split('@')[0] || 
+        'there';
+      
       const response = await fetch('/api/ai/reply', {
         method: 'POST',
         headers: {
@@ -251,7 +257,7 @@ export function EmailViewer({ email, onClose }: EmailViewerProps): JSX.Element {
           subject: email.subject,
           bodyText: email.bodyText,
           bodyHtml: email.bodyHtml,
-          senderName: email.fromAddress.name || email.fromAddress.email,
+          senderName: senderName,
           senderEmail: email.fromAddress.email,
         }),
       });

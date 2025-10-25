@@ -9,8 +9,10 @@ export interface Email {
   id: string;
   subject: string;
   from: string;
+  fromName?: string; // Extracted sender name
   to?: string;
   body?: string;
+  snippet?: string;
   timestamp?: Date;
   threadId?: string;
 }

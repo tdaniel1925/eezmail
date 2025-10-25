@@ -228,7 +228,7 @@ export async function generateReplyDraft(
           subject: email.subject,
           bodyText: email.bodyText,
           bodyHtml: email.bodyHtml,
-          senderName: email.fromAddress.name || email.fromAddress.email,
+          senderName: email.fromAddress.name || email.fromAddress.email?.split('@')[0] || 'there',
           senderEmail: email.fromAddress.email,
           isDraft: true,
           emailId: email.id,

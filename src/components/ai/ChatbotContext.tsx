@@ -36,19 +36,38 @@ export function ChatbotContextProvider({ children }: { children: ReactNode }) {
       const aiPanelStore = useAIPanelStore.getState();
 
       if (email) {
+        // Extract sender email and name
+        let fromEmail = '';
+        let fromName = '';
+        
+        if (typeof email.fromAddress === 'string') {
+          fromEmail = email.fromAddress;
+          // Try to extract name from "Name <email@example.com>" format
+          const match = email.fromAddress.match(/^(.+?)\s*<(.+?)>$/);
+          if (match) {
+            fromName = match[1].trim();
+            fromEmail = match[2].trim();
+          } else {
+            // Just an email, extract name from email username
+            fromName = email.fromAddress.split('@')[0];
+          }
+        } else if (email.fromAddress) {
+          fromEmail = email.fromAddress.email || '';
+          fromName = email.fromAddress.name || email.fromAddress.email?.split('@')[0] || '';
+        }
+
         aiPanelStore.setCurrentEmail({
           id: email.id,
           subject: email.subject,
-          from:
-            typeof email.fromAddress === 'string'
-              ? email.fromAddress
-              : email.fromAddress?.email || '',
+          from: fromEmail,
+          fromName: fromName || undefined,
           to: Array.isArray(email.toAddresses)
             ? email.toAddresses
                 .map((addr) => (typeof addr === 'string' ? addr : addr.email))
                 .join(', ')
             : '',
           body: email.bodyText || email.bodyHtml || '',
+          snippet: email.bodyPreview || email.bodyText?.substring(0, 200) || '',
           timestamp: email.receivedAt || email.createdAt,
           threadId: email.threadId || undefined,
         });

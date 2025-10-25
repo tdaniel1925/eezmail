@@ -150,12 +150,16 @@ export function EmailQuickActions({
     setIsLoading(true);
     setLoadingAction('generate-reply');
     try {
+      // Extract sender name for personalized greeting
+      const senderName = email.fromName || email.from.split('@')[0] || 'there';
+      
       const response = await fetch('/api/ai/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           originalSubject: email.subject,
           originalBody: email.body || email.snippet,
+          senderName: senderName,
           senderEmail: email.from,
           emailId: email.id,
         }),

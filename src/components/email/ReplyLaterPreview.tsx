@@ -41,7 +41,7 @@ export function ReplyLaterPreview({
             subject: email.subject,
             bodyText: email.bodyText,
             bodyHtml: email.bodyHtml,
-            senderName: email.fromAddress.name || email.fromAddress.email,
+            senderName: email.fromAddress.name || email.fromAddress.email?.split('@')[0] || 'there',
             senderEmail: email.fromAddress.email,
             isDraft: true,
           }),
