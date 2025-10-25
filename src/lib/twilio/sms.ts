@@ -46,6 +46,12 @@ export async function sendSMS(
 
     // Format and validate phone number
     const formattedTo = formatPhoneNumber(to);
+    
+    console.log('📱 SMS Debug:', {
+      originalPhone: to,
+      formattedPhone: formattedTo,
+      isValid: validateE164PhoneNumber(formattedTo),
+    });
 
     if (!validateE164PhoneNumber(formattedTo)) {
       return {

@@ -27,6 +27,10 @@ export function SMSComposerModal({
 }: SMSComposerModalProps) {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   const MAX_LENGTH = 160;
   const remaining = MAX_LENGTH - message.length;
@@ -35,37 +39,35 @@ export function SMSComposerModal({
 
   const handleSend = async () => {
     if (!message.trim()) {
-      toast.error('Please enter a message');
+      setStatusMessage({ type: 'error', text: 'Please enter a message' });
       return;
     }
 
     if (message.length > MAX_LENGTH) {
-      toast.error(`Message is too long (${message.length}/${MAX_LENGTH} characters)`);
+      setStatusMessage({ type: 'error', text: `Message is too long (${message.length}/${MAX_LENGTH} characters)` });
       return;
     }
 
     setIsSending(true);
+    setStatusMessage(null);
 
     try {
       const result = await sendContactSMS(contactId, message);
 
       if (result.success) {
-        toast.success(`✅ SMS sent to ${recipientName}`, {
-          position: 'top-center',
-          duration: 4000,
-        });
+        setStatusMessage({ type: 'success', text: `✅ SMS sent successfully to ${recipientName}!` });
         setMessage('');
-        onClose();
+        // Auto-close after 2 seconds
+        setTimeout(() => {
+          onClose();
+          setStatusMessage(null);
+        }, 2000);
       } else {
-        toast.error(result.error || 'Failed to send SMS', {
-          position: 'top-center',
-        });
+        setStatusMessage({ type: 'error', text: result.error || 'Failed to send SMS' });
       }
     } catch (error) {
       console.error('SMS send error:', error);
-      toast.error('Failed to send SMS', {
-        position: 'top-center',
-      });
+      setStatusMessage({ type: 'error', text: 'Failed to send SMS. Please try again.' });
     } finally {
       setIsSending(false);
     }
@@ -113,9 +115,25 @@ export function SMSComposerModal({
 
           {/* Body */}
           <div className="p-6">
+            {/* Inline Status Message */}
+            {statusMessage && (
+              <div
+                className={`mb-4 p-3 rounded-lg ${
+                  statusMessage.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+                }`}
+              >
+                <p className="text-sm font-medium">{statusMessage.text}</p>
+              </div>
+            )}
+
             <textarea
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                setStatusMessage(null); // Clear status when typing
+              }}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
               className="w-full h-32 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
@@ -153,7 +171,9 @@ export function SMSComposerModal({
             </button>
             <button
               onClick={handleSend}
-              disabled={isSending || !message.trim() || message.length > MAX_LENGTH}
+              disabled={
+                isSending || !message.trim() || message.length > MAX_LENGTH
+              }
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSending ? (
@@ -174,4 +194,3 @@ export function SMSComposerModal({
     </>
   );
 }
-
