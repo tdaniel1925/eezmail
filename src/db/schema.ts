@@ -220,12 +220,23 @@ export type DraftAttachment = {
   url: string;
 };
 
+// Account Type Enum
+export const accountTypeEnum = pgEnum('account_type', [
+  'individual',
+  'business',
+]);
+
 // Users table
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
   avatarUrl: text('avatar_url'),
+  
+  // Account type and organization
+  accountType: accountTypeEnum('account_type').default('individual'),
+  organizationId: uuid('organization_id'),
+  
   subscriptionTier: subscriptionTierEnum('subscription_tier')
     .default('free')
     .notNull(),
@@ -233,6 +244,19 @@ export const users = pgTable('users', {
   paymentProcessor: paymentProcessorEnum('payment_processor'),
   stripeCustomerId: text('stripe_customer_id'),
   squareCustomerId: text('square_customer_id'),
+  
+  // Billing balances (for individual accounts)
+  smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default('0.00'),
+  aiBalance: decimal('ai_balance', { precision: 10, scale: 2 }).default('0.00'),
+  
+  // Trial tracking
+  isTrial: boolean('is_trial').default(false),
+  trialExpiresAt: timestamp('trial_expires_at'),
+  
+  // Usage tracking
+  smsSentCount: integer('sms_sent_count').default(0),
+  aiTokensUsed: integer('ai_tokens_used').default(0),
+  
   voiceSettings: jsonb('voice_settings').$type<{
     recordingQuality: 'high' | 'medium' | 'low';
     maxDuration: number;
@@ -2818,3 +2842,97 @@ export const discountRedemptionsRelations = relations(
     }),
   })
 );
+
+// ============================================================================
+// ORGANIZATIONS & MULTI-TENANT TABLES
+// ============================================================================
+
+// Organizations table (for business accounts)
+export const organizations = pgTable(
+  'organizations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 255 }).notNull(),
+    slug: varchar('slug', { length: 255 }).unique(),
+    
+    // Billing
+    pricingTier: varchar('pricing_tier', { length: 50 }).default('standard'),
+    smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default('0.00'),
+    aiBalance: decimal('ai_balance', { precision: 10, scale: 2 }).default('0.00'),
+    
+    // Trial
+    isTrial: boolean('is_trial').default(false),
+    trialCreditsUsed: decimal('trial_credits_used', { precision: 10, scale: 2 }).default('0.00'),
+    trialExpiresAt: timestamp('trial_expires_at'),
+    
+    // Usage tracking
+    smsSentCount: integer('sms_sent_count').default(0),
+    aiTokensUsed: integer('ai_tokens_used').default(0),
+    
+    // Metadata
+    settings: jsonb('settings').default('{}'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    slugIdx: index('organizations_slug_idx').on(table.slug),
+    trialIdx: index('organizations_trial_idx').on(table.isTrial),
+  })
+);
+
+// Organization Members table
+export const organizationMembers = pgTable(
+  'organization_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    role: varchar('role', { length: 50 }).default('member'),
+    permissions: jsonb('permissions').default('[]'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueMember: uniqueIndex('organization_members_unique_idx').on(
+      table.organizationId,
+      table.userId
+    ),
+    orgIdx: index('organization_members_org_idx').on(table.organizationId),
+    userIdx: index('organization_members_user_idx').on(table.userId),
+  })
+);
+
+// Type exports for organizations
+export type Organization = typeof organizations.$inferSelect;
+export type NewOrganization = typeof organizations.$inferInsert;
+export type OrganizationMember = typeof organizationMembers.$inferSelect;
+export type NewOrganizationMember = typeof organizationMembers.$inferInsert;
+
+// Organization Relations
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+  members: many(organizationMembers),
+}));
+
+// Organization Member Relations
+export const organizationMembersRelations = relations(
+  organizationMembers,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [organizationMembers.organizationId],
+      references: [organizations.id],
+    }),
+    user: one(users, {
+      fields: [organizationMembers.userId],
+      references: [users.id],
+    }),
+  })
+);
+
+// Update Users Relations to include organization
+export const usersRelations = relations(users, ({ one, many }) => ({
+  organizationMembership: many(organizationMembers),
+}));
