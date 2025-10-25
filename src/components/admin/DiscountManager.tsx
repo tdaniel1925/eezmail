@@ -24,7 +24,7 @@ interface DiscountManagerProps {
 }
 
 export function DiscountManager({ initialCodes }: DiscountManagerProps) {
-  const [codes, setCode] = useState(initialCodes);
+  const [codes, setCodes] = useState(initialCodes);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
