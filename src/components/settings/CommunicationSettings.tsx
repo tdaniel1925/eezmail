@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Phone, Eye, EyeOff, Loader2, Check, X } from 'lucide-react';
+import { Phone, Eye, EyeOff, Loader2, Check, X, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   getUserCommunicationSettings,
@@ -15,6 +15,17 @@ import {
   type CommunicationSettingsData,
   type CommunicationLimitsData,
 } from '@/lib/contacts/communication-settings-actions';
+
+interface TwilioPhoneNumber {
+  phoneNumber: string;
+  friendlyName: string;
+  sid: string;
+  capabilities: {
+    sms: boolean;
+    voice: boolean;
+    mms: boolean;
+  };
+}
 
 export function CommunicationSettings() {
   const [settings, setSettings] = useState<CommunicationSettingsData>({
@@ -29,6 +40,8 @@ export function CommunicationSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
+  const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
+  const [availableNumbers, setAvailableNumbers] = useState<TwilioPhoneNumber[]>([]);
 
   // Load settings on mount
   useEffect(() => {
@@ -49,6 +62,43 @@ export function CommunicationSettings() {
     setIsLoading(false);
   };
 
+  const fetchTwilioNumbers = async () => {
+    if (!settings.twilioAccountSid || !settings.twilioAuthToken) {
+      toast.error('Please enter Account SID and Auth Token first');
+      return;
+    }
+
+    setIsLoadingNumbers(true);
+
+    try {
+      const params = new URLSearchParams({
+        accountSid: settings.twilioAccountSid,
+        authToken: settings.twilioAuthToken,
+      });
+
+      const response = await fetch(`/api/twilio/phone-numbers?${params}`);
+      const data = await response.json();
+
+      if (data.success && data.phoneNumbers) {
+        setAvailableNumbers(data.phoneNumbers);
+        if (data.phoneNumbers.length === 0) {
+          toast.info('No A2P certified numbers found in your Twilio account');
+        } else {
+          toast.success(`Found ${data.phoneNumbers.length} phone number(s)`);
+        }
+      } else {
+        toast.error(data.error || 'Failed to fetch phone numbers');
+        setAvailableNumbers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching Twilio numbers:', error);
+      toast.error('Failed to fetch phone numbers');
+      setAvailableNumbers([]);
+    } finally {
+      setIsLoadingNumbers(false);
+    }
+  };
+
   const handleTestCredentials = async () => {
     if (!settings.twilioAccountSid || !settings.twilioAuthToken) {
       toast.error('Please enter Account SID and Auth Token');
@@ -65,6 +115,8 @@ export function CommunicationSettings() {
 
     if (result.success) {
       toast.success('Twilio credentials are valid!');
+      // Automatically fetch available numbers on successful credential test
+      await fetchTwilioNumbers();
     } else {
       toast.error(result.error || 'Invalid credentials');
     }
@@ -206,20 +258,61 @@ export function CommunicationSettings() {
 
               {/* Phone Number */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Twilio Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={settings.twilioPhoneNumber || ''}
-                  onChange={(e) =>
-                    setSettings({ ...settings, twilioPhoneNumber: e.target.value })
-                  }
-                  placeholder="+1234567890"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Twilio Phone Number
+                  </label>
+                  {availableNumbers.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={fetchTwilioNumbers}
+                      disabled={isLoadingNumbers}
+                      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 disabled:opacity-50"
+                      title="Refresh phone numbers"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${isLoadingNumbers ? 'animate-spin' : ''}`} />
+                      <span>Refresh</span>
+                    </button>
+                  )}
+                </div>
+                
+                {availableNumbers.length > 0 ? (
+                  <select
+                    value={settings.twilioPhoneNumber || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, twilioPhoneNumber: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select a phone number...</option>
+                    {availableNumbers.map((number) => (
+                      <option key={number.sid} value={number.phoneNumber}>
+                        {number.phoneNumber} 
+                        {number.friendlyName && ` (${number.friendlyName})`}
+                        {' - '}
+                        {number.capabilities.sms && 'SMS'}
+                        {number.capabilities.sms && number.capabilities.voice && ', '}
+                        {number.capabilities.voice && 'Voice'}
+                        {number.capabilities.mms && ', MMS'}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="tel"
+                    value={settings.twilioPhoneNumber || ''}
+                    onChange={(e) =>
+                      setSettings({ ...settings, twilioPhoneNumber: e.target.value })
+                    }
+                    placeholder="+1234567890"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                )}
+                
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  Must be in E.164 format (e.g., +14155552671)
+                  {availableNumbers.length > 0
+                    ? 'Select from your A2P certified Twilio numbers'
+                    : 'Test credentials to load your Twilio numbers, or enter manually in E.164 format (e.g., +14155552671)'}
                 </p>
               </div>
 
