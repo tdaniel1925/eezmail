@@ -2,12 +2,13 @@
 
 /**
  * Twilio SMS Service
- * Handles sending SMS messages
+ * Handles sending SMS messages with sandbox support
  */
 
 import { getTwilioClientForUser } from './client-factory';
 import { validateE164PhoneNumber, formatPhoneNumber } from './client';
 import { checkRateLimit, logCommunicationUsage } from '@/lib/communication/rate-limiter';
+import { shouldBypassQuota, trackSandboxUsage } from '@/lib/sandbox/credentials';
 
 export interface SendSMSResult {
   success: boolean;
@@ -26,22 +27,29 @@ export async function sendSMS(
   contactId?: string
 ): Promise<SendSMSResult> {
   try {
-    // Check rate limit first
-    const rateCheck = await checkRateLimit(userId, 'sms');
+    // Check if user should bypass quota (sandbox users)
+    const bypassQuota = await shouldBypassQuota(userId, 'sms');
 
-    if (!rateCheck.allowed) {
-      // Log rate limited attempt
-      await logCommunicationUsage(userId, 'sms', to, 'rate_limited', {
-        contactId,
-        messagePreview: message.substring(0, 50),
-        errorMessage: rateCheck.reason,
-      });
+    // Check rate limit only for non-sandbox users
+    if (!bypassQuota) {
+      const rateCheck = await checkRateLimit(userId, 'sms');
 
-      return {
-        success: false,
-        error: rateCheck.reason,
-        rateLimited: true,
-      };
+      if (!rateCheck.allowed) {
+        // Log rate limited attempt
+        await logCommunicationUsage(userId, 'sms', to, 'rate_limited', {
+          contactId,
+          messagePreview: message.substring(0, 50),
+          errorMessage: rateCheck.reason,
+        });
+
+        return {
+          success: false,
+          error: rateCheck.reason,
+          rateLimited: true,
+        };
+      }
+    } else {
+      console.log(`🧪 [Sandbox] Bypassing SMS rate limit for user ${userId}`);
     }
 
     // Format and validate phone number
@@ -51,6 +59,7 @@ export async function sendSMS(
       originalPhone: to,
       formattedPhone: formattedTo,
       isValid: validateE164PhoneNumber(formattedTo),
+      isSandboxUser: bypassQuota,
     });
 
     if (!validateE164PhoneNumber(formattedTo)) {
@@ -60,8 +69,8 @@ export async function sendSMS(
       };
     }
 
-    // Get appropriate Twilio client
-    const { client, config, isCustom } = await getTwilioClientForUser(userId);
+    // Get appropriate Twilio client (sandbox, custom, or system)
+    const { client, config, isCustom, isSandbox } = await getTwilioClientForUser(userId);
 
     // Build status callback URL for delivery tracking
     const callbackUrl = process.env.NEXT_PUBLIC_APP_URL 
@@ -87,15 +96,21 @@ export async function sendSMS(
     // Twilio charges ~$0.0075 per SMS in US, varies by country
     const cost = isCustom ? undefined : '0.0075';
 
+    // Track sandbox usage if applicable (non-blocking)
+    if (isSandbox) {
+      await trackSandboxUsage(userId, 'sms', 1);
+    }
+
     // Log successful send
     await logCommunicationUsage(userId, 'sms', formattedTo, 'sent', {
       contactId,
       cost,
       usedCustomTwilio: isCustom,
+      usedSandboxTwilio: isSandbox,
       messagePreview: message.substring(0, 50),
     });
 
-    console.log(`✅ SMS sent to ${formattedTo}: ${result.sid}`);
+    console.log(`✅ SMS sent to ${formattedTo}: ${result.sid}${isSandbox ? ' (sandbox)' : ''}`);
 
     return {
       success: true,

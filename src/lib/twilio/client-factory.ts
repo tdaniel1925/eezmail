@@ -2,7 +2,8 @@
 
 /**
  * Twilio Client Factory
- * Determines whether to use system or user's custom Twilio account
+ * Determines whether to use sandbox, custom, or system Twilio account
+ * Priority: Sandbox > Custom > System
  */
 
 import { db } from '@/lib/db';
@@ -10,20 +11,44 @@ import { communicationSettings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { decrypt } from '@/lib/utils/encryption';
 import { createTwilioClient, getSystemTwilioConfig, type TwilioConfig } from './client';
+import { getTwilioCredentials } from '@/lib/sandbox/credentials';
 
 export interface TwilioClientResult {
   client: ReturnType<typeof createTwilioClient>;
   config: TwilioConfig;
   isCustom: boolean;
+  isSandbox: boolean;
 }
 
 /**
  * Get appropriate Twilio client for a user
- * Returns user's custom client if configured, otherwise system client
+ * Priority: Sandbox > Custom > System
  */
 export async function getTwilioClientForUser(userId: string): Promise<TwilioClientResult> {
   try {
-    // Check if user has custom Twilio configuration
+    // 1. Check for sandbox credentials first (highest priority)
+    const sandboxCreds = await getTwilioCredentials(userId);
+
+    if (sandboxCreds?.isSandbox) {
+      const config: TwilioConfig = {
+        accountSid: sandboxCreds.accountSid,
+        authToken: sandboxCreds.authToken,
+        phoneNumber: sandboxCreds.phoneNumber,
+      };
+
+      const client = createTwilioClient(config);
+
+      console.log(`🧪 Using sandbox Twilio for user ${userId}`);
+
+      return {
+        client,
+        config,
+        isCustom: false,
+        isSandbox: true,
+      };
+    }
+
+    // 2. Check if user has custom Twilio configuration
     const userSettings = await db.query.communicationSettings.findFirst({
       where: eq(communicationSettings.userId, userId),
     });
@@ -51,6 +76,7 @@ export async function getTwilioClientForUser(userId: string): Promise<TwilioClie
           client,
           config,
           isCustom: true,
+          isSandbox: false,
         };
       } catch (error) {
         console.error('Failed to decrypt user Twilio credentials:', error);
@@ -58,7 +84,7 @@ export async function getTwilioClientForUser(userId: string): Promise<TwilioClie
       }
     }
 
-    // Use system Twilio
+    // 3. Use system Twilio (fallback)
     const config = getSystemTwilioConfig();
     const client = createTwilioClient(config);
 
@@ -68,6 +94,7 @@ export async function getTwilioClientForUser(userId: string): Promise<TwilioClie
       client,
       config,
       isCustom: false,
+      isSandbox: false,
     };
   } catch (error) {
     console.error('Error getting Twilio client:', error);

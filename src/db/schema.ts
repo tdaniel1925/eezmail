@@ -146,6 +146,20 @@ export const syncJobTypeEnum = pgEnum('sync_job_type', [
   'webhook_triggered',
 ]);
 
+// Admin & Sandbox Enums
+export const userRoleEnum = pgEnum('user_role', [
+  'user',
+  'sandbox_user',
+  'admin',
+  'super_admin',
+]);
+
+export const sandboxCompanyStatusEnum = pgEnum('sandbox_company_status', [
+  'active',
+  'suspended',
+  'archived',
+]);
+
 // Email Rules Enums
 export const ruleConditionFieldEnum = pgEnum('rule_condition_field', [
   'from',
@@ -237,6 +251,10 @@ export const users = pgTable('users', {
   accountType: accountTypeEnum('account_type').default('individual'),
   organizationId: uuid('organization_id'),
 
+  // User role (admin, sandbox_user, regular user)
+  role: userRoleEnum('role').default('user').notNull(),
+  sandboxCompanyId: uuid('sandbox_company_id'),
+
   subscriptionTier: subscriptionTierEnum('subscription_tier')
     .default('free')
     .notNull(),
@@ -287,6 +305,69 @@ export const subscriptions = pgTable('subscriptions', {
   cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ============================================================================
+// SANDBOX COMPANIES & ADMIN TABLES
+// ============================================================================
+
+export const sandboxCompanies = pgTable('sandbox_companies', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  description: text('description'),
+  status: sandboxCompanyStatusEnum('status').default('active').notNull(),
+  
+  // Service Credentials (shared with sandbox users)
+  twilioAccountSid: text('twilio_account_sid'),
+  twilioAuthToken: text('twilio_auth_token'),
+  twilioPhoneNumber: text('twilio_phone_number'),
+  
+  openaiApiKey: text('openai_api_key'),
+  openaiOrganizationId: text('openai_organization_id'),
+  
+  // Unlimited access flags
+  unlimitedSms: boolean('unlimited_sms').default(true).notNull(),
+  unlimitedAi: boolean('unlimited_ai').default(true).notNull(),
+  unlimitedStorage: boolean('unlimited_storage').default(true).notNull(),
+  
+  // Usage tracking (for monitoring, not limiting)
+  totalSmsUsed: integer('total_sms_used').default(0),
+  totalAiTokensUsed: integer('total_ai_tokens_used').default(0),
+  totalStorageUsed: integer('total_storage_used').default(0), // in bytes
+  
+  // Contact info
+  contactEmail: text('contact_email'),
+  contactName: text('contact_name'),
+  contactPhone: text('contact_phone'),
+  
+  // Metadata
+  notes: text('notes'),
+  tags: jsonb('tags').$type<string[]>(),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  createdBy: uuid('created_by').references(() => users.id),
+});
+
+export const adminAuditLog = pgTable('admin_audit_log', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adminId: uuid('admin_id')
+    .references(() => users.id)
+    .notNull(),
+  action: text('action').notNull(), // e.g., 'create_sandbox_company', 'create_sandbox_user', 'update_credentials'
+  targetType: text('target_type').notNull(), // e.g., 'sandbox_company', 'user'
+  targetId: uuid('target_id'),
+  
+  details: jsonb('details').$type<{
+    before?: Record<string, unknown>;
+    after?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+  }>(),
+  
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ============================================================================

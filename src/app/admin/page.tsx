@@ -1,60 +1,32 @@
-import {
-  getDashboardStats,
-  getSubscriptionStats,
-  getRevenueData,
-  getRecentSignups,
-} from '@/lib/admin/stats';
-import { StatsOverview } from '@/components/admin/StatsOverview';
-import { SubscriptionChart } from '@/components/admin/SubscriptionChart';
-import { RevenueChart } from '@/components/admin/RevenueChart';
-import { RecentSignups } from '@/components/admin/RecentSignups';
+/**
+ * Admin Dashboard Page
+ * Manage sandbox companies and users (admin-only)
+ */
 
-// Force dynamic rendering for admin pages that require auth
-export const dynamic = 'force-dynamic';
+import { redirect } from 'next/navigation';
+import { getAuthenticatedUser, isAdmin } from '@/lib/auth/admin-auth';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 
-export default async function AdminDashboardPage() {
-  const [statsResult, subscriptionResult, revenueResult, signupsResult] =
-    await Promise.all([
-      getDashboardStats(),
-      getSubscriptionStats(),
-      getRevenueData(),
-      getRecentSignups(),
-    ]);
+export const metadata = {
+  title: 'Admin Dashboard | EaseMail',
+  description: 'Manage sandbox companies and users',
+};
+
+export default async function AdminPage(): Promise<JSX.Element> {
+  // Check authentication and admin status
+  const user = await getAuthenticatedUser();
+
+  if (!user) {
+    redirect('/auth/login');
+  }
+
+  if (!isAdmin(user.role)) {
+    redirect('/dashboard');
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Admin Dashboard
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Monitor your platform's performance and metrics
-        </p>
-      </div>
-
-      {/* Stats Overview */}
-      {statsResult.success && statsResult.stats && (
-        <StatsOverview stats={statsResult.stats} />
-      )}
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Subscription Distribution */}
-        {subscriptionResult.success && subscriptionResult.stats && (
-          <SubscriptionChart stats={subscriptionResult.stats} />
-        )}
-
-        {/* Revenue Chart */}
-        {revenueResult.success && revenueResult.data && (
-          <RevenueChart data={revenueResult.data} />
-        )}
-      </div>
-
-      {/* Recent Signups */}
-      {signupsResult.success && signupsResult.users && (
-        <RecentSignups users={signupsResult.users} />
-      )}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <AdminDashboard user={user} />
     </div>
   );
 }
