@@ -2,7 +2,7 @@
 
 /**
  * Inline Help Tooltip Component
- * 
+ *
  * Features:
  * - ? icon that opens tooltip on hover/click
  * - Contextual help text
@@ -59,18 +59,22 @@ export function HelpTooltip({
       switch (position) {
         case 'top':
           top = triggerRect.top - tooltipRect.height - spacing;
-          left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
+          left =
+            triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
           break;
         case 'bottom':
           top = triggerRect.bottom + spacing;
-          left = triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
+          left =
+            triggerRect.left + triggerRect.width / 2 - tooltipRect.width / 2;
           break;
         case 'left':
-          top = triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2;
+          top =
+            triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2;
           left = triggerRect.left - tooltipRect.width - spacing;
           break;
         case 'right':
-          top = triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2;
+          top =
+            triggerRect.top + triggerRect.height / 2 - tooltipRect.height / 2;
           left = triggerRect.right + spacing;
           break;
       }
@@ -250,4 +254,3 @@ export function InlineHelp({
     />
   );
 }
-

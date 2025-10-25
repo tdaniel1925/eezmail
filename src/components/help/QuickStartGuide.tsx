@@ -103,7 +103,7 @@ export function QuickStartGuide(): JSX.Element {
     },
     {
       id: 'understand-categories',
-      title: 'Understand Imbox, Feed & Paper Trail',
+      title: 'Understand Priority Inbox, Feed & Paper Trail',
       description: 'Learn how emails are organized',
       icon: Folder,
       estimatedTime: '1 minute',
@@ -119,7 +119,7 @@ export function QuickStartGuide(): JSX.Element {
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-2 w-2 rounded-full bg-primary"></div>
                 <h5 className="font-semibold text-gray-900 dark:text-white">
-                  📬 Imbox (Important)
+                  📬 Priority Inbox (Important)
                 </h5>
               </div>
               <p className="text-sm text-gray-700 dark:text-white/70">
@@ -254,7 +254,7 @@ export function QuickStartGuide(): JSX.Element {
       content: (
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900 dark:text-white">
-            Make Imbox Yours
+            Make EaseMail Yours
           </h4>
 
           <div className="space-y-4">
@@ -549,7 +549,7 @@ export function QuickStartGuide(): JSX.Element {
             onClick={() => window.location.href = '/dashboard'}
             className="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
-            Start Using Imbox
+            Start Using EaseMail
           </button>
         </div>
       )}

@@ -63,7 +63,7 @@ export function DetailedGuides(): JSX.Element {
       title: 'Email Categories Explained',
       icon: Inbox,
       description:
-        'Understand Imbox, Feed, and Paper Trail and how emails are categorized',
+        'Understand Priority Inbox, Feed, and Paper Trail and how emails are categorized',
       videoUrl: 'https://youtube.com/watch?v=example',
       sections: [
         {
@@ -71,13 +71,13 @@ export function DetailedGuides(): JSX.Element {
           content: (
             <div className="space-y-4">
               <p className="text-sm text-gray-700 dark:text-white/70">
-                Imbox uses a three-tier categorization system designed to help you focus on what matters most while keeping everything organized.
+                EaseMail uses a three-tier categorization system designed to help you focus on what matters most while keeping everything organized.
               </p>
 
               <div className="space-y-3">
                 <div className="rounded-lg border-l-4 border-primary bg-primary/5 p-4">
                   <h5 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    📬 Imbox (VIP Inbox)
+                    📬 Priority Inbox (VIP Inbox)
                   </h5>
                   <p className="text-sm text-gray-700 dark:text-white/70 mb-2">
                     Your priority inbox for important personal and work emails.
@@ -137,7 +137,7 @@ export function DetailedGuides(): JSX.Element {
           content: (
             <div className="space-y-3">
               <p className="text-sm text-gray-700 dark:text-white/70">
-                Imbox uses AI and machine learning to automatically categorize incoming emails based on multiple factors:
+                EaseMail uses AI and machine learning to automatically categorize incoming emails based on multiple factors:
               </p>
 
               <div className="rounded-lg bg-gray-50 dark:bg-white/5 p-4 space-y-2 text-sm">
@@ -184,7 +184,7 @@ export function DetailedGuides(): JSX.Element {
 
               <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 p-3">
                 <p className="text-sm text-blue-900 dark:text-blue-300">
-                  <strong>Pro Tip:</strong> The more you use Imbox and correct categorizations, the smarter the system becomes. It typically achieves 95%+ accuracy after a few days of use!
+                  <strong>Pro Tip:</strong> The more you use EaseMail and correct categorizations, the smarter the system becomes. It typically achieves 95%+ accuracy after a few days of use!
                 </p>
               </div>
             </div>
@@ -224,7 +224,7 @@ export function DetailedGuides(): JSX.Element {
                     Method 3: Keyboard Shortcuts
                   </h6>
                   <div className="space-y-1 text-xs text-gray-600 dark:text-white/60">
-                    <p>• Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">V</kbd> then <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">I</kbd> for Imbox</p>
+                    <p>• Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">V</kbd> then <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">I</kbd> for Priority Inbox</p>
                     <p>• Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">V</kbd> then <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">F</kbd> for Feed</p>
                     <p>• Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">V</kbd> then <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">P</kbd> for Paper Trail</p>
                   </div>
@@ -246,7 +246,7 @@ export function DetailedGuides(): JSX.Element {
           content: (
             <div className="space-y-3">
               <p className="text-sm text-gray-700 dark:text-white/70">
-                When someone emails you for the first time, Imbox&apos;s AI Screener analyzes the email and suggests the best category.
+                When someone emails you for the first time, EaseMail&apos;s AI Screener analyzes the email and suggests the best category.
               </p>
 
               <div className="rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 p-4 space-y-2">
@@ -256,7 +256,7 @@ export function DetailedGuides(): JSX.Element {
                 <ol className="list-decimal pl-5 space-y-1 text-xs text-gray-700 dark:text-white/70">
                   <li>Email arrives from new sender</li>
                   <li>AI analyzes content, sender info, and context</li>
-                  <li>System suggests category (Imbox/Feed/Paper Trail)</li>
+                  <li>System suggests category (Priority Inbox/Feed/Paper Trail)</li>
                   <li>You review and approve/modify the suggestion</li>
                   <li>Future emails from that sender follow your preference</li>
                 </ol>
@@ -828,7 +828,7 @@ export function DetailedGuides(): JSX.Element {
           Detailed Feature Guides
         </h2>
         <p className="text-sm text-gray-600 dark:text-white/60">
-          In-depth instructions for all Imbox features
+          In-depth instructions for all EaseMail features
         </p>
       </div>
 

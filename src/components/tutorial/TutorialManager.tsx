@@ -2,7 +2,7 @@
 
 /**
  * Tutorial Manager Component
- * 
+ *
  * Manages tutorial state and triggers for the dashboard
  */
 
@@ -89,4 +89,3 @@ export function useTutorial() {
     endTutorial,
   };
 }
-

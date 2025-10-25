@@ -2,7 +2,7 @@
 
 /**
  * Interactive Tutorial Overlay System
- * 
+ *
  * Features:
  * - Step-by-step walkthrough for first-time users
  * - Highlight UI elements with spotlight effect
@@ -184,7 +184,8 @@ export function TutorialOverlay({
               left: highlightRect.left - 4,
               width: highlightRect.width + 8,
               height: highlightRect.height + 8,
-              boxShadow: '0 0 0 4px rgba(255, 76, 90, 0.2), 0 0 32px rgba(255, 76, 90, 0.4)',
+              boxShadow:
+                '0 0 0 4px rgba(255, 76, 90, 0.2), 0 0 32px rgba(255, 76, 90, 0.4)',
             }}
           />
         )}
@@ -243,8 +244,8 @@ export function TutorialOverlay({
                     index === currentStepIndex
                       ? 'w-6 bg-primary'
                       : index < currentStepIndex
-                      ? 'w-2 bg-primary/50'
-                      : 'w-2 bg-gray-300 dark:bg-gray-600'
+                        ? 'w-2 bg-primary/50'
+                        : 'w-2 bg-gray-300 dark:bg-gray-600'
                   )}
                   title={`Go to step ${index + 1}`}
                 />
@@ -288,4 +289,3 @@ export function TutorialOverlay({
     </AnimatePresence>
   );
 }
-

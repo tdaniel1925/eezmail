@@ -206,13 +206,13 @@ export const tutorials: Record<string, Tutorial> = {
       {
         title: 'AI-Powered Email Organization',
         description:
-          'easeMail automatically categorizes your emails into Imbox, Feed, and Paper Trail using AI.',
+          'EaseMail automatically categorizes your emails into Priority Inbox, Feed, and Paper Trail using AI.',
         highlight: false,
       },
       {
-        title: 'Imbox - Important Emails',
+        title: 'Priority Inbox - Important Emails',
         description:
-          'Click the "Imbox" tab to see emails from people you know and important messages that need your attention.',
+          'Click the "Priority Inbox" tab to see emails from people you know and important messages that need your attention.',
         targetSelector: '[data-tutorial="imbox-tab"]',
         position: 'bottom',
         highlight: true,

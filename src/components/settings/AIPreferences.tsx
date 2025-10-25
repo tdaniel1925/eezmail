@@ -101,7 +101,7 @@ export function AIPreferences({
             >
               <option value="traditional">Traditional (Inbox + Folders)</option>
               <option value="hey">
-                Hey Mode (Imbox + Feed + Paper Trail)
+                Hey Mode (Priority Inbox + Feed + Paper Trail)
               </option>
               <option value="hybrid">Hybrid (Best of Both)</option>
             </select>
@@ -117,7 +117,7 @@ export function AIPreferences({
               {data.emailMode === 'traditional' &&
                 'Classic email experience with inbox and custom folders. All emails go to inbox, you manually organize them.'}
               {data.emailMode === 'hey' &&
-                'AI automatically sorts emails into Imbox (important), Feed (updates), and Paper Trail (receipts). Inspired by Hey.com.'}
+                'AI automatically sorts emails into Priority Inbox (important), Feed (updates), and Paper Trail (receipts). Inspired by Hey.com.'}
               {data.emailMode === 'hybrid' &&
                 'Get both! AI suggestions for sorting, but you maintain final control with traditional folders.'}
             </p>

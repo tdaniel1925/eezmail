@@ -66,7 +66,7 @@ export default function HelpPage(): JSX.Element {
                 Help & Documentation
               </h1>
               <p className="mt-2 text-gray-600 dark:text-white/60">
-                Everything you need to master Imbox
+                Everything you need to master EaseMail
               </p>
             </div>
             <a
@@ -118,7 +118,7 @@ function VideoTutorials(): JSX.Element {
   const tutorials = [
     {
       id: 'getting-started',
-      title: 'Getting Started with Imbox',
+      title: 'Getting Started with EaseMail',
       description: 'Learn the basics in under 5 minutes',
       duration: '4:32',
       thumbnail: '/thumbnails/getting-started.jpg',
@@ -136,7 +136,7 @@ function VideoTutorials(): JSX.Element {
     },
     {
       id: 'categories-explained',
-      title: 'Understanding Imbox, Feed & Paper Trail',
+      title: 'Understanding Priority Inbox, Feed & Paper Trail',
       description: 'How the three-tier system organizes your emails',
       duration: '6:10',
       thumbnail: '/thumbnails/categories.jpg',
