@@ -62,9 +62,7 @@ export async function searchEmailsHandler(
     // Filter by sender
     if (args.from) {
       conditions.push(
-        or(
-          like(sql`CAST(${emails.fromAddress} AS TEXT)`, `%${args.from}%`)
-        )!
+        like(sql`CAST(${emails.fromAddress} AS TEXT)`, `%${args.from}%`)
       );
     }
 
@@ -85,7 +83,7 @@ export async function searchEmailsHandler(
 
     // Filter by attachments
     if (args.hasAttachments) {
-      conditions.push(sql`${emails.attachmentCount} > 0`);
+      conditions.push(eq(emails.hasAttachments, true));
     }
 
     // Filter by read status
@@ -95,7 +93,7 @@ export async function searchEmailsHandler(
 
     // Filter by folder
     if (args.folder) {
-      conditions.push(like(emails.folder, `%${args.folder}%`));
+      conditions.push(like(emails.folderName, `%${args.folder}%`));
     }
 
     // Search in subject and body if query provided
@@ -108,19 +106,9 @@ export async function searchEmailsHandler(
       );
     }
 
-    // Execute query
+    // Execute query - use * instead of selecting specific fields
     const results = await db
-      .select({
-        id: emails.id,
-        subject: emails.subject,
-        fromAddress: emails.fromAddress,
-        toAddresses: emails.toAddresses,
-        receivedAt: emails.receivedAt,
-        isRead: emails.isRead,
-        attachmentCount: emails.attachmentCount,
-        folder: emails.folder,
-        bodyText: emails.bodyText,
-      })
+      .select()
       .from(emails)
       .where(and(...conditions))
       .orderBy(desc(emails.receivedAt))
@@ -128,7 +116,14 @@ export async function searchEmailsHandler(
 
     // Format results with body preview
     const formattedResults = results.map((email) => ({
-      ...email,
+      id: email.id,
+      subject: email.subject,
+      fromAddress: email.fromAddress,
+      toAddresses: email.toAddresses,
+      receivedAt: email.receivedAt,
+      isRead: email.isRead,
+      hasAttachments: email.hasAttachments,
+      folder: email.folderName,
       bodyPreview: email.bodyText ? email.bodyText.substring(0, 150) : '',
     }));
 
