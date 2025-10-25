@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageCircle, ExternalLink, ChevronDown } from 'lucide-react';
+import { X, MessageCircle, ExternalLink, ChevronDown, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getThreadEmails } from '@/lib/email/thread-actions';
 import { formatDistanceToNow } from 'date-fns';
+import { AttachmentCard } from '@/components/email/AttachmentCard';
+import { toast } from 'sonner';
 import type { Email } from '@/db/schema';
 
 interface ThreadTimelineModalProps {
@@ -29,6 +31,15 @@ export function ThreadTimelineModal({
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
+  
+  // AI Summary state
+  const [aiSummary, setAiSummary] = useState<{
+    summary: string;
+    keyPoints: string[];
+    actionItems: any[];
+  } | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
 
   // Handle client-side mounting for portal
   useEffect(() => {
@@ -56,6 +67,38 @@ export function ThreadTimelineModal({
     }
 
     setIsLoading(false);
+  };
+
+  const generateAISummary = async () => {
+    setIsLoadingSummary(true);
+    try {
+      const response = await fetch(`/api/threads/${threadId}/summary`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate summary');
+      }
+
+      const data = await response.json();
+      setAiSummary({
+        summary: data.summary,
+        keyPoints: data.keyPoints || [],
+        actionItems: data.actionItems || [],
+      });
+      setShowSummary(true);
+      
+      if (data.cached) {
+        toast.success('Summary retrieved from cache');
+      } else {
+        toast.success('AI summary generated successfully');
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      toast.error('Failed to generate AI summary');
+    } finally {
+      setIsLoadingSummary(false);
+    }
   };
 
   const handleEmailClick = (emailId: string) => {
@@ -135,28 +178,135 @@ export function ThreadTimelineModal({
             >
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col max-h-[85vh]">
                 {/* Header */}
-                <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <MessageCircle size={20} className="text-primary" />
+                <div className="flex flex-col gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle size={20} className="text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                          {threadSubject || 'Thread Timeline'}
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                          {emails.length}{' '}
+                          {emails.length === 1 ? 'message' : 'messages'} in
+                          conversation
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                        {threadSubject || 'Thread Timeline'}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                        {emails.length}{' '}
-                        {emails.length === 1 ? 'message' : 'messages'} in
-                        conversation
-                      </p>
-                    </div>
+                    <button
+                      onClick={onClose}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0 ml-2"
+                    >
+                      <X size={18} className="text-gray-500 dark:text-gray-400" />
+                    </button>
                   </div>
-                  <button
-                    onClick={onClose}
-                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-shrink-0 ml-2"
-                  >
-                    <X size={18} className="text-gray-500 dark:text-gray-400" />
-                  </button>
+
+                  {/* AI Summary Button */}
+                  {emails.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (!showSummary && !aiSummary) {
+                            generateAISummary();
+                          } else {
+                            setShowSummary(!showSummary);
+                          }
+                        }}
+                        disabled={isLoadingSummary}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                          showSummary
+                            ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
+                            : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        )}
+                      >
+                        {isLoadingSummary ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Sparkles size={16} />
+                        )}
+                        <span>
+                          {isLoadingSummary
+                            ? 'Generating...'
+                            : showSummary
+                            ? 'Hide Summary'
+                            : aiSummary
+                            ? 'Show Summary'
+                            : 'AI Summary'}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* AI Summary Card */}
+                  <AnimatePresence>
+                    {showSummary && aiSummary && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="p-4 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                          <div className="flex items-start gap-2 mb-2">
+                            <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 uppercase tracking-wide mb-1">
+                                AI Summary
+                              </p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                                {aiSummary.summary}
+                              </p>
+
+                              {aiSummary.keyPoints.length > 0 && (
+                                <div className="mb-3">
+                                  <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                                    Key Points:
+                                  </p>
+                                  <ul className="space-y-1">
+                                    {aiSummary.keyPoints.map((point, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
+                                      >
+                                        <span className="text-purple-600 dark:text-purple-400 flex-shrink-0">
+                                          •
+                                        </span>
+                                        <span>{point}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {aiSummary.actionItems.length > 0 && (
+                                <div>
+                                  <p className="text-xs font-semibold text-purple-900 dark:text-purple-100 mb-1">
+                                    Action Items:
+                                  </p>
+                                  <ul className="space-y-1">
+                                    {aiSummary.actionItems.map((item, idx) => (
+                                      <li
+                                        key={idx}
+                                        className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2"
+                                      >
+                                        <span className="text-purple-600 dark:text-purple-400 flex-shrink-0">
+                                          ✓
+                                        </span>
+                                        <span>{item.task}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Content */}
@@ -372,24 +522,36 @@ export function ThreadTimelineModal({
                                           <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 px-2">
                                             Attachments
                                           </p>
-                                          <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 text-sm">
-                                            <svg
-                                              className="w-4 h-4 text-amber-600 dark:text-amber-400"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                                              />
-                                            </svg>
-                                            <span className="text-amber-900 dark:text-amber-100">
-                                              This email has attachments
-                                            </span>
-                                          </div>
+                                          {(email as any).attachments && (email as any).attachments.length > 0 ? (
+                                            <div className="space-y-2">
+                                              {(email as any).attachments.map((attachment: any) => (
+                                                <AttachmentCard
+                                                  key={attachment.id}
+                                                  attachment={attachment}
+                                                  showPreview={true}
+                                                />
+                                              ))}
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 text-sm">
+                                              <svg
+                                                className="w-4 h-4 text-amber-600 dark:text-amber-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                                                />
+                                              </svg>
+                                              <span className="text-amber-900 dark:text-amber-100">
+                                                This email has attachments
+                                              </span>
+                                            </div>
+                                          )}
                                         </div>
                                       )}
 

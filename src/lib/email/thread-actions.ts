@@ -2,16 +2,16 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
-import { emails, emailAccounts } from '@/db/schema';
+import { emails, emailAccounts, emailAttachments } from '@/db/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import type { Email } from '@/db/schema';
 
 /**
- * Get all emails in a thread (optimized - only fetches needed fields)
+ * Get all emails in a thread with attachments
  */
 export async function getThreadEmails(threadId: string): Promise<{
   success: boolean;
-  emails?: Email[];
+  emails?: any[];
   error?: string;
 }> {
   try {
@@ -28,8 +28,7 @@ export async function getThreadEmails(threadId: string): Promise<{
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Optimized: Only select the fields we need for the modal
-    // Limit to 50 emails max to prevent slow queries on huge threads
+    // Fetch thread emails with basic fields
     const threadEmails = await db
       .select({
         id: emails.id,
@@ -60,7 +59,31 @@ export async function getThreadEmails(threadId: string): Promise<{
       .orderBy(emails.sentAt)
       .limit(50);
 
-    return { success: true, emails: threadEmails as Email[] };
+    // Fetch attachments for these emails
+    const emailIds = threadEmails.map((e) => e.id);
+    const attachmentsData = emailIds.length > 0
+      ? await db
+          .select()
+          .from(emailAttachments)
+          .where(inArray(emailAttachments.emailId, emailIds))
+      : [];
+
+    // Group attachments by email ID
+    const attachmentsByEmail = attachmentsData.reduce((acc, att) => {
+      if (!acc[att.emailId]) {
+        acc[att.emailId] = [];
+      }
+      acc[att.emailId].push(att);
+      return acc;
+    }, {} as Record<string, any[]>);
+
+    // Add attachments to emails
+    const emailsWithAttachments = threadEmails.map((email) => ({
+      ...email,
+      attachments: attachmentsByEmail[email.id] || [],
+    }));
+
+    return { success: true, emails: emailsWithAttachments };
   } catch (error) {
     console.error('Error fetching thread emails:', error);
     return { success: false, error: 'Failed to fetch thread emails' };
