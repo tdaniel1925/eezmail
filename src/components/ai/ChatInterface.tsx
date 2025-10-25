@@ -138,16 +138,75 @@ export function ChatInterface(): JSX.Element {
       if (data.functionCall) {
         const { name, arguments: args } = data.functionCall;
 
-        // For now, inform the user what function would be called
-        // In a full implementation, you'd execute the function and show results
-        const assistantMessage: Message = {
-          id: Date.now().toString() + '-assistant',
+        // Show what function is being executed
+        const executingMessage: Message = {
+          id: Date.now().toString() + '-executing',
           role: 'assistant',
-          content: `I found your request! I would use the "${name}" function with these parameters: ${JSON.stringify(args, null, 2)}.\n\nFunction execution is currently being implemented. For now, you can use the email search bar or filters to find emails from Andy.`,
+          content: `🔄 Executing: ${name}...`,
           timestamp: new Date(),
         };
+        setMessages((prev) => [...prev, executingMessage]);
 
-        setMessages((prev) => [...prev, assistantMessage]);
+        try {
+          // Execute the function
+          const executeResponse = await fetch('/api/chat/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              functionName: name,
+              arguments: args,
+            }),
+          });
+
+          const executeData = await executeResponse.json();
+
+          // Remove the "executing" message and show results
+          setMessages((prev) => prev.filter((m) => m.id !== executingMessage.id));
+
+          let resultContent = '';
+          if (executeData.success) {
+            if (executeData.emails && executeData.emails.length > 0) {
+              // Format email results nicely
+              resultContent = `✅ ${executeData.message}\n\n`;
+              executeData.emails.slice(0, 5).forEach((email: any, idx: number) => {
+                const from = typeof email.fromAddress === 'string' 
+                  ? email.fromAddress 
+                  : email.fromAddress?.name || email.fromAddress?.email || 'Unknown';
+                const date = new Date(email.receivedAt).toLocaleDateString();
+                resultContent += `${idx + 1}. **${email.subject}**\n   From: ${from}\n   Date: ${date}\n   ${email.bodyPreview || ''}...\n\n`;
+              });
+              if (executeData.emails.length > 5) {
+                resultContent += `...and ${executeData.emails.length - 5} more`;
+              }
+            } else {
+              resultContent = `✅ ${executeData.message || 'Action completed successfully'}`;
+            }
+          } else {
+            resultContent = `⚠️ ${executeData.message || executeData.error}`;
+          }
+
+          const resultMessage: Message = {
+            id: Date.now().toString() + '-result',
+            role: 'assistant',
+            content: resultContent,
+            timestamp: new Date(),
+          };
+
+          setMessages((prev) => [...prev, resultMessage]);
+        } catch (error) {
+          console.error('Function execution error:', error);
+          
+          // Remove executing message
+          setMessages((prev) => prev.filter((m) => m.id !== executingMessage.id));
+          
+          const errorMessage: Message = {
+            id: Date.now().toString() + '-error',
+            role: 'assistant',
+            content: `❌ Failed to execute ${name}. Please try again or use the UI.`,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, errorMessage]);
+        }
       } else {
         // Regular text response
         const assistantMessage: Message = {
