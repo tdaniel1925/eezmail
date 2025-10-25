@@ -1,6 +1,6 @@
 /**
  * Tutorial Steps Configuration
- * 
+ *
  * Predefined tutorial flows for different features
  */
 
@@ -12,7 +12,7 @@ import { TutorialStep } from './TutorialOverlay';
 export const firstTimeOnboardingSteps: TutorialStep[] = [
   {
     id: 'welcome',
-    title: 'Welcome to Imbox!',
+    title: 'Welcome to EaseMail!',
     description:
       "Let's take a quick 2-minute tour to help you get started. You can skip this anytime and revisit it from Settings → Help.",
     targetSelector: '[data-tutorial="main-content"]',
@@ -30,7 +30,7 @@ export const firstTimeOnboardingSteps: TutorialStep[] = [
     id: 'sidebar-folders',
     title: 'Organize with Folders',
     description:
-      'Access your Imbox (VIPs), Feed (newsletters), Paper Trail (receipts), and custom folders here. Click any folder to filter your emails.',
+      'Access your Priority Inbox (VIPs), Feed (newsletters), Paper Trail (receipts), and custom folders here. Click any folder to filter your emails.',
     targetSelector: '[data-tutorial="sidebar"]',
     position: 'right',
   },
@@ -127,8 +127,7 @@ export const settingsTutorialSteps: TutorialStep[] = [
   {
     id: 'account-settings',
     title: 'Account Settings',
-    description:
-      'Manage your profile, password, and account preferences here.',
+    description: 'Manage your profile, password, and account preferences here.',
     targetSelector: '[data-tutorial="account-tab"]',
     position: 'right',
   },
@@ -152,7 +151,7 @@ export const settingsTutorialSteps: TutorialStep[] = [
     id: 'display-settings',
     title: 'Display Settings',
     description:
-      'Customize theme, density, reading pane, and typography to make Imbox your own.',
+      'Customize theme, density, reading pane, and typography to make EaseMail your own.',
     targetSelector: '[data-tutorial="display-tab"]',
     position: 'right',
   },
@@ -223,4 +222,3 @@ export function resetAllTutorials(): void {
   );
   tutorialKeys.forEach((key) => localStorage.removeItem(key));
 }
-
