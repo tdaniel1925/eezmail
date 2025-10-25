@@ -160,7 +160,7 @@ export const UpdateContactSchema = z
 
     // Personal info
     birthday: z.string().datetime().optional().or(z.literal('')).nullable(),
-    notes: z.string().optional().or(z.literal('')),
+    notes: z.string().optional().or(z.literal('')).nullable(),
 
     // Avatar
     avatarUrl: z.string().url().optional().or(z.literal('')).nullable(),
@@ -185,7 +185,7 @@ export const UpdateContactSchema = z
       jobTitle: data.jobTitle || undefined,
       department: data.department || undefined,
       birthday: data.birthday || null,
-      notes: data.notes || undefined,
+      notes: data.notes || null,
       avatarUrl: data.avatarUrl || null,
       avatarProvider: data.avatarProvider || undefined,
     };
