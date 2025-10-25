@@ -6,14 +6,14 @@ import { sendEmail } from '@/lib/email/send-email';
 
 /**
  * Inngest Function: Send Scheduled Emails
- * Runs every minute to check for emails that need to be sent
+ * Runs every 5 minutes to check for emails that need to be sent
  */
 export const sendScheduledEmails = inngest.createFunction(
   {
     id: 'send-scheduled-emails',
     name: 'Send Scheduled Emails',
   },
-  { cron: '* * * * *' }, // Every minute
+  { cron: '*/5 * * * *' }, // Every 5 minutes
   async ({ step, logger }) => {
     const now = new Date();
 
