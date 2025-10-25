@@ -48,17 +48,22 @@ export async function searchEmailsHandler(
     const accountIds = userAccounts.map((acc) => acc.id);
 
     // Build query conditions
-    const conditions = [
-      sql`${emails.accountId} IN ${accountIds}`,
-    ];
+    const conditions = [];
+
+    // Filter by account IDs
+    if (accountIds.length === 1) {
+      conditions.push(eq(emails.accountId, accountIds[0]));
+    } else {
+      conditions.push(
+        or(...accountIds.map((id) => eq(emails.accountId, id)))!
+      );
+    }
 
     // Filter by sender
     if (args.from) {
       conditions.push(
         or(
-          like(emails.fromAddress, `%${args.from}%`),
-          like(sql`${emails.fromAddress}->>'email'`, `%${args.from}%`),
-          like(sql`${emails.fromAddress}->>'name'`, `%${args.from}%`)
+          like(sql`CAST(${emails.fromAddress} AS TEXT)`, `%${args.from}%`)
         )!
       );
     }
@@ -66,9 +71,7 @@ export async function searchEmailsHandler(
     // Filter by recipient
     if (args.to) {
       conditions.push(
-        or(
-          like(sql`${emails.toAddresses}::text`, `%${args.to}%`)
-        )!
+        like(sql`CAST(${emails.toAddresses} AS TEXT)`, `%${args.to}%`)
       );
     }
 
@@ -116,20 +119,26 @@ export async function searchEmailsHandler(
         isRead: emails.isRead,
         attachmentCount: emails.attachmentCount,
         folder: emails.folder,
-        bodyPreview: sql<string>`LEFT(${emails.bodyText}, 150)`.as('bodyPreview'),
+        bodyText: emails.bodyText,
       })
       .from(emails)
       .where(and(...conditions))
       .orderBy(desc(emails.receivedAt))
       .limit(args.limit || 10);
 
-    console.log(`✅ [Search Emails] Found: ${results.length} emails`);
+    // Format results with body preview
+    const formattedResults = results.map((email) => ({
+      ...email,
+      bodyPreview: email.bodyText ? email.bodyText.substring(0, 150) : '',
+    }));
+
+    console.log(`✅ [Search Emails] Found: ${formattedResults.length} emails`);
 
     return {
       success: true,
-      count: results.length,
-      emails: results,
-      message: `Found ${results.length} email${results.length !== 1 ? 's' : ''}${args.from ? ` from ${args.from}` : ''}`,
+      count: formattedResults.length,
+      emails: formattedResults,
+      message: `Found ${formattedResults.length} email${formattedResults.length !== 1 ? 's' : ''}${args.from ? ` from ${args.from}` : ''}${args.query ? ` matching "${args.query}"` : ''}`,
     };
   } catch (error) {
     console.error('❌ [Search Emails Error]:', error);
