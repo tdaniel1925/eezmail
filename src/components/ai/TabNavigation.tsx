@@ -1,6 +1,6 @@
 'use client';
 
-import { MessageSquare, Sparkles, Zap } from 'lucide-react';
+import { MessageSquare, Users, Zap } from 'lucide-react';
 import { TabType } from '@/stores/aiPanelStore';
 import { cn } from '@/lib/utils';
 
@@ -24,13 +24,13 @@ export function TabNavigation({
   const tabs: Tab[] = [
     {
       id: 'chat',
-      label: 'Chat',
+      label: 'Assistant',
       icon: MessageSquare,
     },
     {
-      id: 'insights',
-      label: 'Insights',
-      icon: Sparkles,
+      id: 'people',
+      label: 'People',
+      icon: Users,
     },
     {
       id: 'actions',

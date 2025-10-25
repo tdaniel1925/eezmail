@@ -46,6 +46,17 @@ const NotificationCenter = dynamic(
   }
 );
 
+const ProactiveSuggestions = dynamic(
+  () =>
+    import('@/components/notifications/ProactiveSuggestions').then(
+      (mod) => mod.ProactiveSuggestions
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -110,6 +121,9 @@ export default async function DashboardLayout({
 
               {/* Notification Center Panel */}
               <NotificationCenter />
+
+              {/* Proactive Suggestions (AI Insights) */}
+              <ProactiveSuggestions />
             </div>
           </ReplyLaterProvider>
         </KeyboardShortcutsProvider>

@@ -302,7 +302,7 @@ export async function getArchiveCount(): Promise<number> {
 }
 
 /**
- * Get sent count (total sent emails)
+ * Get sent count (TOTAL sent emails - not filtered by read/unread)
  */
 export async function getSentCount(): Promise<number> {
   try {
@@ -315,7 +315,7 @@ export async function getSentCount(): Promise<number> {
       .where(
         and(
           inArray(emails.accountId, accountIds),
-          eq(emails.folderName, 'sent'),
+          sql`LOWER(${emails.folderName}) LIKE '%sent%'`, // Match any folder with 'sent' in name
           eq(emails.isTrashed, false)
         )
       );

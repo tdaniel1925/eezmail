@@ -6,6 +6,8 @@
 import { db } from '@/lib/db';
 import { emails, emailAccounts, contacts } from '@/db/schema';
 import { eq, and, or, like, gte, lte, desc, sql } from 'drizzle-orm';
+import { sendEmailAction } from '@/lib/chat/actions';
+import { sendContactSMS } from '@/lib/contacts/communication-actions';
 
 // ============================================================================
 // EMAIL OPERATIONS
@@ -54,9 +56,7 @@ export async function searchEmailsHandler(
     if (accountIds.length === 1) {
       conditions.push(eq(emails.accountId, accountIds[0]));
     } else {
-      conditions.push(
-        or(...accountIds.map((id) => eq(emails.accountId, id)))!
-      );
+      conditions.push(or(...accountIds.map((id) => eq(emails.accountId, id)))!);
     }
 
     // Filter by sender - search in both name and email fields of JSONB
@@ -161,12 +161,113 @@ export async function sendEmailHandler(
     bcc?: string;
   }
 ) {
-  // TODO: Implement email sending
-  return {
-    success: false,
-    error: 'Not yet implemented',
-    message: 'Email sending is coming soon! Use the compose button for now.',
-  };
+  try {
+    console.log(`📧 [Send Email] User: ${userId}`, args);
+
+    // Get user's active email account
+    const accounts = await db.query.emailAccounts.findMany({
+      where: eq(emailAccounts.userId, userId),
+    });
+
+    const activeAccount = accounts.find((a) => a.status === 'active');
+    if (!activeAccount) {
+      return {
+        success: false,
+        error: 'No active email account',
+        message:
+          'Please connect an email account before sending. Go to Settings > Email Accounts.',
+      };
+    }
+
+    // Call existing sendEmailAction
+    const result = await sendEmailAction({
+      to: args.to,
+      subject: args.subject,
+      body: args.body,
+      cc: args.cc,
+      bcc: args.bcc,
+      accountId: activeAccount.id,
+      isHtml: true,
+    });
+
+    if (result.success) {
+      console.log(`✅ [Send Email] Email sent successfully to ${args.to}`);
+      return {
+        success: true,
+        message: `Email sent successfully to ${args.to}! 📧`,
+      };
+    } else {
+      console.error(`❌ [Send Email] Failed:`, result.error);
+      return {
+        success: false,
+        error: result.error,
+        message: `Failed to send email: ${result.error}`,
+      };
+    }
+  } catch (error) {
+    console.error('❌ [Send Email Error]:', error);
+    return {
+      success: false,
+      error: 'Failed to send email',
+      message: 'An error occurred while sending the email. Please try again.',
+    };
+  }
+}
+
+/**
+ * Generate an email draft for user review
+ */
+export async function generateDraftHandler(
+  userId: string,
+  args: {
+    to: string;
+    subject: string;
+    body: string;
+    cc?: string;
+    bcc?: string;
+  }
+) {
+  try {
+    console.log(`📝 [Generate Draft] User: ${userId}`, args);
+
+    // Get user's active email account
+    const accounts = await db.query.emailAccounts.findMany({
+      where: eq(emailAccounts.userId, userId),
+    });
+
+    const activeAccount = accounts.find((a) => a.status === 'active');
+    if (!activeAccount) {
+      return {
+        success: false,
+        error: 'No active email account',
+        message:
+          'Please connect an email account before creating drafts. Go to Settings > Email Accounts.',
+      };
+    }
+
+    // Return draft data for the composer
+    return {
+      success: true,
+      message: 'Draft generated successfully',
+      draft: {
+        to: args.to,
+        subject: args.subject,
+        body: args.body,
+        cc: args.cc || '',
+        bcc: args.bcc || '',
+        accountId: activeAccount.id,
+        fromEmail: activeAccount.emailAddress,
+      },
+    };
+  } catch (error) {
+    console.error('❌ [Generate Draft Error]:', error);
+    return {
+      success: false,
+      error: 'Failed to generate draft',
+      message:
+        'An error occurred while generating the draft. Please try again.',
+    };
+  }
 }
 
 /**
@@ -278,15 +379,100 @@ export async function markReadUnreadHandler(
 }
 
 // ============================================================================
-// CONTACT OPERATIONS (Stubs for now)
+// CONTACT OPERATIONS
 // ============================================================================
 
-export async function searchContactsHandler(userId: string, args: any) {
-  return {
-    success: false,
-    error: 'Not yet implemented',
-    message: 'Contact search is coming soon!',
-  };
+/**
+ * Search for contacts
+ */
+export async function searchContactsHandler(
+  userId: string,
+  args: {
+    query?: string;
+    email?: string;
+    name?: string;
+    limit?: number;
+  }
+) {
+  try {
+    console.log(`🔍 [Search Contacts] User: ${userId}`, args);
+
+    // Get user's email accounts
+    const userAccounts = await db
+      .select()
+      .from(emailAccounts)
+      .where(eq(emailAccounts.userId, userId));
+
+    if (userAccounts.length === 0) {
+      return {
+        success: false,
+        error: 'No email accounts found',
+        message: 'Please connect an email account first.',
+      };
+    }
+
+    const accountIds = userAccounts.map((acc) => acc.id);
+
+    // Build query conditions
+    const conditions = [];
+
+    // Filter by account IDs
+    if (accountIds.length === 1) {
+      conditions.push(eq(contacts.accountId, accountIds[0]));
+    } else {
+      conditions.push(
+        or(...accountIds.map((id) => eq(contacts.accountId, id)))!
+      );
+    }
+
+    // Search by query (name or email)
+    if (args.query) {
+      conditions.push(
+        or(
+          like(contacts.name, `%${args.query}%`),
+          like(contacts.email, `%${args.query}%`)
+        )!
+      );
+    }
+
+    // Search by specific email
+    if (args.email) {
+      conditions.push(like(contacts.email, `%${args.email}%`));
+    }
+
+    // Search by specific name
+    if (args.name) {
+      conditions.push(like(contacts.name, `%${args.name}%`));
+    }
+
+    // Execute query
+    const results = await db
+      .select()
+      .from(contacts)
+      .where(and(...conditions))
+      .limit(args.limit || 10);
+
+    console.log(`✅ [Search Contacts] Found: ${results.length} contacts`);
+
+    return {
+      success: true,
+      count: results.length,
+      contacts: results.map((contact) => ({
+        id: contact.id,
+        name: contact.name,
+        email: contact.email,
+        lastContactedAt: contact.lastContactedAt,
+      })),
+      message: `Found ${results.length} contact${results.length !== 1 ? 's' : ''}${args.query ? ` matching "${args.query}"` : ''}`,
+    };
+  } catch (error) {
+    console.error('❌ [Search Contacts Error]:', error);
+    return {
+      success: false,
+      error: 'Failed to search contacts',
+      message: 'An error occurred while searching contacts. Please try again.',
+    };
+  }
 }
 
 export async function createContactHandler(userId: string, args: any) {
@@ -297,5 +483,68 @@ export async function createContactHandler(userId: string, args: any) {
   };
 }
 
-// ... Add more handlers as needed
+// ============================================================================
+// COMMUNICATION OPERATIONS
+// ============================================================================
 
+/**
+ * Send SMS to a contact
+ */
+export async function sendSMSHandler(
+  userId: string,
+  args: {
+    recipient: string; // contact name, email, or phone number
+    message: string;
+  }
+) {
+  try {
+    console.log(`📱 [Send SMS] User: ${userId}`, args);
+
+    // First, try to find the contact by name or email
+    const contact = await db.query.contacts.findFirst({
+      where: or(
+        like(contacts.name, `%${args.recipient}%`),
+        like(contacts.email, `%${args.recipient}%`)
+      ),
+    });
+
+    if (!contact) {
+      return {
+        success: false,
+        error: 'Contact not found',
+        message: `I couldn't find a contact matching "${args.recipient}". Please check the name and try again, or add them as a contact first.`,
+      };
+    }
+
+    // Use the existing sendContactSMS function
+    const result = await sendContactSMS(contact.id, args.message);
+
+    if (result.success) {
+      return {
+        success: true,
+        message: `✅ SMS sent successfully to ${contact.name || args.recipient}!`,
+        contact: {
+          id: contact.id,
+          name: contact.name,
+          email: contact.email,
+        },
+      };
+    } else {
+      return {
+        success: false,
+        error: result.error,
+        message: `❌ Failed to send SMS: ${result.error}`,
+      };
+    }
+  } catch (error) {
+    console.error('❌ [Send SMS Error]:', error);
+    return {
+      success: false,
+      error: 'Failed to send SMS',
+      message:
+        'An error occurred while sending the SMS. Please try again or use the contact card.',
+    };
+  }
+}
+
+// ... Add more handlers as needed

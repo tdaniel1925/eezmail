@@ -105,9 +105,9 @@ export function WritingCoach({ content, onClose }: WritingCoachProps) {
             </Button>
           )}
         </div>
-        <div className="animate-pulse space-y-2">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
+          <span>Reading and thinking...</span>
         </div>
       </Card>
     );

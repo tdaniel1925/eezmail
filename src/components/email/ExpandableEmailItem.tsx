@@ -8,18 +8,17 @@ import {
   Archive,
   Clock,
   Reply,
-  Sparkles,
   Forward,
   CheckSquare,
   Square,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { addHours, addDays } from 'date-fns';
 import { useReplyLater } from '@/contexts/ReplyLaterContext';
 import { toast } from 'sonner';
 import { AISummaryBox } from './AISummaryBox';
-import { AIAnalysisModal } from './AIAnalysisModal';
 import { ContextualActions } from './ContextualActions';
 import { ThreadBadge } from './ThreadBadge';
 import { ThreadTimelineModal } from './ThreadTimelineModal';
@@ -55,7 +54,6 @@ export function ExpandableEmailItem({
   const { setCurrentEmail } = useChatbotContext();
   const { addEmail } = useReplyLater();
   const [isRead, setIsRead] = useState(email.isRead ?? false);
-  const [showAIModal, setShowAIModal] = useState(false);
   const [showThreadModal, setShowThreadModal] = useState(false);
   const [threadCount, setThreadCount] = useState<number>(0);
   const [showReplyLaterPicker, setShowReplyLaterPicker] = useState(false);
@@ -463,7 +461,7 @@ export function ExpandableEmailItem({
 
         {/* Email Info */}
         <div className="flex-1 min-w-0">
-          {/* Line 1: Sender + AI Icon + Thread Badge + Time */}
+          {/* Line 1: Sender + Thread Badge + Time */}
           <div className="flex items-baseline gap-2 mb-0.5">
             <div className="flex items-center gap-1.5">
               <span
@@ -475,19 +473,6 @@ export function ExpandableEmailItem({
               >
                 {senderName}
               </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAIModal(true);
-                }}
-                className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors group"
-                title="AI Analysis"
-              >
-                <Sparkles
-                  size={14}
-                  className="text-blue-500 dark:text-blue-400 group-hover:text-blue-600 dark:group-hover:text-blue-300"
-                />
-              </button>
               {threadCount > 1 && (
                 <ThreadBadge
                   count={threadCount}
@@ -831,13 +816,6 @@ export function ExpandableEmailItem({
           </div>
         </div>
       )}
-
-      {/* AI Analysis Modal */}
-      <AIAnalysisModal
-        email={email}
-        isOpen={showAIModal}
-        onClose={() => setShowAIModal(false)}
-      />
 
       {/* Thread Timeline Modal */}
       {email.threadId && (

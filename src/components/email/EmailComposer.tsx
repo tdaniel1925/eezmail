@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { toast } from '@/lib/toast';
 import { sendEmailAction } from '@/lib/chat/actions';
 import { EmailComposerModal } from './EmailComposerModal';
 import { saveDraft, deleteDraft } from '@/lib/email/draft-actions';
@@ -132,6 +131,10 @@ export function EmailComposer({
   const [showSendMenu, setShowSendMenu] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState<string>(''); // Show real-time transcript
 
+  // Writing Coach state - auto-show for manual compose/reply
+  const [showWritingCoach, setShowWritingCoach] = useState(false);
+  const [coachWidth, setCoachWidth] = useState(256); // Default 256px (w-64)
+
   // Voice message state
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [voiceMessage, setVoiceMessage] = useState<{
@@ -242,6 +245,21 @@ export function EmailComposer({
             // Set subject (use AI subject if available)
             setSubject(aiReplyData?.subject || result.data.subject);
 
+            // Fetch user's signature
+            let signatureHtml = '';
+            try {
+              const sigResponse = await fetch('/api/email/signature');
+              if (sigResponse.ok) {
+                const sigData = await sigResponse.json();
+                if (sigData.signature) {
+                  signatureHtml = `<p><br></p><p>${sigData.signature}</p>`;
+                }
+              }
+            } catch (sigError) {
+              console.error('Failed to fetch signature:', sigError);
+              // Continue without signature
+            }
+
             // Combine AI reply + quoted text
             let finalBody = result.data.body;
             if (aiReplyData) {
@@ -321,12 +339,15 @@ export function EmailComposer({
               // Join paragraphs with empty <p></p> tags for visual spacing
               const aiReplyHtml = htmlParts.join('<p></p>');
 
-              // Format: AI reply HTML + quoted text (already in HTML)
-              finalBody = `${aiReplyHtml}${result.data.body}`;
+              // Format: AI reply HTML + signature + quoted text
+              finalBody = `${aiReplyHtml}${signatureHtml}${result.data.body}`;
               console.log(
                 '✅ Pre-filled composer with AI reply above quoted text'
               );
               console.log('📝 Generated HTML paragraphs:', htmlParts.length);
+            } else {
+              // No AI reply: Add 3 blank lines at the top for user to type + signature + quoted text
+              finalBody = `<p><br></p><p><br></p><p><br></p>${signatureHtml}${result.data.body}`;
             }
 
             setBody(finalBody);
@@ -334,11 +355,10 @@ export function EmailComposer({
               editorRef.current.commands.setContent(finalBody);
             }
           } else {
-            toast.error(result.error || 'Failed to load email');
+            console.error('Failed to load email:', result.error);
           }
         } catch (error) {
           console.error('Error loading email for reply:', error);
-          toast.error('Failed to load email');
         } finally {
           setIsLoadingEmailData(false);
         }
@@ -357,11 +377,10 @@ export function EmailComposer({
               editorRef.current.commands.setContent(result.data.body);
             }
           } else {
-            toast.error(result.error || 'Failed to load email');
+            console.error('Failed to load email:', result.error);
           }
         } catch (error) {
           console.error('Error loading email for forward:', error);
-          toast.error('Failed to load email');
         } finally {
           setIsLoadingEmailData(false);
         }
@@ -371,10 +390,32 @@ export function EmailComposer({
     fetchEmailData();
   }, [isOpen, replyToEmailId, forwardEmailId]);
 
+  // Auto-show Writing Coach for manual compose/reply (not AI-generated) - COMMENTED OUT
+  /* useEffect(() => {
+    if (!isOpen) {
+      setShowWritingCoach(false);
+      return;
+    }
+
+    // Show Writing Coach if:
+    // - Mode is compose, reply, or forward
+    // - No AI content was generated (body is empty or very short)
+    // - Not dictating or using AI tools
+    const shouldShow =
+      (mode === 'compose' || mode === 'reply' || mode === 'forward') &&
+      body.trim().length < 50 && // Empty or very short (not AI-generated)
+      !isAIDraft &&
+      !isDictating &&
+      !isAIWriting &&
+      !isRemixing;
+
+    setShowWritingCoach(shouldShow);
+  }, [isOpen, mode, body, isAIDraft, isDictating, isAIWriting, isRemixing]); */
+
   // Handler functions (defined before useEffects that use them)
   const handleSend = useCallback(async (): Promise<void> => {
     if (!to || !subject || !body) {
-      toast.warning('Please fill in all required fields (To, Subject, Body)');
+      console.warn('Missing required fields: to, subject, or body');
       return;
     }
 
@@ -481,7 +522,7 @@ export function EmailComposer({
         setDraftId(null);
         setSaveStatus('idle');
 
-        toast.success(
+        console.log(
           `Email ${mode === 'reply' ? 'reply' : 'sent'} successfully!`
         );
 
@@ -492,11 +533,10 @@ export function EmailComposer({
 
         onClose();
       } else {
-        toast.error(result.error || 'Failed to send email');
+        console.error('Failed to send email:', result.error);
       }
     } catch (error) {
       console.error('Failed to send email:', error);
-      toast.error('Failed to send email. Please try again.');
     } finally {
       setIsSending(false);
     }
@@ -550,7 +590,7 @@ export function EmailComposer({
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault();
         // Draft is auto-saved, just show a toast
-        toast.success('Draft saved');
+        console.log('Draft saved');
       }
 
       // Escape: Close composer (with confirmation if has content)
@@ -627,13 +667,13 @@ export function EmailComposer({
           setIsDictating(false);
 
           if (event.error === 'not-allowed') {
-            toast.error(
+            console.error(
               'Microphone permission denied. Please allow microphone access.'
             );
           } else if (event.error === 'no-speech') {
-            toast.warning('No speech detected. Try again.');
+            console.warn('No speech detected. Try again.');
           } else {
-            toast.error(`Dictation error: ${event.error}`);
+            console.error(`Dictation error: ${event.error}`);
           }
         };
 
@@ -775,7 +815,7 @@ export function EmailComposer({
 
   const handleSchedule = async (scheduledFor: Date): Promise<void> => {
     if (!to || !subject || !body) {
-      toast.warning('Please fill in all required fields (To, Subject, Body)');
+      console.warn('Missing required fields: to, subject, or body');
       return;
     }
 
@@ -824,13 +864,12 @@ export function EmailComposer({
           hour12: true,
         });
 
-        toast.success(`Email scheduled for ${formattedDate}`);
+        console.log(`Email scheduled for ${formattedDate}`);
       } else {
-        toast.error(result.error || 'Failed to schedule email');
+        console.error('Failed to schedule email:', result.error);
       }
     } catch (error) {
       console.error('Failed to schedule email:', error);
-      toast.error('Failed to schedule email. Please try again.');
     } finally {
       setIsSending(false);
     }
@@ -838,7 +877,7 @@ export function EmailComposer({
 
   const handleRemix = async (): Promise<void> => {
     if (!body.trim()) {
-      toast.warning('Please write some text to remix');
+      console.warn('Please write some text to remix');
       return;
     }
 
@@ -879,11 +918,10 @@ export function EmailComposer({
           editorRef.current.commands.setContent(htmlContent);
         }
         setBody(htmlContent || data.rewrittenText);
-        toast.success('✨ Text remixed! Fixed spelling, grammar & structure');
+        console.log('✨ Text remixed! Fixed spelling, grammar & structure');
       }
     } catch (error) {
       console.error('Error remixing text:', error);
-      toast.error('Failed to remix text. Please try again.');
     } finally {
       setIsRemixing(false);
     }
@@ -891,7 +929,7 @@ export function EmailComposer({
 
   const handleDictationToggle = async (): Promise<void> => {
     if (!dictationRecognitionRef.current) {
-      toast.error(
+      console.error(
         'Voice dictation not supported in this browser. Try Chrome or Edge.'
       );
       return;
@@ -912,12 +950,12 @@ export function EmailComposer({
         // Start listening
         dictationRecognitionRef.current.start();
         setIsDictating(true);
-        toast.success(
+        console.log(
           "🎤 Start speaking... I'll stop automatically when you're done"
         );
       } catch (error) {
         console.error('Error starting dictation:', error);
-        toast.error(
+        console.error(
           'Failed to start voice input. Please check microphone permissions.'
         );
         setIsDictating(false);
@@ -966,10 +1004,9 @@ export function EmailComposer({
           format: data.format,
         });
 
-        toast.success('Voice message recorded!');
+        console.log('Voice message recorded!');
       } catch (error) {
         console.error('Error uploading voice message:', error);
-        toast.error('Failed to upload voice message');
       } finally {
         setIsUploadingVoice(false);
       }
@@ -1036,7 +1073,7 @@ export function EmailComposer({
             voiceStreamRef.current.getTracks().forEach((track) => track.stop());
           }
 
-          toast.success('Voice message recorded!');
+          console.log('Voice message recorded!');
         };
 
         mediaRecorder.start(100);
@@ -1055,10 +1092,10 @@ export function EmailComposer({
           });
         }, 1000);
 
-        toast.success('🎤 Recording voice message...');
+        console.log('🎤 Recording voice message...');
       } catch (error) {
         console.error('Error starting voice recording:', error);
-        toast.error('Failed to access microphone. Please check permissions.');
+        console.error('Failed to access microphone. Please check permissions.');
       }
     }
   }, [isRecordingVoiceMessage, voiceRecordingDuration]);
@@ -1163,7 +1200,7 @@ export function EmailComposer({
     setLiveTranscript('');
 
     if (transcribedText.length > 5) {
-      toast.info('✨ AI is writing your email from voice...');
+      console.log('✨ AI is writing your email from voice...');
       setIsAIWriting(true);
 
       try {
@@ -1199,20 +1236,20 @@ export function EmailComposer({
           if (data.subject && !subject) {
             setSubject(data.subject);
           }
-          toast.success('📧 Email written from your voice!');
+          console.log('📧 Email written from your voice!');
         } else {
-          toast.error('Failed to generate email');
+          console.error('Failed to generate email');
         }
       } catch (error) {
         console.error('Error generating email:', error);
-        toast.error('Failed to write email from voice. Try typing manually.');
+        console.error('Failed to write email from voice. Try typing manually.');
       } finally {
         setIsAIWriting(false);
         dictationTextRef.current = '';
         isProcessingDictationRef.current = false; // Reset flag
       }
     } else {
-      toast.warning(
+      console.warn(
         'Not enough words captured. Speak for at least a few seconds.'
       );
       dictationTextRef.current = '';
@@ -1223,21 +1260,21 @@ export function EmailComposer({
   // AI Writer Button: Expand brief text into full email
   const handleAIWriter = async (): Promise<void> => {
     if (!body.trim()) {
-      toast.warning('Please write a brief description of your email first');
+      console.warn('Please write a brief description of your email first');
       return;
     }
 
     const plainText = body.replace(/<[^>]*>/g, '').trim();
 
     if (plainText.length < 10) {
-      toast.warning('Please write at least a few words for AI to work with');
+      console.warn('Please write at least a few words for AI to work with');
       return;
     }
 
     setIsAIWriting(true);
 
     try {
-      toast.info('✨ AI is expanding your text into a full email...');
+      console.log('✨ AI is expanding your text into a full email...');
 
       const response = await fetch('/api/ai/compose-suggest', {
         method: 'POST',
@@ -1275,13 +1312,13 @@ export function EmailComposer({
         if (data.subject && !subject) {
           setSubject(data.subject);
         }
-        toast.success('✨ AI expanded your text into a full email!');
+        console.log('✨ AI expanded your text into a full email!');
       } else {
-        toast.error('Failed to generate email');
+        console.error('Failed to generate email');
       }
     } catch (error) {
       console.error('Error with AI Writer:', error);
-      toast.error('Failed to expand text. Try AI Remix to polish instead.');
+      console.error('Failed to expand text. Try AI Remix to polish instead.');
     } finally {
       setIsAIWriting(false);
     }
@@ -1379,7 +1416,7 @@ export function EmailComposer({
               : att
           )
         );
-        toast.error(`Failed to upload ${file.name}`);
+        console.error(`Failed to upload ${file.name}`);
       }
     }
 
@@ -1415,7 +1452,7 @@ export function EmailComposer({
   ): void => {
     setSubject(templateSubject);
     setBody(templateBody);
-    toast.success('Template applied successfully');
+    console.log('Template applied successfully');
   };
 
   if (!isOpen || !mounted) return null;
@@ -1482,6 +1519,11 @@ export function EmailComposer({
       isPlayingVoiceMessage={isPlayingVoiceMessage}
       onPlayVoiceMessage={handlePlayVoiceMessage}
       handleVoiceMessageSilenceDetected={handleVoiceMessageSilenceDetected}
+      // Writing Coach props
+      showWritingCoach={showWritingCoach}
+      setShowWritingCoach={setShowWritingCoach}
+      coachWidth={coachWidth}
+      setCoachWidth={setCoachWidth}
     />
   );
 }

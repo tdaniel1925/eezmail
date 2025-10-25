@@ -8,7 +8,7 @@ import { PanelHeader } from './PanelHeader';
 import { PanelSettingsModal } from './PanelSettingsModal';
 import { TabNavigation } from './TabNavigation';
 import { ChatTab } from './tabs/ChatTab';
-import { InsightsTab } from './tabs/InsightsTab';
+import { PeopleTab } from './tabs/PeopleTab';
 import { ActionsTab } from './tabs/ActionsTab';
 
 export function AIAssistantPanel(): JSX.Element {
@@ -109,13 +109,13 @@ export function AIAssistantPanel(): JSX.Element {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'chat':
-        return <ChatTab currentEmail={currentEmail} />;
-      case 'insights':
-        return <InsightsTab currentEmail={currentEmail} />;
+        return <ChatTab />;
+      case 'people':
+        return <PeopleTab />;
       case 'actions':
         return <ActionsTab />;
       default:
-        return <ChatTab currentEmail={currentEmail} />;
+        return <ChatTab />;
     }
   };
 

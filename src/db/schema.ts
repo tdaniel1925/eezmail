@@ -232,11 +232,11 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
   avatarUrl: text('avatar_url'),
-  
+
   // Account type and organization
   accountType: accountTypeEnum('account_type').default('individual'),
   organizationId: uuid('organization_id'),
-  
+
   subscriptionTier: subscriptionTierEnum('subscription_tier')
     .default('free')
     .notNull(),
@@ -244,19 +244,21 @@ export const users = pgTable('users', {
   paymentProcessor: paymentProcessorEnum('payment_processor'),
   stripeCustomerId: text('stripe_customer_id'),
   squareCustomerId: text('square_customer_id'),
-  
+
   // Billing balances (for individual accounts)
-  smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default('0.00'),
+  smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default(
+    '0.00'
+  ),
   aiBalance: decimal('ai_balance', { precision: 10, scale: 2 }).default('0.00'),
-  
+
   // Trial tracking
   isTrial: boolean('is_trial').default(false),
   trialExpiresAt: timestamp('trial_expires_at'),
-  
+
   // Usage tracking
   smsSentCount: integer('sms_sent_count').default(0),
   aiTokensUsed: integer('ai_tokens_used').default(0),
-  
+
   voiceSettings: jsonb('voice_settings').$type<{
     recordingQuality: 'high' | 'medium' | 'low';
     maxDuration: number;
@@ -2681,6 +2683,76 @@ export type OnboardingTutorial = typeof onboardingTutorials.$inferSelect;
 export type NewOnboardingTutorial = typeof onboardingTutorials.$inferInsert;
 
 // ============================================================================
+// PROACTIVE ALERTS TABLE
+// ============================================================================
+
+export const proactiveAlertTypeEnum = pgEnum('proactive_alert_type', [
+  'vip_email',
+  'overdue_response',
+  'meeting_prep',
+  'urgent_keyword',
+  'follow_up_needed',
+  'deadline_approaching',
+]);
+
+export const proactiveAlerts = pgTable(
+  'proactive_alerts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Alert details
+    type: proactiveAlertTypeEnum('type').notNull(),
+    priority: priorityEnum('priority').default('medium').notNull(),
+    title: text('title').notNull(),
+    message: text('message').notNull(),
+
+    // Related entities
+    emailId: uuid('email_id').references(() => emails.id, {
+      onDelete: 'cascade',
+    }),
+    contactId: uuid('contact_id').references(() => contacts.id, {
+      onDelete: 'cascade',
+    }),
+    calendarEventId: uuid('calendar_event_id').references(
+      () => calendarEvents.id,
+      { onDelete: 'cascade' }
+    ),
+
+    // Action link
+    actionUrl: text('action_url'),
+    actionLabel: text('action_label'),
+
+    // Metadata
+    metadata: jsonb('metadata').default({}).notNull(),
+
+    // Status
+    dismissed: boolean('dismissed').default(false).notNull(),
+    dismissedAt: timestamp('dismissed_at'),
+    actedUpon: boolean('acted_upon').default(false).notNull(),
+    actedUponAt: timestamp('acted_upon_at'),
+
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('proactive_alerts_user_id_idx').on(table.userId),
+    typeIdx: index('proactive_alerts_type_idx').on(table.type),
+    priorityIdx: index('proactive_alerts_priority_idx').on(table.priority),
+    dismissedIdx: index('proactive_alerts_dismissed_idx').on(table.dismissed),
+    createdAtIdx: index('proactive_alerts_created_at_idx').on(table.createdAt),
+  })
+);
+
+export type ProactiveAlert = typeof proactiveAlerts.$inferSelect;
+export type NewProactiveAlert = typeof proactiveAlerts.$inferInsert;
+export type ProactiveAlertType =
+  (typeof proactiveAlertTypeEnum.enumValues)[number];
+
+// ============================================================================
 // TABLE RELATIONS
 // Define relationships between tables for Drizzle's relational queries
 // ============================================================================
@@ -2868,21 +2940,28 @@ export const organizations = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     name: varchar('name', { length: 255 }).notNull(),
     slug: varchar('slug', { length: 255 }).unique(),
-    
+
     // Billing
     pricingTier: varchar('pricing_tier', { length: 50 }).default('standard'),
-    smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default('0.00'),
-    aiBalance: decimal('ai_balance', { precision: 10, scale: 2 }).default('0.00'),
-    
+    smsBalance: decimal('sms_balance', { precision: 10, scale: 2 }).default(
+      '0.00'
+    ),
+    aiBalance: decimal('ai_balance', { precision: 10, scale: 2 }).default(
+      '0.00'
+    ),
+
     // Trial
     isTrial: boolean('is_trial').default(false),
-    trialCreditsUsed: decimal('trial_credits_used', { precision: 10, scale: 2 }).default('0.00'),
+    trialCreditsUsed: decimal('trial_credits_used', {
+      precision: 10,
+      scale: 2,
+    }).default('0.00'),
     trialExpiresAt: timestamp('trial_expires_at'),
-    
+
     // Usage tracking
     smsSentCount: integer('sms_sent_count').default(0),
     aiTokensUsed: integer('ai_tokens_used').default(0),
-    
+
     // Metadata
     settings: jsonb('settings').default('{}'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -3019,7 +3098,10 @@ export const aiPricingOverrides = pgTable(
       onDelete: 'cascade',
     }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-    ratePer1kTokens: decimal('rate_per_1k_tokens', { precision: 8, scale: 6 }).notNull(),
+    ratePer1kTokens: decimal('rate_per_1k_tokens', {
+      precision: 8,
+      scale: 6,
+    }).notNull(),
     effectiveFrom: timestamp('effective_from').defaultNow().notNull(),
     effectiveUntil: timestamp('effective_until'),
     reason: text('reason'),
@@ -3041,7 +3123,10 @@ export const trialCredits = pgTable(
       onDelete: 'cascade',
     }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-    creditAmount: decimal('credit_amount', { precision: 10, scale: 2 }).notNull(),
+    creditAmount: decimal('credit_amount', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
     durationDays: integer('duration_days').notNull(),
     status: varchar('status', { length: 20 }).default('active'),
     startedAt: timestamp('started_at').defaultNow().notNull(),
@@ -3067,7 +3152,10 @@ export const aiTrialCredits = pgTable(
       onDelete: 'cascade',
     }),
     userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
-    creditAmount: decimal('credit_amount', { precision: 10, scale: 2 }).notNull(),
+    creditAmount: decimal('credit_amount', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
     tokensIncluded: integer('tokens_included'),
     durationDays: integer('duration_days').notNull(),
     status: varchar('status', { length: 20 }).default('active'),
@@ -3187,7 +3275,9 @@ export const communicationLogs = pgTable(
     orgIdx: index('comm_logs_org_idx').on(table.organizationId),
     typeIdx: index('comm_logs_type_idx').on(table.type),
     timestampIdx: index('comm_logs_timestamp_idx').on(table.timestamp),
-    billingStatusIdx: index('comm_logs_billing_status_idx').on(table.billingStatus),
+    billingStatusIdx: index('comm_logs_billing_status_idx').on(
+      table.billingStatus
+    ),
   })
 );
 

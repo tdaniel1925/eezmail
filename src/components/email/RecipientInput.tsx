@@ -46,8 +46,10 @@ export function RecipientInput({
   // Search contacts when input changes
   useEffect(() => {
     if (!inputValue.trim()) {
-      // Show recent contacts when input is empty
-      performSearch('');
+      // Don't show suggestions when input is empty
+      setContacts([]);
+      setGroups([]);
+      setShowDropdown(false);
       return;
     }
 
@@ -217,7 +219,6 @@ export function RecipientInput({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setShowDropdown(true)}
           placeholder={recipients.length === 0 ? placeholder : ''}
           className="flex-1 min-w-[200px] border-none bg-transparent text-sm focus:outline-none focus:ring-0 dark:text-white"
         />
@@ -255,7 +256,8 @@ export function RecipientInput({
                       {group.name}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {group.memberCount} member{group.memberCount !== 1 ? 's' : ''}
+                      {group.memberCount} member
+                      {group.memberCount !== 1 ? 's' : ''}
                     </div>
                   </div>
                 </button>
@@ -315,4 +317,3 @@ export function RecipientInput({
     </div>
   );
 }
-

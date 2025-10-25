@@ -30,37 +30,37 @@ export async function GET(request: NextRequest) {
         SELECT id FROM email_accounts WHERE user_id = ${user.id}
       )
       SELECT
-        -- Inbox count
-        COUNT(*) FILTER (WHERE email_category = 'inbox' AND is_trashed = FALSE) as inbox_count,
+        -- Inbox count (UNREAD only)
+        COUNT(*) FILTER (WHERE email_category = 'inbox' AND is_trashed = FALSE AND is_read = FALSE) as inbox_count,
         
-        -- Sent emails (all folders containing 'sent')
+        -- Sent emails (TOTAL count - all sent emails)
         COUNT(*) FILTER (WHERE LOWER(folder_name) LIKE '%sent%' AND is_trashed = FALSE) as sent_count,
         
-        -- Drafts
+        -- Drafts (TOTAL count)
         COUNT(*) FILTER (WHERE LOWER(folder_name) LIKE '%draft%' AND is_trashed = FALSE) as drafts_count,
         
-        -- Starred
-        COUNT(*) FILTER (WHERE is_starred = TRUE AND is_trashed = FALSE) as starred_count,
+        -- Starred (UNREAD only)
+        COUNT(*) FILTER (WHERE is_starred = TRUE AND is_trashed = FALSE AND is_read = FALSE) as starred_count,
         
-        -- Unscreened (Hey-style screening)
-        COUNT(*) FILTER (WHERE email_category = 'unscreened' AND is_trashed = FALSE) as unscreened_count,
+        -- Unscreened (UNREAD only)
+        COUNT(*) FILTER (WHERE email_category = 'unscreened' AND is_trashed = FALSE AND is_read = FALSE) as unscreened_count,
         
-        -- Newsfeed/Feed
-        COUNT(*) FILTER (WHERE email_category = 'newsfeed' AND is_trashed = FALSE) as newsfeed_count,
+        -- Newsfeed/Feed (UNREAD only)
+        COUNT(*) FILTER (WHERE email_category = 'newsfeed' AND is_trashed = FALSE AND is_read = FALSE) as newsfeed_count,
         
-        -- Receipts/Paper Trail
-        COUNT(*) FILTER (WHERE email_category = 'receipts' AND is_trashed = FALSE) as receipts_count,
+        -- Receipts/Paper Trail (UNREAD only)
+        COUNT(*) FILTER (WHERE email_category = 'receipts' AND is_trashed = FALSE AND is_read = FALSE) as receipts_count,
         
-        -- Spam
-        COUNT(*) FILTER (WHERE email_category = 'spam' AND is_trashed = FALSE) as spam_count,
+        -- Spam (UNREAD only)
+        COUNT(*) FILTER (WHERE email_category = 'spam' AND is_trashed = FALSE AND is_read = FALSE) as spam_count,
         
-        -- Trash
+        -- Trash (TOTAL count)
         COUNT(*) FILTER (WHERE is_trashed = TRUE) as trash_count,
         
-        -- All Mail
-        COUNT(*) FILTER (WHERE is_trashed = FALSE) as all_mail_count,
+        -- All Mail / Unified Inbox (UNREAD only)
+        COUNT(*) FILTER (WHERE is_trashed = FALSE AND is_read = FALSE AND is_draft = FALSE) as all_mail_count,
         
-        -- Unread count (for badge)
+        -- Unread count (for global badge)
         COUNT(*) FILTER (WHERE is_read = FALSE AND is_trashed = FALSE) as unread_count,
         
         -- Reply Queue (emails marked for reply)

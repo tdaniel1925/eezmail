@@ -36,6 +36,10 @@ interface UnifiedHeaderProps {
   onRefresh?: () => void;
   isRefreshing?: boolean;
   className?: string;
+  // Search props
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
+  searchPlaceholder?: string;
 }
 
 export function UnifiedHeader({
@@ -50,6 +54,9 @@ export function UnifiedHeader({
   onRefresh,
   isRefreshing = false,
   className,
+  searchQuery = '',
+  onSearchChange,
+  searchPlaceholder = 'Search...',
 }: UnifiedHeaderProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -94,11 +101,7 @@ export function UnifiedHeader({
         )}
 
         {/* Left Actions (e.g., bulk select checkbox) */}
-        {leftActions && (
-          <div className="flex items-center">
-            {leftActions}
-          </div>
-        )}
+        {leftActions && <div className="flex items-center">{leftActions}</div>}
 
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -118,8 +121,10 @@ export function UnifiedHeader({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
       </div>

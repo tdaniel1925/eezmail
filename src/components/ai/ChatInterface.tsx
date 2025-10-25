@@ -1,16 +1,31 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Mic, MicOff, Loader2 } from 'lucide-react';
+import { Send, Mic, MicOff, Loader2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useChatbotContext } from './ChatbotContext';
+import { EmailResultCard } from './EmailResultCard';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  isTemporary?: boolean;
+  emails?: any[];
+  contacts?: any[];
+  usedInternetSearch?: boolean;
+  searchResults?: any[];
+  draft?: {
+    to: string;
+    subject: string;
+    body: string;
+    cc?: string;
+    bcc?: string;
+    accountId: string;
+    fromEmail: string;
+  };
 }
 
 interface SpeechRecognition extends EventTarget {
@@ -104,6 +119,16 @@ export function ChatInterface(): JSX.Element {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+
+    // Add instant "thinking" acknowledgment
+    const thinkingMessage: Message = {
+      id: Date.now().toString() + '-thinking',
+      role: 'assistant',
+      content: '🤔 Thinking...',
+      timestamp: new Date(),
+      isTemporary: true,
+    };
+    setMessages((prev) => [...prev, thinkingMessage]);
     setIsTyping(true);
 
     try {
@@ -134,6 +159,9 @@ export function ChatInterface(): JSX.Element {
 
       const data = await response.json();
 
+      // Remove thinking message
+      setMessages((prev) => prev.filter((m) => !m.isTemporary));
+
       // Check if AI wants to call a function
       if (data.functionCall) {
         const { name, arguments: args } = data.functionCall;
@@ -161,24 +189,52 @@ export function ChatInterface(): JSX.Element {
           const executeData = await executeResponse.json();
 
           // Remove the "executing" message and show results
-          setMessages((prev) => prev.filter((m) => m.id !== executingMessage.id));
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== executingMessage.id)
+          );
 
           let resultContent = '';
           if (executeData.success) {
-            if (executeData.emails && executeData.emails.length > 0) {
-              // Format email results nicely
+            // Handle draft generation
+            if (executeData.draft) {
+              const draftMessage: Message = {
+                id: Date.now().toString() + '-draft',
+                role: 'assistant',
+                content: `✅ ${executeData.message}\n\nI've prepared an email draft for you to review. Click the button below to open it in the composer.`,
+                timestamp: new Date(),
+                draft: executeData.draft,
+              };
+              setMessages((prev) => [...prev, draftMessage]);
+              toast.success('Draft ready for review!');
+              return; // Skip generic rendering
+            }
+            // Format email results nicely
+            else if (executeData.emails && executeData.emails.length > 0) {
+              // Store emails in message for rendering as cards
+              const resultMessage: Message = {
+                id: Date.now().toString() + '-result',
+                role: 'assistant',
+                content: `✅ ${executeData.message}`,
+                timestamp: new Date(),
+                emails: executeData.emails,
+              };
+              setMessages((prev) => [...prev, resultMessage]);
+              return; // Skip the generic content rendering
+            }
+            // Format contact results nicely
+            else if (executeData.contacts && executeData.contacts.length > 0) {
               resultContent = `✅ ${executeData.message}\n\n`;
-              executeData.emails.slice(0, 5).forEach((email: any, idx: number) => {
-                const from = typeof email.fromAddress === 'string' 
-                  ? email.fromAddress 
-                  : email.fromAddress?.name || email.fromAddress?.email || 'Unknown';
-                const date = new Date(email.receivedAt).toLocaleDateString();
-                resultContent += `${idx + 1}. **${email.subject}**\n   From: ${from}\n   Date: ${date}\n   ${email.bodyPreview || ''}...\n\n`;
-              });
-              if (executeData.emails.length > 5) {
-                resultContent += `...and ${executeData.emails.length - 5} more`;
+              executeData.contacts
+                .slice(0, 10)
+                .forEach((contact: any, idx: number) => {
+                  resultContent += `${idx + 1}. **${contact.name || 'No name'}**\n   Email: ${contact.email}\n\n`;
+                });
+              if (executeData.contacts.length > 10) {
+                resultContent += `...and ${executeData.contacts.length - 10} more`;
               }
-            } else {
+            }
+            // Generic success message
+            else {
               resultContent = `✅ ${executeData.message || 'Action completed successfully'}`;
             }
           } else {
@@ -195,10 +251,12 @@ export function ChatInterface(): JSX.Element {
           setMessages((prev) => [...prev, resultMessage]);
         } catch (error) {
           console.error('Function execution error:', error);
-          
+
           // Remove executing message
-          setMessages((prev) => prev.filter((m) => m.id !== executingMessage.id));
-          
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== executingMessage.id)
+          );
+
           const errorMessage: Message = {
             id: Date.now().toString() + '-error',
             role: 'assistant',
@@ -214,12 +272,21 @@ export function ChatInterface(): JSX.Element {
           role: 'assistant',
           content: data.response || 'Sorry, I could not process that request.',
           timestamp: new Date(),
+          usedInternetSearch: data.usedInternetSearch || false,
+          searchResults: data.searchResults || undefined,
         };
 
         setMessages((prev) => [...prev, assistantMessage]);
+
+        // Show a toast if internet search was used
+        if (data.usedInternetSearch) {
+          toast.success('🌐 Enhanced answer with internet search results');
+        }
       }
     } catch (error) {
       console.error('Chat error:', error);
+      // Remove thinking message on error
+      setMessages((prev) => prev.filter((m) => !m.isTemporary));
       toast.error('Failed to get response. Please try again.');
     } finally {
       setIsTyping(false);
@@ -264,13 +331,83 @@ export function ChatInterface(): JSX.Element {
           >
             <div
               className={cn(
-                'max-w-[85%] rounded-lg px-3 py-2 text-sm',
+                'max-w-[85%] rounded-lg text-sm',
                 message.role === 'user'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+                  ? 'bg-primary px-3 py-2 text-white'
+                  : message.emails && message.emails.length > 0
+                    ? 'w-full space-y-2'
+                    : 'bg-gray-100 px-3 py-2 text-gray-900 dark:bg-gray-800 dark:text-white'
               )}
             >
-              {message.content}
+              {/* Text content */}
+              {message.content && (
+                <div
+                  className={cn(
+                    message.emails &&
+                      message.emails.length > 0 &&
+                      'mb-2 rounded-lg bg-gray-100 px-3 py-2 dark:bg-gray-800'
+                  )}
+                >
+                  {message.content}
+                </div>
+              )}
+
+              {/* Email cards */}
+              {message.emails && message.emails.length > 0 && (
+                <div className="space-y-2">
+                  {message.emails.slice(0, 5).map((email: any) => (
+                    <EmailResultCard
+                      key={email.id}
+                      email={email}
+                      onOpen={(id) => {
+                        window.location.href = `/dashboard/inbox?emailId=${id}`;
+                      }}
+                      onReply={(id) => {
+                        toast.info('Reply feature coming soon!');
+                      }}
+                      onForward={(id) => {
+                        toast.info('Forward feature coming soon!');
+                      }}
+                      onArchive={(id) => {
+                        toast.info('Archive feature coming soon!');
+                      }}
+                    />
+                  ))}
+                  {message.emails.length > 5 && (
+                    <p className="rounded-lg bg-gray-100 px-3 py-2 text-center text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      ...and {message.emails.length - 5} more email
+                      {message.emails.length - 5 !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Draft preview button */}
+              {message.draft && (
+                <button
+                  onClick={() => {
+                    // Open email composer with pre-filled data
+                    const composerEvent = new CustomEvent(
+                      'open-email-composer',
+                      {
+                        detail: {
+                          to: message.draft.to,
+                          subject: message.draft.subject,
+                          body: message.draft.body,
+                          cc: message.draft.cc,
+                          bcc: message.draft.bcc,
+                        },
+                      }
+                    );
+                    window.dispatchEvent(composerEvent);
+                    toast.success('Opening draft in composer...');
+                  }}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary/90"
+                >
+                  <Mail className="h-4 w-4" />
+                  Open in Composer
+                </button>
+              )}
             </div>
           </div>
         ))}

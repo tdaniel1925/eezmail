@@ -2,6 +2,8 @@ import { serve } from 'inngest/next';
 import { inngest } from '@/inngest/client';
 import { testSync } from '@/inngest/functions/test-sync';
 import { syncMicrosoftAccount } from '@/inngest/functions/sync-microsoft';
+import { sendScheduledEmails } from '@/inngest/functions/send-scheduled-emails';
+import { proactiveMonitoring } from '@/inngest/functions/proactive-monitoring';
 
 /**
  * Inngest API endpoint
@@ -13,6 +15,8 @@ export const { GET, POST, PUT } = serve({
   functions: [
     testSync,
     syncMicrosoftAccount, // Microsoft email sync
+    sendScheduledEmails, // Scheduled email sender (runs every minute)
+    proactiveMonitoring, // Proactive monitoring (runs every 5 minutes)
     // More functions will be added here as we build them
   ],
 });

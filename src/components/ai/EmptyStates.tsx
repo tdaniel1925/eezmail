@@ -1,14 +1,28 @@
 'use client';
 
-import { Bot, Sparkles, Mail, MessageSquare, FileText, CheckSquare } from 'lucide-react';
+import {
+  Bot,
+  Sparkles,
+  Mail,
+  MessageSquare,
+  FileText,
+  CheckSquare,
+  Users,
+} from 'lucide-react';
+
+export type EmptyStateType = 'chat' | 'chat-with-email' | 'insights' | 'people';
 
 interface EmptyStateProps {
-  type: 'chat' | 'chat-with-email' | 'insights';
+  type: EmptyStateType;
   emailFrom?: string;
   onActionClick?: (action: string) => void;
 }
 
-export function EmptyState({ type, emailFrom, onActionClick }: EmptyStateProps): JSX.Element {
+export function EmptyState({
+  type,
+  emailFrom,
+  onActionClick,
+}: EmptyStateProps): JSX.Element {
   if (type === 'chat-with-email') {
     return (
       <div className="p-6 space-y-4">
@@ -62,6 +76,22 @@ export function EmptyState({ type, emailFrom, onActionClick }: EmptyStateProps):
     );
   }
 
+  if (type === 'people') {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 mb-4">
+          <Users className="h-8 w-8 text-white" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          No Email Selected
+        </h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
+          Select an email to view sender details and previous conversations
+        </p>
+      </div>
+    );
+  }
+
   if (type === 'insights') {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -72,7 +102,8 @@ export function EmptyState({ type, emailFrom, onActionClick }: EmptyStateProps):
           No Email Selected
         </h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs">
-          Select an email to view AI-powered insights including summaries, key points, and action items
+          Select an email to view AI-powered insights including summaries, key
+          points, and action items
         </p>
       </div>
     );
@@ -114,4 +145,3 @@ export function EmptyState({ type, emailFrom, onActionClick }: EmptyStateProps):
     </div>
   );
 }
-

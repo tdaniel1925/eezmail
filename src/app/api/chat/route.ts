@@ -184,10 +184,80 @@ export async function POST(request: NextRequest) {
     }
 
     // Regular text response
+    const responseContent =
+      message.content || 'I apologize, but I could not generate a response.';
+
+    // Check if AI doesn't know the answer and query might need internet search
+    const uncertaintyIndicators = [
+      "i don't know",
+      "i'm not sure",
+      "i don't have",
+      'i cannot find',
+      'no information',
+      'unable to',
+      'i apologize',
+    ];
+
+    const seemsUncertain = uncertaintyIndicators.some((indicator) =>
+      responseContent.toLowerCase().includes(indicator)
+    );
+
+    // Try Tavily search fallback if AI is uncertain
+    if (seemsUncertain) {
+      console.log('🔍 [Chat API] AI uncertain, trying internet search...');
+
+      const { searchInternet, formatSearchResults, isGeneralKnowledgeQuery } =
+        await import('@/lib/search/tavily');
+
+      // Check if this is a general knowledge query
+      if (isGeneralKnowledgeQuery(lastUserMessage)) {
+        const searchResult = await searchInternet(lastUserMessage, {
+          maxResults: 3,
+          searchDepth: 'basic',
+        });
+
+        if (searchResult.success && searchResult.results.length > 0) {
+          console.log(
+            `✅ [Chat API] Found ${searchResult.results.length} search results, re-prompting AI...`
+          );
+
+          // Re-prompt AI with search results
+          const searchContext = formatSearchResults(searchResult.results);
+          const enhancedMessage = `${searchContext}\n\nBased on the above internet search results, please answer: ${lastUserMessage}`;
+
+          const enhancedCompletion = await openai.chat.completions.create({
+            model: 'gpt-4-turbo-preview',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: enhancedMessage },
+            ],
+            max_tokens: 1500,
+            temperature: 0.7,
+          });
+
+          const enhancedResponse =
+            enhancedCompletion.choices[0].message.content;
+
+          if (enhancedResponse) {
+            console.log(
+              '✅ [Chat API] Generated enhanced response with search results'
+            );
+            return NextResponse.json({
+              success: true,
+              response: enhancedResponse,
+              searchResults: searchResult.results,
+              usedInternetSearch: true,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        }
+      }
+    }
+
+    // Return regular response
     return NextResponse.json({
       success: true,
-      response:
-        message.content || 'I apologize, but I could not generate a response.',
+      response: responseContent,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -228,7 +298,8 @@ You can perform ANY of these actions via function calling:
 
 **Email Operations:**
 - search_emails: Find emails with advanced filters
-- send_email: Compose and send new emails
+- send_email: Compose and send new emails IMMEDIATELY (use for simple, straightforward emails)
+- generate_draft: Generate email draft for user review BEFORE sending (use when email needs user approval, editing, or is complex/important)
 - reply_to_email: Reply to specific emails
 - forward_email: Forward emails
 - move_emails: Move emails to folders
@@ -364,8 +435,15 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
         parameters: {
           type: 'object',
           properties: {
-            query: { type: 'string', description: 'Search query to match in subject or body' },
-            from: { type: 'string', description: 'Filter by sender name or email (partial match). Use "stripe" instead of "noreply@stripe.com"' },
+            query: {
+              type: 'string',
+              description: 'Search query to match in subject or body',
+            },
+            from: {
+              type: 'string',
+              description:
+                'Filter by sender name or email (partial match). Use "stripe" instead of "noreply@stripe.com"',
+            },
             to: { type: 'string', description: 'Filter by recipient email' },
             dateFrom: {
               type: 'string',
@@ -389,6 +467,31 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
       function: {
         name: 'send_email',
         description: 'Compose and send a new email',
+        parameters: {
+          type: 'object',
+          properties: {
+            to: { type: 'string', description: 'Recipient email address' },
+            subject: { type: 'string', description: 'Email subject' },
+            body: { type: 'string', description: 'Email body (HTML or text)' },
+            cc: {
+              type: 'string',
+              description: 'CC email addresses (comma-separated)',
+            },
+            bcc: {
+              type: 'string',
+              description: 'BCC email addresses (comma-separated)',
+            },
+          },
+          required: ['to', 'subject', 'body'],
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: 'generate_draft',
+        description:
+          'Generate an email draft for user review before sending. Returns draft data that opens in composer.',
         parameters: {
           type: 'object',
           properties: {
@@ -577,6 +680,32 @@ function getFunctionTools(): OpenAI.Chat.ChatCompletionTool[] {
             contactId: { type: 'string', description: 'Contact ID' },
           },
           required: ['contactId'],
+        },
+      },
+    },
+
+    // ==== COMMUNICATION OPERATIONS ====
+    {
+      type: 'function',
+      function: {
+        name: 'send_sms',
+        description:
+          'Send an SMS text message to a contact. Use this when user wants to text someone.',
+        parameters: {
+          type: 'object',
+          properties: {
+            recipient: {
+              type: 'string',
+              description:
+                'Contact name, email, or phone number (e.g., "John Smith", "john@example.com")',
+            },
+            message: {
+              type: 'string',
+              description:
+                'The SMS message content (keep under 160 characters)',
+            },
+          },
+          required: ['recipient', 'message'],
         },
       },
     },

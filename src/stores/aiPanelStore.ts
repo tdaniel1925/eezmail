@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 // Tab types for the right sidebar (simplified to 3)
-export type TabType = 'chat' | 'insights' | 'actions';
+export type TabType = 'chat' | 'people' | 'actions';
 
 // Email interface for context
 export interface Email {

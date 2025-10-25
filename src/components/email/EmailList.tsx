@@ -75,13 +75,11 @@ export function EmailList({
 }: EmailListProps): JSX.Element {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedEmailId, setExpandedEmailId] = useState<string | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<
     'compose' | 'reply' | 'forward'
   >('compose');
   const [composerEmailId, setComposerEmailId] = useState<string | null>(null);
-  const [searchResults, setSearchResults] = useState<Email[] | null>(null);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
@@ -135,59 +133,80 @@ export function EmailList({
     };
   }, [hasMore, isLoadingMore, onLoadMore]);
 
-  // Use search results if available, otherwise use filtered local emails
-  const displayEmails =
-    searchResults !== null
-      ? searchResults
-      : emails.filter(
-          (email) =>
-            email.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (email.fromAddress?.email || '')
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())
-        );
+  // Listen for 'open-email' event from other components (e.g., PeopleTab)
+  useEffect(() => {
+    const handleOpenEmail = (event: CustomEvent) => {
+      const { emailId } = event.detail;
 
-  const handleSearch = async (): Promise<void> => {
-    if (!searchQuery.trim()) {
-      toast.info('Please enter a search query');
-      return;
-    }
+      console.log('[EmailList] Open email event received:', emailId);
 
-    setIsSearching(true);
-    try {
-      const response = await fetch('/api/ai/smart-search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ query: searchQuery }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
+      // Find the email in the list
+      const email = emails.find((e) => e.id === emailId);
+      if (!email) {
+        console.warn('[EmailList] Email not found in current list:', emailId);
+        return;
       }
 
-      const data = await response.json();
+      // Expand the email
+      setExpandedEmailId(emailId);
 
-      if (data.results && Array.isArray(data.results)) {
-        setSearchResults(data.results);
-        toast.success(`Found ${data.results.length} emails`);
-      } else {
-        setSearchResults([]);
-        toast.info('No emails found');
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      toast.error('Search failed. Please try again.');
-    } finally {
-      setIsSearching(false);
+      // Scroll to the email after a brief delay to allow DOM update
+      setTimeout(() => {
+        const emailElement = emailRefs.current[emailId];
+        if (emailElement && scrollContainerRef.current) {
+          emailElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+          console.log('[EmailList] Scrolled to email:', emailId);
+        } else {
+          console.warn('[EmailList] Email element not found in DOM:', emailId);
+        }
+      }, 100);
+    };
+
+    window.addEventListener('open-email', handleOpenEmail as EventListener);
+
+    return () => {
+      window.removeEventListener(
+        'open-email',
+        handleOpenEmail as EventListener
+      );
+    };
+  }, [emails]);
+
+  // Filter emails based on search query (instant local search)
+  const displayEmails = emails.filter((email) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+
+    // Search in subject
+    if (email.subject?.toLowerCase().includes(query)) return true;
+
+    // Search in sender email
+    if (typeof email.fromAddress === 'object' && email.fromAddress) {
+      const fromEmail = (email.fromAddress as any).email?.toLowerCase() || '';
+      if (fromEmail.includes(query)) return true;
+
+      // Search in sender name
+      const fromName = (email.fromAddress as any).name?.toLowerCase() || '';
+      if (fromName.includes(query)) return true;
     }
-  };
 
-  const handleClearSearch = (): void => {
-    setSearchQuery('');
-    setSearchResults(null);
-  };
+    // Search in body/snippet
+    if (
+      email.body &&
+      typeof email.body === 'string' &&
+      email.body.toLowerCase().includes(query)
+    ) {
+      return true;
+    }
+
+    if (email.snippet?.toLowerCase().includes(query)) return true;
+
+    return false;
+  });
 
   // Bulk action handlers
   const toggleSelectAll = (): void => {
@@ -503,6 +522,9 @@ export function EmailList({
         subtitle={`${unreadCount} unread${newEmailsCount > 0 ? ` • +${newEmailsCount} new` : ''}`}
         onRefresh={onRefresh}
         isRefreshing={isSyncing}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="Search emails..."
         leftActions={
           /* Select All Checkbox - Aligned with email card checkboxes */
           <button
@@ -607,23 +629,6 @@ export function EmailList({
               <span className="hidden sm:inline">Label</span>
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Search Results Indicator */}
-      {searchResults !== null && (
-        <div className="flex items-center justify-between border-b border-gray-200 bg-blue-50 px-6 py-2 text-sm dark:border-gray-700 dark:bg-blue-900/20">
-          <span className="text-gray-700 dark:text-gray-300">
-            {searchResults.length > 0
-              ? `Showing ${searchResults.length} results for "${searchQuery}"`
-              : `No results found for "${searchQuery}"`}
-          </span>
-          <button
-            onClick={handleClearSearch}
-            className="font-medium text-primary hover:underline"
-          >
-            Clear search
-          </button>
         </div>
       )}
 

@@ -4,12 +4,16 @@ import { z } from 'zod';
 import {
   searchEmailsHandler,
   sendEmailHandler,
+  generateDraftHandler,
   replyToEmailHandler,
   moveEmailsHandler,
   deleteEmailsHandler,
   archiveEmailsHandler,
   starEmailsHandler,
   markReadUnreadHandler,
+  searchContactsHandler,
+  createContactHandler,
+  sendSMSHandler,
 } from '@/lib/chat/function-handlers';
 
 export const runtime = 'nodejs';
@@ -51,6 +55,9 @@ export async function POST(request: NextRequest) {
       case 'send_email':
         result = await sendEmailHandler(user.id, args);
         break;
+      case 'generate_draft':
+        result = await generateDraftHandler(user.id, args);
+        break;
       case 'reply_to_email':
         result = await replyToEmailHandler(user.id, args);
         break;
@@ -68,6 +75,19 @@ export async function POST(request: NextRequest) {
         break;
       case 'mark_read_unread':
         result = await markReadUnreadHandler(user.id, args);
+        break;
+
+      // Contact Operations
+      case 'search_contacts':
+        result = await searchContactsHandler(user.id, args);
+        break;
+      case 'create_contact':
+        result = await createContactHandler(user.id, args);
+        break;
+
+      // Communication Operations
+      case 'send_sms':
+        result = await sendSMSHandler(user.id, args);
         break;
 
       // Add more handlers as needed...
