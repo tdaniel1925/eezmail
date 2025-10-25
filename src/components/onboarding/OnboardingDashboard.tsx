@@ -90,7 +90,8 @@ export function OnboardingDashboard({ progress, userId }: Props) {
           label: 'Explore Smart Inbox',
           completed: progress.smartInboxViewed,
           link: '/dashboard/inbox',
-          tooltip: 'Check out your Priority Inbox, Feed, and Paper Trail categories',
+          tooltip:
+            'Check out your Priority Inbox, Feed, and Paper Trail categories',
           tutorialId: 'smartInboxViewed',
         },
         {

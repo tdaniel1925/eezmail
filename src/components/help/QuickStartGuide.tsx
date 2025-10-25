@@ -40,7 +40,7 @@ export function QuickStartGuide(): JSX.Element {
           <h4 className="font-semibold text-gray-900 dark:text-white">
             Connect Your Email Account
           </h4>
-          
+
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-sm font-semibold flex-shrink-0">
@@ -73,10 +73,19 @@ export function QuickStartGuide(): JSX.Element {
                   Choose your email provider:
                 </p>
                 <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-600 dark:text-white/60">
-                  <li><strong>Gmail:</strong> Sign in with Google (OAuth - most secure)</li>
-                  <li><strong>Outlook/Microsoft:</strong> Sign in with Microsoft</li>
-                  <li><strong>Yahoo:</strong> Use app-specific password</li>
-                  <li><strong>IMAP:</strong> Enter server details manually</li>
+                  <li>
+                    <strong>Gmail:</strong> Sign in with Google (OAuth - most
+                    secure)
+                  </li>
+                  <li>
+                    <strong>Outlook/Microsoft:</strong> Sign in with Microsoft
+                  </li>
+                  <li>
+                    <strong>Yahoo:</strong> Use app-specific password
+                  </li>
+                  <li>
+                    <strong>IMAP:</strong> Enter server details manually
+                  </li>
                 </ul>
               </div>
             </div>
@@ -95,7 +104,9 @@ export function QuickStartGuide(): JSX.Element {
 
           <div className="rounded-lg bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 p-4">
             <p className="text-sm text-blue-900 dark:text-blue-300">
-              <strong>Pro Tip:</strong> We recommend starting with OAuth (Gmail/Outlook) as it&apos;s the most secure method. You can connect up to 3 accounts on the free plan!
+              <strong>Pro Tip:</strong> We recommend starting with OAuth
+              (Gmail/Outlook) as it&apos;s the most secure method. You can
+              connect up to 3 accounts on the free plan!
             </p>
           </div>
         </div>
@@ -123,7 +134,8 @@ export function QuickStartGuide(): JSX.Element {
                 </h5>
               </div>
               <p className="text-sm text-gray-700 dark:text-white/70">
-                Your VIP inbox for important emails from people and services you care about.
+                Your VIP inbox for important emails from people and services you
+                care about.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60 mt-2">
                 Examples: Messages from colleagues, clients, friends, family
@@ -138,7 +150,8 @@ export function QuickStartGuide(): JSX.Element {
                 </h5>
               </div>
               <p className="text-sm text-gray-700 dark:text-white/70">
-                Newsletters, updates, and marketing emails you can read when you have time.
+                Newsletters, updates, and marketing emails you can read when you
+                have time.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60 mt-2">
                 Examples: Newsletters, promotions, social media notifications
@@ -153,7 +166,8 @@ export function QuickStartGuide(): JSX.Element {
                 </h5>
               </div>
               <p className="text-sm text-gray-700 dark:text-white/70">
-                Transactional emails, receipts, and confirmations organized for reference.
+                Transactional emails, receipts, and confirmations organized for
+                reference.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60 mt-2">
                 Examples: Order confirmations, receipts, shipping notifications
@@ -163,7 +177,9 @@ export function QuickStartGuide(): JSX.Element {
 
           <div className="rounded-lg bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/30 p-4">
             <p className="text-sm text-purple-900 dark:text-purple-300">
-              <strong>How it works:</strong> Our AI automatically categorizes incoming emails. You can always move emails between categories or train the system to match your preferences!
+              <strong>How it works:</strong> Our AI automatically categorizes
+              incoming emails. You can always move emails between categories or
+              train the system to match your preferences!
             </p>
           </div>
         </div>
@@ -186,9 +202,12 @@ export function QuickStartGuide(): JSX.Element {
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <h5 className="font-medium text-gray-900 dark:text-white">Email Screening</h5>
+                <h5 className="font-medium text-gray-900 dark:text-white">
+                  Email Screening
+                </h5>
                 <p className="text-sm text-gray-600 dark:text-white/60 mt-1">
-                  AI analyzes new senders and suggests the best category for their emails
+                  AI analyzes new senders and suggests the best category for
+                  their emails
                 </p>
               </div>
             </div>
@@ -196,9 +215,12 @@ export function QuickStartGuide(): JSX.Element {
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <h5 className="font-medium text-gray-900 dark:text-white">Smart Summaries</h5>
+                <h5 className="font-medium text-gray-900 dark:text-white">
+                  Smart Summaries
+                </h5>
                 <p className="text-sm text-gray-600 dark:text-white/60 mt-1">
-                  Get the gist of long emails instantly with AI-generated summaries
+                  Get the gist of long emails instantly with AI-generated
+                  summaries
                 </p>
               </div>
             </div>
@@ -206,9 +228,12 @@ export function QuickStartGuide(): JSX.Element {
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <h5 className="font-medium text-gray-900 dark:text-white">Quick Replies</h5>
+                <h5 className="font-medium text-gray-900 dark:text-white">
+                  Quick Replies
+                </h5>
                 <p className="text-sm text-gray-600 dark:text-white/60 mt-1">
-                  AI suggests contextual responses that match your communication style
+                  AI suggests contextual responses that match your communication
+                  style
                 </p>
               </div>
             </div>
@@ -216,9 +241,12 @@ export function QuickStartGuide(): JSX.Element {
             <div className="flex items-start gap-3">
               <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
               <div>
-                <h5 className="font-medium text-gray-900 dark:text-white">Writing Assistant</h5>
+                <h5 className="font-medium text-gray-900 dark:text-white">
+                  Writing Assistant
+                </h5>
                 <p className="text-sm text-gray-600 dark:text-white/60 mt-1">
-                  Improve your emails with tone adjustments, grammar fixes, and suggestions
+                  Improve your emails with tone adjustments, grammar fixes, and
+                  suggestions
                 </p>
               </div>
             </div>
@@ -229,7 +257,9 @@ export function QuickStartGuide(): JSX.Element {
               To enable AI features:
             </p>
             <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-700 dark:text-white/70">
-              <li>Go to <strong>Settings → AI Preferences</strong></li>
+              <li>
+                Go to <strong>Settings → AI Preferences</strong>
+              </li>
               <li>Toggle on the features you want to use</li>
               <li>Customize AI behavior (tone, creativity level, etc.)</li>
               <li>Save your preferences</li>
@@ -238,7 +268,9 @@ export function QuickStartGuide(): JSX.Element {
 
           <div className="rounded-lg bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 p-4">
             <p className="text-sm text-yellow-900 dark:text-yellow-300">
-              <strong>Privacy Note:</strong> AI features process emails locally when possible. Your data is never used to train models or shared with third parties.
+              <strong>Privacy Note:</strong> AI features process emails locally
+              when possible. Your data is never used to train models or shared
+              with third parties.
             </p>
           </div>
         </div>
@@ -290,10 +322,34 @@ export function QuickStartGuide(): JSX.Element {
                 Learn essential shortcuts to work faster:
               </p>
               <ul className="space-y-1 text-sm text-gray-600 dark:text-white/60 pl-4">
-                <li>• <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">C</kbd> - Compose new email</li>
-                <li>• <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd> - Reply to email</li>
-                <li>• <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> - Archive email</li>
-                <li>• <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">?</kbd> - View all shortcuts</li>
+                <li>
+                  •{' '}
+                  <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">
+                    C
+                  </kbd>{' '}
+                  - Compose new email
+                </li>
+                <li>
+                  •{' '}
+                  <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">
+                    R
+                  </kbd>{' '}
+                  - Reply to email
+                </li>
+                <li>
+                  •{' '}
+                  <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">
+                    E
+                  </kbd>{' '}
+                  - Archive email
+                </li>
+                <li>
+                  •{' '}
+                  <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs">
+                    ?
+                  </kbd>{' '}
+                  - View all shortcuts
+                </li>
               </ul>
             </div>
 
@@ -312,7 +368,11 @@ export function QuickStartGuide(): JSX.Element {
 
           <div className="rounded-lg bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 p-4">
             <p className="text-sm text-green-900 dark:text-green-300">
-              <strong>Quick Tip:</strong> Press <kbd className="px-2 py-1 bg-green-200 dark:bg-green-700 rounded text-xs">Cmd/Ctrl + ,</kbd> anytime to open settings!
+              <strong>Quick Tip:</strong> Press{' '}
+              <kbd className="px-2 py-1 bg-green-200 dark:bg-green-700 rounded text-xs">
+                Cmd/Ctrl + ,
+              </kbd>{' '}
+              anytime to open settings!
             </p>
           </div>
         </div>
@@ -340,7 +400,9 @@ export function QuickStartGuide(): JSX.Element {
                 Schedule a reminder to respond to an email at a better time.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60">
-                <strong>How:</strong> Click the clock icon, choose when to be reminded, and the email will reappear in your inbox at that time.
+                <strong>How:</strong> Click the clock icon, choose when to be
+                reminded, and the email will reappear in your inbox at that
+                time.
               </p>
             </div>
 
@@ -352,7 +414,8 @@ export function QuickStartGuide(): JSX.Element {
                 Temporarily remove emails from your inbox to reduce clutter.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60">
-                <strong>How:</strong> Swipe or click &quot;Set Aside&quot;. Access set aside emails anytime from the sidebar.
+                <strong>How:</strong> Swipe or click &quot;Set Aside&quot;.
+                Access set aside emails anytime from the sidebar.
               </p>
             </div>
 
@@ -364,7 +427,8 @@ export function QuickStartGuide(): JSX.Element {
                 Mark important emails you need to reference later.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60">
-                <strong>How:</strong> Click the star icon. View all starred emails from the sidebar.
+                <strong>How:</strong> Click the star icon. View all starred
+                emails from the sidebar.
               </p>
             </div>
 
@@ -376,14 +440,20 @@ export function QuickStartGuide(): JSX.Element {
                 Remove emails from your inbox while keeping them searchable.
               </p>
               <p className="text-xs text-gray-600 dark:text-white/60">
-                <strong>How:</strong> Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">E</kbd> or click the archive icon.
+                <strong>How:</strong> Press{' '}
+                <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">
+                  E
+                </kbd>{' '}
+                or click the archive icon.
               </p>
             </div>
           </div>
 
           <div className="rounded-lg bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 p-4">
             <p className="text-sm text-indigo-900 dark:text-indigo-300">
-              <strong>Power User Tip:</strong> Combine these actions with rules to automate your workflow. For example, automatically set aside newsletters to read on weekends!
+              <strong>Power User Tip:</strong> Combine these actions with rules
+              to automate your workflow. For example, automatically set aside
+              newsletters to read on weekends!
             </p>
           </div>
         </div>
@@ -522,7 +592,7 @@ export function QuickStartGuide(): JSX.Element {
               </button>
             ) : (
               <button
-                onClick={() => window.location.href = '/dashboard'}
+                onClick={() => (window.location.href = '/dashboard')}
                 className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors flex items-center gap-2"
               >
                 Go to Dashboard
@@ -543,10 +613,11 @@ export function QuickStartGuide(): JSX.Element {
             🎉 You&apos;re All Set!
           </h3>
           <p className="text-gray-700 dark:text-white/70 mb-4">
-            Great job completing the quick start guide. You&apos;re ready to take control of your inbox!
+            Great job completing the quick start guide. You&apos;re ready to
+            take control of your inbox!
           </p>
           <button
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => (window.location.href = '/dashboard')}
             className="px-6 py-2.5 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-lg transition-colors"
           >
             Start Using EaseMail
@@ -556,4 +627,3 @@ export function QuickStartGuide(): JSX.Element {
     </div>
   );
 }
-

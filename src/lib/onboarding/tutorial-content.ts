@@ -484,4 +484,3 @@ export function getTutorial(tutorialId: string): Tutorial | undefined {
 export function getAllTutorialIds(): string[] {
   return Object.keys(tutorials);
 }
-

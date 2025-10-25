@@ -208,12 +208,22 @@ function VideoTutorials(): JSX.Element {
     },
   ];
 
-  const categories = ['All', 'Basics', 'Organization', 'AI Features', 'Features', 'Productivity', 'Advanced', 'Support'];
+  const categories = [
+    'All',
+    'Basics',
+    'Organization',
+    'AI Features',
+    'Features',
+    'Productivity',
+    'Advanced',
+    'Support',
+  ];
   const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const filteredTutorials = selectedCategory === 'All'
-    ? tutorials
-    : tutorials.filter((t) => t.category === selectedCategory);
+  const filteredTutorials =
+    selectedCategory === 'All'
+      ? tutorials
+      : tutorials.filter((t) => t.category === selectedCategory);
 
   return (
     <div className="space-y-6">
@@ -312,4 +322,3 @@ function VideoTutorials(): JSX.Element {
     </div>
   );
 }
-
