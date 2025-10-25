@@ -51,6 +51,10 @@ export function ContactFormModal({
   onSave,
 }: ContactFormModalProps): JSX.Element | null {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Form state
   const [firstName, setFirstName] = useState(contact?.firstName || '');
@@ -151,7 +155,7 @@ export function ContactFormModal({
       !displayName &&
       emails.every((e) => !e.email)
     ) {
-      toast.error('Please provide at least a name or email address');
+      setStatusMessage({ type: 'error', text: 'Please provide at least a name or email address' });
       return;
     }
 
@@ -160,11 +164,13 @@ export function ContactFormModal({
     const validPhones = phones.filter((p) => p.phone.trim());
 
     if (validEmails.length === 0 && !firstName && !lastName && !displayName) {
-      toast.error('Please provide at least one piece of contact information');
+      setStatusMessage({ type: 'error', text: 'Please provide at least one piece of contact information' });
       return;
     }
 
     setIsSubmitting(true);
+    setStatusMessage(null);
+    
     try {
       await onSave({
         firstName,
@@ -183,12 +189,18 @@ export function ContactFormModal({
         tags: [],
       });
 
-      // Toast notification handled by parent component
-      // Removed duplicate toast to prevent double notifications
-      onClose();
+      setStatusMessage({ 
+        type: 'success', 
+        text: contact ? '✅ Contact updated successfully!' : '✅ Contact created successfully!' 
+      });
+      
+      // Auto-close after 1.5 seconds
+      setTimeout(() => {
+        onClose();
+        setStatusMessage(null);
+      }, 1500);
     } catch (error) {
-      // Only show error toast here (parent won't know about this error)
-      toast.error('Failed to save contact');
+      setStatusMessage({ type: 'error', text: 'Failed to save contact' });
       console.error('Error saving contact:', error);
     } finally {
       setIsSubmitting(false);
@@ -217,6 +229,19 @@ export function ContactFormModal({
           onSubmit={handleSubmit}
           className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto"
         >
+          {/* Inline Status Message */}
+          {statusMessage && (
+            <div
+              className={`p-3 rounded-lg ${
+                statusMessage.type === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+                  : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+              }`}
+            >
+              <p className="text-sm font-medium">{statusMessage.text}</p>
+            </div>
+          )}
+
           {/* Basic Information */}
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
