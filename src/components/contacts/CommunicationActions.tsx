@@ -30,17 +30,29 @@ export function CommunicationActions({
   const handleEmailClick = () => {
     if (onEmailClick) {
       onEmailClick();
+      toast.success(`📧 Opening email to ${contactName}`, {
+        position: 'top-center',
+        duration: 3000,
+      });
     } else if (email) {
       // Open default email composer
       window.location.href = `/dashboard/inbox?compose=true&to=${encodeURIComponent(email)}`;
+      toast.success(`📧 Opening email composer`, {
+        position: 'top-center',
+        duration: 3000,
+      });
     } else {
-      toast.error('No email address available for this contact');
+      toast.error('No email address available for this contact', {
+        position: 'top-center',
+      });
     }
   };
 
   const handleSMSClick = () => {
     if (!phone) {
-      toast.error('No phone number available for this contact');
+      toast.error('No phone number available for this contact', {
+        position: 'top-center',
+      });
       return;
     }
     setShowSMSModal(true);

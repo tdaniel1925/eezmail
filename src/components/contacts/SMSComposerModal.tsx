@@ -50,15 +50,22 @@ export function SMSComposerModal({
       const result = await sendContactSMS(contactId, message);
 
       if (result.success) {
-        toast.success(`SMS sent to ${recipientName}`);
+        toast.success(`✅ SMS sent to ${recipientName}`, {
+          position: 'top-center',
+          duration: 4000,
+        });
         setMessage('');
         onClose();
       } else {
-        toast.error(result.error || 'Failed to send SMS');
+        toast.error(result.error || 'Failed to send SMS', {
+          position: 'top-center',
+        });
       }
     } catch (error) {
       console.error('SMS send error:', error);
-      toast.error('Failed to send SMS');
+      toast.error('Failed to send SMS', {
+        position: 'top-center',
+      });
     } finally {
       setIsSending(false);
     }
