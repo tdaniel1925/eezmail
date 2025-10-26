@@ -3967,19 +3967,19 @@ export const userSettings = pgTable('user_settings', {
 });
 
 // Type exports
-export type KnowledgeBaseCategory = typeof knowledgeBaseCategories.\;
-export type NewKnowledgeBaseCategory = typeof knowledgeBaseCategories.\;
-export type KnowledgeBaseArticle = typeof knowledgeBaseArticles.\;
-export type NewKnowledgeBaseArticle = typeof knowledgeBaseArticles.\;
-export type AlertRule = typeof alertRules.\;
-export type NewAlertRule = typeof alertRules.\;
-export type AlertEvent = typeof alertEvents.\;
-export type NewAlertEvent = typeof alertEvents.\;
-export type SystemMetric = typeof systemMetrics.\;
-export type NewSystemMetric = typeof systemMetrics.\;
-export type SupportTicket = typeof supportTickets.\;
-export type NewSupportTicket = typeof supportTickets.\;
-export type TicketComment = typeof ticketComments.\;
-export type NewTicketComment = typeof ticketComments.\;
-export type UserSetting = typeof userSettings.\;
-export type NewUserSetting = typeof userSettings.\;
+export type KnowledgeBaseCategory = typeof knowledgeBaseCategories.$inferSelect;
+export type NewKnowledgeBaseCategory = typeof knowledgeBaseCategories.$inferInsert;
+export type KnowledgeBaseArticle = typeof knowledgeBaseArticles.$inferSelect;
+export type NewKnowledgeBaseArticle = typeof knowledgeBaseArticles.$inferInsert;
+export type AlertRule = typeof alertRules.$inferSelect;
+export type NewAlertRule = typeof alertRules.$inferInsert;
+export type AlertEvent = typeof alertEvents.$inferSelect;
+export type NewAlertEvent = typeof alertEvents.$inferInsert;
+export type SystemMetric = typeof systemMetrics.$inferSelect;
+export type NewSystemMetric = typeof systemMetrics.$inferInsert;
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type NewSupportTicket = typeof supportTickets.$inferInsert;
+export type TicketComment = typeof ticketComments.$inferSelect;
+export type NewTicketComment = typeof ticketComments.$inferInsert;
+export type UserSetting = typeof userSettings.$inferSelect;
+export type NewUserSetting = typeof userSettings.$inferInsert;
