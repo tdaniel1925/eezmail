@@ -74,7 +74,7 @@ export async function getUsers(params: {
       LEFT JOIN subscriptions s ON s.user_id = u.id
       ${whereClause}
     `);
-    const total = parseInt(countResult.rows[0]?.count || '0');
+    const total = parseInt((countResult?.rows?.[0] as any)?.count || '0');
 
     // Get users
     const result = await db.execute(sql`
