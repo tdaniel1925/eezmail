@@ -1,6 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+// Track redirect loops
+const redirectCount = new Map<string, number>();
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -36,7 +39,26 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  console.log('[MIDDLEWARE]', request.nextUrl.pathname, '- User:', user ? `✅ ${user.email}` : '❌ Not authenticated');
+  // Detect redirect loops
+  const clientId = request.headers.get('user-agent') || 'unknown';
+  const loopKey = `${clientId}-${request.nextUrl.pathname}`;
+  const count = (redirectCount.get(loopKey) || 0) + 1;
+  redirectCount.set(loopKey, count);
+  
+  // Clear old entries after 10 seconds
+  setTimeout(() => redirectCount.delete(loopKey), 10000);
+  
+  if (count > 5) {
+    console.error('[MIDDLEWARE] ⚠️ REDIRECT LOOP DETECTED!', request.nextUrl.pathname, 'Count:', count);
+    console.error('[MIDDLEWARE] User:', user?.email || 'Not authenticated');
+    // Break the loop by allowing the request through
+    return supabaseResponse;
+  }
+
+  // Only log every 3rd request to reduce spam
+  if (count % 3 === 1) {
+    console.log('[MIDDLEWARE]', request.nextUrl.pathname, '- User:', user ? `✅ ${user.email}` : '❌ Not authenticated');
+  }
 
   // Allow API routes (webhooks, auth callbacks, etc.)
   if (request.nextUrl.pathname.startsWith('/api/')) {
@@ -45,7 +67,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users from landing to dashboard
   if (user && request.nextUrl.pathname === '/') {
-    console.log('[MIDDLEWARE] Redirecting authenticated user from / to /dashboard');
+    if (count % 3 === 1) console.log('[MIDDLEWARE] Redirecting authenticated user from / to /dashboard');
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
@@ -53,7 +75,7 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard routes
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    console.log('[MIDDLEWARE] ⛔ Blocking unauthenticated access to /dashboard, redirecting to /login');
+    if (count % 3 === 1) console.log('[MIDDLEWARE] ⛔ Blocking unauthenticated access to /dashboard, redirecting to /login');
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -65,7 +87,7 @@ export async function middleware(request: NextRequest) {
     (request.nextUrl.pathname === '/login' ||
       request.nextUrl.pathname === '/signup')
   ) {
-    console.log('[MIDDLEWARE] Redirecting authenticated user from auth page to /dashboard');
+    if (count % 3 === 1) console.log('[MIDDLEWARE] Redirecting authenticated user from auth page to /dashboard');
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
