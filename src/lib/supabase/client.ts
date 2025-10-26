@@ -12,6 +12,9 @@ export function createClient() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
+      // Ensure cookies work across subdomains
+      storageKey: 'sb-auth-token',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     },
     global: {
       // Override default headers to prevent non-ASCII characters
