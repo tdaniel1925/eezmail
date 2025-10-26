@@ -27,5 +27,30 @@ export async function createClient() {
         }
       },
     },
+    global: {
+      // Remove all custom headers to avoid ISO-8859-1 issues
+      headers: {},
+      fetch: (url, options = {}) => {
+        // Strip any non-ASCII characters from headers
+        if (options.headers) {
+          const cleanHeaders: Record<string, string> = {};
+          const headers = options.headers as Record<string, string>;
+          
+          Object.keys(headers).forEach((key) => {
+            const value = headers[key];
+            if (typeof value === 'string') {
+              // Only keep ASCII characters (0-127)
+              cleanHeaders[key] = value.replace(/[^\x00-\x7F]/g, '');
+            } else {
+              cleanHeaders[key] = value;
+            }
+          });
+          
+          options.headers = cleanHeaders;
+        }
+        
+        return fetch(url, options);
+      },
+    },
   });
 }
