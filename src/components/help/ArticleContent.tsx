@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
-import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+// Import PrismLight directly from the light build (not from index)
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter/dist/esm/prism-light';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 // Import only the languages we need (using ESM paths to avoid refractor dependency)
 import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
