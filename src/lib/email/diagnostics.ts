@@ -6,7 +6,7 @@
 import { db } from '@/db';
 import { emailAccounts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { MicrosoftService } from '@/lib/email/microsoft-api';
+import { MicrosoftService } from '@/lib/email/microsoft-graph';
 import { GmailService } from '@/lib/email/gmail-api';
 
 export interface DiagnosticResult {
