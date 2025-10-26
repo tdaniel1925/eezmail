@@ -39,6 +39,16 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Debug: Log cookies to see what's being sent
+  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname === '/login') {
+    const allCookies = request.cookies.getAll();
+    const supabaseCookies = allCookies.filter(c => c.name.includes('supabase') || c.name.includes('sb-'));
+    console.log('[MIDDLEWARE] Path:', request.nextUrl.pathname);
+    console.log('[MIDDLEWARE] Total cookies:', allCookies.length);
+    console.log('[MIDDLEWARE] Supabase cookies:', supabaseCookies.map(c => c.name).join(', ') || 'NONE');
+    console.log('[MIDDLEWARE] User:', user ? `✅ ${user.email}` : '❌ Not authenticated');
+  }
+
   // Detect redirect loops
   const clientId = request.headers.get('user-agent') || 'unknown';
   const loopKey = `${clientId}-${request.nextUrl.pathname}`;
