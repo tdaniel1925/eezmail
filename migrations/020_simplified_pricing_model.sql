@@ -33,21 +33,25 @@ ALTER TABLE subscriptions
   ADD COLUMN total_amount DECIMAL(10, 2);
 
 -- ============================================================================
--- 3. MIGRATE EXISTING SUBSCRIPTIONS
+-- 3. MIGRATE EXISTING SUBSCRIPTIONS (BEFORE ENUM CHANGE)
 -- ============================================================================
--- Convert old tiers to new tiers with appropriate seat pricing
+-- Set default values for new columns first (while old enum still exists)
 UPDATE subscriptions SET
   seats = 1,
   price_per_seat = CASE 
-    WHEN tier = 'free' THEN 0.00
-    WHEN tier = 'pro' THEN 45.00
-    WHEN tier = 'starter' THEN 45.00
+    WHEN tier::text = 'free' THEN 0.00
+    WHEN tier::text = 'starter' THEN 45.00
+    WHEN tier::text = 'pro' THEN 45.00
+    WHEN tier::text = 'team' THEN 35.00
+    WHEN tier::text = 'enterprise' THEN 25.00
     ELSE 45.00
   END,
   total_amount = CASE 
-    WHEN tier = 'free' THEN 0.00
-    WHEN tier = 'pro' THEN 45.00
-    WHEN tier = 'starter' THEN 45.00
+    WHEN tier::text = 'free' THEN 0.00
+    WHEN tier::text = 'starter' THEN 45.00
+    WHEN tier::text = 'pro' THEN 45.00
+    WHEN tier::text = 'team' THEN 175.00
+    WHEN tier::text = 'enterprise' THEN 150.00
     ELSE 45.00
   END;
 
@@ -57,9 +61,9 @@ ALTER TABLE subscriptions
   ALTER COLUMN total_amount SET NOT NULL;
 
 -- ============================================================================
--- 4. UPDATE users TABLE: Change default tier
+-- 4. UPDATE users TABLE: Change default tier (BEFORE ENUM CHANGE)
 -- ============================================================================
--- Alter column using new enum (temporarily nullable to allow conversion)
+-- Alter column using text casting (temporarily nullable to allow conversion)
 ALTER TABLE users
   ALTER COLUMN subscription_tier DROP DEFAULT;
 
@@ -67,14 +71,14 @@ ALTER TABLE users
 ALTER TABLE users
   ADD COLUMN subscription_tier_new subscription_tier_new;
 
--- Migrate user tier data
+-- Migrate user tier data using text casting
 UPDATE users SET
   subscription_tier_new = CASE 
-    WHEN subscription_tier = 'free' THEN 'individual'::subscription_tier_new
-    WHEN subscription_tier = 'pro' THEN 'individual'::subscription_tier_new
-    WHEN subscription_tier = 'starter' THEN 'individual'::subscription_tier_new
-    WHEN subscription_tier = 'team' THEN 'team'::subscription_tier_new
-    WHEN subscription_tier = 'enterprise' THEN 'enterprise'::subscription_tier_new
+    WHEN subscription_tier::text = 'free' THEN 'individual'::subscription_tier_new
+    WHEN subscription_tier::text = 'pro' THEN 'individual'::subscription_tier_new
+    WHEN subscription_tier::text = 'starter' THEN 'individual'::subscription_tier_new
+    WHEN subscription_tier::text = 'team' THEN 'team'::subscription_tier_new
+    WHEN subscription_tier::text = 'enterprise' THEN 'enterprise'::subscription_tier_new
     ELSE 'individual'::subscription_tier_new
   END;
 
@@ -88,20 +92,20 @@ ALTER TABLE users
   RENAME COLUMN subscription_tier_new TO subscription_tier;
 
 -- ============================================================================
--- 5. UPDATE subscriptions TABLE: Change tier column type
+-- 5. UPDATE subscriptions TABLE: Change tier column type (BEFORE ENUM CHANGE)
 -- ============================================================================
 -- Add temporary column with new enum
 ALTER TABLE subscriptions
   ADD COLUMN tier_new subscription_tier_new;
 
--- Migrate subscription tier data
+-- Migrate subscription tier data using text casting
 UPDATE subscriptions SET
   tier_new = CASE 
-    WHEN tier = 'free' THEN 'individual'::subscription_tier_new
-    WHEN tier = 'pro' THEN 'individual'::subscription_tier_new
-    WHEN tier = 'starter' THEN 'individual'::subscription_tier_new
-    WHEN tier = 'team' THEN 'team'::subscription_tier_new
-    WHEN tier = 'enterprise' THEN 'enterprise'::subscription_tier_new
+    WHEN tier::text = 'free' THEN 'individual'::subscription_tier_new
+    WHEN tier::text = 'pro' THEN 'individual'::subscription_tier_new
+    WHEN tier::text = 'starter' THEN 'individual'::subscription_tier_new
+    WHEN tier::text = 'team' THEN 'team'::subscription_tier_new
+    WHEN tier::text = 'enterprise' THEN 'enterprise'::subscription_tier_new
     ELSE 'individual'::subscription_tier_new
   END;
 
