@@ -1,15 +1,15 @@
 import ReactMarkdown from 'react-markdown';
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-// Import only the languages we need
-import javascript from 'react-syntax-highlighter/dist/cjs/languages/prism/javascript';
-import typescript from 'react-syntax-highlighter/dist/cjs/languages/prism/typescript';
-import jsx from 'react-syntax-highlighter/dist/cjs/languages/prism/jsx';
-import tsx from 'react-syntax-highlighter/dist/cjs/languages/prism/tsx';
-import bash from 'react-syntax-highlighter/dist/cjs/languages/prism/bash';
-import json from 'react-syntax-highlighter/dist/cjs/languages/prism/json';
-import sql from 'react-syntax-highlighter/dist/cjs/languages/prism/sql';
-import python from 'react-syntax-highlighter/dist/cjs/languages/prism/python';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+// Import only the languages we need (using ESM paths to avoid refractor dependency)
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
 
 // Register the languages
 SyntaxHighlighter.registerLanguage('javascript', javascript);
