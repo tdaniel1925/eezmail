@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Lock, ArrowLeft, CheckCircle } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
 
-export default function ResetPasswordPage(): JSX.Element {
+function ResetPasswordForm(): JSX.Element {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -256,6 +256,18 @@ export default function ResetPasswordPage(): JSX.Element {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage(): JSX.Element {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
+        <div className="text-gray-600 dark:text-white/60">Loading...</div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
 
