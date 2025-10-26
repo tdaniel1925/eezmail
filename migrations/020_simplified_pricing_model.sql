@@ -174,7 +174,8 @@ ALTER TABLE subscriptions
 -- 8. CREATE AUDIT LOG ENTRY
 -- ============================================================================
 INSERT INTO audit_logs (
-  user_id,
+  actor_id,
+  actor_type,
   action,
   resource_type,
   resource_id,
@@ -183,6 +184,7 @@ INSERT INTO audit_logs (
   metadata
 ) VALUES (
   NULL,
+  'system',
   'system.migration',
   'pricing_model',
   gen_random_uuid(),
