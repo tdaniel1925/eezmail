@@ -164,8 +164,8 @@ export default function TermsPage() {
             </p>
             <p className="text-gray-600 dark:text-gray-300">
               Email:{' '}
-              <a href="mailto:support@easemail.ai" className="text-primary hover:underline">
-                support@easemail.ai
+              <a href="mailto:support@easemail.app" className="text-primary hover:underline">
+                support@easemail.app
               </a>
             </p>
           </section>

@@ -59,7 +59,7 @@ A browser extension might be intercepting fetch calls and adding headers with no
 
 ### Step 1: Check Browser Console
 
-Open https://easemail.ai/login and check the browser console **before** attempting to log in.
+Open https://easemail.app/login and check the browser console **before** attempting to log in.
 
 Look for:
 

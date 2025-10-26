@@ -239,14 +239,14 @@ export default function PrivacyPage() {
             </p>
             <p className="text-gray-600 dark:text-gray-300 mb-2">
               Email:{' '}
-              <a href="mailto:privacy@easemail.ai" className="text-primary hover:underline">
-                privacy@easemail.ai
+              <a href="mailto:privacy@easemail.app" className="text-primary hover:underline">
+                privacy@easemail.app
               </a>
             </p>
             <p className="text-gray-600 dark:text-gray-300">
               Support:{' '}
-              <a href="mailto:support@easemail.ai" className="text-primary hover:underline">
-                support@easemail.ai
+              <a href="mailto:support@easemail.app" className="text-primary hover:underline">
+                support@easemail.app
               </a>
             </p>
           </section>
