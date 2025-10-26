@@ -21,7 +21,7 @@ export default function LoginPage(): JSX.Element {
     setError(null);
     setLoading(true);
 
-    console.log('🔐 Login attempt for:', email);
+    console.log('[AUTH] Login attempt for:', email);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -30,12 +30,12 @@ export default function LoginPage(): JSX.Element {
       });
 
       if (error) {
-        console.error('❌ Login error:', error);
+        console.error('[AUTH] Login error:', error);
         throw error;
       }
 
-      console.log('✅ Login successful:', data.user?.email);
-      console.log('🔄 Redirecting to dashboard...');
+      console.log('[AUTH] Login successful:', data.user?.email);
+      console.log('[AUTH] Redirecting to dashboard...');
 
       // Force a hard redirect to ensure middleware runs
       window.location.href = '/dashboard';
