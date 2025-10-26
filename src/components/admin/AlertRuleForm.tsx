@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { METRICS } from '@/lib/monitoring/metrics';
+import { METRICS } from '@/lib/monitoring/metrics-constants';
 
 interface AlertRuleFormProps {
   initialData?: {
