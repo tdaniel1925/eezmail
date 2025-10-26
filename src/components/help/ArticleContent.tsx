@@ -1,6 +1,26 @@
 import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+// Import only the languages we need
+import javascript from 'react-syntax-highlighter/dist/cjs/languages/prism/javascript';
+import typescript from 'react-syntax-highlighter/dist/cjs/languages/prism/typescript';
+import jsx from 'react-syntax-highlighter/dist/cjs/languages/prism/jsx';
+import tsx from 'react-syntax-highlighter/dist/cjs/languages/prism/tsx';
+import bash from 'react-syntax-highlighter/dist/cjs/languages/prism/bash';
+import json from 'react-syntax-highlighter/dist/cjs/languages/prism/json';
+import sql from 'react-syntax-highlighter/dist/cjs/languages/prism/sql';
+import python from 'react-syntax-highlighter/dist/cjs/languages/prism/python';
+
+// Register the languages
+SyntaxHighlighter.registerLanguage('javascript', javascript);
+SyntaxHighlighter.registerLanguage('typescript', typescript);
+SyntaxHighlighter.registerLanguage('jsx', jsx);
+SyntaxHighlighter.registerLanguage('tsx', tsx);
+SyntaxHighlighter.registerLanguage('bash', bash);
+SyntaxHighlighter.registerLanguage('shell', bash);
+SyntaxHighlighter.registerLanguage('json', json);
+SyntaxHighlighter.registerLanguage('sql', sql);
+SyntaxHighlighter.registerLanguage('python', python);
 
 interface ArticleContentProps {
   content: string;
