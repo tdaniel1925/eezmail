@@ -3835,3 +3835,151 @@ export type FolderMapping = typeof folderMappings.$inferSelect;
 export type NewFolderMapping = typeof folderMappings.$inferInsert;
 export type UnmappedFolder = typeof unmappedFolders.$inferSelect;
 export type NewUnmappedFolder = typeof unmappedFolders.$inferInsert;
+// =====================================================
+// ADMIN FEATURE TABLES (from migrations 014, 015, 016)
+// =====================================================
+
+// Knowledge Base Categories
+export const knowledgeBaseCategories = pgTable('kb_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  parentId: uuid('parent_id'),
+  icon: varchar('icon', { length: 50 }),
+  sortOrder: integer('sort_order').default(0),
+  isVisible: boolean('is_visible').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Knowledge Base Articles  
+export const knowledgeBaseArticles = pgTable('kb_articles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  content: text('content').notNull(),
+  excerpt: text('excerpt'),
+  categoryId: uuid('category_id'),
+  tags: text('tags').array().default([]),
+  authorId: uuid('author_id'),
+  status: varchar('status', { length: 20 }).default('draft'),
+  visibility: varchar('visibility', { length: 20 }).default('public'),
+  helpfulCount: integer('helpful_count').default(0),
+  notHelpfulCount: integer('not_helpful_count').default(0),
+  views: integer('views').default(0),
+  featured: boolean('featured').default(false),
+  seoTitle: text('seo_title'),
+  seoDescription: text('seo_description'),
+  seoKeywords: text('seo_keywords').array(),
+  publishedAt: timestamp('published_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Alert Rules
+export const alertRules = pgTable('alert_rules', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  description: text('description'),
+  metric: varchar('metric', { length: 100 }).notNull(),
+  operator: varchar('operator', { length: 10 }).notNull(),
+  threshold: decimal('threshold', { precision: 20, scale: 6 }).notNull(),
+  durationMinutes: integer('duration_minutes').default(5),
+  severity: varchar('severity', { length: 20 }).default('warning'),
+  notificationChannels: jsonb('notification_channels').default([]),
+  enabled: boolean('enabled').notNull().default(true),
+  lastTriggeredAt: timestamp('last_triggered_at'),
+  metadata: jsonb('metadata').default({}),
+  createdBy: uuid('created_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Alert Events
+export const alertEvents = pgTable('alert_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  alertRuleId: uuid('alert_rule_id'),
+  triggeredAt: timestamp('triggered_at').defaultNow().notNull(),
+  resolvedAt: timestamp('resolved_at'),
+  severity: varchar('severity', { length: 20 }).notNull(),
+  message: text('message').notNull(),
+  metricValue: decimal('metric_value', { precision: 20, scale: 6 }),
+  metadata: jsonb('metadata').default({}),
+  acknowledgedBy: uuid('acknowledged_by'),
+  acknowledgedAt: timestamp('acknowledged_at'),
+});
+
+// System Metrics
+export const systemMetrics = pgTable('system_metrics', {
+  id: uuid('id').defaultRandom().notNull(),
+  metricName: varchar('metric_name', { length: 100 }).notNull(),
+  metricValue: decimal('metric_value', { precision: 20, scale: 6 }).notNull(),
+  tags: jsonb('tags').default({}),
+  timestamp: timestamp('timestamp').defaultNow().notNull(),
+});
+
+// Support Tickets
+export const supportTickets = pgTable('support_tickets', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ticketNumber: serial('ticket_number').notNull().unique(),
+  organizationId: uuid('organization_id'),
+  userId: uuid('user_id'),
+  subject: varchar('subject', { length: 500 }).notNull(),
+  description: text('description').notNull(),
+  category: varchar('category', { length: 100 }),
+  priority: varchar('priority', { length: 20 }).default('normal'),
+  status: varchar('status', { length: 20 }).default('new'),
+  assignedTo: uuid('assigned_to'),
+  slaResponseBy: timestamp('sla_response_by'),
+  slaResolutionBy: timestamp('sla_resolution_by'),
+  firstResponseAt: timestamp('first_response_at'),
+  resolvedAt: timestamp('resolved_at'),
+  closedAt: timestamp('closed_at'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Ticket Comments
+export const ticketComments = pgTable('ticket_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ticketId: uuid('ticket_id').notNull(),
+  authorId: uuid('author_id'),
+  authorEmail: varchar('author_email', { length: 255 }),
+  comment: text('comment').notNull(),
+  isInternal: boolean('is_internal').notNull().default(false),
+  attachments: jsonb('attachments').default([]),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// User Settings
+export const userSettings = pgTable('user_settings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().unique(),
+  theme: varchar('theme', { length: 20 }).default('light'),
+  language: varchar('language', { length: 10 }).default('en'),
+  timezone: varchar('timezone', { length: 50 }).default('UTC'),
+  notifications: jsonb('notifications').default({}),
+  preferences: jsonb('preferences').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Type exports
+export type KnowledgeBaseCategory = typeof knowledgeBaseCategories.\;
+export type NewKnowledgeBaseCategory = typeof knowledgeBaseCategories.\;
+export type KnowledgeBaseArticle = typeof knowledgeBaseArticles.\;
+export type NewKnowledgeBaseArticle = typeof knowledgeBaseArticles.\;
+export type AlertRule = typeof alertRules.\;
+export type NewAlertRule = typeof alertRules.\;
+export type AlertEvent = typeof alertEvents.\;
+export type NewAlertEvent = typeof alertEvents.\;
+export type SystemMetric = typeof systemMetrics.\;
+export type NewSystemMetric = typeof systemMetrics.\;
+export type SupportTicket = typeof supportTickets.\;
+export type NewSupportTicket = typeof supportTickets.\;
+export type TicketComment = typeof ticketComments.\;
+export type NewTicketComment = typeof ticketComments.\;
+export type UserSetting = typeof userSettings.\;
+export type NewUserSetting = typeof userSettings.\;
