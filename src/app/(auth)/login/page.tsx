@@ -35,10 +35,14 @@ export default function LoginPage(): JSX.Element {
       }
 
       console.log('[AUTH] Login successful:', data.user?.email);
-      console.log('[AUTH] Redirecting to dashboard...');
+      console.log('[AUTH] Session:', data.session ? 'present' : 'missing');
 
-      // Force a hard redirect to ensure middleware runs
-      window.location.href = '/dashboard';
+      // Wait a bit for cookies to be set, then redirect
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      console.log('[AUTH] Redirecting to dashboard...');
+      router.push('/dashboard');
+      router.refresh(); // Force a refresh to ensure middleware runs
     } catch (err) {
       console.error('[AUTH] Caught error:', err);
       const errorMessage =
@@ -56,7 +60,6 @@ export default function LoginPage(): JSX.Element {
       } else {
         setError(errorMessage);
       }
-    } finally {
       setLoading(false);
     }
   };
