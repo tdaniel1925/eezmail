@@ -13,6 +13,9 @@ import { CategoryList } from '@/components/help/CategoryList';
 import { PopularArticles } from '@/components/help/PopularArticles';
 import { BookOpen } from 'lucide-react';
 
+// Force dynamic rendering - don't try to fetch DB at build time
+export const dynamic = 'force-dynamic';
+
 export default async function HelpPage() {
   // Get featured articles
   const featuredArticles = await db.query.knowledgeBaseArticles.findMany({
