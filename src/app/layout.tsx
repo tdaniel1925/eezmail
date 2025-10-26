@@ -36,45 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-          {/* CRITICAL: Install fetch sanitizer BEFORE any other JavaScript */}
-          <Script
-            id="fetch-sanitizer"
-            strategy="beforeInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-(function() {
-  if (typeof window !== 'undefined' && window.fetch) {
-    const originalFetch = window.fetch;
-    window.fetch = function(input, init) {
-      if (init && init.headers) {
-        const sanitized = {};
-        if (init.headers instanceof Headers) {
-          init.headers.forEach(function(v, k) {
-            // Only remove control characters and extended ASCII > 127
-            // Keep standard ASCII (0-127) which includes base64 characters
-            sanitized[k] = v.replace(/[\\x80-\\xFF\\x00-\\x1F]/g, '');
-          });
-          init.headers = sanitized;
-        } else if (Array.isArray(init.headers)) {
-          init.headers = init.headers.map(function(p) {
-            return [p[0], typeof p[1] === 'string' ? p[1].replace(/[\\x80-\\xFF\\x00-\\x1F]/g, '') : p[1]];
-          });
-        } else {
-          Object.keys(init.headers).forEach(function(k) {
-            var v = init.headers[k];
-            sanitized[k] = typeof v === 'string' ? v.replace(/[\\x80-\\xFF\\x00-\\x1F]/g, '') : v;
-          });
-          init.headers = sanitized;
-        }
-      }
-      return originalFetch.call(this, input, init);
-    };
-    console.log('[FETCH] Sanitizer active (selective mode)');
-  }
-})();
-              `,
-            }}
-          />
+          {/* Fetch sanitizer removed - using Supabase client configuration instead */}
       </head>
       <body className={`${inter.className} ${playfair.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
