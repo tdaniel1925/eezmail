@@ -1,16 +1,16 @@
 ---
-description: AI integration specification for email client including sentiment analysis, writing suggestions, thread summarization, and context management
+description: Analyze AI integration patterns including sentiment analysis, writing suggestions, thread summarization, and context management
 ---
 
-
+# === USER INSTRUCTIONS ===
+---
+description: AI integration specification for email client including sentiment analysis, writing suggestions, thread summarization, and context management
+---
 # ai-integration
-
 ## Core AI Integration Components
-
 ### 1. Sentiment Analysis Engine
 **Path**: src/lib/ai/sentiment-analyzer.ts
 **Importance**: 90/100
-
 - Real-time email sentiment detection
 - Custom scoring algorithm for business context
 - Five-tier classification system:
@@ -20,11 +20,9 @@ description: AI integration specification for email client including sentiment a
   - Negative/Concerned
   - Neutral
 - Context-aware tone matching based on recipient relationship
-
 ### 2. Writing Coach System
 **Path**: src/components/ai/WritingCoach.tsx
 **Importance**: 85/100
-
 - Real-time writing suggestions with custom metrics:
   - Professionalism scoring
   - Readability analysis
@@ -35,22 +33,18 @@ description: AI integration specification for email client including sentiment a
   - Professional tone adjustments
   - Contextual formality
   - Response urgency
-
 ### 3. Thread Analysis Engine
 **Path**: src/lib/ai/thread-analyzer.ts
 **Importance**: 95/100
-
 - Sophisticated email thread summarization
 - Action item extraction with priority detection
 - Meeting detail identification
 - Participant relationship mapping
 - Decision tracking across conversation flow
 - Context preservation between related threads
-
 ### 4. Smart Compose Engine
 **Path**: src/components/ai/SmartCompose.tsx
 **Importance**: 85/100
-
 - Context-aware completion suggestions
 - Professional template integration
 - Relationship-based tone matching
@@ -59,23 +53,74 @@ description: AI integration specification for email client including sentiment a
   - Recipient relationship
   - Email context
   - Time of day
-
 ### 5. Context Management System
 **Path**: src/lib/ai/context-builder.ts
 **Importance**: 80/100
-
 - Intelligent context building for AI operations
 - Relationship strength incorporation
 - Communication history integration
 - Previous interaction analysis
 - Topic clustering across threads
-
 Key Business Rules:
 - Sentiment analysis must consider recipient relationship
 - Writing suggestions adapt to formal/informal relationships
 - Thread summaries preserve critical business context
 - Smart compose maintains professional tone standards
 - Context building prioritizes recent relevant interactions
+$END$
+# === END USER INSTRUCTIONS ===
+
+# ai-integration
+
+## Core AI Integration Components
+
+### 1. Writing Assistance Pipeline (95/100)
+src/lib/ai/writing-assistance.ts
+- Real-time professional tone adaptation
+- Context-aware writing suggestions
+- Custom prompt engineering for email context
+- Integration with RAG for personalized style matching
+
+### 2. Sentiment Analysis Engine (90/100)
+src/lib/ai/sentiment-analyzer.ts
+- Custom email sentiment scoring (-100 to +100)
+- Multi-dimensional analysis (urgency, formality, emotion)
+- Thread-level sentiment tracking
+- Contact relationship context integration
+
+### 3. Thread Intelligence System (85/100)
+src/lib/ai/thread-analyzer.ts
+- Smart conversation summarization
+- Key point extraction with citation linking 
+- Action item detection with priority scoring
+- Decision tracking across thread history
+
+### 4. Context Management (90/100)
+src/lib/ai/context-manager.ts
+- Sophisticated pronoun resolution for email threads
+- Entity tracking across multiple messages
+- Relationship graph maintenance
+- Smart context windowing based on relevance
+
+### 5. Smart Compose Integration (85/100)
+src/lib/ai/smart-compose.ts
+- Professional email completion suggestions
+- Contact-aware salutation generation
+- Custom signature integration
+- Thread-aware response suggestions
+
+### 6. AI Caching System (80/100)
+src/lib/ai/response-cache.ts
+- Domain-specific caching for AI responses
+- Smart invalidation based on thread updates
+- Partial response reuse for similar contexts
+- Performance optimization for common patterns
+
+Core Workflows:
+1. Real-time writing assistance with tone matching
+2. Thread-aware context building for AI responses
+3. Intelligent summarization with key point extraction
+4. Smart suggestion generation with relationship context
 
 $END$
 

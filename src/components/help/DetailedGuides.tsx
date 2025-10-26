@@ -63,7 +63,7 @@ export function DetailedGuides(): JSX.Element {
       title: 'Email Categories Explained',
       icon: Inbox,
       description:
-        'Understand Priority Inbox, Feed, and Paper Trail and how emails are categorized',
+        'Understand Imbox, Feed, and Paper Trail and how emails are categorized',
       videoUrl: 'https://youtube.com/watch?v=example',
       sections: [
         {
@@ -79,10 +79,10 @@ export function DetailedGuides(): JSX.Element {
               <div className="space-y-3">
                 <div className="rounded-lg border-l-4 border-primary bg-primary/5 p-4">
                   <h5 className="font-semibold text-gray-900 dark:text-white mb-2">
-                    📬 Priority Inbox (VIP Inbox)
+                    📬 Imbox (VIP Inbox)
                   </h5>
                   <p className="text-sm text-gray-700 dark:text-white/70 mb-2">
-                    Your priority inbox for important personal and work emails.
+                    Your imbox for important personal and work emails.
                   </p>
                   <p className="text-xs font-medium text-gray-900 dark:text-white mb-1">
                     Typically includes:
@@ -264,7 +264,7 @@ export function DetailedGuides(): JSX.Element {
                       <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">
                         I
                       </kbd>{' '}
-                      for Priority Inbox
+                      for Imbox
                     </p>
                     <p>
                       • Press{' '}
@@ -319,9 +319,7 @@ export function DetailedGuides(): JSX.Element {
                 <ol className="list-decimal pl-5 space-y-1 text-xs text-gray-700 dark:text-white/70">
                   <li>Email arrives from new sender</li>
                   <li>AI analyzes content, sender info, and context</li>
-                  <li>
-                    System suggests category (Priority Inbox/Feed/Paper Trail)
-                  </li>
+                  <li>System suggests category (Imbox/Feed/Paper Trail)</li>
                   <li>You review and approve/modify the suggestion</li>
                   <li>Future emails from that sender follow your preference</li>
                 </ol>

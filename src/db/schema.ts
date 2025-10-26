@@ -316,34 +316,34 @@ export const sandboxCompanies = pgTable('sandbox_companies', {
   name: text('name').notNull(),
   description: text('description'),
   status: sandboxCompanyStatusEnum('status').default('active').notNull(),
-  
+
   // Service Credentials (shared with sandbox users)
   twilioAccountSid: text('twilio_account_sid'),
   twilioAuthToken: text('twilio_auth_token'),
   twilioPhoneNumber: text('twilio_phone_number'),
-  
+
   openaiApiKey: text('openai_api_key'),
   openaiOrganizationId: text('openai_organization_id'),
-  
+
   // Unlimited access flags
   unlimitedSms: boolean('unlimited_sms').default(true).notNull(),
   unlimitedAi: boolean('unlimited_ai').default(true).notNull(),
   unlimitedStorage: boolean('unlimited_storage').default(true).notNull(),
-  
+
   // Usage tracking (for monitoring, not limiting)
   totalSmsUsed: integer('total_sms_used').default(0),
   totalAiTokensUsed: integer('total_ai_tokens_used').default(0),
   totalStorageUsed: integer('total_storage_used').default(0), // in bytes
-  
+
   // Contact info
   contactEmail: text('contact_email'),
   contactName: text('contact_name'),
   contactPhone: text('contact_phone'),
-  
+
   // Metadata
   notes: text('notes'),
   tags: jsonb('tags').$type<string[]>(),
-  
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   createdBy: uuid('created_by').references(() => users.id),
@@ -357,16 +357,16 @@ export const adminAuditLog = pgTable('admin_audit_log', {
   action: text('action').notNull(), // e.g., 'create_sandbox_company', 'create_sandbox_user', 'update_credentials'
   targetType: text('target_type').notNull(), // e.g., 'sandbox_company', 'user'
   targetId: uuid('target_id'),
-  
+
   details: jsonb('details').$type<{
     before?: Record<string, unknown>;
     after?: Record<string, unknown>;
     metadata?: Record<string, unknown>;
   }>(),
-  
+
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
-  
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -589,6 +589,23 @@ export const emails = pgTable(
 // EMAIL FOLDERS TABLE
 // ============================================================================
 
+// Core folder type enum for standardization across providers
+export const coreFolderTypeEnum = pgEnum('core_folder_type', [
+  'inbox',
+  'sent',
+  'drafts',
+  'trash',
+  'spam',
+  'archive',
+  'starred',
+  'important',
+  'all_mail',
+  'outbox',
+  'custom',
+]);
+
+export type CoreFolderType = (typeof coreFolderTypeEnum.enumValues)[number];
+
 export const emailFolders = pgTable(
   'email_folders',
   {
@@ -599,17 +616,41 @@ export const emailFolders = pgTable(
     userId: uuid('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Original provider info (kept for backwards compatibility)
     name: text('name').notNull(),
     externalId: text('external_id').notNull(),
-    type: text('type').notNull(), // inbox, sent, drafts, trash, spam, archive, starred, custom
+    type: text('type').notNull(), // Original type from provider
     parentId: uuid('parent_id'), // For nested folders
-    messageCount: integer('message_count').default(0), // Total messages in folder
+
+    // NEW: Standardized folder type
+    folderType: coreFolderTypeEnum('folder_type').default('custom'),
+    isSystemFolder: boolean('is_system_folder').default(false),
+
+    // NEW: Display customization
+    displayName: text('display_name'),
+    icon: text('icon').default('folder'),
+    color: varchar('color', { length: 7 }), // Hex color
+    sortOrder: integer('sort_order').default(999),
+
+    // NEW: Provider-specific fields
+    providerPath: text('provider_path'), // Full IMAP path
+    delimiter: varchar('delimiter', { length: 10 }).default('/'),
+
+    // Message counts
+    messageCount: integer('message_count').default(0),
     unreadCount: integer('unread_count').default(0),
+    totalSizeBytes: integer('total_size_bytes').default(0),
 
     // Per-folder sync tracking
-    syncCursor: text('sync_cursor'), // Delta link or page token for this folder
-    lastSyncAt: timestamp('last_sync_at'), // When this folder was last synced
-    syncStatus: text('sync_status').default('idle'), // 'idle', 'syncing', 'error'
+    syncCursor: text('sync_cursor'), // Delta link or page token
+    lastSyncAt: timestamp('last_sync_at'),
+    syncStatus: text('sync_status').default('idle'),
+
+    // NEW: Per-folder sync settings
+    syncEnabled: boolean('sync_enabled').default(true),
+    syncFrequencyMinutes: integer('sync_frequency_minutes').default(15),
+    syncDaysBack: integer('sync_days_back').default(30),
 
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -619,6 +660,16 @@ export const emailFolders = pgTable(
       'email_folders_account_external_unique'
     ).on(table.accountId, table.externalId),
     lastSyncAtIdx: index('email_folders_last_sync_at_idx').on(table.lastSyncAt),
+    // NEW: Indexes for new fields
+    folderTypeIdx: index('idx_email_folders_folder_type').on(table.folderType),
+    syncEnabledIdx: index('idx_email_folders_sync_enabled').on(
+      table.accountId,
+      table.syncEnabled
+    ),
+    sortOrderIdx: index('idx_email_folders_sort_order').on(
+      table.accountId,
+      table.sortOrder
+    ),
   })
 );
 

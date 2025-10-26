@@ -30,7 +30,7 @@ export const firstTimeOnboardingSteps: TutorialStep[] = [
     id: 'sidebar-folders',
     title: 'Organize with Folders',
     description:
-      'Access your Priority Inbox (VIPs), Feed (newsletters), Paper Trail (receipts), and custom folders here. Click any folder to filter your emails.',
+      'Access your Imbox (VIPs), Feed (newsletters), Paper Trail (receipts), and custom folders here. Click any folder to filter your emails.',
     targetSelector: '[data-tutorial="sidebar"]',
     position: 'right',
   },

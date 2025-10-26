@@ -66,3 +66,4 @@ CREATE TABLE IF NOT EXISTS public.onboarding_tutorials (
 SELECT 'Migration completed successfully! Onboarding tables created.' AS status;
 
 
+

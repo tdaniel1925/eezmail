@@ -56,6 +56,10 @@ export function FolderList({
       type: string;
       externalId: string;
       unreadCount: number;
+      folderType?: string; // NEW: standardized type
+      displayName?: string; // NEW: display name
+      icon?: string; // NEW: icon
+      sortOrder?: number; // NEW: sort order
     }>
   >([]);
 
@@ -83,39 +87,72 @@ export function FolderList({
 
       console.log('📁 Fetching folders for account:', currentAccountId);
       const result = await getEmailFolders({ accountId: currentAccountId });
-      
+
       if (result.success) {
         console.log('✅ Fetched server folders:', result.folders);
-        
+
         // Filter out folders that are already shown in primary/standard sections
         // to avoid duplicates (e.g., inbox, sent, drafts, trash, spam, archive)
-        const excludedTypes = ['inbox', 'sent', 'drafts', 'trash', 'spam', 'archive', 'starred'];
-        const excludedNames = ['inbox', 'sent', 'drafts', 'trash', 'spam', 'junk', 'archive', 'archived', 'starred', 'important', 'attachments'];
-        
-        const uniqueFolders = result.folders.filter(folder => {
+        const excludedTypes = [
+          'inbox',
+          'sent',
+          'drafts',
+          'trash',
+          'spam',
+          'archive',
+          'starred',
+        ];
+        const excludedNames = [
+          'inbox',
+          'sent',
+          'drafts',
+          'trash',
+          'spam',
+          'junk',
+          'archive',
+          'archived',
+          'starred',
+          'important',
+          'attachments',
+        ];
+
+        const uniqueFolders = result.folders.filter((folder) => {
+          // ✅ Use new folderType field if available, fallback to type
+          const folderType = (folder.folderType || folder.type).toLowerCase();
           const normalizedName = folder.name.toLowerCase();
-          const normalizedType = folder.type.toLowerCase();
-          
+
           // Exclude if the type matches a hard-coded folder
-          if (excludedTypes.includes(normalizedType)) {
+          if (excludedTypes.includes(folderType)) {
             return false;
           }
-          
+
           // Exclude if the name matches a hard-coded folder
-          if (excludedNames.some(excluded => normalizedName.includes(excluded))) {
+          if (
+            excludedNames.some((excluded) => normalizedName.includes(excluded))
+          ) {
             return false;
           }
-          
+
           return true;
         });
-        
-        // Convert folder names to title case
-        const titleCaseFolders = uniqueFolders.map(folder => ({
+
+        // ✅ Sort by sortOrder if available
+        const sortedFolders = uniqueFolders.sort((a, b) => {
+          const orderA = a.sortOrder ?? 999;
+          const orderB = b.sortOrder ?? 999;
+          return orderA - orderB;
+        });
+
+        // Convert folder names to title case, use displayName if available
+        const titleCaseFolders = sortedFolders.map((folder) => ({
           ...folder,
-          name: toTitleCase(folder.name)
+          name: folder.displayName || toTitleCase(folder.name),
         }));
-        
-        console.log('📂 Unique server folders after filtering:', titleCaseFolders);
+
+        console.log(
+          '📂 Unique server folders after filtering:',
+          titleCaseFolders
+        );
         setServerFolders(titleCaseFolders);
       } else {
         console.error('❌ Failed to fetch folders:', result.message);
@@ -129,17 +166,14 @@ export function FolderList({
   // Helper function to convert strings to title case
   const toTitleCase = (str: string): string => {
     if (!str) return str;
-    
+
     // Handle common patterns: replace underscores and hyphens with spaces
-    const normalized = str
-      .replace(/_/g, ' ')
-      .replace(/-/g, ' ')
-      .trim();
-    
+    const normalized = str.replace(/_/g, ' ').replace(/-/g, ' ').trim();
+
     // Split on spaces and capitalize each word
     return normalized
       .split(/\s+/)
-      .map(word => {
+      .map((word) => {
         if (word.length === 0) return word;
         return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       })
@@ -379,7 +413,9 @@ export function FolderList({
                 <button
                   key={folder.id}
                   onClick={() => handleFolderClick(folder.name.toLowerCase())}
-                  onContextMenu={(e) => handleContextMenu(e, folder.name.toLowerCase())}
+                  onContextMenu={(e) =>
+                    handleContextMenu(e, folder.name.toLowerCase())
+                  }
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group relative',
                     isActive
@@ -388,7 +424,10 @@ export function FolderList({
                     isCollapsed && 'justify-center px-2'
                   )}
                 >
-                  <Folder size={18} className={cn(isActive && 'text-primary')} />
+                  <Folder
+                    size={18}
+                    className={cn(isActive && 'text-primary')}
+                  />
 
                   {!isCollapsed && (
                     <>

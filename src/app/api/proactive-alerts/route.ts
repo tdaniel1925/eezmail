@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { proactiveAlerts, emailAccounts } from '@/db/schema';
-import { eq, and, desc, or } from 'drizzle-orm';
+import { eq, and, desc, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
-export const runtime = 'nodejs';
+// Note: Cannot use Edge Runtime due to Postgres driver dependency on Node.js 'net' module
+// export const runtime = 'edge'; // ⚠️ Disabled - postgres requires Node.js runtime
 export const dynamic = 'force-dynamic';
 
 // ============================================================================
@@ -41,36 +42,45 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(proactiveAlerts.dismissed, false));
     }
 
-    // Fetch alerts
-    const alerts = await db
-      .select()
-      .from(proactiveAlerts)
-      .where(and(...conditions))
-      .orderBy(desc(proactiveAlerts.createdAt))
-      .limit(validatedData.limit);
+    // ✅ OPTIMIZED: Fetch alerts and counts in parallel
+    const [alerts, countResult] = await Promise.all([
+      // Fetch limited alerts
+      db
+        .select()
+        .from(proactiveAlerts)
+        .where(and(...conditions))
+        .orderBy(desc(proactiveAlerts.createdAt))
+        .limit(validatedData.limit),
 
-    // Get counts by type
-    const allAlerts = await db
-      .select()
-      .from(proactiveAlerts)
-      .where(eq(proactiveAlerts.userId, user.id));
+      // Get counts in database (not in JavaScript) - MUCH faster
+      db.execute(sql`
+        SELECT 
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE dismissed = FALSE) as undismissed,
+          COUNT(*) FILTER (WHERE dismissed = TRUE) as dismissed,
+          COUNT(*) FILTER (WHERE type = 'vip_email') as vip_email,
+          COUNT(*) FILTER (WHERE type = 'overdue_response') as overdue_response,
+          COUNT(*) FILTER (WHERE type = 'meeting_prep') as meeting_prep,
+          COUNT(*) FILTER (WHERE type = 'urgent_keyword') as urgent_keyword,
+          COUNT(*) FILTER (WHERE type = 'follow_up_needed') as follow_up_needed,
+          COUNT(*) FILTER (WHERE type = 'deadline_approaching') as deadline_approaching
+        FROM proactive_alerts
+        WHERE user_id = ${user.id}
+      `),
+    ]);
 
+    const countsRow = countResult.rows[0] as any;
     const counts = {
-      total: allAlerts.length,
-      undismissed: allAlerts.filter((a) => !a.dismissed).length,
-      dismissed: allAlerts.filter((a) => a.dismissed).length,
+      total: parseInt(countsRow?.total || '0'),
+      undismissed: parseInt(countsRow?.undismissed || '0'),
+      dismissed: parseInt(countsRow?.dismissed || '0'),
       byType: {
-        vip_email: allAlerts.filter((a) => a.type === 'vip_email').length,
-        overdue_response: allAlerts.filter((a) => a.type === 'overdue_response')
-          .length,
-        meeting_prep: allAlerts.filter((a) => a.type === 'meeting_prep').length,
-        urgent_keyword: allAlerts.filter((a) => a.type === 'urgent_keyword')
-          .length,
-        follow_up_needed: allAlerts.filter((a) => a.type === 'follow_up_needed')
-          .length,
-        deadline_approaching: allAlerts.filter(
-          (a) => a.type === 'deadline_approaching'
-        ).length,
+        vip_email: parseInt(countsRow?.vip_email || '0'),
+        overdue_response: parseInt(countsRow?.overdue_response || '0'),
+        meeting_prep: parseInt(countsRow?.meeting_prep || '0'),
+        urgent_keyword: parseInt(countsRow?.urgent_keyword || '0'),
+        follow_up_needed: parseInt(countsRow?.follow_up_needed || '0'),
+        deadline_approaching: parseInt(countsRow?.deadline_approaching || '0'),
       },
     };
 

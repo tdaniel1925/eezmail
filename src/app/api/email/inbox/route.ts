@@ -11,6 +11,9 @@ const inboxEmailSchema = z.object({
   offset: z.number().min(0).optional().default(0),
 });
 
+// Note: Cannot use Edge Runtime due to Postgres driver dependency
+// export const runtime = 'edge'; // ⚠️ Disabled - postgres requires Node.js runtime
+
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user

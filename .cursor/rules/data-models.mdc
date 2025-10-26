@@ -1,66 +1,126 @@
 ---
-description: Specification for email data models including threading, contacts, timelines and folder structures
+description: Used for documenting data model implementations including emails, contacts, threads and folder structures
 ---
 
-
+# === USER INSTRUCTIONS ===
+---
+description: Specification for email data models including threading, contacts, timelines and folder structures
+---
 # data-models
-
 ## Email Threading Model
 Importance Score: 95/100
-
 Core data structures for email threading and relationships:
 - Thread grouping with parent-child relationships
 - Multi-provider thread ID mapping 
 - Thread participant tracking with role identification
 - Timeline-based thread organization
 - Thread status tracking (active/archived/snoozed)
-
 ## Contact Relationship Model
 Importance Score: 90/100
-
 Contact data organization:
 - Hierarchical contact grouping system
 - Contact interaction history with timeline events
 - Relationship strength scoring based on interaction patterns
 - Auto-categorization rules for contact organization
 - VIP status tracking and criteria
-
 ## Timeline Event Model 
 Importance Score: 85/100
-
 Timeline data structure:
 - Event categorization (email/meeting/call/note)
 - Event relationship mapping to threads and contacts
 - Priority scoring for timeline events
 - Action item extraction and tracking
 - Event grouping by conversation context
-
 ## Folder Organization Model
 Importance Score: 80/100
-
 Custom folder hierarchy:
 - Smart folder categorization (Imbox/Feed/Paper Trail)
 - Provider-specific folder mapping
 - Rule-based folder assignment criteria
 - Folder access patterns tracking
 - Unified folder view across providers
-
 ## Email Screening Model
 Importance Score: 85/100
-
 Screening data organization:
 - Sender trust level tracking
 - Domain-level screening decisions
 - Custom screening rules storage
 - Screening history with user decisions
 - Auto-categorization patterns
-
 Key relationships:
 - Threads contain multiple Timeline Events
 - Contacts participate in multiple Threads
 - Timeline Events reference Contacts and Threads
 - Folders contain multiple Threads
 - Screening Rules apply to multiple Senders
+$END$
+# === END USER INSTRUCTIONS ===
+
+# data-models
+
+## Email Threading Model
+Importance Score: 95/100
+
+Key Data Structures:
+- Thread grouping using References and In-Reply-To headers
+- Participant tracking with role classification (From, To, CC, BCC)
+- Timeline-based conversation visualization
+- Cross-provider thread ID normalization
+- Custom email relationship mapping
+
+## Contact Relationship Model 
+Importance Score: 90/100
+
+Data Architecture:
+- Bi-directional contact relationship tracking
+- Communication pattern analysis
+- Response time metrics
+- Interaction strength scoring
+- VIP status determination logic
+- Group membership tracking
+
+## Folder Organization Model
+Importance Score: 85/100
+
+Core Structure:
+- Provider-agnostic folder hierarchy
+- Smart folder categorization (Imbox/Feed/Paper Trail)
+- Custom folder type detection
+- Cross-provider folder mapping
+- Nested folder relationship tracking
+
+## Timeline Event Model
+Importance Score: 80/100
+
+Event Types:
+- Email interactions (send/receive/read)
+- Voice message exchanges
+- Document sharing events
+- Meeting invitations
+- Task assignments
+- Follow-up reminders
+
+## Email Classification Model
+Importance Score: 85/100
+
+Classification Rules:
+- Sender trust scoring system
+- Content-based categorization
+- Receipt/newsletter detection
+- Priority determination
+- Action item extraction
+- Meeting detection logic
+
+## Security Classification Model
+Importance Score: 90/100
+
+Security Attributes:
+- Phishing risk indicators
+- Sender verification status
+- Link safety analysis
+- Content risk scoring
+- Domain reputation metrics
+- Historical threat patterns
 
 $END$
 

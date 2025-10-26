@@ -23,3 +23,4 @@ export default async function OnboardingPage() {
   return <OnboardingDashboard progress={progress} userId={user.id} />;
 }
 
+

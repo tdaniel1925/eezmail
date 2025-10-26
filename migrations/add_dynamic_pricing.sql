@@ -192,3 +192,4 @@ COMMENT ON TABLE discount_codes IS 'Discount codes and coupons for subscriptions
 COMMENT ON TABLE discount_redemptions IS 'Tracks which users redeemed which discount codes';
 
 
+

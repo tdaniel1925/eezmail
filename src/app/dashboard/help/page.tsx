@@ -136,7 +136,7 @@ function VideoTutorials(): JSX.Element {
     },
     {
       id: 'categories-explained',
-      title: 'Understanding Priority Inbox, Feed & Paper Trail',
+      title: 'Understanding Imbox, Feed & Paper Trail',
       description: 'How the three-tier system organizes your emails',
       duration: '6:10',
       thumbnail: '/thumbnails/categories.jpg',

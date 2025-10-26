@@ -4,6 +4,7 @@ import { inngest } from '@/inngest/client';
 import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import { checkInngestHealth } from '@/lib/inngest/health-check';
 
 /**
  * SYNC ORCHESTRATOR
@@ -38,7 +39,17 @@ export async function triggerSync(request: SyncRequest): Promise<{
     console.log(`   Account: ${accountId}`);
     console.log(`   Trigger: ${trigger}`);
 
-    // 1. Validate account exists and belongs to user
+    // 1. Check if Inngest is healthy (in development)
+    const inngestHealth = await checkInngestHealth();
+    if (!inngestHealth.healthy) {
+      console.error(`❌ Cannot start sync: ${inngestHealth.error}`);
+      return {
+        success: false,
+        error: `Cannot start sync: ${inngestHealth.error}`,
+      };
+    }
+
+    // 2. Validate account exists and belongs to user
     const account = await db.query.emailAccounts.findFirst({
       where: and(
         eq(emailAccounts.id, accountId),
@@ -50,7 +61,7 @@ export async function triggerSync(request: SyncRequest): Promise<{
       return { success: false, error: 'Account not found' };
     }
 
-    // 2. Determine sync mode based on trigger
+    // 3. Determine sync mode based on trigger
     // ALWAYS do initial sync for manual triggers until we get emails
     // This fixes the loop where incremental sync returns 0 emails
     const syncMode: SyncMode =
@@ -62,7 +73,7 @@ export async function triggerSync(request: SyncRequest): Promise<{
       `📊 Sync mode: ${syncMode} (trigger: ${trigger}, initialSyncCompleted: ${account.initialSyncCompleted})`
     );
 
-    // 3. Check if sync is already running (prevent duplicate syncs)
+    // 4. Check if sync is already running (prevent duplicate syncs)
     if (account.syncStatus === 'syncing') {
       console.log(`⚠️ Sync already in progress for account ${accountId}`);
       return {
@@ -72,7 +83,7 @@ export async function triggerSync(request: SyncRequest): Promise<{
       };
     }
 
-    // 4. Mark as syncing
+    // 5. Mark as syncing
     await db
       .update(emailAccounts)
       .set({
@@ -84,48 +95,68 @@ export async function triggerSync(request: SyncRequest): Promise<{
 
     console.log(`✅ Account marked as syncing`);
 
-    // Safety timeout: Auto-reset if sync doesn't complete in 30 minutes
-    // This prevents permanent "stuck syncing" state
-    setTimeout(
-      async () => {
-        try {
-          const checkAccount = await db.query.emailAccounts.findFirst({
-            where: and(
-              eq(emailAccounts.id, accountId),
-              eq(emailAccounts.userId, userId)
-            ),
-          });
+    // Safety timeout: Auto-reset if sync is ACTUALLY stuck (no progress)
+    // Initial syncs can take longer, so we use a longer timeout and check for progress
+    const timeoutDuration =
+      syncMode === 'initial' ? 120 * 60 * 1000 : 30 * 60 * 1000; // 2 hours for initial, 30 min for incremental
+    const startProgress = 0;
+    const startTime = Date.now();
 
-          if (checkAccount && checkAccount.syncStatus === 'syncing') {
-            console.warn(
-              `⚠️ Sync timeout detected for account ${accountId} - auto-resetting status`
+    setTimeout(async () => {
+      try {
+        const checkAccount = await db.query.emailAccounts.findFirst({
+          where: and(
+            eq(emailAccounts.id, accountId),
+            eq(emailAccounts.userId, userId)
+          ),
+        });
+
+        if (checkAccount && checkAccount.syncStatus === 'syncing') {
+          // Check if progress was made - if syncProgress changed OR updatedAt is recent, sync is active
+          const progressMade = (checkAccount.syncProgress || 0) > startProgress;
+          const recentUpdate =
+            checkAccount.updatedAt &&
+            Date.now() - new Date(checkAccount.updatedAt).getTime() <
+              10 * 60 * 1000; // Updated in last 10 minutes
+
+          if (progressMade || recentUpdate) {
+            console.log(
+              `✅ Sync still active for account ${accountId} (progress: ${checkAccount.syncProgress}%) - NOT resetting`
             );
-            console.warn(`   Last progress: ${checkAccount.syncProgress}%`);
-            console.warn(`   Account: ${checkAccount.emailAddress}`);
-
-            await db
-              .update(emailAccounts)
-              .set({
-                syncStatus: 'idle',
-                syncProgress: 0,
-                status: 'active',
-                lastSyncError:
-                  'Sync timed out after 30 minutes. Please try syncing again.',
-                lastSyncAt: new Date(),
-              } as any)
-              .where(eq(emailAccounts.id, accountId));
-
-            console.log('✅ Sync status auto-reset due to timeout');
+            return; // Don't reset - sync is making progress
           }
-        } catch (error) {
-          console.error('❌ Error in safety timeout handler:', error);
-          // Don't throw - this is a background safety check
-        }
-      },
-      30 * 60 * 1000
-    ); // 30 minutes
 
-    // 5. Trigger appropriate Inngest function based on provider
+          // Only reset if truly stuck with no progress
+          console.warn(
+            `⚠️ Sync appears STUCK for account ${accountId} - auto-resetting status`
+          );
+          console.warn(`   Last progress: ${checkAccount.syncProgress}%`);
+          console.warn(`   Account: ${checkAccount.emailAddress}`);
+          console.warn(
+            `   Time elapsed: ${Math.round((Date.now() - startTime) / 60000)} minutes`
+          );
+
+          await db
+            .update(emailAccounts)
+            .set({
+              syncStatus: 'idle',
+              syncProgress: 0,
+              status: 'active',
+              lastSyncError:
+                'Sync appears to be stuck with no progress. Please try syncing again.',
+              lastSyncAt: new Date(),
+            } as any)
+            .where(eq(emailAccounts.id, accountId));
+
+          console.log('✅ Sync status auto-reset due to being stuck');
+        }
+      } catch (error) {
+        console.error('❌ Error in safety timeout handler:', error);
+        // Don't throw - this is a background safety check
+      }
+    }, timeoutDuration);
+
+    // 6. Trigger appropriate Inngest function based on provider
     let eventName: string;
     switch (account.provider) {
       case 'microsoft':
@@ -151,7 +182,7 @@ export async function triggerSync(request: SyncRequest): Promise<{
         };
     }
 
-    // 6. Send event to Inngest with all required data
+    // 7. Send event to Inngest with all required data
     try {
       const { ids } = await inngest.send({
         name: eventName,

@@ -38,6 +38,11 @@ interface ExpandableEmailItemProps {
   onNavigateToEmail?: (emailId: string) => void;
   onOpenComposer?: (mode: 'reply' | 'forward', emailId: string) => void;
   className?: string;
+  preloadedSummary?: {
+    summary: string;
+    loading: boolean;
+    error: boolean;
+  };
 }
 
 export function ExpandableEmailItem({
@@ -50,6 +55,7 @@ export function ExpandableEmailItem({
   onNavigateToEmail,
   onOpenComposer,
   className,
+  preloadedSummary,
 }: ExpandableEmailItemProps): JSX.Element {
   const { setCurrentEmail } = useChatbotContext();
   const { addEmail } = useReplyLater();
@@ -71,6 +77,20 @@ export function ExpandableEmailItem({
   const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use preloaded summary if available
+  useEffect(() => {
+    if (preloadedSummary && preloadedSummary.summary && !summary) {
+      setSummary(preloadedSummary.summary);
+      setIsLoadingSummary(false);
+      setSummaryError(false);
+    } else if (preloadedSummary?.loading) {
+      setIsLoadingSummary(true);
+    } else if (preloadedSummary?.error) {
+      setSummaryError(true);
+      setIsLoadingSummary(false);
+    }
+  }, [preloadedSummary, summary]);
 
   // Inline notification for AI reply buttons
   const [inlineNotification, setInlineNotification] = useState<string | null>(
@@ -261,6 +281,7 @@ export function ExpandableEmailItem({
 
   // AI Summary Hover Functions
   const fetchSummary = async (): Promise<void> => {
+    // Skip if we already have a summary (from preload or previous fetch)
     if (summary || isLoadingSummary || isExpanded) return;
 
     setIsLoadingSummary(true);

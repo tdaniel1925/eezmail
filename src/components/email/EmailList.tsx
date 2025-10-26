@@ -42,6 +42,7 @@ import { applyLabelsToEmails } from '@/lib/labels/actions';
 import { FolderSelectorModal } from '@/components/modals/FolderSelectorModal';
 import { LabelSelectorModal } from '@/components/modals/LabelSelectorModal';
 import { createClient } from '@/lib/supabase/client';
+import { useViewportSummaries } from '@/hooks/useViewportSummaries';
 
 interface EmailListProps {
   emails: Email[];
@@ -90,6 +91,45 @@ export function EmailList({
   // Infinite scroll observer
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
+
+  // Filter emails based on search query (instant local search)
+  const displayEmails = emails.filter((email) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+
+    // Search in subject
+    if (email.subject?.toLowerCase().includes(query)) return true;
+
+    // Search in sender email
+    if (typeof email.fromAddress === 'object' && email.fromAddress) {
+      const fromEmail = (email.fromAddress as any).email?.toLowerCase() || '';
+      if (fromEmail.includes(query)) return true;
+
+      // Search in sender name
+      const fromName = (email.fromAddress as any).name?.toLowerCase() || '';
+      if (fromName.includes(query)) return true;
+    }
+
+    // Search in body/snippet
+    if (
+      email.body &&
+      typeof email.body === 'string' &&
+      email.body.toLowerCase().includes(query)
+    ) {
+      return true;
+    }
+
+    if (email.snippet?.toLowerCase().includes(query)) return true;
+
+    return false;
+  });
+
+  // Viewport-based AI summary preloading
+  const { getSummary, registerEmailElement } = useViewportSummaries(
+    displayEmails,
+    scrollContainerRef
+  );
 
   // Get user ID on mount
   useEffect(() => {
@@ -174,39 +214,6 @@ export function EmailList({
       );
     };
   }, [emails]);
-
-  // Filter emails based on search query (instant local search)
-  const displayEmails = emails.filter((email) => {
-    if (!searchQuery.trim()) return true;
-
-    const query = searchQuery.toLowerCase();
-
-    // Search in subject
-    if (email.subject?.toLowerCase().includes(query)) return true;
-
-    // Search in sender email
-    if (typeof email.fromAddress === 'object' && email.fromAddress) {
-      const fromEmail = (email.fromAddress as any).email?.toLowerCase() || '';
-      if (fromEmail.includes(query)) return true;
-
-      // Search in sender name
-      const fromName = (email.fromAddress as any).name?.toLowerCase() || '';
-      if (fromName.includes(query)) return true;
-    }
-
-    // Search in body/snippet
-    if (
-      email.body &&
-      typeof email.body === 'string' &&
-      email.body.toLowerCase().includes(query)
-    ) {
-      return true;
-    }
-
-    if (email.snippet?.toLowerCase().includes(query)) return true;
-
-    return false;
-  });
 
   // Bulk action handlers
   const toggleSelectAll = (): void => {
@@ -683,8 +690,10 @@ export function EmailList({
             {displayEmails.map((email) => (
               <div
                 key={email.id}
+                data-email-id={email.id}
                 ref={(el) => {
                   emailRefs.current[email.id] = el;
+                  registerEmailElement(email.id, el);
                 }}
               >
                 <ExpandableEmailItem
@@ -704,6 +713,7 @@ export function EmailList({
                     setIsComposerOpen(true);
                   }}
                   onNavigateToEmail={handleNavigateToEmail}
+                  preloadedSummary={getSummary(email.id)}
                 />
               </div>
             ))}

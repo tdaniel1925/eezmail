@@ -1,14 +1,15 @@
 ---
-description: Documentation for email sync system including delta sync strategies, threading logic, provider-specific optimizations
+description: Specifications for multi-provider email synchronization system including delta sync, threading logic and provider optimizations.
 ---
 
-
+# === USER INSTRUCTIONS ===
+---
+description: Documentation for email sync system including delta sync strategies, threading logic, provider-specific optimizations
+---
 # sync-architecture
-
 ## Core Sync Engine
 File: src/lib/sync/email-sync-service.ts
 Importance Score: 95/100
-
 Multi-provider email synchronization system:
 - Initial full sync for past 30 days
 - Delta sync using provider cursors for incremental updates 
@@ -18,11 +19,9 @@ Multi-provider email synchronization system:
   - IMAP: 25 messages/batch
 - Automatic retry with exponential backoff
 - Conflict resolution for cross-device edits
-
 ## Real-Time Sync Management
 File: src/lib/sync/sync-modes.ts
 Importance Score: 85/100
-
 Three-tier sync strategy:
 1. Webhook-based instant sync
    - Microsoft Graph change notifications
@@ -34,39 +33,87 @@ Three-tier sync strategy:
 3. Fallback polling
    - 5-minute intervals for providers without push
    - Full refresh every 30 minutes
-
 ## Threading Engine
 File: src/lib/sync/thread-service.ts
 Importance Score: 90/100
-
 Thread synchronization logic:
 - Cross-provider thread mapping
 - Reference-based conversation linking
 - Subject line normalization
 - Participant-based thread grouping
 - Timeline preservation across providers
-
 ## Sync State Management
 File: src/lib/sync/sync-state.ts
 Importance Score: 80/100
-
 Cursor-based sync state tracking:
 - Provider-specific sync tokens
 - Last successful sync timestamp
 - Failed message tracking
 - Partial sync recovery
 - Progress calculation
-
 ## Folder Sync Logic
 File: src/lib/sync/folder-sync.ts
 Importance Score: 75/100
-
 Folder synchronization rules:
 - Provider label mapping
 - Nested folder support
 - Custom folder permissions
 - Auto-creation of system folders
 - Cross-provider folder normalization
+$END$
+# === END USER INSTRUCTIONS ===
+
+# sync-architecture
+
+Multi-Provider Email Sync System implements sophisticated provider-agnostic email synchronization:
+
+## Core Sync Engine
+Location: src/lib/sync/sync-orchestrator.ts
+Importance Score: 95/100
+
+- Delta-based sync strategy using provider-specific cursors
+- Parallel sync across multiple email providers (Gmail, Microsoft, IMAP)
+- Adaptive rate limiting with provider quotas:
+  - Gmail: 250 requests/quota unit
+  - Microsoft: 4 requests/second 
+  - IMAP: Provider-configurable
+- Cursor-based incremental sync with failure recovery
+- Cross-provider thread ID mapping and conversation grouping
+
+## Provider Adapters 
+Location: src/lib/providers/*
+Importance Score: 85/100
+
+Provider-specific sync implementations:
+- Gmail history API integration for change detection
+- Microsoft Graph delta query handling
+- IMAP IDLE support for real-time updates
+- Custom folder mapping between providers
+- Unified thread ID generation system
+
+## Sync State Management
+Location: src/lib/sync/sync-state.ts
+Importance Score: 80/100
+
+- Multi-stage sync state machine:
+  - Initial Sync
+  - Delta Sync
+  - Real-time Updates
+- Provider-specific progress tracking
+- Folder-level sync status monitoring
+- Sync interruption recovery system
+- Cross-provider consistency validation
+
+## Threading Service
+Location: src/lib/sync/threading-service.ts
+Importance Score: 90/100
+
+- RFC 5322 compliant email threading
+- Cross-provider thread detection
+- In-Reply-To and References header analysis
+- Conversation participant tracking
+- Thread relationship mapping
+- Timeline-based thread organization
 
 $END$
 

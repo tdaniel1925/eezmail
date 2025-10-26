@@ -114,7 +114,7 @@ export function QuickStartGuide(): JSX.Element {
     },
     {
       id: 'understand-categories',
-      title: 'Understand Priority Inbox, Feed & Paper Trail',
+      title: 'Understand Imbox, Feed & Paper Trail',
       description: 'Learn how emails are organized',
       icon: Folder,
       estimatedTime: '1 minute',
@@ -130,7 +130,7 @@ export function QuickStartGuide(): JSX.Element {
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-2 w-2 rounded-full bg-primary"></div>
                 <h5 className="font-semibold text-gray-900 dark:text-white">
-                  📬 Priority Inbox (Important)
+                  📬 Imbox (Important)
                 </h5>
               </div>
               <p className="text-sm text-gray-700 dark:text-white/70">

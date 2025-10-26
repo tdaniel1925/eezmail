@@ -234,6 +234,10 @@ export async function getEmailFolders(params: { accountId: string }): Promise<{
     type: string;
     externalId: string;
     unreadCount: number;
+    folderType?: string; // NEW
+    displayName?: string; // NEW
+    icon?: string; // NEW
+    sortOrder?: number; // NEW
   }>;
   message?: string;
 }> {
@@ -247,24 +251,25 @@ export async function getEmailFolders(params: { accountId: string }): Promise<{
       return { success: false, folders: [], message: 'Unauthorized' };
     }
 
-    // Fetch all folders for the account
+    // Get all folders for this account
     const folders = await db.query.emailFolders.findMany({
-      where: and(
-        eq(emailFolders.accountId, params.accountId),
-        eq(emailFolders.userId, user.id)
-      ),
-      orderBy: (folders, { asc }) => [asc(folders.name)],
+      where: eq(emailFolders.accountId, params.accountId),
+      columns: {
+        id: true,
+        name: true,
+        type: true,
+        externalId: true,
+        unreadCount: true,
+        folderType: true, // NEW
+        displayName: true, // NEW
+        icon: true, // NEW
+        sortOrder: true, // NEW
+      },
     });
 
     return {
       success: true,
-      folders: folders.map((f) => ({
-        id: f.id,
-        name: f.name,
-        type: f.type,
-        externalId: f.externalId,
-        unreadCount: f.unreadCount ?? 0,
-      })),
+      folders,
     };
   } catch (error) {
     console.error('Error in getEmailFolders:', error);

@@ -2,6 +2,16 @@ import { inngest } from '../client';
 import { db } from '@/lib/db';
 import { emailAccounts, emailFolders, emails } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
+import {
+  detectFolderType,
+  isSystemFolder,
+  getDefaultDisplayName,
+  getDefaultIcon,
+  getDefaultSortOrder,
+  getDefaultSyncFrequency,
+  getDefaultSyncDaysBack,
+  shouldSyncByDefault,
+} from '@/lib/folders/folder-mapper';
 
 /**
  * Helper function to categorize emails based on folder name
@@ -20,8 +30,9 @@ function categorizeFolderName(folderName: string): string {
     return 'spam';
   if (normalized === 'archive' || normalized === 'archived') return 'archived';
 
-  // Sent items → archived (they're essentially archived outgoing mail)
-  if (normalized === 'sent' || normalized === 'sentitems') return 'archived';
+  // Sent items → keep as inbox category but flag with folder_name for filtering
+  // This allows sent emails to be accessible via /dashboard/sent
+  if (normalized === 'sent' || normalized === 'sentitems') return 'inbox';
 
   // Drafts → unscreened (they haven't been sent/screened yet)
   if (normalized === 'drafts') return 'unscreened';
@@ -212,6 +223,10 @@ export const syncMicrosoftAccount = inngest.createFunction(
         for (const folder of folderList) {
           const normalizedName = normalizeFolderName(folder.displayName);
 
+          // NEW: Detect folder type using the mapping utility
+          const folderType = detectFolderType(folder.displayName, 'microsoft');
+          const isSystem = isSystemFolder(folderType);
+
           await db
             .insert(emailFolders)
             .values({
@@ -219,7 +234,18 @@ export const syncMicrosoftAccount = inngest.createFunction(
               userId,
               externalId: folder.id,
               name: normalizedName,
-              type: normalizedName, // Use normalized name as type
+              type: normalizedName, // ✅ Keep old field for backwards compatibility
+
+              // NEW: Standardized fields
+              folderType, // ✅ New standardized type
+              isSystemFolder: isSystem,
+              displayName: folder.displayName, // Original name from provider
+              icon: getDefaultIcon(folderType),
+              sortOrder: getDefaultSortOrder(folderType),
+              syncEnabled: shouldSyncByDefault(folderType),
+              syncFrequencyMinutes: getDefaultSyncFrequency(folderType),
+              syncDaysBack: getDefaultSyncDaysBack(folderType),
+
               messageCount: folder.totalItemCount || 0,
               unreadCount: folder.unreadItemCount || 0,
               syncStatus: 'idle',
@@ -227,8 +253,14 @@ export const syncMicrosoftAccount = inngest.createFunction(
             .onConflictDoUpdate({
               target: [emailFolders.accountId, emailFolders.externalId],
               set: {
+                // Update message counts
                 messageCount: folder.totalItemCount || 0,
                 unreadCount: folder.unreadItemCount || 0,
+
+                // Update folder type if changed (rare, but possible)
+                folderType,
+                displayName: folder.displayName,
+
                 updatedAt: new Date(),
               } as any,
             });

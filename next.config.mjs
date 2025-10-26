@@ -17,9 +17,20 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   // Enable webpack caching for better performance
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     // Re-enable caching for performance (was disabled for sync conflicts)
     // config.cache = false; // REMOVED - hurts performance
+
+    // Faster incremental builds in development
+    if (dev) {
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: false,
+      };
+    }
+
     return config;
   },
   // Production optimizations
@@ -32,7 +43,11 @@ const nextConfig = {
   // Optimize page data fetching
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    // Faster HMR in development
+    turbo: process.env.NODE_ENV === 'development' ? {} : undefined,
   },
+  // Faster development reloads
+  reactStrictMode: false, // Disable in dev for faster HMR (re-enable for production testing)
   // Headers for better caching
   async headers() {
     return [

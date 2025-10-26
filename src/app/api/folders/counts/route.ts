@@ -6,6 +6,8 @@ import { eq, and, inArray, sql } from 'drizzle-orm';
 
 // Cache the response for 30 seconds to reduce database load
 export const revalidate = 30;
+// Note: Cannot use Edge Runtime due to Postgres driver dependency on Node.js 'net' module
+// export const runtime = 'edge'; // ⚠️ Disabled - postgres requires Node.js runtime
 
 /**
  * Batch API endpoint for folder counts

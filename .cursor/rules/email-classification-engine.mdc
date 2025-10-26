@@ -1,64 +1,115 @@
 ---
-description: Specification for email classification and screening system including AI-powered categorization, filtering rules, and automated routing logic
+description: Specification for email classification and categorization logic including screening workflows and automated routing rules
 ---
 
-
+# === USER INSTRUCTIONS ===
+---
+description: Specification for email classification and screening system including AI-powered categorization, filtering rules, and automated routing logic
+---
 # email-classification-engine
-
 ## Core Classification Engine
 Importance Score: 95/100
-
 Primary classification pipeline with three-tier system:
 - Imbox (important/personal emails)
 - Feed (newsletters/marketing)
 - Paper Trail (receipts/transactions)
-
 Implementation in `src/lib/screener/email-categorizer.ts`:
 - Initial rule-based screening using sender patterns
 - AI-powered content analysis for ambiguous cases
 - Learning system that adapts to user corrections
 - Domain-level decisions that apply to all future emails
 - Bulk email detection using header analysis
-
 ## Screening Rules Engine
 Importance Score: 90/100
-
 Custom rule processing system in `src/lib/screener/rule-processor.ts`:
 - Complex condition evaluation with AND/OR logic
 - Multi-factor sender trust scoring
 - Automated folder suggestions based on content
 - Rule priority management with inheritance
 - Custom folder mapping per email provider
-
 ## AI Classification System
 Importance Score: 85/100
-
 Intelligent classification in `src/lib/ai/classifier/email-classifier.ts`:
 - RAG-enhanced content analysis
 - Sender relationship strength scoring
 - Communication pattern detection
 - Auto-learning from user actions
 - Confidence scoring for classification decisions
-
 ## Routing Logic
 Importance Score: 80/100
-
 Smart routing system in `src/components/email/screening/AutoRouter.tsx`:
 - Provider-specific folder management
 - Label inheritance rules
 - Priority-based delivery paths
 - Custom routing rules per category
 - Automated folder creation
-
 ## Classification Analytics
 Importance Score: 75/100
-
 Analytics engine in `src/lib/screener/analytics.ts`:
 - Classification accuracy tracking
 - User correction patterns
 - Category distribution analysis
 - AI intervention frequency
 - Rule effectiveness scoring
+$END$
+# === END USER INSTRUCTIONS ===
+
+# email-classification-engine
+
+## Core Classification Logic
+Path: src/lib/screener/email-categorizer.ts
+Importance Score: 95/100
+
+Custom Hey-style email classification system:
+- Imbox (VIP emails + trusted senders)
+- Feed (newsletters + marketing content)
+- Paper Trail (receipts + notifications)
+
+Classification rules:
+- First-time sender detection and quarantine
+- Newsletter pattern matching via subject lines and HTML structure
+- Receipt identification using transaction patterns
+- Trust score calculation for senders based on user interactions
+
+## Screening Workflow
+Path: src/lib/email/screening/workflow.ts
+Importance Score: 90/100
+
+Automated email screening pipeline:
+- New sender review process with approval/reject
+- Custom folder suggestions based on content analysis
+- Auto-categorization based on learned preferences
+- Rule generation from screening decisions
+
+## AI Classification Engine
+Path: src/lib/ai/email-categorizer.ts 
+Importance Score: 85/100
+
+Intelligent categorization system:
+- ML-based content analysis for email type detection
+- Sender reputation scoring from historical patterns
+- Custom embedding model for email content similarity
+- Category confidence scoring with threshold-based routing
+
+## Contact Relationship Scoring
+Path: src/components/email/screening/RelationshipManager.tsx
+Importance Score: 80/100
+
+Relationship-based classification:
+- Communication frequency analysis
+- Response pattern tracking
+- Email interaction history scoring
+- VIP contact detection algorithm
+
+## Folder Routing System
+Path: src/lib/screener/routing-rules.ts
+Importance Score: 75/100
+
+Smart folder management:
+- Dynamic folder creation based on patterns
+- Rule-based email routing logic
+- Custom folder hierarchy management
+- Cross-folder relationship tracking
 
 $END$
 
