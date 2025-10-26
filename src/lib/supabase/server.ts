@@ -7,8 +7,10 @@ export async function createClient() {
   // Allow build without Supabase keys (will fail at runtime if actually used)
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const supabaseAnonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  
+  // Strip BOM and non-ASCII characters from API key (Vercel env vars sometimes have invisible BOM)
+  const rawAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  const supabaseAnonKey = rawAnonKey.replace(/^\uFEFF/, '').replace(/[^\x00-\x7F]/g, '');
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
