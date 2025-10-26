@@ -7,14 +7,14 @@ export function createClient() {
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
+  console.log('[SUPABASE CLIENT] Creating client with URL:', supabaseUrl);
+
   return createBrowserClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      // Ensure cookies work across subdomains
-      storageKey: 'sb-auth-token',
-      storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+      flowType: 'pkce', // Use PKCE flow for better security
     },
     global: {
       // Override default headers to prevent non-ASCII characters
