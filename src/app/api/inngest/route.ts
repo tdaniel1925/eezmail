@@ -9,8 +9,8 @@ import { sendScheduledEmails } from '@/inngest/functions/send-scheduled-emails';
 
 // Admin system background jobs
 import { auditLogArchival } from '@/inngest/functions/audit-log-archival';
-import { alertRuleEvaluation } from '@/inngest/functions/alert-rule-evaluation';
-import { ticketSlaMonitor } from '@/inngest/functions/ticket-sla-monitor';
+// import { alertRuleEvaluation } from '@/inngest/functions/alert-rule-evaluation'; // DISABLED - alertRules table not in schema
+// import { ticketSlaMonitor } from '@/inngest/functions/ticket-sla-monitor'; // DISABLED - supportTickets table not in schema
 import {
   stripeProductSync,
   stripeProductSyncOnDemand,
@@ -34,8 +34,8 @@ export const { GET, POST, PUT } = serve({
 
     // Admin system background jobs
     auditLogArchival, // Archive old audit logs (daily at 2 AM)
-    alertRuleEvaluation, // Evaluate alert rules (every minute)
-    ticketSlaMonitor, // Monitor ticket SLA (every minute)
+    // alertRuleEvaluation, // Evaluate alert rules (every minute) - DISABLED: alertRules table missing
+    // ticketSlaMonitor, // Monitor ticket SLA (every minute) - DISABLED: supportTickets table missing
     stripeProductSync, // Sync products to Stripe (hourly)
     stripeProductSyncOnDemand, // On-demand product sync (triggered by API)
   ],
