@@ -21,25 +21,41 @@ export default function SignupPage(): JSX.Element {
     setError(null);
     setLoading(true);
 
+    console.log('[SIGNUP] Attempting signup for:', email);
+
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
           },
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[SIGNUP] Error:', error);
+        throw error;
+      }
 
-      // Redirect to dashboard after successful signup
-      router.push('/dashboard');
-      router.refresh();
+      console.log('[SIGNUP] Signup successful:', data.user?.email);
+      console.log('[SIGNUP] Session:', data.session ? 'created' : 'pending confirmation');
+
+      // If session exists, user is auto-confirmed
+      if (data.session) {
+        console.log('[SIGNUP] Redirecting to dashboard...');
+        // Wait for session to be stored
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        window.location.href = '/dashboard';
+      } else {
+        // Email confirmation required
+        setError('Please check your email to confirm your account before signing in.');
+      }
     } catch (err) {
+      console.error('[SIGNUP] Caught error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
       setLoading(false);
     }
   };
