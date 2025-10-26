@@ -1,114 +1,127 @@
-# Quick Start Guide - Inngest Email Sync
+# Quick Start Guide - New Admin Systems
 
-## 🚀 Get Started in 3 Minutes
+## 🚀 Get Started in 3 Steps
 
-### 1. Run Database Migration
-
-Open Supabase SQL Editor and run:
-
-```sql
-ALTER TABLE email_accounts
-ADD COLUMN IF NOT EXISTS initial_sync_completed BOOLEAN DEFAULT FALSE;
-
-ALTER TABLE email_accounts
-ADD COLUMN IF NOT EXISTS gmail_history_id TEXT;
-```
-
-### 2. Start Inngest Dev Server (New Terminal)
+### Step 1: Apply Database Migration
 
 ```bash
-npx inngest-cli@latest dev
+# Apply the advanced analytics migration
+psql $DATABASE_URL -f migrations/017_advanced_analytics.sql
 ```
 
-Dashboard opens at: **http://localhost:8288**
+### Step 2: Navigate to New Admin Features
 
-### 3. Start Your App
+All systems are ready to use! Visit:
 
-```bash
-npm run dev
-```
+- **Sync Jobs:** [/admin/debug/sync-trace](/admin/debug/sync-trace)
+- **Connection Test:** [/admin/debug/connection-test](/admin/debug/connection-test)
+- **Performance:** [/admin/debug/profiler](/admin/debug/profiler)
+- **GDPR Privacy:** [/admin/privacy](/admin/privacy)
+- **Analytics:** [/admin/analytics/advanced](/admin/analytics/advanced)
 
-### 4. Test It
+### Step 3: Add Navigation Links (Optional)
 
-Visit: http://localhost:3000/api/test-inngest
-
-✅ Should see success message
-✅ Check dashboard: http://localhost:8288 for test function
-
-## 📧 Sync Your Emails
-
-### Method 1: Connect New Account (Automatic)
-
-1. Go to **Settings → Email Accounts**
-2. Click **"Add Microsoft Account"**
-3. Complete OAuth
-4. ✅ Sync starts automatically!
-
-### Method 2: Manual Sync (API)
-
-```bash
-curl -X POST http://localhost:3000/api/email/sync \
-  -H "Content-Type: application/json" \
-  -d '{"accountId":"YOUR_ID","syncType":"manual"}'
-```
-
-### Method 3: Check Sync Status
-
-```bash
-curl http://localhost:3000/api/email/sync?accountId=YOUR_ID
-```
-
-## 📊 Monitor Progress
-
-Dashboard: **http://localhost:8288**
-
-- **Runs Tab** - See all syncs
-- **Click on a run** - View step-by-step progress
-- **Real-time updates** - Watch folders sync
-
-## ✅ Verify It Works
-
-- [ ] Test function shows 3 steps in dashboard
-- [ ] Connect Microsoft account → redirects to inbox
-- [ ] Dashboard shows sync running
-- [ ] All emails appear in inbox (not just 219)
-- [ ] Folder counts match Outlook
-- [ ] Database: `initial_sync_completed = true`
-
-## 🐛 Troubleshooting
-
-**Dashboard shows "No Functions"?**
-
-1. Restart Inngest: `npx inngest-cli@latest dev`
-2. Visit: http://localhost:3000/api/inngest
-3. Refresh dashboard
-
-**Sync not triggering?**
-
-1. Check dashboard "Events" tab
-2. Check "Runs" tab for errors
-3. Check terminal logs
-
-## 📖 Full Documentation
-
-- **Setup Guide:** `INNGEST_SETUP_GUIDE.md`
-- **Phase 1 Summary:** `INNGEST_PHASE_1_COMPLETE.md`
-- **Implementation Details:** `PHASE_1_IMPLEMENTATION_COMPLETE.md`
-
-## 🎯 What's Fixed
-
-1. ✅ Delta sync pagination (syncs ALL emails now)
-2. ✅ Completion tracking (prevents premature delta sync)
-3. ✅ Folder counts (accurate from API)
-4. ✅ Performance (duplicate detection optimized)
-5. ✅ Auto-sync (triggers on connection)
-6. ✅ Visibility (Inngest dashboard)
-7. ✅ Error recovery (auto-retry)
-
-## 🚀 Next Steps
-
-**Phase 2:** Gmail sync with History API (2-3 hours)
+Update your admin sidebar to include links to the new pages.
 
 ---
 
-**Questions?** Check `INNGEST_SETUP_GUIDE.md` for detailed documentation.
+## 📋 What Each System Does
+
+### 🔍 Sync Job Tracer
+
+Track email synchronization jobs in real-time. See which jobs are running, completed, or failed. Click any job for a detailed timeline with performance metrics.
+
+**Best For:** Debugging email sync issues, monitoring sync performance
+
+### 🔌 Connection Tester
+
+Test email provider connections (Gmail, Microsoft). Get a health score (0-100) with actionable recommendations to fix issues.
+
+**Best For:** Diagnosing connectivity problems, validating OAuth tokens
+
+### ⚡ Performance Profiler
+
+Find slow API endpoints and queries. See average response times, P95/P99 percentiles, and error rates.
+
+**Best For:** Identifying performance bottlenecks, optimizing slow queries
+
+### 🛡️ GDPR Privacy Manager
+
+Handle data export and deletion requests. Export all user data to ZIP, manage deletion requests with 30-day grace period.
+
+**Best For:** GDPR compliance, handling data subject requests
+
+### 📊 Advanced Analytics
+
+View cohort retention, churn predictions, revenue attribution, and feature adoption metrics.
+
+**Best For:** Understanding user behavior, identifying churn risks, revenue analysis
+
+---
+
+## 🎯 Common Tasks
+
+### Debug a Failed Sync Job
+
+1. Go to [Sync Job Tracer](/admin/debug/sync-trace)
+2. Filter by "Failed" status
+3. Click on the failed job
+4. Review error message and timeline
+
+### Test Email Connection
+
+1. Go to [Connection Tester](/admin/debug/connection-test)
+2. Enter the email account ID
+3. Click "Test"
+4. Review health score and recommendations
+
+### Export User Data (GDPR)
+
+1. Go to [Privacy Manager](/admin/privacy)
+2. View export requests
+3. Download completed exports (ZIP files)
+
+### Find Slow Queries
+
+1. Go to [Performance Profiler](/admin/debug/profiler)
+2. Check "Slow Queries" section
+3. Sort by average duration
+4. Optimize the slowest endpoints
+
+### Check Churn Risk
+
+1. Go to [Advanced Analytics](/admin/analytics/advanced)
+2. Scroll to "Churn Risk Predictions"
+3. View users at high risk
+4. Take action to retain them
+
+---
+
+## 🔐 Security Reminder
+
+**Add Admin Role Checks!**
+
+Before deploying to production, add role verification to all API routes:
+
+```typescript
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+// Check if user is admin (implement your role system)
+if (user.role !== 'admin') {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+}
+```
+
+---
+
+## 📞 Need Help?
+
+- **Logs:** Check `/admin/debug/logs` for recent activity
+- **Docs:** See `REMAINING_SYSTEMS_COMPLETE.md` for full details
+- **Migration:** Run `migrations/017_advanced_analytics.sql` if analytics don't work
+
+---
+
+**Ready to use!** 🎉

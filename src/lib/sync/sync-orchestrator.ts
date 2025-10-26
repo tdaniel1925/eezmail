@@ -158,28 +158,25 @@ export async function triggerSync(request: SyncRequest): Promise<{
 
     // 6. Trigger appropriate Inngest function based on provider
     let eventName: string;
-    switch (account.provider) {
-      case 'microsoft':
-        eventName = 'email/microsoft.sync';
-        break;
-      case 'gmail':
-        eventName = 'email/gmail.sync';
-        break;
-      case 'imap':
-      case 'yahoo':
-        eventName = 'email/imap.sync';
-        break;
-      default:
-        // Revert sync status if provider is unsupported
-        await db
-          .update(emailAccounts)
-          .set({ syncStatus: 'idle' } as any)
-          .where(eq(emailAccounts.id, accountId));
+    const provider = account.provider as string;
 
-        return {
-          success: false,
-          error: `Unsupported provider: ${account.provider}`,
-        };
+    if (provider === 'microsoft') {
+      eventName = 'email/microsoft.sync';
+    } else if (provider === 'google' || provider === 'gmail') {
+      eventName = 'email/sync.gmail';
+    } else if (provider === 'imap' || provider === 'yahoo') {
+      eventName = 'email/sync.imap';
+    } else {
+      // Revert sync status if provider is unsupported
+      await db
+        .update(emailAccounts)
+        .set({ syncStatus: 'idle' } as any)
+        .where(eq(emailAccounts.id, accountId));
+
+      return {
+        success: false,
+        error: `Unsupported provider: ${account.provider}`,
+      };
     }
 
     // 7. Send event to Inngest with all required data

@@ -2,8 +2,19 @@ import { serve } from 'inngest/next';
 import { inngest } from '@/inngest/client';
 import { testSync } from '@/inngest/functions/test-sync';
 import { syncMicrosoftAccount } from '@/inngest/functions/sync-microsoft';
+import { syncGmailAccount } from '@/inngest/functions/sync-gmail';
+import { syncImapAccount } from '@/inngest/functions/sync-imap';
 import { sendScheduledEmails } from '@/inngest/functions/send-scheduled-emails';
 // import { proactiveMonitoring } from '@/inngest/functions/proactive-monitoring'; // TEMPORARILY DISABLED - SQL errors
+
+// Admin system background jobs
+import { auditLogArchival } from '@/inngest/functions/audit-log-archival';
+import { alertRuleEvaluation } from '@/inngest/functions/alert-rule-evaluation';
+import { ticketSlaMonitor } from '@/inngest/functions/ticket-sla-monitor';
+import {
+  stripeProductSync,
+  stripeProductSyncOnDemand,
+} from '@/inngest/functions/stripe-product-sync';
 
 /**
  * Inngest API endpoint
@@ -13,10 +24,19 @@ import { sendScheduledEmails } from '@/inngest/functions/send-scheduled-emails';
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [
+    // Email sync functions
     testSync,
     syncMicrosoftAccount, // Microsoft email sync
+    syncGmailAccount, // Gmail email sync
+    syncImapAccount, // IMAP email sync
     sendScheduledEmails, // Scheduled email sender (runs every minute)
     // proactiveMonitoring, // TEMPORARILY DISABLED - SQL errors causing slowdowns
-    // More functions will be added here as we build them
+
+    // Admin system background jobs
+    auditLogArchival, // Archive old audit logs (daily at 2 AM)
+    alertRuleEvaluation, // Evaluate alert rules (every minute)
+    ticketSlaMonitor, // Monitor ticket SLA (every minute)
+    stripeProductSync, // Sync products to Stripe (hourly)
+    stripeProductSyncOnDemand, // On-demand product sync (triggered by API)
   ],
 });

@@ -56,6 +56,7 @@
     "imap": "^0.8.19",
     "inngest": "^3.44.3",
     "isomorphic-dompurify": "^2.29.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.462.0",
     "mailparser": "^3.7.5",
     "next": "14.2.33",

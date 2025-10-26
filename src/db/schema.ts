@@ -3442,6 +3442,356 @@ export const aiTransactions = pgTable(
   })
 );
 
+// ============================================================================
+// E-COMMERCE PLATFORM
+// ============================================================================
+
+export const productTypeEnum = pgEnum('product_type', [
+  'subscription',
+  'one_time',
+  'usage_based',
+]);
+
+export const orderStatusEnum = pgEnum('order_status', [
+  'pending',
+  'processing',
+  'completed',
+  'failed',
+  'refunded',
+  'cancelled',
+]);
+
+export const products = pgTable(
+  'products',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull().unique(),
+    description: text('description'),
+    productType: varchar('product_type', { length: 20 }).notNull(),
+    price: decimal('price', { precision: 10, scale: 2 }),
+    billingInterval: text('billing_interval'),
+    trialPeriodDays: integer('trial_period_days').default(0),
+    usageUnit: text('usage_unit'),
+    usageRate: decimal('usage_rate', { precision: 10, scale: 6 }),
+    status: varchar('status', { length: 20 }).default('active'),
+    stripeProductId: text('stripe_product_id').unique(),
+    stripePriceId: text('stripe_price_id'),
+    category: text('category'),
+    features: jsonb('features').default({}),
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    statusIdx: index('products_status_idx').on(table.status),
+    stripeProductIdx: index('products_stripe_product_idx').on(
+      table.stripeProductId
+    ),
+    categoryIdx: index('products_category_idx').on(table.category),
+  })
+);
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderNumber: text('order_number').notNull().unique(),
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'set null',
+    }),
+    status: varchar('status', { length: 20 }).default('pending'),
+    subtotal: decimal('subtotal', { precision: 10, scale: 2 }).notNull(),
+    discountAmount: decimal('discount_amount', {
+      precision: 10,
+      scale: 2,
+    }).default('0'),
+    taxAmount: decimal('tax_amount', { precision: 10, scale: 2 }).default('0'),
+    totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).default('USD'),
+    paymentProcessor: text('payment_processor'),
+    stripePaymentIntentId: text('stripe_payment_intent_id'),
+    squarePaymentId: text('square_payment_id'),
+    paidAt: timestamp('paid_at'),
+    notes: text('notes'),
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('orders_user_idx').on(table.userId),
+    orgIdx: index('orders_org_idx').on(table.organizationId),
+    statusIdx: index('orders_status_idx').on(table.status),
+    createdIdx: index('orders_created_idx').on(table.createdAt),
+  })
+);
+
+export const orderItems = pgTable(
+  'order_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    orderId: uuid('order_id')
+      .notNull()
+      .references(() => orders.id, { onDelete: 'cascade' }),
+    productId: uuid('product_id').references(() => products.id, {
+      onDelete: 'set null',
+    }),
+    productName: text('product_name').notNull(),
+    productType: varchar('product_type', { length: 20 }).notNull(),
+    quantity: integer('quantity').default(1).notNull(),
+    unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
+    totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
+    subscriptionId: text('subscription_id'),
+    metadata: jsonb('metadata').default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    orderIdx: index('order_items_order_idx').on(table.orderId),
+    productIdx: index('order_items_product_idx').on(table.productId),
+  })
+);
+
+export const carts = pgTable(
+  'carts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id'),
+    subtotal: decimal('subtotal', { precision: 10, scale: 2 }).default('0'),
+    discountAmount: decimal('discount_amount', {
+      precision: 10,
+      scale: 2,
+    }).default('0'),
+    taxAmount: decimal('tax_amount', { precision: 10, scale: 2 }).default('0'),
+    totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).default(
+      '0'
+    ),
+    discountCode: varchar('discount_code', { length: 50 }),
+    status: text('status').default('active'),
+    expiresAt: timestamp('expires_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('carts_user_idx').on(table.userId),
+    sessionIdx: index('carts_session_idx').on(table.sessionId),
+    statusIdx: index('carts_status_idx').on(table.status),
+  })
+);
+
+export const cartItems = pgTable(
+  'cart_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    cartId: uuid('cart_id')
+      .notNull()
+      .references(() => carts.id, { onDelete: 'cascade' }),
+    productId: uuid('product_id')
+      .notNull()
+      .references(() => products.id, { onDelete: 'cascade' }),
+    quantity: integer('quantity').default(1).notNull(),
+    addedAt: timestamp('added_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    cartIdx: index('cart_items_cart_idx').on(table.cartId),
+    productIdx: index('cart_items_product_idx').on(table.productId),
+    uniqueCartProduct: uniqueIndex('unique_cart_product').on(
+      table.cartId,
+      table.productId
+    ),
+  })
+);
+
+// ============================================================================
+// IMPERSONATION SYSTEM
+// ============================================================================
+
+export const impersonationSessions = pgTable(
+  'impersonation_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    adminId: uuid('admin_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    targetUserId: uuid('target_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    reason: text('reason').notNull(),
+    sessionToken: varchar('session_token', { length: 255 }).notNull().unique(),
+    startedAt: timestamp('started_at').defaultNow().notNull(),
+    endedAt: timestamp('ended_at'),
+    readOnly: boolean('read_only').default(false).notNull(),
+    actionsPerformed: jsonb('actions_performed').default([]).notNull(),
+    metadata: jsonb('metadata').default({}),
+  },
+  (table) => ({
+    adminIdx: index('impersonation_admin_idx').on(table.adminId),
+    targetIdx: index('impersonation_target_idx').on(table.targetUserId),
+    tokenIdx: index('impersonation_token_idx').on(table.sessionToken),
+  })
+);
+
+// ============================================================================
+// AUDIT LOGGING (HIPAA Compliant)
+// ============================================================================
+
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    actorId: uuid('actor_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    actorType: varchar('actor_type', { length: 50 }).notNull(),
+    actorEmail: varchar('actor_email', { length: 255 }),
+    impersonatorId: uuid('impersonator_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    action: varchar('action', { length: 100 }).notNull(),
+    resourceType: varchar('resource_type', { length: 50 }).notNull(),
+    resourceId: varchar('resource_id', { length: 255 }),
+    organizationId: uuid('organization_id').references(() => organizations.id, {
+      onDelete: 'set null',
+    }),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+    requestId: varchar('request_id', { length: 100 }),
+    sessionId: varchar('session_id', { length: 100 }),
+    changes: jsonb('changes'),
+    metadata: jsonb('metadata'),
+    riskLevel: varchar('risk_level', { length: 20 }).default('low'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    actorIdx: index('audit_logs_actor_idx').on(table.actorId),
+    actionIdx: index('audit_logs_action_idx').on(table.action),
+    resourceIdx: index('audit_logs_resource_idx').on(
+      table.resourceType,
+      table.resourceId
+    ),
+    createdIdx: index('audit_logs_created_idx').on(table.createdAt),
+    orgIdx: index('audit_logs_org_idx').on(table.organizationId),
+    riskIdx: index('audit_logs_risk_idx').on(table.riskLevel),
+    sessionIdx: index('audit_logs_session_idx').on(table.sessionId),
+  })
+);
+
+// ============================================================================
+// FOLDER MAPPING SYSTEM
+// ============================================================================
+
+// User-defined folder mappings (overrides auto-detection)
+export const folderMappings = pgTable(
+  'folder_mappings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+
+    // Provider folder info
+    providerFolderName: text('provider_folder_name').notNull(), // "Sent Items"
+    providerFolderId: text('provider_folder_id').notNull(), // External ID
+
+    // User's chosen mapping
+    mappedToType: coreFolderTypeEnum('mapped_to_type').notNull(), // 'sent'
+
+    // AI recommendation (for transparency)
+    aiRecommendation: coreFolderTypeEnum('ai_recommendation'),
+    aiConfidence: decimal('ai_confidence', { precision: 3, scale: 2 }), // 0.0 - 1.0
+
+    // Mapping source
+    mappingSource: varchar('mapping_source', { length: 20 })
+      .notNull()
+      .default('manual'), // 'auto', 'ai', 'manual'
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdx: index('folder_mappings_user_idx').on(table.userId),
+    accountIdx: index('folder_mappings_account_idx').on(table.accountId),
+    providerFolderIdx: index('folder_mappings_provider_folder_idx').on(
+      table.providerFolderId
+    ),
+    mappedTypeIdx: index('folder_mappings_mapped_type_idx').on(
+      table.mappedToType
+    ),
+    uniqueMapping: uniqueIndex('unique_folder_mapping').on(
+      table.accountId,
+      table.providerFolderId
+    ),
+  })
+);
+
+// Track unmapped folders needing attention
+export const unmappedFolders = pgTable(
+  'unmapped_folders',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => emailAccounts.id, { onDelete: 'cascade' }),
+    folderId: uuid('folder_id')
+      .notNull()
+      .references(() => emailFolders.id, { onDelete: 'cascade' }),
+
+    // Folder details
+    folderName: text('folder_name').notNull(),
+    folderDisplayName: text('folder_display_name'),
+    messageCount: integer('message_count').default(0),
+
+    // AI recommendations (top 3)
+    recommendations: jsonb('recommendations'), // [{ type: 'sent', confidence: 0.85, reason: '...' }]
+
+    // Status
+    status: varchar('status', { length: 20 }).default('pending'), // 'pending', 'mapped', 'ignored'
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    resolvedAt: timestamp('resolved_at'),
+  },
+  (table) => ({
+    userIdx: index('unmapped_folders_user_idx').on(table.userId),
+    accountIdx: index('unmapped_folders_account_idx').on(table.accountId),
+    folderIdx: index('unmapped_folders_folder_idx').on(table.folderId),
+    statusIdx: index('unmapped_folders_status_idx').on(table.status),
+    uniqueUnmapped: uniqueIndex('unique_unmapped_folder').on(table.folderId),
+  })
+);
+
+// Type exports for e-commerce
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
+export type Order = typeof orders.$inferSelect;
+export type NewOrder = typeof orders.$inferInsert;
+export type OrderItem = typeof orderItems.$inferSelect;
+export type NewOrderItem = typeof orderItems.$inferInsert;
+export type Cart = typeof carts.$inferSelect;
+export type NewCart = typeof carts.$inferInsert;
+export type CartItem = typeof cartItems.$inferSelect;
+export type NewCartItem = typeof cartItems.$inferInsert;
+export type CustomerSubscription = typeof customerSubscriptions.$inferSelect;
+export type NewCustomerSubscription = typeof customerSubscriptions.$inferInsert;
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;
+
+// Type exports for impersonation
+export type ImpersonationSession = typeof impersonationSessions.$inferSelect;
+export type NewImpersonationSession = typeof impersonationSessions.$inferInsert;
+
+// Type exports for audit logging
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+
 // Type exports for billing tables
 export type PlatformAdmin = typeof platformAdmins.$inferSelect;
 export type NewPlatformAdmin = typeof platformAdmins.$inferInsert;
@@ -3465,3 +3815,9 @@ export type CommunicationLog = typeof communicationLogs.$inferSelect;
 export type NewCommunicationLog = typeof communicationLogs.$inferInsert;
 export type AITransaction = typeof aiTransactions.$inferSelect;
 export type NewAITransaction = typeof aiTransactions.$inferInsert;
+
+// Type exports for folder mapping
+export type FolderMapping = typeof folderMappings.$inferSelect;
+export type NewFolderMapping = typeof folderMappings.$inferInsert;
+export type UnmappedFolder = typeof unmappedFolders.$inferSelect;
+export type NewUnmappedFolder = typeof unmappedFolders.$inferInsert;

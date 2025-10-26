@@ -13,53 +13,452 @@ import { type CoreFolderType } from '@/db/schema';
 
 /**
  * Provider-specific folder name variations mapped to core types
+ *
+ * Includes 100+ variations across multiple languages:
+ * - English, Spanish, French, German, Italian, Portuguese
+ * - Dutch, Russian, Japanese, Chinese, Korean, Arabic
+ * - Provider-specific paths (Gmail, Microsoft, IMAP)
  */
 export const FOLDER_NAME_MAPPINGS: Record<CoreFolderType, string[]> = {
-  inbox: ['inbox', 'INBOX', 'Inbox'],
+  inbox: [
+    // English
+    'inbox',
+    'INBOX',
+    'Inbox',
+    'InBox',
+    // Spanish
+    'bandeja de entrada',
+    'Bandeja de entrada',
+    'Entrada',
+    // French
+    'boîte de réception',
+    'Boîte de réception',
+    'Réception',
+    // German
+    'posteingang',
+    'Posteingang',
+    'Eingang',
+    // Italian
+    'posta in arrivo',
+    'Posta in arrivo',
+    'Arrivo',
+    // Portuguese
+    'caixa de entrada',
+    'Caixa de Entrada',
+    'Entrada',
+    // Dutch
+    'postvak in',
+    'Postvak IN',
+    // Russian
+    'входящие',
+    'Входящие',
+    // Japanese
+    '受信トレイ',
+    '受信箱',
+    // Chinese
+    '收件箱',
+    '收件匣',
+    // Korean
+    '받은 편지함',
+    // Arabic
+    'صندوق الوارد',
+  ],
   sent: [
+    // English
     'sent',
     'Sent',
     'Sent Items',
     'Sent Mail',
     'Sent Messages',
     'Sent Folder',
+    'SentItems',
+    'Sent Email',
+    'Outgoing',
+    // Spanish
+    'enviados',
+    'Enviados',
+    'Elementos enviados',
+    'Correo enviado',
+    // French
+    'envoyés',
+    'Envoyés',
+    'Éléments envoyés',
+    'Messages envoyés',
+    // German
+    'gesendete elemente',
+    'Gesendete Elemente',
+    'Gesendet',
+    // Italian
+    'posta inviata',
+    'Posta Inviata',
+    'Inviati',
+    'Elementi inviati',
+    // Portuguese
+    'itens enviados',
+    'Itens Enviados',
+    'Enviados',
+    'Enviadas',
+    // Dutch
+    'verzonden items',
+    'Verzonden Items',
+    'Verzonden',
+    // Russian
+    'отправленные',
+    'Отправленные',
+    // Japanese
+    '送信済みアイテム',
+    '送信済み',
+    '送信トレイ',
+    // Chinese
+    '已发送邮件',
+    '寄件備份',
+    '已发送',
+    '寄件匣',
+    // Korean
+    '보낸 편지함',
+    // Arabic
+    'العناصر المرسلة',
+    'البريد المرسل',
+    // Provider-specific
     '[Gmail]/Sent Mail',
     'INBOX.Sent',
+    'Sent.',
+    '.Sent',
   ],
-  drafts: ['drafts', 'Drafts', 'Draft', '[Gmail]/Drafts', 'INBOX.Drafts'],
+  drafts: [
+    // English
+    'drafts',
+    'Drafts',
+    'Draft',
+    'Draft Messages',
+    // Spanish
+    'borradores',
+    'Borradores',
+    // French
+    'brouillons',
+    'Brouillons',
+    // German
+    'entwürfe',
+    'Entwürfe',
+    // Italian
+    'bozze',
+    'Bozze',
+    // Portuguese
+    'rascunhos',
+    'Rascunhos',
+    // Dutch
+    'concepten',
+    'Concepten',
+    // Russian
+    'черновики',
+    'Черновики',
+    // Japanese
+    '下書き',
+    // Chinese
+    '草稿',
+    '草稿匣',
+    // Korean
+    '임시 보관함',
+    // Arabic
+    'المسودات',
+    // Provider-specific
+    '[Gmail]/Drafts',
+    'INBOX.Drafts',
+    'Drafts.',
+  ],
   trash: [
+    // English
     'trash',
     'Trash',
     'Deleted Items',
     'Deleted',
     'Bin',
     'Recycle Bin',
+    'Deleted Messages',
+    'Deleted Emails',
+    'DeletedItems',
+    'Rubbish',
+    // Spanish
+    'papelera',
+    'Papelera',
+    'elementos eliminados',
+    'Elementos eliminados',
+    'Eliminados',
+    // French
+    'corbeille',
+    'Corbeille',
+    'éléments supprimés',
+    'Éléments supprimés',
+    'Supprimés',
+    // German
+    'gelöschte elemente',
+    'Gelöschte Elemente',
+    'Papierkorb',
+    'Gelöscht',
+    // Italian
+    'posta eliminata',
+    'Posta Eliminata',
+    'Cestino',
+    'Eliminati',
+    // Portuguese
+    'itens excluídos',
+    'Itens Excluídos',
+    'Lixeira',
+    'Excluídos',
+    // Dutch
+    'verwijderde items',
+    'Verwijderde Items',
+    'Prullenbak',
+    // Russian
+    'удаленные',
+    'Удаленные',
+    'Корзина',
+    // Japanese
+    '削除済みアイテム',
+    'ごみ箱',
+    // Chinese
+    '已删除邮件',
+    '垃圾桶',
+    '已删除',
+    '刪除的郵件',
+    // Korean
+    '지운 편지함',
+    '휴지통',
+    // Arabic
+    'العناصر المحذوفة',
+    'سلة المحذوفات',
+    // Provider-specific
     '[Gmail]/Trash',
     'INBOX.Trash',
-    'Deleted Messages',
+    'Trash.',
+    '.Trash',
   ],
   spam: [
+    // English
     'spam',
     'Spam',
     'Junk',
     'Junk Email',
     'Junk E-mail',
+    'Junk Mail',
     'Bulk Mail',
+    'JunkEmail',
+    'Quarantine',
+    // Spanish
+    'correo no deseado',
+    'Correo no deseado',
+    'No deseado',
+    // French
+    'courrier indésirable',
+    'Courrier indésirable',
+    'Indésirables',
+    // German
+    'junk-e-mail',
+    'Junk-E-Mail',
+    'Spam',
+    // Italian
+    'posta indesiderata',
+    'Posta Indesiderata',
+    'Spam',
+    // Portuguese
+    'lixo eletrônico',
+    'Lixo Eletrônico',
+    'Spam',
+    // Dutch
+    'ongewenste e-mail',
+    'Ongewenste E-mail',
+    'Spam',
+    // Russian
+    'спам',
+    'Спам',
+    'Нежелательная почта',
+    // Japanese
+    '迷惑メール',
+    // Chinese
+    '垃圾邮件',
+    '垃圾郵件',
+    // Korean
+    '정크 메일',
+    // Arabic
+    'البريد العشوائي',
+    // Provider-specific
     '[Gmail]/Spam',
     'INBOX.Junk',
-    'Junk Mail',
+    'INBOX.Spam',
+    'Junk.',
   ],
   archive: [
+    // English
     'archive',
     'Archive',
     'All Mail',
+    'Archives',
+    // Spanish
+    'archivo',
+    'Archivo',
+    'Todo el correo',
+    // French
+    'archives',
+    'Archives',
+    'Tous les messages',
+    // German
+    'archiv',
+    'Archiv',
+    'Alle Nachrichten',
+    // Italian
+    'archivio',
+    'Archivio',
+    'Tutti i messaggi',
+    // Portuguese
+    'arquivo',
+    'Arquivo',
+    'Todos os e-mails',
+    // Dutch
+    'archief',
+    'Archief',
+    'Alle berichten',
+    // Russian
+    'архив',
+    'Архив',
+    // Japanese
+    'アーカイブ',
+    'すべてのメール',
+    // Chinese
+    '归档',
+    '所有邮件',
+    '全部郵件',
+    // Korean
+    '보관함',
+    '모든 메일',
+    // Arabic
+    'الأرشيف',
+    'كل البريد',
+    // Provider-specific
     '[Gmail]/All Mail',
     'INBOX.Archive',
+    'Archive.',
   ],
-  starred: ['starred', 'Starred', 'Flagged', '[Gmail]/Starred', 'Important'],
-  important: ['important', 'Important', '[Gmail]/Important', 'Priority'],
-  all_mail: ['All Mail', '[Gmail]/All Mail'],
-  outbox: ['outbox', 'Outbox'],
+  starred: [
+    // English
+    'starred',
+    'Starred',
+    'Flagged',
+    'Favorites',
+    'Favourites',
+    // Spanish
+    'destacados',
+    'Destacados',
+    'Con estrella',
+    // French
+    'suivis',
+    'Suivis',
+    'Messages suivis',
+    // German
+    'markiert',
+    'Markiert',
+    // Italian
+    'speciali',
+    'Speciali',
+    'Con stella',
+    // Portuguese
+    'com estrela',
+    'Com Estrela',
+    'Favoritos',
+    // Dutch
+    'met ster',
+    'Met ster',
+    // Russian
+    'помеченные',
+    'Помеченные',
+    // Japanese
+    'スター付き',
+    // Chinese
+    '已加星标',
+    '已加星號',
+    // Korean
+    '별표편지함',
+    // Arabic
+    'المميزة بنجمة',
+    // Provider-specific
+    '[Gmail]/Starred',
+    'INBOX.Flagged',
+  ],
+  important: [
+    // English
+    'important',
+    'Important',
+    'Priority',
+    'VIP',
+    // Spanish
+    'importante',
+    'Importante',
+    // French
+    'important',
+    'Important',
+    // German
+    'wichtig',
+    'Wichtig',
+    // Italian
+    'importante',
+    'Importante',
+    // Portuguese
+    'importante',
+    'Importante',
+    // Dutch
+    'belangrijk',
+    'Belangrijk',
+    // Russian
+    'важные',
+    'Важные',
+    // Japanese
+    '重要',
+    // Chinese
+    '重要',
+    '重要郵件',
+    // Korean
+    '중요',
+    // Arabic
+    'مهم',
+    // Provider-specific
+    '[Gmail]/Important',
+  ],
+  all_mail: ['All Mail', '[Gmail]/All Mail', 'INBOX.All Mail'],
+  outbox: [
+    // English
+    'outbox',
+    'Outbox',
+    'Outgoing',
+    'To Send',
+    // Spanish
+    'bandeja de salida',
+    'Bandeja de salida',
+    // French
+    "boîte d'envoi",
+    "Boîte d'envoi",
+    // German
+    'postausgang',
+    'Postausgang',
+    // Italian
+    'posta in uscita',
+    'Posta in uscita',
+    // Portuguese
+    'caixa de saída',
+    'Caixa de Saída',
+    // Dutch
+    'postvak uit',
+    'Postvak UIT',
+    // Russian
+    'исходящие',
+    'Исходящие',
+    // Japanese
+    '送信トレイ',
+    // Chinese
+    '发件箱',
+    // Korean
+    '보낼 편지함',
+    // Arabic
+    'صندوق الصادر',
+  ],
   custom: [], // User-created folders
 };
 
@@ -69,6 +468,13 @@ export const FOLDER_NAME_MAPPINGS: Record<CoreFolderType, string[]> = {
 
 /**
  * Detects the core folder type from a provider folder name
+ *
+ * Uses multiple matching strategies:
+ * 1. Exact match (case-insensitive)
+ * 2. Contains match (for paths like "INBOX.Sent")
+ * 3. Fuzzy match (handles typos, spaces, special chars)
+ * 4. Substring match (70% overlap)
+ * 5. Provider-specific heuristics
  *
  * @param folderName - The folder name from the provider (e.g., "Sent Items")
  * @param providerType - Optional provider type for provider-specific logic
@@ -84,7 +490,7 @@ export function detectFolderType(
 
   const normalizedName = folderName.trim().toLowerCase();
 
-  // Check against all known variations
+  // Strategy 1 & 2: Exact and Contains matching
   for (const [coreType, variations] of Object.entries(FOLDER_NAME_MAPPINGS)) {
     if (coreType === 'custom') continue;
 
@@ -100,10 +506,50 @@ export function detectFolderType(
       if (normalizedName.includes(normalizedVariation)) {
         return coreType as CoreFolderType;
       }
+
+      // Reverse contains (for "Sent" matching "INBOX.Sent Items")
+      if (normalizedVariation.includes(normalizedName)) {
+        return coreType as CoreFolderType;
+      }
     }
   }
 
-  // Provider-specific heuristics
+  // Strategy 3: Fuzzy matching (remove spaces, dashes, underscores)
+  const fuzzyName = normalizedName.replace(/[\s\-_\.]/g, '');
+
+  for (const [coreType, variations] of Object.entries(FOLDER_NAME_MAPPINGS)) {
+    if (coreType === 'custom') continue;
+
+    for (const variation of variations) {
+      const fuzzyVariation = variation.toLowerCase().replace(/[\s\-_\.]/g, '');
+
+      if (fuzzyName === fuzzyVariation) {
+        return coreType as CoreFolderType;
+      }
+
+      if (
+        fuzzyName.includes(fuzzyVariation) ||
+        fuzzyVariation.includes(fuzzyName)
+      ) {
+        return coreType as CoreFolderType;
+      }
+    }
+  }
+
+  // Strategy 4: Substring similarity (70% match)
+  for (const [coreType, variations] of Object.entries(FOLDER_NAME_MAPPINGS)) {
+    if (coreType === 'custom') continue;
+
+    for (const variation of variations) {
+      const normalizedVariation = variation.toLowerCase();
+
+      if (calculateSimilarity(normalizedName, normalizedVariation) > 0.7) {
+        return coreType as CoreFolderType;
+      }
+    }
+  }
+
+  // Strategy 5: Provider-specific heuristics
   if (providerType === 'google' && normalizedName.startsWith('[gmail]/')) {
     // Gmail-specific folders not in mapping
     return 'custom';
@@ -111,6 +557,20 @@ export function detectFolderType(
 
   // Fallback to custom for unknown folders
   return 'custom';
+}
+
+/**
+ * Calculates similarity between two strings (0.0 - 1.0)
+ * Uses Jaccard similarity coefficient
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const set1 = new Set(str1.split(''));
+  const set2 = new Set(str2.split(''));
+
+  const intersection = new Set(Array.from(set1).filter((x) => set2.has(x)));
+  const union = new Set([...Array.from(set1), ...Array.from(set2)]);
+
+  return intersection.size / union.size;
 }
 
 /**
@@ -334,4 +794,3 @@ export function extractIMAPFolderName(
   const parts = path.split(delimiter);
   return parts[parts.length - 1];
 }
-
