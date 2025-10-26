@@ -412,9 +412,12 @@ export const emailAccounts = pgTable(
     // Sync state
     status: emailAccountStatusEnum('status').notNull().default('active'),
     lastSyncAt: timestamp('last_sync_at'),
+    lastSyncedAt: timestamp('last_synced_at'), // Alternative field name for consistency
     lastSyncError: text('last_sync_error'),
     syncCursor: text('sync_cursor'),
+    lastSyncCursor: text('last_sync_cursor'), // Delta sync cursor (Gmail historyId, etc.)
     sentSyncCursor: text('sent_sync_cursor'), // Separate cursor for sent folder
+    imapConfig: jsonb('imap_config'), // IMAP-specific configuration
 
     // Enhanced sync tracking
     syncStatus: emailSyncStatusEnum('sync_status').default('idle'),
@@ -467,7 +470,11 @@ export const emails = pgTable(
     messageId: text('message_id').notNull(),
     nylasMessageId: text('nylas_message_id'),
     providerMessageId: text('provider_message_id'),
+    providerId: text('provider_id'), // External message ID from provider
     threadId: text('thread_id'),
+    folderId: uuid('folder_id').references(() => emailFolders.id, {
+      onDelete: 'set null',
+    }), // Link to folder
 
     // Email metadata
     subject: text('subject').notNull(),
@@ -620,6 +627,7 @@ export const emailFolders = pgTable(
     // Original provider info (kept for backwards compatibility)
     name: text('name').notNull(),
     externalId: text('external_id').notNull(),
+    providerId: text('provider_id'), // External folder ID from provider
     type: text('type').notNull(), // Original type from provider
     parentId: uuid('parent_id'), // For nested folders
 
@@ -644,7 +652,9 @@ export const emailFolders = pgTable(
 
     // Per-folder sync tracking
     syncCursor: text('sync_cursor'), // Delta link or page token
+    lastSyncCursor: text('last_sync_cursor'), // Alternative field name for incremental sync
     lastSyncAt: timestamp('last_sync_at'),
+    lastSyncedAt: timestamp('last_synced_at'), // Alternative field name for consistency
     syncStatus: text('sync_status').default('idle'),
 
     // NEW: Per-folder sync settings
@@ -1431,12 +1441,15 @@ export const syncJobs = pgTable(
 
     // Job details
     jobType: syncJobTypeEnum('job_type').notNull().default('incremental'),
+    syncType: text('sync_type').default('incremental'), // 'full', 'incremental'
     status: syncStatusEnum('status').notNull().default('pending'),
     priority: integer('priority').default(2).notNull(), // 0=immediate, 1=high, 2=normal, 3=low, 4=background
 
     // Progress tracking
     progress: integer('progress').default(0),
     total: integer('total').default(0),
+    emailsProcessed: integer('emails_processed').default(0),
+    emailsFailed: integer('emails_failed').default(0),
 
     // Timing
     scheduledFor: timestamp('scheduled_for'),
@@ -3807,10 +3820,6 @@ export type AITrialCredit = typeof aiTrialCredits.$inferSelect;
 export type NewAITrialCredit = typeof aiTrialCredits.$inferInsert;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 export type NewSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
-export type CustomerSubscription = typeof customerSubscriptions.$inferSelect;
-export type NewCustomerSubscription = typeof customerSubscriptions.$inferInsert;
-export type Invoice = typeof invoices.$inferSelect;
-export type NewInvoice = typeof invoices.$inferInsert;
 export type CommunicationLog = typeof communicationLogs.$inferSelect;
 export type NewCommunicationLog = typeof communicationLogs.$inferInsert;
 export type AITransaction = typeof aiTransactions.$inferSelect;
