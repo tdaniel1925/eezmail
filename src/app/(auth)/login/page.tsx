@@ -40,7 +40,7 @@ export default function LoginPage(): JSX.Element {
       // Force a hard redirect to ensure middleware runs
       window.location.href = '/dashboard';
     } catch (err) {
-      console.error('❌ Caught error:', err);
+      console.error('[AUTH] Caught error:', err);
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred';
 
