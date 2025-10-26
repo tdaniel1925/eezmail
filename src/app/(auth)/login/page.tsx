@@ -21,32 +21,50 @@ export default function LoginPage(): JSX.Element {
     setError(null);
     setLoading(true);
 
+    console.log('[AUTH] ========== LOGIN STARTED ==========');
     console.log('[AUTH] Login attempt for:', email);
     console.log('[AUTH] Current URL:', window.location.href);
+    console.log('[AUTH] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     try {
+      console.log('[AUTH] Calling signInWithPassword...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('[AUTH] signInWithPassword response received');
+
       if (error) {
-        console.error('[AUTH] Login error:', error);
+        console.error('[AUTH] ❌ Login error:', error);
+        console.error('[AUTH] Error message:', error.message);
+        console.error('[AUTH] Error status:', error.status);
         throw error;
       }
 
-      console.log('[AUTH] Login successful:', data.user?.email);
-      console.log('[AUTH] Session:', data.session ? 'present' : 'missing');
-      console.log('[AUTH] Access token:', data.session?.access_token ? 'present' : 'missing');
+      console.log('[AUTH] ✅ Login successful!');
+      console.log('[AUTH] User ID:', data.user?.id);
+      console.log('[AUTH] User email:', data.user?.email);
+      console.log('[AUTH] Session present:', data.session ? '✅ YES' : '❌ NO');
+      console.log('[AUTH] Access token present:', data.session?.access_token ? '✅ YES' : '❌ NO');
+      
+      if (data.session) {
+        console.log('[AUTH] Session expires at:', new Date(data.session.expires_at || 0).toISOString());
+      }
 
-      // Wait a bit for cookies to be set, then redirect
+      // Check if session is stored in cookies
+      console.log('[AUTH] Waiting 1 second for cookies to be set...');
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      console.log('[AUTH] Redirecting to dashboard...');
+      console.log('[AUTH] Cookies:', document.cookie);
+      console.log('[AUTH] Redirecting to /dashboard...');
       
       // Use window.location for a hard redirect to ensure cookies are sent
       window.location.href = '/dashboard';
+      
+      console.log('[AUTH] ========== REDIRECT INITIATED ==========');
     } catch (err) {
+      console.error('[AUTH] ========== LOGIN FAILED ==========');
       console.error('[AUTH] Caught error:', err);
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred';
