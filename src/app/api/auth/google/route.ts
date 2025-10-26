@@ -1,11 +1,11 @@
 /**
  * Google Gmail OAuth Initiation
- * Redirects user to Google OAuth consent screen
+ * Redirects user to Google OAuth consent screen with incremental authorization
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { GmailService } from '@/lib/email/gmail-api';
+import { GmailService, GmailScopeLevel } from '@/lib/email/gmail-api';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   console.log('🚀 INITIATING GOOGLE GMAIL OAUTH');
@@ -18,6 +18,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url));
+    }
+
+    // Check if requesting additional scopes (incremental auth)
+    const searchParams = request.nextUrl.searchParams;
+    const additionalScopes = searchParams.get('scopes');
+    
+    // Default: base + read scopes for initial connection
+    let scopeLevels: GmailScopeLevel[] = ['base', 'read'];
+    
+    // Parse additional scopes if provided (for incremental auth)
+    if (additionalScopes) {
+      const requested = additionalScopes.split(',') as GmailScopeLevel[];
+      scopeLevels = [...scopeLevels, ...requested];
+      console.log('🔐 Requesting additional Gmail scopes:', requested);
     }
 
     // Initialize Gmail service
@@ -35,8 +49,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       timestamp: Date.now(),
     });
 
-    const authUrl = gmail.generateAuthUrl(state);
-    console.log('✅ Redirecting to Gmail OAuth URL');
+    // Generate auth URL with incremental authorization enabled
+    const authUrl = gmail.generateAuthUrl(state, scopeLevels);
+    console.log('✅ Redirecting to Gmail OAuth URL with scopes:', scopeLevels);
 
     return NextResponse.redirect(authUrl);
   } catch (error) {

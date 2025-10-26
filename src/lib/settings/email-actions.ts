@@ -111,7 +111,8 @@ export async function initiateEmailConnection(provider: string) {
 
       const gmail = new GmailService(gmailConfig);
       const state = JSON.stringify({ userId: user.id, provider });
-      const authUrl = gmail.generateAuthUrl(state);
+      // Use incremental auth: start with base + read scopes only
+      const authUrl = gmail.generateAuthUrl(state, ['base', 'read']);
 
       return {
         success: true,

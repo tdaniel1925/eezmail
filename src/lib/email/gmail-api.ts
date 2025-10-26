@@ -1,6 +1,7 @@
 /**
  * Google Gmail API Integration
  * Direct integration with Gmail API for Google accounts
+ * Implements incremental authorization for better user experience
  */
 
 export interface GmailConfig {
@@ -8,6 +9,40 @@ export interface GmailConfig {
   clientSecret: string;
   redirectUri: string;
 }
+
+/**
+ * Gmail OAuth Scope Sets
+ * Organized by permission level for incremental authorization
+ */
+export const GMAIL_SCOPES = {
+  // Base scopes - Always requested on initial auth
+  BASE: [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ],
+  
+  // Read-only access to emails
+  READ: [
+    'https://www.googleapis.com/auth/gmail.readonly',
+  ],
+  
+  // Modify emails (mark as read, archive, delete)
+  MODIFY: [
+    'https://www.googleapis.com/auth/gmail.modify',
+  ],
+  
+  // Send emails
+  SEND: [
+    'https://www.googleapis.com/auth/gmail.send',
+  ],
+  
+  // Compose and draft management
+  COMPOSE: [
+    'https://www.googleapis.com/auth/gmail.compose',
+  ],
+} as const;
+
+export type GmailScopeLevel = 'base' | 'read' | 'modify' | 'send' | 'compose';
 
 export class GmailService {
   private config: GmailConfig;
@@ -17,18 +52,52 @@ export class GmailService {
   }
 
   /**
-   * Generate OAuth URL for Gmail API
+   * Generate OAuth URL for Gmail API with incremental authorization support
+   * 
+   * @param state - State parameter for OAuth flow
+   * @param scopeLevels - Array of scope levels to request (default: ['base', 'read'])
+   * @returns OAuth authorization URL
+   * 
+   * @example
+   * // Initial connection - only request read access
+   * const authUrl = gmail.generateAuthUrl(state, ['base', 'read']);
+   * 
+   * // Later, when user wants to send emails
+   * const authUrl = gmail.generateAuthUrl(state, ['send']);
    */
-  generateAuthUrl(state: string): string {
+  generateAuthUrl(
+    state: string, 
+    scopeLevels: GmailScopeLevel[] = ['base', 'read']
+  ): string {
+    // Build scope list based on requested levels
+    const scopes: string[] = [];
+    
+    if (scopeLevels.includes('base')) {
+      scopes.push(...GMAIL_SCOPES.BASE);
+    }
+    if (scopeLevels.includes('read')) {
+      scopes.push(...GMAIL_SCOPES.READ);
+    }
+    if (scopeLevels.includes('modify')) {
+      scopes.push(...GMAIL_SCOPES.MODIFY);
+    }
+    if (scopeLevels.includes('send')) {
+      scopes.push(...GMAIL_SCOPES.SEND);
+    }
+    if (scopeLevels.includes('compose')) {
+      scopes.push(...GMAIL_SCOPES.COMPOSE);
+    }
+
     const params = new URLSearchParams({
       client_id: this.config.clientId,
       response_type: 'code',
       redirect_uri: this.config.redirectUri,
-      scope:
-        'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send',
+      scope: scopes.join(' '),
       state: state,
       access_type: 'offline',
       prompt: 'consent',
+      // KEY: Enable incremental authorization
+      include_granted_scopes: 'true',
     });
 
     return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
