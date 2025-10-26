@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { initFetchSanitizer } from '@/lib/fetch-sanitizer';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
@@ -16,11 +15,6 @@ export default function LoginPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-
-  // Install fetch sanitizer on mount
-  useEffect(() => {
-    initFetchSanitizer();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
