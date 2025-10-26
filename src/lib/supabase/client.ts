@@ -7,5 +7,17 @@ export function createClient() {
   const supabaseAnonKey =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
-  return createBrowserClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+    global: {
+      // Override default headers to prevent non-ASCII characters
+      headers: {
+        'X-Client-Info': 'supabase-js-web', // Simple ASCII-only client info
+      },
+    },
+  });
 }
