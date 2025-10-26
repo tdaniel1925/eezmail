@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
+import { loginAction } from '@/app/actions/auth';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
@@ -14,78 +14,39 @@ export default function LoginPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    console.log('[AUTH] ========== LOGIN STARTED ==========');
+    console.log('[AUTH] ========== SERVER-SIDE LOGIN STARTED ==========');
     console.log('[AUTH] Login attempt for:', email);
-    console.log('[AUTH] Current URL:', window.location.href);
-    console.log('[AUTH] Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
 
     try {
-      console.log('[AUTH] Calling signInWithPassword...');
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
 
-      console.log('[AUTH] signInWithPassword response received');
-
-      if (error) {
-        console.error('[AUTH] ❌ Login error:', error);
-        console.error('[AUTH] Error message:', error.message);
-        console.error('[AUTH] Error status:', error.status);
-        throw error;
-      }
-
-      console.log('[AUTH] ✅ Login successful!');
-      console.log('[AUTH] User ID:', data.user?.id);
-      console.log('[AUTH] User email:', data.user?.email);
-      console.log('[AUTH] Session present:', data.session ? '✅ YES' : '❌ NO');
-      console.log('[AUTH] Access token present:', data.session?.access_token ? '✅ YES' : '❌ NO');
+      const result = await loginAction(formData);
       
-      if (data.session) {
-        console.log('[AUTH] Session expires at:', new Date(data.session.expires_at || 0).toISOString());
+      if (result?.error) {
+        console.error('[AUTH] Login failed:', result.error);
         
-        // Store session explicitly in localStorage as backup
-        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
-        console.log('[AUTH] Session stored in localStorage');
+        // Provide more helpful error messages
+        if (result.error.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else if (result.error.includes('Email not confirmed')) {
+          setError('Please confirm your email address. Check your inbox for a confirmation link.');
+        } else {
+          setError(result.error);
+        }
+        setLoading(false);
       }
-
-      // Check if session is stored in cookies
-      console.log('[AUTH] Waiting 2 seconds for cookies to be set...');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
-      console.log('[AUTH] Cookies:', document.cookie);
-      console.log('[AUTH] LocalStorage keys:', Object.keys(localStorage));
-      console.log('[AUTH] Redirecting to /dashboard...');
-      
-      // Use window.location for a hard redirect to ensure cookies are sent
-      window.location.href = '/dashboard';
-      
-      console.log('[AUTH] ========== REDIRECT INITIATED ==========');
+      // If no error, redirect happens automatically in server action
     } catch (err) {
-      console.error('[AUTH] ========== LOGIN FAILED ==========');
       console.error('[AUTH] Caught error:', err);
-      const errorMessage =
-        err instanceof Error ? err.message : 'An error occurred';
-
-      // Provide more helpful error messages
-      if (errorMessage.includes('Invalid login credentials')) {
-        setError(
-          'Invalid email or password. Please check your credentials and try again.'
-        );
-      } else if (errorMessage.includes('Email not confirmed')) {
-        setError(
-          'Please confirm your email address. Check your inbox for a confirmation link.'
-        );
-      } else {
-        setError(errorMessage);
-      }
+      setError('An error occurred during login');
       setLoading(false);
     }
   };
