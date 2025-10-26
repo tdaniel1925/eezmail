@@ -50,13 +50,18 @@ export default function LoginPage(): JSX.Element {
       
       if (data.session) {
         console.log('[AUTH] Session expires at:', new Date(data.session.expires_at || 0).toISOString());
+        
+        // Store session explicitly in localStorage as backup
+        localStorage.setItem('supabase.auth.token', JSON.stringify(data.session));
+        console.log('[AUTH] Session stored in localStorage');
       }
 
       // Check if session is stored in cookies
-      console.log('[AUTH] Waiting 1 second for cookies to be set...');
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log('[AUTH] Waiting 2 seconds for cookies to be set...');
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       
       console.log('[AUTH] Cookies:', document.cookie);
+      console.log('[AUTH] LocalStorage keys:', Object.keys(localStorage));
       console.log('[AUTH] Redirecting to /dashboard...');
       
       // Use window.location for a hard redirect to ensure cookies are sent

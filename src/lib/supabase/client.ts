@@ -14,7 +14,7 @@ export function createClient() {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
-      flowType: 'pkce', // Use PKCE flow for better security
+      flowType: 'implicit', // Changed from 'pkce' to 'implicit' for better compatibility
     },
     global: {
       // Override default headers to prevent non-ASCII characters
