@@ -69,7 +69,8 @@ export async function GET(request: NextRequest) {
       `),
     ]);
 
-    const countsRow = countResult.rows[0] as any;
+    // Handle empty result set
+    const countsRow = (countResult?.rows?.[0] || {}) as any;
     const counts = {
       total: parseInt(countsRow?.total || '0'),
       undismissed: parseInt(countsRow?.undismissed || '0'),
