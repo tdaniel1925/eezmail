@@ -8,6 +8,9 @@
 import { type CoreFolderType } from '@/db/schema';
 import { detectFolderType, FOLDER_NAME_MAPPINGS } from './folder-mapper';
 
+// Re-export for use in other modules
+export { detectFolderType };
+
 export interface DetectedFolder {
   id: string;
   name: string;

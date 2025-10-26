@@ -9,13 +9,12 @@ import { products } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { Product } from '@/db/schema';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not configured');
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2024-11-20.acacia',
-});
+// Make Stripe optional for development
+const stripe = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-11-20.acacia',
+    })
+  : null;
 
 export interface SyncResult {
   success: boolean;
@@ -32,6 +31,14 @@ export async function syncProductToStripe(
   productId: string
 ): Promise<SyncResult> {
   try {
+    // Skip if Stripe is not configured
+    if (!stripe) {
+      return {
+        success: false,
+        error: 'Stripe is not configured',
+      };
+    }
+
     // Get product from database
     const [product] = await db
       .select()
@@ -141,6 +148,15 @@ export async function syncAllProductsToStripe(): Promise<{
   failed: number;
   errors: Array<{ productId: string; error: string }>;
 }> {
+  // Skip if Stripe is not configured
+  if (!stripe) {
+    return {
+      success: 0,
+      failed: 0,
+      errors: [{ productId: 'N/A', error: 'Stripe is not configured' }],
+    };
+  }
+
   const allProducts = await db
     .select()
     .from(products)

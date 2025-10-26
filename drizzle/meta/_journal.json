@@ -43,6 +43,13 @@
       "when": 1760912512035,
       "tag": "0005_add_webhook_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1761502138201,
+      "tag": "0006_careful_spectrum",
+      "breakpoints": true
     }
   ]
 }
