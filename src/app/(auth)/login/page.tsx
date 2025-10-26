@@ -22,6 +22,7 @@ export default function LoginPage(): JSX.Element {
     setLoading(true);
 
     console.log('[AUTH] Login attempt for:', email);
+    console.log('[AUTH] Current URL:', window.location.href);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -36,13 +37,15 @@ export default function LoginPage(): JSX.Element {
 
       console.log('[AUTH] Login successful:', data.user?.email);
       console.log('[AUTH] Session:', data.session ? 'present' : 'missing');
+      console.log('[AUTH] Access token:', data.session?.access_token ? 'present' : 'missing');
 
       // Wait a bit for cookies to be set, then redirect
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       
       console.log('[AUTH] Redirecting to dashboard...');
-      router.push('/dashboard');
-      router.refresh(); // Force a refresh to ensure middleware runs
+      
+      // Use window.location for a hard redirect to ensure cookies are sent
+      window.location.href = '/dashboard';
     } catch (err) {
       console.error('[AUTH] Caught error:', err);
       const errorMessage =
