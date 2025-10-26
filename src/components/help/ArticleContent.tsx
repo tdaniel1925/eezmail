@@ -1,49 +1,49 @@
-import ReactMarkdown from 'react-markdown';
-// Import PrismLight directly from the light build (not from index)
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter/dist/esm/prism-light';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-// Import only the languages we need (using ESM paths to avoid refractor dependency)
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
-import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
-import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
-import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
-import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql';
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+'use client';
 
-// Register the languages
-SyntaxHighlighter.registerLanguage('javascript', javascript);
-SyntaxHighlighter.registerLanguage('typescript', typescript);
-SyntaxHighlighter.registerLanguage('jsx', jsx);
-SyntaxHighlighter.registerLanguage('tsx', tsx);
-SyntaxHighlighter.registerLanguage('bash', bash);
-SyntaxHighlighter.registerLanguage('shell', bash);
-SyntaxHighlighter.registerLanguage('json', json);
-SyntaxHighlighter.registerLanguage('sql', sql);
-SyntaxHighlighter.registerLanguage('python', python);
+import { useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import Prism from 'prismjs';
+
+// Import Prism themes and languages
+import 'prismjs/themes/prism-tomorrow.css';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-jsx';
+import 'prismjs/components/prism-tsx';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-sql';
+import 'prismjs/components/prism-python';
 
 interface ArticleContentProps {
   content: string;
 }
 
 export function ArticleContent({ content }: ArticleContentProps) {
+  useEffect(() => {
+    // Highlight all code blocks after rendering
+    Prism.highlightAll();
+  }, [content]);
+
   return (
     <div className="prose prose-lg max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-code:rounded prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:text-sm prose-code:text-gray-800 prose-code:before:content-[''] prose-code:after:content-[''] prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-img:rounded-lg prose-img:shadow-md">
       <ReactMarkdown
         components={{
           code({ node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
-            return !inline && match ? (
-              <SyntaxHighlighter
-                style={oneDark}
-                language={match[1]}
-                PreTag="div"
-                {...props}
-              >
-                {String(children).replace(/\n$/, '')}
-              </SyntaxHighlighter>
-            ) : (
+            const language = match ? match[1] : '';
+
+            if (!inline && language) {
+              return (
+                <pre className={`language-${language}`}>
+                  <code className={`language-${language}`} {...props}>
+                    {String(children).replace(/\n$/, '')}
+                  </code>
+                </pre>
+              );
+            }
+
+            return (
               <code className={className} {...props}>
                 {children}
               </code>
