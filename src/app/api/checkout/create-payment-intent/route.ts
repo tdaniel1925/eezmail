@@ -9,9 +9,19 @@ import { convertCartToOrder } from '@/lib/ecommerce/cart';
 import Stripe from 'stripe';
 import { z } from 'zod';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-});
+// Initialize Stripe lazily to avoid build-time errors
+let stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2024-11-20.acacia',
+    });
+  }
+  return stripe;
+}
 
 const createPaymentIntentSchema = z.object({
   cartId: z.string().uuid(),
@@ -55,6 +65,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     // Create Stripe payment intent
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(parseFloat(order.totalAmount) * 100),
       currency: 'usd',
