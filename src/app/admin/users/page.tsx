@@ -1,54 +1,58 @@
-import { getUsers } from '@/lib/admin/users';
-import { UserManagementTable } from '@/components/admin/UserManagementTable';
+'use client';
 
-// Force dynamic rendering for admin pages that require auth
-export const dynamic = 'force-dynamic';
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { AddUserModal } from '@/components/admin/AddUserModal';
+import { BulkActionToolbar } from '@/components/admin/BulkActionToolbar';
 
-export default async function AdminUsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-    search?: string;
-    tier?: string;
-    status?: string;
-  }>;
-}) {
-  const params = await searchParams;
-  const page = parseInt(params.page || '1');
-  const search = params.search;
-  const tier = params.tier;
-  const status = params.status;
+export default function AdminUsersPage() {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const result = await getUsers({ page, search, tier, status });
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+    setSelectedUserIds([]);
+  };
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          User Management
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Manage all users and their subscriptions
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            User Management
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Manage all users and their subscriptions
+          </p>
+        </div>
+
+        <Button onClick={() => setShowAddModal(true)} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Add User
+        </Button>
       </div>
 
-      {/* User Table */}
-      {result.success && result.users && (
-        <UserManagementTable
-          users={result.users}
-          total={result.total || 0}
-          page={result.page || 1}
-          totalPages={result.totalPages || 1}
-        />
-      )}
+      {/* Bulk Actions Toolbar */}
+      <BulkActionToolbar
+        selectedIds={selectedUserIds}
+        onClearSelection={() => setSelectedUserIds([])}
+        onActionComplete={handleRefresh}
+      />
 
-      {!result.success && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-red-700 dark:text-red-400">{result.error}</p>
-        </div>
-      )}
+      {/* User Table - Will be loaded via server component */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <p className="text-sm text-gray-500">Loading users...</p>
+      </div>
+
+      {/* Add User Modal */}
+      <AddUserModal
+        open={showAddModal}
+        onOpenChange={setShowAddModal}
+        onSuccess={handleRefresh}
+      />
     </div>
   );
 }
