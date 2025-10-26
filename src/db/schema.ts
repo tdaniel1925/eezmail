@@ -20,8 +20,7 @@ import { relations } from 'drizzle-orm';
 
 // Payment & Subscription Enums
 export const subscriptionTierEnum = pgEnum('subscription_tier', [
-  'free',
-  'pro',
+  'individual',
   'team',
   'enterprise',
 ]);
@@ -256,7 +255,7 @@ export const users = pgTable('users', {
   sandboxCompanyId: uuid('sandbox_company_id'),
 
   subscriptionTier: subscriptionTierEnum('subscription_tier')
-    .default('free')
+    .default('individual')
     .notNull(),
   subscriptionStatus: subscriptionStatusEnum('subscription_status'),
   paymentProcessor: paymentProcessorEnum('payment_processor'),
@@ -300,6 +299,12 @@ export const subscriptions = pgTable('subscriptions', {
   status: subscriptionStatusEnum('status').notNull(),
   processor: paymentProcessorEnum('processor').notNull(),
   processorSubscriptionId: text('processor_subscription_id').notNull(),
+  
+  // Seat-based billing
+  seats: integer('seats').notNull().default(1),
+  pricePerSeat: decimal('price_per_seat', { precision: 10, scale: 2 }).notNull(),
+  totalAmount: decimal('total_amount', { precision: 10, scale: 2 }).notNull(),
+  
   currentPeriodStart: timestamp('current_period_start').notNull(),
   currentPeriodEnd: timestamp('current_period_end').notNull(),
   cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),

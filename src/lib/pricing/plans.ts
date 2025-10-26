@@ -1,145 +1,120 @@
 /**
- * Pricing Plans and Feature Definitions
+ * Simplified Pricing Plans
  * 
- * Defines all available subscription tiers, features, and limits
+ * Three-tier seat-based pricing model:
+ * - Individual: $45/month (1 user, everything included)
+ * - Team: $35/user/month (min 5 users, volume pricing)
+ * - Enterprise: $25/user/month (6+ users, best value)
+ * 
+ * All plans include unlimited features - SMS billed separately
  */
 
 export const PLANS = {
-  free: {
-    id: 'free',
-    name: 'Free',
-    price: 0,
+  individual: {
+    id: 'individual',
+    name: 'Individual',
+    price: 45,
+    pricePerSeat: 45,
     interval: 'month' as const,
-    stripeProductId: null,
-    stripePriceId: null,
-    description: 'Try out the basics',
+    stripeProductId: process.env.STRIPE_INDIVIDUAL_PRODUCT_ID,
+    stripePriceId: process.env.STRIPE_INDIVIDUAL_PRICE_ID,
+    description: 'Everything you need to supercharge your inbox',
+    minSeats: 1,
+    maxSeats: 1,
     features: [
-      '1 email account',
-      '1,000 emails stored',
-      '10 RAG searches per day',
-      '50 AI queries per month',
-      'Basic email management',
-      'Standard support',
-    ],
-    limits: {
-      emailAccounts: 1,
-      emailsStored: 1000,
-      ragSearchesPerDay: 10,
-      aiQueriesPerMonth: 50,
-      storageGB: 1,
-      customLabels: 5,
-      customFolders: 3,
-      emailRules: 5,
-      contactsStored: 100,
-      attachmentSizeLimit: 10, // MB
-    },
-    highlighted: false,
-  },
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    price: 15,
-    interval: 'month' as const,
-    stripeProductId: process.env.STRIPE_STARTER_PRODUCT_ID,
-    stripePriceId: process.env.STRIPE_STARTER_PRICE_ID,
-    description: 'For professionals',
-    features: [
-      '3 email accounts',
-      '10,000 emails stored',
-      '100 RAG searches per day',
-      '500 AI queries per month',
-      'Advanced email management',
-      'Contact management',
-      'Email scheduling',
+      'Unlimited email accounts',
+      'Unlimited storage',
+      'Full AI features (sentiment, summarization, writing assistance)',
+      'Smart email categorization (Imbox/Feed/Paper Trail)',
+      'Advanced search with RAG',
+      'Contact intelligence & relationship scoring',
+      'Email scheduling & templates',
       'Priority support',
+      'All integrations included',
     ],
-    limits: {
-      emailAccounts: 3,
-      emailsStored: 10000,
-      ragSearchesPerDay: 100,
-      aiQueriesPerMonth: 500,
-      storageGB: 10,
-      customLabels: 25,
-      customFolders: 10,
-      emailRules: 25,
-      contactsStored: 1000,
-      attachmentSizeLimit: 25, // MB
-    },
     highlighted: false,
   },
-  professional: {
-    id: 'professional',
-    name: 'Professional',
+  team: {
+    id: 'team',
+    name: 'Team',
     price: 35,
+    pricePerSeat: 35,
     interval: 'month' as const,
-    stripeProductId: process.env.STRIPE_PROFESSIONAL_PRODUCT_ID,
-    stripePriceId: process.env.STRIPE_PROFESSIONAL_PRICE_ID,
-    description: 'For teams',
+    stripeProductId: process.env.STRIPE_TEAM_PRODUCT_ID,
+    stripePriceId: process.env.STRIPE_TEAM_PRICE_ID,
+    description: 'For growing teams (minimum 5 users)',
+    minSeats: 5,
+    maxSeats: null, // Unlimited
     features: [
-      '10 email accounts',
-      '50,000 emails stored',
-      'Unlimited RAG searches',
-      '2,000 AI queries per month',
-      'Everything in Starter',
-      'Team collaboration',
-      'Advanced AI features',
-      'Custom integrations',
-      'Dedicated support',
+      'Everything in Individual',
+      'Team collaboration features',
+      'Shared contacts & labels',
+      'Team inbox management',
+      'Admin controls & permissions',
+      'Usage analytics & insights',
+      'Bulk actions & automation',
+      'SMS at cost (pay-as-you-go)',
+      'Volume pricing ($35/user)',
     ],
-    limits: {
-      emailAccounts: 10,
-      emailsStored: 50000,
-      ragSearchesPerDay: -1, // -1 = unlimited
-      aiQueriesPerMonth: 2000,
-      storageGB: 50,
-      customLabels: -1,
-      customFolders: -1,
-      emailRules: -1,
-      contactsStored: -1,
-      attachmentSizeLimit: 100, // MB
-    },
-    highlighted: true,
+    highlighted: true, // Most popular
   },
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    price: null, // Custom pricing
+    price: 25,
+    pricePerSeat: 25,
     interval: 'month' as const,
     stripeProductId: process.env.STRIPE_ENTERPRISE_PRODUCT_ID,
     stripePriceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
-    description: 'For large organizations',
+    description: 'For large organizations (6+ users)',
+    minSeats: 6,
+    maxSeats: null, // Unlimited
     features: [
-      'Unlimited email accounts',
-      'Unlimited emails stored',
-      'Unlimited RAG searches',
-      'Unlimited AI queries',
-      'Everything in Professional',
-      'Custom AI models',
-      'SSO & SAML',
-      'Advanced security',
-      'API access',
+      'Everything in Team',
+      'Best value ($25/user)',
+      'Custom AI models & training',
+      'SSO & SAML authentication',
+      'Advanced security controls',
+      'API access for integrations',
       'White-label options',
-      '24/7 Premium support',
       'Dedicated account manager',
+      '24/7 premium support',
+      'SLA guarantees',
+      'Custom contracts available',
     ],
-    limits: {
-      emailAccounts: -1,
-      emailsStored: -1,
-      ragSearchesPerDay: -1,
-      aiQueriesPerMonth: -1,
-      storageGB: -1,
-      customLabels: -1,
-      customFolders: -1,
-      emailRules: -1,
-      contactsStored: -1,
-      attachmentSizeLimit: 500, // MB
-    },
     highlighted: false,
   },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
 export type Plan = (typeof PLANS)[PlanId];
+
+/**
+ * Calculate subscription cost based on plan and seats
+ */
+export function calculateSubscriptionCost(planId: PlanId, seats: number): number {
+  const plan = PLANS[planId];
+  
+  // Individual: fixed $45 (always 1 seat)
+  if (planId === 'individual') {
+    return 45;
+  }
+  
+  // Enforce minimum seats
+  const actualSeats = Math.max(seats, plan.minSeats || 1);
+  
+  // Team: $35/user (min 5 users = $175)
+  if (planId === 'team') {
+    return actualSeats * 35;
+  }
+  
+  // Enterprise: $25/user (min 6 users = $150)
+  if (planId === 'enterprise') {
+    return actualSeats * 25;
+  }
+  
+  return 0;
+}
 
 /**
  * Get plan by ID
@@ -165,107 +140,69 @@ export function getPlanByStripePriceId(priceId: string): Plan | null {
 }
 
 /**
- * Check if a plan has a specific limit
+ * Validate seat count for a plan
  */
-export function hasLimit(planId: PlanId, limitKey: keyof Plan['limits']): boolean {
-  const plan = getPlan(planId);
-  const limit = plan.limits[limitKey];
-  return limit !== -1;
-}
-
-/**
- * Get limit value for a plan
- * Returns -1 for unlimited
- */
-export function getLimit(planId: PlanId, limitKey: keyof Plan['limits']): number {
-  const plan = getPlan(planId);
-  return plan.limits[limitKey];
-}
-
-/**
- * Check if usage is within plan limits
- */
-export function isWithinLimit(
-  planId: PlanId,
-  limitKey: keyof Plan['limits'],
-  currentUsage: number
-): boolean {
-  const limit = getLimit(planId, limitKey);
-  if (limit === -1) return true; // Unlimited
-  return currentUsage < limit;
-}
-
-/**
- * Calculate usage percentage
- * Returns 0-100 for limited plans, 0 for unlimited
- */
-export function getUsagePercentage(
-  planId: PlanId,
-  limitKey: keyof Plan['limits'],
-  currentUsage: number
-): number {
-  const limit = getLimit(planId, limitKey);
-  if (limit === -1) return 0; // Unlimited
-  if (limit === 0) return 100;
-  return Math.min(100, Math.round((currentUsage / limit) * 100));
-}
-
-/**
- * Check if upgrade is needed based on usage
- */
-export function needsUpgrade(
-  planId: PlanId,
-  limitKey: keyof Plan['limits'],
-  currentUsage: number,
-  threshold: number = 0.9 // 90% usage
-): boolean {
-  const limit = getLimit(planId, limitKey);
-  if (limit === -1) return false; // Unlimited
-  return currentUsage >= limit * threshold;
-}
-
-/**
- * Get recommended plan based on usage
- */
-export function getRecommendedPlan(usage: {
-  emailAccounts: number;
-  emailsStored: number;
-  ragSearchesPerDay: number;
-  aiQueriesPerMonth: number;
-}): PlanId {
-  // Check each plan from lowest to highest
-  for (const [planId, plan] of Object.entries(PLANS)) {
-    const limits = plan.limits;
-    
-    if (
-      (limits.emailAccounts === -1 || usage.emailAccounts <= limits.emailAccounts) &&
-      (limits.emailsStored === -1 || usage.emailsStored <= limits.emailsStored) &&
-      (limits.ragSearchesPerDay === -1 || usage.ragSearchesPerDay <= limits.ragSearchesPerDay) &&
-      (limits.aiQueriesPerMonth === -1 || usage.aiQueriesPerMonth <= limits.aiQueriesPerMonth)
-    ) {
-      return planId as PlanId;
-    }
+export function validateSeats(planId: PlanId, seats: number): { valid: boolean; error?: string; correctedSeats?: number } {
+  const plan = PLANS[planId];
+  
+  if (seats < (plan.minSeats || 1)) {
+    return {
+      valid: false,
+      error: `${plan.name} plan requires a minimum of ${plan.minSeats} ${plan.minSeats === 1 ? 'user' : 'users'}`,
+      correctedSeats: plan.minSeats || 1,
+    };
   }
   
-  return 'enterprise'; // If nothing matches, recommend enterprise
+  if (plan.maxSeats !== null && seats > plan.maxSeats) {
+    return {
+      valid: false,
+      error: `${plan.name} plan has a maximum of ${plan.maxSeats} ${plan.maxSeats === 1 ? 'user' : 'users'}`,
+      correctedSeats: plan.maxSeats,
+    };
+  }
+  
+  return { valid: true };
+}
+
+/**
+ * Get recommended plan based on team size
+ */
+export function getRecommendedPlan(teamSize: number): PlanId {
+  if (teamSize === 1) {
+    return 'individual';
+  }
+  
+  if (teamSize >= 6) {
+    return 'enterprise'; // Best value for 6+ users
+  }
+  
+  if (teamSize >= 5) {
+    return 'team'; // Teams start at 5 users
+  }
+  
+  // 2-4 users: recommend Individual for each OR suggest waiting for team plan
+  return 'individual';
 }
 
 /**
  * Format price for display
  */
-export function formatPrice(price: number | null): string {
+export function formatPrice(price: number | null, seats?: number): string {
   if (price === null) return 'Custom';
   if (price === 0) return 'Free';
-  return `$${price}`;
+  
+  if (seats && seats > 1) {
+    return `$${price * seats}/mo for ${seats} users`;
+  }
+  
+  return `$${price}/mo`;
 }
 
 /**
- * Format limit for display
+ * Format per-seat price for display
  */
-export function formatLimit(limit: number): string {
-  if (limit === -1) return 'Unlimited';
-  if (limit >= 1000000) return `${(limit / 1000000).toFixed(1)}M`;
-  if (limit >= 1000) return `${(limit / 1000).toFixed(0)}K`;
-  return limit.toString();
+export function formatPricePerSeat(plan: Plan): string {
+  if (plan.pricePerSeat === 0) return 'Free';
+  return `$${plan.pricePerSeat}/user/mo`;
 }
 
