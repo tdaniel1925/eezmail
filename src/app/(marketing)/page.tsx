@@ -280,7 +280,7 @@ export default function LandingPage() {
             <div className="group relative rounded-2xl overflow-hidden">
               <div className="relative h-96">
                 <Image
-                  src="/images/trent-daniel.png"
+                  src="/images/trent.daniel.png"
                   alt="Trent T. Daniel"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
@@ -299,7 +299,7 @@ export default function LandingPage() {
             <div className="group relative rounded-2xl overflow-hidden">
               <div className="relative h-96">
                 <Image
-                  src="/images/sella-hall.png"
+                  src="/images/sella.hall.png"
                   alt="Sella Hall"
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
