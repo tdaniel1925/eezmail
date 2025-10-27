@@ -1,12 +1,13 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 /**
  * Check if the current user is an admin (supports both old and new role systems)
  */
 export async function isAdmin(): Promise<boolean> {
   try {
+    // Get current user from session
     const supabase = await createClient();
     const {
       data: { user },
@@ -19,8 +20,9 @@ export async function isAdmin(): Promise<boolean> {
 
     console.log('[isAdmin] 🔍 Checking user:', user.email);
 
-    // Check database for both old role and new roleHierarchy
-    const { data, error } = await supabase
+    // Use admin client to query users table (bypasses RLS)
+    const adminClient = createAdminClient();
+    const { data, error } = await adminClient
       .from('users')
       .select('role, role_hierarchy')
       .eq('id', user.id)
