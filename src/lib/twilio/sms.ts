@@ -38,7 +38,7 @@ export async function sendSMS(
         // Log rate limited attempt
         await logCommunicationUsage(userId, 'sms', to, 'rate_limited', {
           contactId,
-          messagePreview: message.substring(0, 50),
+          messagePreview: message ? message.substring(0, 50) : '',
           errorMessage: rateCheck.reason,
         });
 
@@ -107,7 +107,7 @@ export async function sendSMS(
       cost,
       usedCustomTwilio: isCustom,
       usedSandboxTwilio: isSandbox,
-      messagePreview: message.substring(0, 50),
+      messagePreview: message ? message.substring(0, 50) : '',
     });
 
     console.log(`✅ SMS sent to ${formattedTo}: ${result.sid}${isSandbox ? ' (sandbox)' : ''}`);
@@ -122,7 +122,7 @@ export async function sendSMS(
     // Log failed attempt
     await logCommunicationUsage(userId, 'sms', to, 'failed', {
       contactId,
-      messagePreview: message.substring(0, 50),
+      messagePreview: message ? message.substring(0, 50) : '',
       errorMessage: error.message || 'Unknown error',
     });
 

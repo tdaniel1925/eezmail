@@ -81,7 +81,7 @@ export async function sendContactSMS(
     );
 
     // Send SMS via Twilio
-    const result = await sendSMS(phone, message);
+    const result = await sendSMS(user.id, phone, message, contactId);
 
     if (!result.success) {
       // Refund the charge if SMS failed
@@ -97,11 +97,11 @@ export async function sendContactSMS(
     await addTimelineEvent(contactId, {
       eventType: 'sms_sent',
       title: 'SMS Sent',
-      description: message.substring(0, 100),
+      description: message ? message.substring(0, 100) : '(No message)',
       metadata: {
         messageSid: result.messageSid,
         phone,
-        messageLength: message.length,
+        messageLength: message?.length || 0,
         deliveryStatus: 'queued',
         sentAt: new Date(),
         cost: chargeResult.amount,
