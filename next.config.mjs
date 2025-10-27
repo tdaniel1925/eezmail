@@ -16,10 +16,15 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Enable webpack caching for better performance
+  // ⚡ PERFORMANCE: Enable webpack caching for better performance
   webpack: (config, { isServer, dev }) => {
-    // Re-enable caching for performance (was disabled for sync conflicts)
-    // config.cache = false; // REMOVED - hurts performance
+    // Enable persistent caching (disabled in production for freshness)
+    if (dev) {
+      config.cache = {
+        type: 'filesystem',
+        compression: false, // Faster caching without compression
+      };
+    }
 
     // Faster incremental builds in development
     if (dev) {
@@ -28,6 +33,12 @@ const nextConfig = {
         removeAvailableModules: false,
         removeEmptyChunks: false,
         splitChunks: false,
+        runtimeChunk: false, // Disable runtime chunk for faster dev
+      };
+
+      // Reduce module resolution time
+      config.snapshot = {
+        managedPaths: [/^(.+?[\\/]node_modules[\\/])/],
       };
     }
 
@@ -43,11 +54,21 @@ const nextConfig = {
   // Optimize page data fetching
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-    // Faster HMR in development
-    turbo: process.env.NODE_ENV === 'development' ? {} : undefined,
+    // ⚡ TURBOPACK: Faster development with Turbopack (Next.js 14+)
+    // Disabled for now to ensure compatibility
+    // turbo: process.env.NODE_ENV === 'development' ? {} : undefined,
   },
-  // Faster development reloads
+  // ⚡ PERFORMANCE: Disable strict mode for faster HMR in dev
   reactStrictMode: false, // Disable in dev for faster HMR (re-enable for production testing)
+
+  // ⚡ PERFORMANCE: Optimize server-side rendering
+  onDemandEntries: {
+    // Period (in ms) where the server will keep pages in the buffer
+    maxInactiveAge: 60 * 1000, // 1 minute
+    // Number of pages that should be kept simultaneously without being disposed
+    pagesBufferLength: 5, // Reduced from default to save memory
+  },
+
   // Headers for better caching
   async headers() {
     return [

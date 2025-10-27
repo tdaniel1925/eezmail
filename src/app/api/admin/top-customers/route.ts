@@ -9,20 +9,20 @@ export async function GET(req: NextRequest) {
 
     const result = await db.execute(sql`
       WITH plan_prices AS (
-        SELECT 'starter' as tier, 15 as price
-        UNION ALL SELECT 'professional', 35
+        SELECT 'individual'::text as tier, 15 as price
+        UNION ALL SELECT 'team', 35
         UNION ALL SELECT 'enterprise', 200
       )
       SELECT
         u.id,
         u.email,
-        COALESCE(s.tier, 'free') as tier,
+        COALESCE(s.tier::text, 'individual') as tier,
         u.created_at as joined_at,
         COALESCE(pp.price, 0) as monthly_revenue,
         COALESCE(pp.price, 0) * 12 as lifetime_value
       FROM auth.users u
       LEFT JOIN subscriptions s ON s.user_id = u.id
-      LEFT JOIN plan_prices pp ON pp.tier = s.tier
+      LEFT JOIN plan_prices pp ON pp.tier = s.tier::text
       WHERE s.status = 'active'
       ORDER BY lifetime_value DESC
       LIMIT 10
@@ -45,4 +45,3 @@ export async function GET(req: NextRequest) {
     );
   }
 }
-

@@ -31,10 +31,17 @@ async function SyncJobsContent(): Promise<JSX.Element> {
   // For now, assuming all authenticated users can access
 
   // Fetch sync jobs
+  console.log('[SyncTracePage] Fetching sync jobs with filters:', {
+    limit: 50,
+    offset: 0,
+  });
   const { jobs, total } = await getSyncJobs({ limit: 50, offset: 0 });
+  console.log('[SyncTracePage] Got jobs:', jobs?.length || 0, 'total:', total);
 
   // Fetch stats
+  console.log('[SyncTracePage] Fetching sync job stats with filters:', {});
   const stats = await getSyncJobStats({});
+  console.log('[SyncTracePage] Got stats:', stats);
 
   return (
     <div className="space-y-6">

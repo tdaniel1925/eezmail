@@ -6,6 +6,38 @@ import { eq, sql, and, inArray } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { formatBytes } from './utils';
 
+// ⚡ PERFORMANCE: Cache storage calculations for 5 minutes
+const storageCache = new Map<
+  string,
+  { data: any; timestamp: number; expiresAt: number }
+>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function getCachedData<T>(key: string): T | null {
+  const cached = storageCache.get(key);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.data as T;
+  }
+  storageCache.delete(key);
+  return null;
+}
+
+function setCachedData(key: string, data: any): void {
+  const now = Date.now();
+  storageCache.set(key, {
+    data,
+    timestamp: now,
+    expiresAt: now + CACHE_DURATION,
+  });
+
+  // Clean old cache entries (older than 10 minutes)
+  for (const [cacheKey, value] of storageCache.entries()) {
+    if (Date.now() > value.expiresAt + 5 * 60 * 1000) {
+      storageCache.delete(cacheKey);
+    }
+  }
+}
+
 /**
  * Helper to get user's account IDs
  */
@@ -131,6 +163,7 @@ export async function getStorageQuota(userId: string): Promise<{
 
 /**
  * Get complete storage information for a user
+ * ⚡ OPTIMIZED: Cached for 5 minutes to avoid expensive queries on every page load
  */
 export async function getStorageInfo(userId: string): Promise<{
   success: boolean;
@@ -143,6 +176,13 @@ export async function getStorageInfo(userId: string): Promise<{
   error?: string;
 }> {
   try {
+    // Check cache first
+    const cacheKey = `storage_${userId}`;
+    const cached = getCachedData<ReturnType<typeof getStorageInfo>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const [usedResult, quotaResult] = await Promise.all([
       calculateStorageUsed(userId),
       getStorageQuota(userId),
@@ -160,7 +200,7 @@ export async function getStorageInfo(userId: string): Promise<{
     const quota = quotaResult.bytesQuota || 1;
     const percentUsed = Math.round((used / quota) * 100);
 
-    return {
+    const result = {
       success: true,
       used,
       quota,
@@ -169,6 +209,11 @@ export async function getStorageInfo(userId: string): Promise<{
       percentUsed,
       tier: quotaResult.tier,
     };
+
+    // Cache the result
+    setCachedData(cacheKey, result);
+
+    return result;
   } catch (error) {
     console.error('Error getting storage info:', error);
     return { success: false, error: 'Failed to get storage info' };

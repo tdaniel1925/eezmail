@@ -20,60 +20,62 @@ export async function SidebarDataLoader() {
     redirect('/signin');
   }
 
-  // Fetch user's email accounts - with error handling
-  let accounts: Awaited<ReturnType<typeof db.query.emailAccounts.findMany>> =
-    [];
-  try {
-    accounts = await db.query.emailAccounts.findMany({
-      where: eq(emailAccounts.userId, user.id),
-      orderBy: [emailAccounts.createdAt],
-    });
-  } catch (error) {
-    console.error('Failed to fetch email accounts:', error);
-  }
+  // ⚡ PERFORMANCE OPTIMIZATION: Run all queries in parallel
+  const [accountsResult, labelsResult, tasksResult, storageResult] =
+    await Promise.allSettled([
+      // Query 1: Email accounts
+      db.query.emailAccounts.findMany({
+        where: eq(emailAccounts.userId, user.id),
+        orderBy: [emailAccounts.createdAt],
+        columns: {
+          id: true,
+          emailAddress: true,
+          provider: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+
+      // Query 2: Labels
+      getLabels(),
+
+      // Query 3: Pending tasks count
+      getPendingTasksCount(),
+
+      // Query 4: Storage info (cached, throttled)
+      getStorageInfo(user.id),
+    ]);
+
+  // Process results with proper error handling
+  const accounts =
+    accountsResult.status === 'fulfilled' ? accountsResult.value : [];
+
+  const labels =
+    labelsResult.status === 'fulfilled' && labelsResult.value.success
+      ? labelsResult.value.labels || []
+      : [];
+
+  const pendingTasksCount =
+    tasksResult.status === 'fulfilled' && tasksResult.value.success
+      ? tasksResult.value.count || 0
+      : 0;
+
+  const storage =
+    storageResult.status === 'fulfilled' && storageResult.value.success
+      ? {
+          used: storageResult.value.used || 0,
+          total: storageResult.value.quota || 15 * 1024 * 1024 * 1024,
+        }
+      : {
+          used: 0,
+          total: 15 * 1024 * 1024 * 1024, // Default 15GB
+        };
 
   // Get first active account or first account
   const currentAccountId =
     accounts.find((acc) => acc.status === 'active')?.id ||
     accounts[0]?.id ||
     null;
-
-  // Fetch labels - with error handling
-  let labels: any[] = [];
-  try {
-    const labelsResult = await getLabels();
-    labels = labelsResult.success ? labelsResult.labels || [] : [];
-  } catch (error) {
-    console.error('Failed to fetch labels:', error);
-  }
-
-  // Fetch pending tasks count - with error handling
-  let pendingTasksCount = 0;
-  try {
-    const tasksResult = await getPendingTasksCount();
-    pendingTasksCount = tasksResult.success ? tasksResult.count || 0 : 0;
-  } catch (error) {
-    console.error('Failed to fetch tasks count:', error);
-  }
-
-  // Calculate storage (real calculation) - with error handling
-  let storage = {
-    used: 0,
-    total: 15 * 1024 * 1024 * 1024, // Default 15GB
-  };
-
-  try {
-    const storageInfo = await getStorageInfo(user.id);
-    if (storageInfo.success) {
-      storage = {
-        used: storageInfo.used || 0,
-        total: storageInfo.quota || 15 * 1024 * 1024 * 1024,
-      };
-    }
-  } catch (error) {
-    console.error('Storage calculation failed:', error);
-    // Use default values
-  }
 
   return {
     user: {

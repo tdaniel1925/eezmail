@@ -1,6 +1,5 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { requireAdmin } from './auth';
 import { db } from '@/lib/db';
 import { sql } from 'drizzle-orm';
@@ -37,16 +36,28 @@ export async function getDashboardStats(): Promise<{
 }> {
   try {
     await requireAdmin();
-    const supabase = await createClient();
 
-    // Get MRR and subscription stats
-    const { data: mrrData, error: mrrError } = await supabase.rpc('get_mrr');
-    
-    if (mrrError) {
-      throw mrrError;
-    }
+    // Get MRR and subscription stats using direct SQL instead of RPC
+    const mrrResult = await db.execute(sql`
+      WITH plan_prices AS (
+        SELECT 'individual'::text as tier, 15 as price
+        UNION ALL SELECT 'team', 35
+        UNION ALL SELECT 'enterprise', 99
+      )
+      SELECT
+        COUNT(DISTINCT u.id) as total_users,
+        COUNT(DISTINCT s.id) FILTER (WHERE s.status IN ('active', 'trialing')) as active_subscriptions,
+        COALESCE(SUM(pp.price) FILTER (WHERE s.status IN ('active', 'trialing')), 0) as mrr
+      FROM auth.users u
+      LEFT JOIN subscriptions s ON s.user_id = u.id
+      LEFT JOIN plan_prices pp ON pp.tier = s.tier::text
+    `);
 
-    const stats = mrrData?.[0] || { mrr: 0, active_subscriptions: 0, total_users: 0 };
+    const stats = mrrResult.rows[0] || {
+      mrr: 0,
+      active_subscriptions: 0,
+      total_users: 0,
+    };
 
     // Get total emails
     const emailCount = await db.execute(sql`
@@ -80,7 +91,10 @@ export async function getDashboardStats(): Promise<{
     `);
     const canceledCount = parseInt(canceledResult.rows[0]?.count || '0');
     const activeCount = parseInt(stats.active_subscriptions || '0');
-    const churnRate = activeCount > 0 ? (canceledCount / (activeCount + canceledCount)) * 100 : 0;
+    const churnRate =
+      activeCount > 0
+        ? (canceledCount / (activeCount + canceledCount)) * 100
+        : 0;
 
     return {
       success: true,
@@ -113,17 +127,32 @@ export async function getSubscriptionStats(): Promise<{
 }> {
   try {
     await requireAdmin();
-    const supabase = await createClient();
 
-    const { data, error } = await supabase.rpc('get_subscription_stats');
-    
-    if (error) {
-      throw error;
-    }
+    // Replace RPC with direct SQL query
+    const result = await db.execute(sql`
+      WITH tier_counts AS (
+        SELECT
+          tier::text,
+          COUNT(*) as count
+        FROM subscriptions
+        WHERE status IN ('active', 'trialing')
+        GROUP BY tier
+      ),
+      total AS (
+        SELECT SUM(count) as total_count FROM tier_counts
+      )
+      SELECT
+        tc.tier,
+        tc.count,
+        ROUND((tc.count::numeric / t.total_count * 100), 2) as percentage
+      FROM tier_counts tc
+      CROSS JOIN total t
+      ORDER BY tc.count DESC
+    `);
 
     return {
       success: true,
-      stats: (data || []).map((row: any) => ({
+      stats: (result.rows || []).map((row: any) => ({
         tier: row.tier,
         count: parseInt(row.count),
         percentage: parseFloat(row.percentage),
@@ -151,9 +180,8 @@ export async function getRevenueData(): Promise<{
 
     const result = await db.execute(sql`
       WITH plan_prices AS (
-        SELECT 'free' as tier, 0 as price
-        UNION ALL SELECT 'starter', 15
-        UNION ALL SELECT 'professional', 35
+        SELECT 'individual'::text as tier, 15 as price
+        UNION ALL SELECT 'team', 35
         UNION ALL SELECT 'enterprise', 99
       ),
       daily_revenue AS (
@@ -162,7 +190,7 @@ export async function getRevenueData(): Promise<{
           COUNT(*) as subscriptions,
           SUM(pp.price) as revenue
         FROM subscriptions s
-        JOIN plan_prices pp ON pp.tier = s.tier
+        JOIN plan_prices pp ON pp.tier = s.tier::text
         WHERE s.created_at >= NOW() - INTERVAL '30 days'
           AND s.status IN ('active', 'trialing')
         GROUP BY DATE(s.created_at)
@@ -183,7 +211,8 @@ export async function getRevenueData(): Promise<{
     console.error('Error getting revenue data:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get revenue data',
+      error:
+        error instanceof Error ? error.message : 'Failed to get revenue data',
     };
   }
 }
@@ -229,7 +258,8 @@ export async function getRecentSignups(): Promise<{
     console.error('Error getting recent signups:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get recent signups',
+      error:
+        error instanceof Error ? error.message : 'Failed to get recent signups',
     };
   }
 }
@@ -272,8 +302,8 @@ export async function getUsageStats(days: number = 30): Promise<{
     console.error('Error getting usage stats:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to get usage stats',
+      error:
+        error instanceof Error ? error.message : 'Failed to get usage stats',
     };
   }
 }
-

@@ -2,7 +2,7 @@
 
 import { db } from '@/lib/db';
 import { tasks } from '@/db/schema';
-import { eq, and, desc, or } from 'drizzle-orm';
+import { eq, and, desc, or, sql } from 'drizzle-orm';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
@@ -179,6 +179,7 @@ export async function getTasks(): Promise<{
 
 /**
  * Get pending tasks count
+ * ⚡ OPTIMIZED: Uses count query instead of fetching all records
  */
 export async function getPendingTasksCount(): Promise<{
   success: boolean;
@@ -195,15 +196,19 @@ export async function getPendingTasksCount(): Promise<{
       return { success: false, error: 'Unauthorized' };
     }
 
-    const pendingTasks = await db.query.tasks.findMany({
-      where: and(
-        eq(tasks.userId, user.id),
-        eq(tasks.completed, false),
-        or(eq(tasks.status, 'pending'), eq(tasks.status, 'in_progress'))
-      ),
-    });
+    // ⚡ Use SQL COUNT instead of fetching all records
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.userId, user.id),
+          eq(tasks.completed, false),
+          or(eq(tasks.status, 'pending'), eq(tasks.status, 'in_progress'))
+        )
+      );
 
-    return { success: true, count: pendingTasks.length };
+    return { success: true, count: result[0]?.count || 0 };
   } catch (error) {
     console.error('Error fetching pending tasks count:', error);
     return { success: false, error: 'Failed to fetch count' };

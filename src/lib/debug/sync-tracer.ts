@@ -60,19 +60,35 @@ export async function getSyncJobs(filters: {
 }): Promise<{ jobs: SyncJobDetail[]; total: number }> {
   const { status, accountId, userId, limit = 50, offset = 0 } = filters;
 
+  console.log('[getSyncJobs] Called with filters:', {
+    status,
+    accountId,
+    userId,
+    limit,
+    offset,
+  });
+
   const conditions = [];
   if (status) conditions.push(eq(syncJobs.status, status as any));
   if (accountId) conditions.push(eq(syncJobs.accountId, accountId));
   if (userId) conditions.push(eq(syncJobs.userId, userId));
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+  console.log(
+    '[getSyncJobs] Where clause:',
+    whereClause ? 'defined' : 'undefined',
+    'conditions count:',
+    conditions.length
+  );
 
   // Get jobs with account details
-  const jobs = await db
+  console.log('[getSyncJobs] Building jobs query...');
+
+  let jobsQueryBuilder = db
     .select({
       id: syncJobs.id,
       accountId: syncJobs.accountId,
-      accountEmail: emailAccounts.email,
+      accountEmail: emailAccounts.emailAddress,
       provider: emailAccounts.provider,
       userId: syncJobs.userId,
       jobType: syncJobs.jobType,
@@ -91,17 +107,37 @@ export async function getSyncJobs(filters: {
       updatedAt: syncJobs.updatedAt,
     })
     .from(syncJobs)
-    .leftJoin(emailAccounts, eq(syncJobs.accountId, emailAccounts.id))
-    .where(whereClause)
+    .leftJoin(emailAccounts, eq(syncJobs.accountId, emailAccounts.id));
+
+  // Add where clause if conditions exist
+  if (whereClause) {
+    jobsQueryBuilder = jobsQueryBuilder.where(whereClause);
+  }
+
+  // Add ordering and pagination
+  jobsQueryBuilder = jobsQueryBuilder
     .orderBy(desc(syncJobs.createdAt))
     .limit(limit)
     .offset(offset);
 
+  // Execute query
+  console.log('[getSyncJobs] Executing jobs query...');
+  const jobs = await jobsQueryBuilder;
+  console.log('[getSyncJobs] Got', jobs?.length || 0, 'jobs');
+
   // Get total count
-  const [{ count }] = await db
+  console.log('[getSyncJobs] Building count query...');
+  let countQueryBuilder = db
     .select({ count: sql<number>`count(*)::int` })
-    .from(syncJobs)
-    .where(whereClause);
+    .from(syncJobs);
+
+  if (whereClause) {
+    countQueryBuilder = countQueryBuilder.where(whereClause);
+  }
+
+  console.log('[getSyncJobs] Executing count query...');
+  const [{ count }] = await countQueryBuilder;
+  console.log('[getSyncJobs] Total count:', count);
 
   // Calculate durations
   const jobsWithDuration: SyncJobDetail[] = jobs.map((job) => {
@@ -174,17 +210,22 @@ export async function getSyncJobStats(filters: {
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
   // Get aggregate stats
-  const [stats] = await db
+  let statsQueryBuilder = db
     .select({
       totalJobs: sql<number>`count(*)::int`,
-      activeJobs: sql<number>`count(*) FILTER (WHERE status IN ('pending', 'running'))::int`,
+      activeJobs: sql<number>`count(*) FILTER (WHERE status IN ('pending', 'in_progress'))::int`,
       completedJobs: sql<number>`count(*) FILTER (WHERE status = 'completed')::int`,
       failedJobs: sql<number>`count(*) FILTER (WHERE status = 'failed')::int`,
       averageDuration: sql<number>`COALESCE(AVG(EXTRACT(EPOCH FROM (completed_at - started_at))), 0)::int`,
       messagesProcessed: sql<number>`COALESCE(SUM(total), 0)::int`,
     })
-    .from(syncJobs)
-    .where(whereClause);
+    .from(syncJobs);
+
+  if (whereClause) {
+    statsQueryBuilder = statsQueryBuilder.where(whereClause);
+  }
+
+  const [stats] = await statsQueryBuilder;
 
   const errorRate =
     stats.totalJobs > 0
@@ -212,7 +253,7 @@ export async function getSyncJobById(
     .select({
       id: syncJobs.id,
       accountId: syncJobs.accountId,
-      accountEmail: emailAccounts.email,
+      accountEmail: emailAccounts.emailAddress,
       provider: emailAccounts.provider,
       userId: syncJobs.userId,
       jobType: syncJobs.jobType,

@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   AlertTriangle,
   Mail,
+  Bell,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,6 +46,12 @@ const debugSection = [
 
 const systemSection = [
   { name: 'Email Accounts', href: '/admin/email-accounts', icon: Mail },
+  { name: 'Email Templates', href: '/admin/email-templates', icon: Mail },
+  {
+    name: 'Notification Templates',
+    href: '/admin/notification-templates',
+    icon: Bell,
+  },
   { name: 'Support Tickets', href: '/admin/support', icon: LifeBuoy },
   { name: 'Knowledge Base', href: '/admin/knowledge-base', icon: BookOpen },
   { name: 'Products', href: '/admin/products', icon: ShoppingBag },
@@ -83,10 +90,10 @@ export function AdminSidebar() {
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          Admin Panel
+          EaseMail Admin
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Manage your SaaS platform
+          Manage your email platform
         </p>
       </div>
 

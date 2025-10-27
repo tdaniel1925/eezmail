@@ -7,9 +7,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sandboxCompanies } from '@/db/schema';
-import { requireAdmin, logAdminAction, getClientIp, getUserAgent } from '@/lib/auth/admin-auth';
+import {
+  requireAdmin,
+  logAdminAction,
+  getClientIp,
+  getUserAgent,
+} from '@/lib/auth/admin-auth';
 import { desc, like, or, eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { sendAdminCompanyCreatedNotification } from '@/lib/notifications/sandbox-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -151,7 +157,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       userAgent: getUserAgent(req),
     });
 
-    console.log(`✅ [Admin] Created sandbox company: ${newCompany.name} (${newCompany.id})`);
+    console.log(
+      `✅ [Admin] Created sandbox company: ${newCompany.name} (${newCompany.id})`
+    );
+
+    // Send notification email to admin (non-blocking)
+    sendAdminCompanyCreatedNotification(newCompany.id, admin.id).catch(
+      (error) => {
+        console.error(
+          '❌ [Admin API] Error sending company created notification:',
+          error
+        );
+        // Don't fail the request if notification fails
+      }
+    );
 
     return NextResponse.json(
       {
@@ -185,4 +204,3 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 }
-

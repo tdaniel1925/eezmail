@@ -160,6 +160,43 @@ export const sandboxCompanyStatusEnum = pgEnum('sandbox_company_status', [
   'archived',
 ]);
 
+// Notification Template Enums
+export const notificationTemplateTypeEnum = pgEnum(
+  'notification_template_type',
+  [
+    'transactional', // Account actions, password resets
+    'marketing', // Newsletters, updates
+    'system', // System notifications, alerts
+    'sandbox', // Sandbox-specific notifications
+  ]
+);
+
+export const notificationAudienceEnum = pgEnum('notification_audience', [
+  'all', // All users
+  'sandbox', // Sandbox users only
+  'individual', // Individual tier
+  'team', // Team tier
+  'enterprise', // Enterprise tier
+  'admin', // Admin users
+]);
+
+export const notificationStatusEnum = pgEnum('notification_status', [
+  'draft',
+  'active',
+  'paused',
+  'archived',
+]);
+
+export const emailDeliveryStatusEnum = pgEnum('email_delivery_status', [
+  'pending',
+  'sent',
+  'delivered',
+  'failed',
+  'bounced',
+  'opened',
+  'clicked',
+]);
+
 // Email Rules Enums
 export const ruleConditionFieldEnum = pgEnum('rule_condition_field', [
   'from',
@@ -289,6 +326,223 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Notification Settings table
+export const notificationSettings = pgTable(
+  'notification_settings',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Notification category (e.g., 'sandbox_assignment', 'billing', 'security')
+    category: varchar('category', { length: 50 }).notNull(),
+
+    // Whether this notification type is enabled
+    enabled: boolean('enabled').default(true).notNull(),
+
+    // Delivery channels
+    emailEnabled: boolean('email_enabled').default(true).notNull(),
+    pushEnabled: boolean('push_enabled').default(false).notNull(),
+    smsEnabled: boolean('sms_enabled').default(false).notNull(),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    userIdIdx: index('notification_settings_user_id_idx').on(table.userId),
+    categoryIdx: index('notification_settings_category_idx').on(table.category),
+    userCategoryIdx: uniqueIndex('notification_settings_user_category_idx').on(
+      table.userId,
+      table.category
+    ),
+  })
+);
+
+// ============================================================================
+// NOTIFICATION TEMPLATES & EMAIL TRACKING TABLES
+// ============================================================================
+
+export const notificationTemplates = pgTable(
+  'notification_templates',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    // Template metadata
+    name: varchar('name', { length: 200 }).notNull(),
+    description: text('description'),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+
+    // Template type and audience
+    type: notificationTemplateTypeEnum('type').notNull(),
+    audience: notificationAudienceEnum('audience').notNull().default('all'),
+    status: notificationStatusEnum('status').notNull().default('draft'),
+
+    // Email content
+    subject: text('subject').notNull(),
+    htmlContent: text('html_content').notNull(), // Full HTML with inline CSS
+    textContent: text('text_content'), // Plain text fallback
+    preheader: text('preheader'), // Email preview text
+
+    // Template variables (JSON array of variable names)
+    variables: jsonb('variables').$type<string[]>().default([]),
+
+    // Images (JSON array of image references)
+    images: jsonb('images')
+      .$type<
+        Array<{
+          id: string;
+          url: string;
+          alt: string;
+          width?: number;
+          height?: number;
+        }>
+      >()
+      .default([]),
+
+    // Personalization rules (JSON)
+    personalizationRules: jsonb('personalization_rules')
+      .$type<{
+        individual?: Record<string, any>;
+        team?: Record<string, any>;
+        enterprise?: Record<string, any>;
+        sandbox?: Record<string, any>;
+      }>()
+      .default({}),
+
+    // Sender info
+    fromName: varchar('from_name', { length: 100 }),
+    fromEmail: varchar('from_email', { length: 255 }),
+    replyToEmail: varchar('reply_to_email', { length: 255 }),
+
+    // Categories and tags
+    category: varchar('category', { length: 100 }),
+    tags: jsonb('tags').$type<string[]>().default([]),
+
+    // Usage tracking
+    useCount: integer('use_count').default(0).notNull(),
+    lastUsedAt: timestamp('last_used_at'),
+
+    // Metadata
+    createdBy: uuid('created_by').references(() => users.id),
+    updatedBy: uuid('updated_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    typeIdx: index('notification_templates_type_idx').on(table.type),
+    audienceIdx: index('notification_templates_audience_idx').on(
+      table.audience
+    ),
+    statusIdx: index('notification_templates_status_idx').on(table.status),
+    categoryIdx: index('notification_templates_category_idx').on(
+      table.category
+    ),
+  })
+);
+
+export const notificationQueue = pgTable(
+  'notification_queue',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    // Template and recipient
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => notificationTemplates.id, { onDelete: 'cascade' }),
+    recipientId: uuid('recipient_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+
+    // Email details
+    recipientEmail: varchar('recipient_email', { length: 255 }).notNull(),
+    recipientName: varchar('recipient_name', { length: 255 }),
+    subject: text('subject').notNull(),
+    htmlContent: text('html_content').notNull(),
+    textContent: text('text_content'),
+
+    // Variable substitution data
+    variables: jsonb('variables').$type<Record<string, string>>().default({}),
+
+    // Delivery status
+    status: emailDeliveryStatusEnum('status').notNull().default('pending'),
+    deliveryAttempts: integer('delivery_attempts').default(0).notNull(),
+    lastAttemptAt: timestamp('last_attempt_at'),
+    sentAt: timestamp('sent_at'),
+    deliveredAt: timestamp('delivered_at'),
+    openedAt: timestamp('opened_at'),
+    clickedAt: timestamp('clicked_at'),
+
+    // External service tracking
+    externalId: varchar('external_id', { length: 255 }), // Resend email ID
+    externalStatus: text('external_status'),
+
+    // Error tracking
+    errorMessage: text('error_message'),
+    errorCode: varchar('error_code', { length: 50 }),
+
+    // Scheduling
+    scheduledFor: timestamp('scheduled_for'),
+
+    // Metadata
+    metadata: jsonb('metadata').$type<Record<string, any>>().default({}),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    templateIdIdx: index('notification_queue_template_id_idx').on(
+      table.templateId
+    ),
+    recipientIdIdx: index('notification_queue_recipient_id_idx').on(
+      table.recipientId
+    ),
+    statusIdx: index('notification_queue_status_idx').on(table.status),
+    scheduledForIdx: index('notification_queue_scheduled_for_idx').on(
+      table.scheduledFor
+    ),
+    sentAtIdx: index('notification_queue_sent_at_idx').on(table.sentAt),
+  })
+);
+
+export const templateImages = pgTable(
+  'template_images',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    // Image metadata
+    filename: varchar('filename', { length: 255 }).notNull(),
+    originalFilename: varchar('original_filename', { length: 255 }).notNull(),
+    mimeType: varchar('mime_type', { length: 100 }).notNull(),
+    size: integer('size').notNull(), // bytes
+    width: integer('width'),
+    height: integer('height'),
+
+    // Storage
+    url: text('url').notNull(), // Full URL to the image
+    storageKey: text('storage_key'), // Key if using cloud storage
+
+    // Alt text and metadata
+    altText: text('alt_text'),
+    description: text('description'),
+    tags: jsonb('tags').$type<string[]>().default([]),
+
+    // Usage tracking
+    useCount: integer('use_count').default(0).notNull(),
+    usedInTemplates: jsonb('used_in_templates').$type<string[]>().default([]),
+
+    // Upload info
+    uploadedBy: uuid('uploaded_by').references(() => users.id),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uploadedByIdx: index('template_images_uploaded_by_idx').on(
+      table.uploadedBy
+    ),
+    filenameIdx: index('template_images_filename_idx').on(table.filename),
+  })
+);
 
 // Subscriptions table
 export const subscriptions = pgTable('subscriptions', {
@@ -3839,6 +4093,14 @@ export type FolderMapping = typeof folderMappings.$inferSelect;
 export type NewFolderMapping = typeof folderMappings.$inferInsert;
 export type UnmappedFolder = typeof unmappedFolders.$inferSelect;
 export type NewUnmappedFolder = typeof unmappedFolders.$inferInsert;
+
+// Type exports for notification templates
+export type NotificationTemplate = typeof notificationTemplates.$inferSelect;
+export type NewNotificationTemplate = typeof notificationTemplates.$inferInsert;
+export type NotificationQueue = typeof notificationQueue.$inferSelect;
+export type NewNotificationQueue = typeof notificationQueue.$inferInsert;
+export type TemplateImage = typeof templateImages.$inferSelect;
+export type NewTemplateImage = typeof templateImages.$inferInsert;
 // =====================================================
 // ADMIN FEATURE TABLES (from migrations 014, 015, 016)
 // =====================================================

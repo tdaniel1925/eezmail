@@ -1,33 +1,64 @@
 /**
- * API Route: Admin - Sandbox Users
- * POST /api/admin/sandbox-companies/[id]/users - Create sandbox user
- * GET /api/admin/sandbox-companies/[id]/users - List company users
+ * API Route: Admin - Sandbox Company Users
+ * GET /api/admin/sandbox-companies/[id]/users - List users in company
+ * POST /api/admin/sandbox-companies/[id]/users - Assign user to company
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, sandboxCompanies } from '@/db/schema';
-import { requireAdmin, logAdminAction, getClientIp, getUserAgent } from '@/lib/auth/admin-auth';
-import { eq } from 'drizzle-orm';
+import { users } from '@/db/schema';
+import {
+  requireAdmin,
+  logAdminAction,
+  getClientIp,
+  getUserAgent,
+} from '@/lib/auth/admin-auth';
+import { eq, and, isNull } from 'drizzle-orm';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
+import {
+  sendUserWelcomeNotification,
+  sendAdminUserAssignedNotification,
+} from '@/lib/notifications/sandbox-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-// ============================================================================
-// VALIDATION SCHEMAS
-// ============================================================================
-
-const createSandboxUserSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  fullName: z.string().min(1, 'Full name is required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+const assignUserSchema = z.object({
+  userId: z.string().uuid(),
 });
 
-// ============================================================================
-// POST - Create Sandbox User
-// ============================================================================
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  try {
+    await requireAdmin();
+
+    const companyUsers = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        role: users.role,
+        createdAt: users.createdAt,
+      })
+      .from(users)
+      .where(eq(users.sandboxCompanyId, params.id));
+
+    return NextResponse.json({ users: companyUsers });
+  } catch (error) {
+    console.error('[Admin API] Error fetching company users:', error);
+
+    if (error instanceof Error && error.message.includes('Forbidden')) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+
+    return NextResponse.json(
+      { error: 'Failed to fetch company users' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(
   req: NextRequest,
@@ -35,96 +66,66 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const admin = await requireAdmin();
-    const companyId = params.id;
-
-    // Verify sandbox company exists
-    const company = await db.query.sandboxCompanies.findFirst({
-      where: eq(sandboxCompanies.id, companyId),
-    });
-
-    if (!company) {
-      return NextResponse.json(
-        { error: 'Sandbox company not found' },
-        { status: 404 }
-      );
-    }
-
-    // Parse and validate request body
     const body = await req.json();
-    const validatedData = createSandboxUserSchema.parse(body);
+    const { userId } = assignUserSchema.parse(body);
 
-    // Create user in Supabase Auth
-    const supabase = await createClient();
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: validatedData.email,
-      password: validatedData.password,
-      email_confirm: true, // Auto-confirm sandbox users
-      user_metadata: {
-        full_name: validatedData.fullName,
-        role: 'sandbox_user',
-        sandbox_company_id: companyId,
-      },
-    });
+    // Check if user exists and is not already assigned
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
-    if (authError || !authData.user) {
-      console.error('❌ [Admin] Error creating Supabase user:', authError);
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (user.sandboxCompanyId) {
       return NextResponse.json(
-        { error: authError?.message || 'Failed to create user account' },
-        { status: 500 }
+        { error: 'User is already assigned to a sandbox company' },
+        { status: 400 }
       );
     }
 
-    // Create user in database
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        id: authData.user.id,
-        email: validatedData.email,
-        fullName: validatedData.fullName,
-        role: 'sandbox_user',
-        sandboxCompanyId: companyId,
-        subscriptionTier: 'enterprise', // Give sandbox users enterprise tier
+    // Assign user to company
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        sandboxCompanyId: params.id,
+        updatedAt: new Date(),
       })
+      .where(eq(users.id, userId))
       .returning();
 
     // Log admin action
     await logAdminAction({
       adminId: admin.id,
-      action: 'create_sandbox_user',
+      action: 'assign_user_to_sandbox',
       targetType: 'user',
-      targetId: newUser.id,
+      targetId: userId,
       details: {
-        after: {
-          email: newUser.email,
-          role: newUser.role,
-          sandboxCompanyId: companyId,
-        },
-        metadata: {
-          companyName: company.name,
-        },
+        sandboxCompanyId: params.id,
+        userEmail: updatedUser.email,
       },
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
     });
 
-    console.log(`✅ [Admin] Created sandbox user: ${newUser.email} for company: ${company.name}`);
+    // Send notification emails (non-blocking)
+    Promise.all([
+      sendUserWelcomeNotification(userId, params.id),
+      sendAdminUserAssignedNotification(userId, params.id, admin.id),
+    ]).catch((error) => {
+      console.error('❌ [Admin API] Error sending notifications:', error);
+      // Don't fail the request if notifications fail
+    });
 
-    return NextResponse.json(
-      {
-        success: true,
-        user: {
-          id: newUser.id,
-          email: newUser.email,
-          fullName: newUser.fullName,
-          role: newUser.role,
-          sandboxCompanyId: newUser.sandboxCompanyId,
-        },
-        message: `Sandbox user "${newUser.email}" created successfully`,
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
+    });
   } catch (error) {
-    console.error('❌ [Admin API] Error creating sandbox user:', error);
+    console.error('[Admin API] Error assigning user:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -137,64 +138,9 @@ export async function POST(
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
 
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
-
     return NextResponse.json(
-      { error: 'Failed to create sandbox user' },
+      { error: 'Failed to assign user' },
       { status: 500 }
     );
   }
 }
-
-// ============================================================================
-// GET - List Sandbox Company Users
-// ============================================================================
-
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse> {
-  try {
-    await requireAdmin();
-    const companyId = params.id;
-
-    // Get company users
-    const companyUsers = await db.query.users.findMany({
-      where: eq(users.sandboxCompanyId, companyId),
-      columns: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        subscriptionTier: true,
-        smsSentCount: true,
-        aiTokensUsed: true,
-        createdAt: true,
-      },
-      orderBy: (users, { desc }) => [desc(users.createdAt)],
-    });
-
-    return NextResponse.json({
-      users: companyUsers,
-      count: companyUsers.length,
-    });
-  } catch (error) {
-    console.error('❌ [Admin API] Error listing sandbox users:', error);
-
-    if (error instanceof Error && error.message.includes('Forbidden')) {
-      return NextResponse.json({ error: error.message }, { status: 403 });
-    }
-
-    if (error instanceof Error && error.message.includes('Unauthorized')) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to list sandbox users' },
-      { status: 500 }
-    );
-  }
-}
-
