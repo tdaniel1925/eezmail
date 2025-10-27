@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
+import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
 export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('');
@@ -81,6 +82,21 @@ export default function LoginPage(): JSX.Element {
 
         {/* Login Card */}
         <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md p-8 shadow-lg">
+          {/* OAuth Buttons */}
+          <OAuthButtons mode="signin" />
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200 dark:border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white/60 dark:bg-white/5 px-4 text-gray-600 dark:text-white/60">
+                Or sign in with email
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
               <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
