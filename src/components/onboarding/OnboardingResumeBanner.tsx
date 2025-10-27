@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -103,8 +103,8 @@ export function OnboardingResumeBanner({
               <span className="sr-only">Dismiss</span>
             </Button>
             <Button asChild size="sm">
-              <Link href={getResumeUrl()} className="gap-1">
-                Continue Setup
+              <Link href={getResumeUrl()} className="flex items-center gap-1">
+                <span>Continue Setup</span>
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>

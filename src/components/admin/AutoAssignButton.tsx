@@ -113,8 +113,10 @@ export function AutoAssignButton({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <UserPlus className="h-4 w-4 mr-2" />
-          Auto-Assign {isBulk && `(${targetCount})`}
+          <span className="flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            <span>Auto-Assign {isBulk && `(${targetCount})`}</span>
+          </span>
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -271,9 +271,10 @@ export function KBArticlesTable({
                         <DropdownMenuItem asChild>
                           <Link
                             href={`/admin/knowledge-base/edit/${item.article.id}`}
+                            className="flex items-center"
                           >
                             <Edit className="h-4 w-4 mr-2" />
-                            Edit
+                            <span>Edit</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem
@@ -292,9 +293,10 @@ export function KBArticlesTable({
                             <Link
                               href={`/help/${item.article.slug}`}
                               target="_blank"
+                              className="flex items-center"
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
-                              View Public
+                              <span>View Public</span>
                             </Link>
                           </DropdownMenuItem>
                         )}

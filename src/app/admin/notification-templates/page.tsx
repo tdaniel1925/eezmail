@@ -355,9 +355,12 @@ export default function NotificationTemplatesPage() {
             <div className="text-center py-8">
               <p className="text-muted-foreground">No templates found</p>
               <Button className="mt-4" asChild>
-                <Link href="/admin/notification-templates/new">
+                <Link
+                  href="/admin/notification-templates/new"
+                  className="flex items-center"
+                >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Template
+                  <span>Create Your First Template</span>
                 </Link>
               </Button>
             </div>
