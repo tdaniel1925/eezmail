@@ -7,8 +7,14 @@
 
 import { getTwilioClientForUser } from './client-factory';
 import { validateE164PhoneNumber, formatPhoneNumber } from './client';
-import { checkRateLimit, logCommunicationUsage } from '@/lib/communication/rate-limiter';
-import { shouldBypassQuota, trackSandboxUsage } from '@/lib/sandbox/credentials';
+import {
+  checkRateLimit,
+  logCommunicationUsage,
+} from '@/lib/communication/rate-limiter';
+import {
+  shouldBypassQuota,
+  trackSandboxUsage,
+} from '@/lib/sandbox/credentials';
 
 export interface SendSMSResult {
   success: boolean;
@@ -54,7 +60,7 @@ export async function sendSMS(
 
     // Format and validate phone number
     const formattedTo = formatPhoneNumber(to);
-    
+
     console.log('📱 SMS Debug:', {
       originalPhone: to,
       formattedPhone: formattedTo,
@@ -70,14 +76,24 @@ export async function sendSMS(
     }
 
     // Get appropriate Twilio client (sandbox, custom, or system)
-    const { client, config, isCustom, isSandbox } = await getTwilioClientForUser(userId);
+    const { client, config, isCustom, isSandbox } =
+      await getTwilioClientForUser(userId);
 
-    // Build status callback URL for delivery tracking
-    const callbackUrl = process.env.NEXT_PUBLIC_APP_URL 
-      ? `${process.env.NEXT_PUBLIC_APP_URL}/api/twilio/status-callback`
-      : undefined;
+    // Build status callback URL for delivery tracking (only in production)
+    const isProduction = process.env.NODE_ENV === 'production';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const callbackUrl =
+      isProduction && appUrl && !appUrl.includes('localhost')
+        ? `${appUrl}/api/twilio/status-callback`
+        : undefined;
 
-    // Send SMS with status callback
+    console.log('📲 SMS Callback Config:', {
+      isProduction,
+      appUrl,
+      hasCallback: !!callbackUrl,
+    });
+
+    // Send SMS with status callback (if available)
     const result = await client.messages.create({
       body: message,
       from: config.phoneNumber,
@@ -110,7 +126,9 @@ export async function sendSMS(
       messagePreview: message ? message.substring(0, 50) : '',
     });
 
-    console.log(`✅ SMS sent to ${formattedTo}: ${result.sid}${isSandbox ? ' (sandbox)' : ''}`);
+    console.log(
+      `✅ SMS sent to ${formattedTo}: ${result.sid}${isSandbox ? ' (sandbox)' : ''}`
+    );
 
     return {
       success: true,
@@ -182,7 +200,12 @@ export async function sendBulkSMS(
 
   // Send to each recipient
   for (const recipient of recipients) {
-    const result = await sendSMS(userId, recipient.phone, message, recipient.contactId);
+    const result = await sendSMS(
+      userId,
+      recipient.phone,
+      message,
+      recipient.contactId
+    );
 
     results.push({
       phone: recipient.phone,
@@ -245,4 +268,3 @@ export async function getSMSStatus(
     };
   }
 }
-
