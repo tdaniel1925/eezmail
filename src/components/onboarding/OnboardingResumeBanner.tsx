@@ -102,8 +102,8 @@ export function OnboardingResumeBanner({
               <X className="h-4 w-4" />
               <span className="sr-only">Dismiss</span>
             </Button>
-            <Button asChild size="sm" className="gap-1">
-              <Link href={getResumeUrl()}>
+            <Button asChild size="sm">
+              <Link href={getResumeUrl()} className="gap-1">
                 Continue Setup
                 <ChevronRight className="h-4 w-4" />
               </Link>
