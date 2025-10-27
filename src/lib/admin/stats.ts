@@ -265,6 +265,56 @@ export async function getRecentSignups(): Promise<{
 }
 
 /**
+ * Get revenue breakdown by tier
+ */
+export async function getRevenueBytier(): Promise<{
+  success: boolean;
+  data?: Array<{
+    tier: string;
+    subscriptions: number;
+    revenue: number;
+  }>;
+  error?: string;
+}> {
+  try {
+    await requireAdmin();
+
+    const result = await db.execute(sql`
+      WITH plan_prices AS (
+        SELECT 'individual'::text as tier, 15 as price
+        UNION ALL SELECT 'team', 35
+        UNION ALL SELECT 'enterprise', 99
+      )
+      SELECT
+        s.tier::text,
+        COUNT(*) as subscriptions,
+        SUM(pp.price) as revenue
+      FROM subscriptions s
+      JOIN plan_prices pp ON pp.tier = s.tier::text
+      WHERE s.status IN ('active', 'trialing')
+      GROUP BY s.tier
+      ORDER BY revenue DESC
+    `);
+
+    return {
+      success: true,
+      data: (result.rows || []).map((row: any) => ({
+        tier: row.tier,
+        subscriptions: parseInt(row.subscriptions || '0'),
+        revenue: parseFloat(row.revenue || '0'),
+      })),
+    };
+  } catch (error) {
+    console.error('Error getting revenue by tier:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to get revenue by tier',
+    };
+  }
+}
+
+/**
  * Get usage stats by resource type
  */
 export async function getUsageStats(days: number = 30): Promise<{

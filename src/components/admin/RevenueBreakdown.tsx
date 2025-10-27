@@ -6,23 +6,34 @@ import { format } from 'date-fns';
 
 interface RevenueBreakdownProps {
   data: RevenueData[];
+  tierData: Array<{
+    tier: string;
+    subscriptions: number;
+    revenue: number;
+  }>;
 }
 
 const COLORS = ['#FF4C5A', '#10B981', '#3B82F6', '#F59E0B'];
 
-export function RevenueBreakdown({ data }: RevenueBreakdownProps) {
+const TIER_NAMES: Record<string, string> = {
+  individual: 'Individual',
+  team: 'Team',
+  enterprise: 'Enterprise',
+};
+
+export function RevenueBreakdown({ data, tierData }: RevenueBreakdownProps) {
   const chartData = data.map((item) => ({
     date: format(new Date(item.date), 'MMM dd'),
     revenue: item.revenue,
     subscriptions: item.subscriptions,
   }));
 
-  // Calculate tier breakdown (mock data for now - would come from API)
-  const tierData = [
-    { name: 'Starter', value: 45, revenue: 675 },
-    { name: 'Professional', value: 35, revenue: 1225 },
-    { name: 'Enterprise', value: 20, revenue: 2000 },
-  ];
+  // Format tier data for the pie chart
+  const formattedTierData = tierData.map((item) => ({
+    name: TIER_NAMES[item.tier] || item.tier,
+    value: item.subscriptions,
+    revenue: item.revenue,
+  }));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -57,25 +68,31 @@ export function RevenueBreakdown({ data }: RevenueBreakdownProps) {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Revenue by Tier
         </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={tierData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={(entry) => `${entry.name}: $${entry.revenue}`}
-              outerRadius={100}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {tierData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+        {formattedTierData.length === 0 ? (
+          <div className="flex items-center justify-center h-[300px] text-gray-500 dark:text-gray-400">
+            No tier data available yet
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={formattedTierData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={(entry) => `${entry.name}: $${entry.revenue}`}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {formattedTierData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );

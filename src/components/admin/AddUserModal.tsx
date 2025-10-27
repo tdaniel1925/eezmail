@@ -1,11 +1,23 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { UserPlus, Loader2, CheckCircle, XCircle } from 'lucide-react';
 
@@ -15,14 +27,21 @@ interface AddUserModalProps {
   onSuccess: () => void;
 }
 
-export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProps) {
+export function AddUserModal({
+  open,
+  onOpenChange,
+  onSuccess,
+}: AddUserModalProps) {
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     name: '',
     role: 'user',
-    tier: 'free',
+    tier: 'individual',
     sendInvite: true,
   });
 
@@ -44,23 +63,29 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
         throw new Error(data.error || 'Failed to create user');
       }
 
-      setMessage({ type: 'success', text: `User ${formData.email} created successfully!` });
-      
+      setMessage({
+        type: 'success',
+        text: `User ${formData.email} created successfully!`,
+      });
+
       // Reset form after a delay
-      setTimeout(() => {
-        setFormData({
-          email: '',
-          name: '',
-          role: 'user',
-          tier: 'free',
-          sendInvite: true,
-        });
-        setMessage(null);
-        onSuccess();
-        onOpenChange(false);
-      }, 2000);
+        setTimeout(() => {
+          setFormData({
+            email: '',
+            name: '',
+            role: 'user',
+            tier: 'individual',
+            sendInvite: true,
+          });
+          setMessage(null);
+          onSuccess();
+          onOpenChange(false);
+        }, 2000);
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Failed to create user' });
+      setMessage({
+        type: 'error',
+        text: error.message || 'Failed to create user',
+      });
     } finally {
       setLoading(false);
     }
@@ -110,7 +135,9 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
               type="email"
               placeholder="user@example.com"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
               disabled={loading}
             />
@@ -122,7 +149,9 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
               id="name"
               placeholder="John Doe"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               required
               disabled={loading}
             />
@@ -131,9 +160,11 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select 
-                value={formData.role} 
-                onValueChange={(value) => setFormData({ ...formData, role: value })}
+              <Select
+                value={formData.role}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, role: value })
+                }
                 disabled={loading}
               >
                 <SelectTrigger id="role">
@@ -149,18 +180,19 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
 
             <div className="space-y-2">
               <Label htmlFor="tier">Tier</Label>
-              <Select 
-                value={formData.tier} 
-                onValueChange={(value) => setFormData({ ...formData, tier: value })}
+              <Select
+                value={formData.tier}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, tier: value })
+                }
                 disabled={loading}
               >
                 <SelectTrigger id="tier">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
+                  <SelectItem value="individual">Individual</SelectItem>
+                  <SelectItem value="team">Team</SelectItem>
                   <SelectItem value="enterprise">Enterprise</SelectItem>
                 </SelectContent>
               </Select>
@@ -171,16 +203,26 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
             <Checkbox
               id="sendInvite"
               checked={formData.sendInvite}
-              onCheckedChange={(checked) => setFormData({ ...formData, sendInvite: checked as boolean })}
+              onCheckedChange={(checked) =>
+                setFormData({ ...formData, sendInvite: checked as boolean })
+              }
               disabled={loading}
             />
-            <Label htmlFor="sendInvite" className="text-sm font-normal cursor-pointer">
+            <Label
+              htmlFor="sendInvite"
+              className="text-sm font-normal cursor-pointer"
+            >
               Send invitation email
             </Label>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={loading}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
@@ -193,4 +235,3 @@ export function AddUserModal({ open, onOpenChange, onSuccess }: AddUserModalProp
     </Dialog>
   );
 }
-

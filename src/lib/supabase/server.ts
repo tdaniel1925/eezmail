@@ -7,14 +7,16 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
  * USE ONLY FOR ADMIN OPERATIONS - This client has full database access
  */
 export function createAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
-  
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const serviceRoleKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
+
   return createSupabaseClient(supabaseUrl, serviceRoleKey, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   });
 }
 
@@ -24,10 +26,13 @@ export async function createClient() {
   // Allow build without Supabase keys (will fail at runtime if actually used)
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-  
+
   // Strip BOM and non-ASCII characters from API key (Vercel env vars sometimes have invisible BOM)
-  const rawAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
-  const supabaseAnonKey = rawAnonKey.replace(/^\uFEFF/, '').replace(/[^\x00-\x7F]/g, '');
+  const rawAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
+  const supabaseAnonKey = rawAnonKey
+    .replace(/^\uFEFF/, '')
+    .replace(/[^\x00-\x7F]/g, '');
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -54,7 +59,7 @@ export async function createClient() {
         if (options.headers) {
           const cleanHeaders: Record<string, string> = {};
           const headers = options.headers as Record<string, string>;
-          
+
           Object.keys(headers).forEach((key) => {
             const value = headers[key];
             if (typeof value === 'string') {
@@ -64,10 +69,10 @@ export async function createClient() {
               cleanHeaders[key] = value;
             }
           });
-          
+
           options.headers = cleanHeaders;
         }
-        
+
         return fetch(url, options);
       },
     },

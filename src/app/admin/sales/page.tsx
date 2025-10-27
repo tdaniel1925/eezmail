@@ -1,4 +1,4 @@
-import { getDashboardStats, getRevenueData } from '@/lib/admin/stats';
+import { getDashboardStats, getRevenueData, getRevenueBytier } from '@/lib/admin/stats';
 import { SalesMetrics } from '@/components/admin/SalesMetrics';
 import { RevenueBreakdown } from '@/components/admin/RevenueBreakdown';
 import { TopCustomers } from '@/components/admin/TopCustomers';
@@ -7,9 +7,10 @@ import { TopCustomers } from '@/components/admin/TopCustomers';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminSalesPage() {
-  const [statsResult, revenueResult] = await Promise.all([
+  const [statsResult, revenueResult, tierResult] = await Promise.all([
     getDashboardStats(),
     getRevenueData(),
+    getRevenueBytier(),
   ]);
 
   return (
@@ -30,8 +31,11 @@ export default async function AdminSalesPage() {
       )}
 
       {/* Revenue Breakdown */}
-      {revenueResult.success && revenueResult.data && (
-        <RevenueBreakdown data={revenueResult.data} />
+      {revenueResult.success && revenueResult.data && tierResult.success && tierResult.data && (
+        <RevenueBreakdown 
+          data={revenueResult.data}
+          tierData={tierResult.data}
+        />
       )}
 
       {/* Top Customers */}
