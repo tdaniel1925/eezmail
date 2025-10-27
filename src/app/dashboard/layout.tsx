@@ -129,13 +129,13 @@ export default async function DashboardLayout({
 
               {/* Column 2: Main Content Area */}
               <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
-                {/* Onboarding Resume Banner - Disabled (onboarding completed) */}
-                {/* {onboardingProgress && (
+                {/* Onboarding Resume Banner */}
+                {onboardingProgress && (
                   <OnboardingResumeBanner
                     progress={onboardingProgress}
                     userId={user.id}
                   />
-                )} */}
+                )}
 
                 {children}
               </main>
