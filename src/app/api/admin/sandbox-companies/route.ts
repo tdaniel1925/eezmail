@@ -27,11 +27,6 @@ export const dynamic = 'force-dynamic';
 const createSandboxCompanySchema = z.object({
   name: z.string().min(1, 'Company name is required'),
   description: z.string().optional(),
-  twilioAccountSid: z.string().optional(),
-  twilioAuthToken: z.string().optional(),
-  twilioPhoneNumber: z.string().optional(),
-  openaiApiKey: z.string().optional(),
-  openaiOrganizationId: z.string().optional(),
   contactEmail: z.string().email().optional().or(z.literal('')),
   contactName: z.string().optional(),
   contactPhone: z.string().optional(),
@@ -122,16 +117,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const validatedData = createSandboxCompanySchema.parse(body);
 
     // Create sandbox company
+    // Note: Twilio and OpenAI credentials will use system .env.local values automatically
     const [newCompany] = await db
       .insert(sandboxCompanies)
       .values({
         name: validatedData.name,
         description: validatedData.description,
-        twilioAccountSid: validatedData.twilioAccountSid,
-        twilioAuthToken: validatedData.twilioAuthToken,
-        twilioPhoneNumber: validatedData.twilioPhoneNumber,
-        openaiApiKey: validatedData.openaiApiKey,
-        openaiOrganizationId: validatedData.openaiOrganizationId,
         contactEmail: validatedData.contactEmail,
         contactName: validatedData.contactName,
         contactPhone: validatedData.contactPhone,
