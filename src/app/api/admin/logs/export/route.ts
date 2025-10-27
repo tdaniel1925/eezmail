@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
 import { adminLogs } from '@/db/schema';
-import { desc, and, eq, gte, sql, like } from 'drizzle-orm';
+import { desc, and, eq, gte, sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -62,9 +62,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     if (query) {
-      conditions.push(
-        sql`${adminLogs.message} ILIKE ${'%' + query + '%'}`
-      );
+      conditions.push(sql`${adminLogs.message} ILIKE ${'%' + query + '%'}`);
     }
 
     // Fetch logs
@@ -73,25 +71,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .from(adminLogs)
       .where(and(...conditions))
       .orderBy(desc(adminLogs.createdAt))
-      .limit(500);
+      .limit(10000); // Larger limit for export
 
-    return NextResponse.json({
-      success: true,
-      logs: logs.map((log) => ({
-        id: log.id,
-        timestamp: log.createdAt,
-        level: log.level,
-        category: log.category,
-        message: log.message,
-        userId: log.userId,
-        metadata: log.metadata,
-      })),
+    // Convert to JSON
+    const jsonData = JSON.stringify(logs, null, 2);
+
+    // Return as downloadable file
+    return new NextResponse(jsonData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Disposition': `attachment; filename="logs-${new Date().toISOString()}.json"`,
+      },
     });
   } catch (error) {
-    console.error('Error searching logs:', error);
+    console.error('Error exporting logs:', error);
     return NextResponse.json(
-      { error: 'Failed to search logs' },
+      { error: 'Failed to export logs' },
       { status: 500 }
     );
   }
 }
+

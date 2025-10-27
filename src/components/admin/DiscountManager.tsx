@@ -27,41 +27,67 @@ export function DiscountManager({ initialCodes }: DiscountManagerProps) {
   const [codes, setCodes] = useState(initialCodes);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'deactivate' | 'delete';
+    id: string;
+    code?: string;
+  } | null>(null);
+  const [actionResult, setActionResult] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   const refreshCodes = () => {
     window.location.reload();
   };
 
   const handleDeactivate = async (id: string) => {
-    if (!confirm('Deactivate this discount code?')) return;
-
     try {
       const result = await deactivateDiscountCode(id);
       if (result.success) {
-        toast.success('Discount code deactivated');
-        refreshCodes();
+        setActionResult({
+          type: 'success',
+          message: 'Discount code deactivated successfully',
+        });
+        setTimeout(() => refreshCodes(), 1500);
       } else {
-        toast.error(result.error || 'Failed to deactivate');
+        setActionResult({
+          type: 'error',
+          message: result.error || 'Failed to deactivate discount code',
+        });
       }
     } catch (error) {
-      toast.error('An error occurred');
+      setActionResult({
+        type: 'error',
+        message: 'An error occurred while deactivating',
+      });
+    } finally {
+      setConfirmAction(null);
     }
   };
 
-  const handleDelete = async (id: string, code: string) => {
-    if (!confirm(`Delete discount code "${code}"? This cannot be undone.`))
-      return;
-
+  const handleDelete = async (id: string) => {
     try {
       const result = await deleteDiscountCode(id);
       if (result.success) {
-        toast.success('Discount code deleted');
-        refreshCodes();
+        setActionResult({
+          type: 'success',
+          message: 'Discount code deleted successfully',
+        });
+        setTimeout(() => refreshCodes(), 1500);
       } else {
-        toast.error(result.error || 'Failed to delete');
+        setActionResult({
+          type: 'error',
+          message: result.error || 'Failed to delete discount code',
+        });
       }
     } catch (error) {
-      toast.error('An error occurred');
+      setActionResult({
+        type: 'error',
+        message: 'An error occurred while deleting',
+      });
+    } finally {
+      setConfirmAction(null);
     }
   };
 

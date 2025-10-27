@@ -122,14 +122,38 @@ async function SyncJobsContent(): Promise<JSX.Element> {
 export default async function SyncTracePage(): Promise<JSX.Element> {
   return (
     <div className="container mx-auto py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Sync Job Tracer</h1>
-        <p className="text-muted-foreground">
-          Track and debug email synchronization jobs across all providers
-        </p>
+      {/* Page Header with Explanation */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
+          Sync Job Tracer
+        </h1>
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-sm text-blue-900 dark:text-blue-200 mb-3">
+            <strong>📊 What is this page for?</strong>
+          </p>
+          <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
+            This page monitors all email synchronization jobs running in the background across Gmail, Microsoft, and IMAP accounts. 
+            Each time the system fetches new emails, it creates a "sync job" tracked here.
+          </p>
+          <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
+            <li><strong>Active:</strong> Jobs currently running and fetching emails</li>
+            <li><strong>Completed:</strong> Successfully finished sync operations</li>
+            <li><strong>Failed:</strong> Jobs that encountered errors (check details for troubleshooting)</li>
+            <li><strong>Progress:</strong> Real-time view of how many emails have been processed</li>
+            <li><strong>Duration:</strong> How long each sync operation takes (helps identify slow accounts)</li>
+          </ul>
+          <p className="text-sm text-blue-800 dark:text-blue-300 mt-3">
+            💡 <strong>Use this to:</strong> Debug sync issues, monitor performance, identify stuck jobs, and track which accounts sync most frequently.
+          </p>
+        </div>
       </div>
 
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading sync jobs...</span>
+        </div>
+      }>
         <SyncJobsContent />
       </Suspense>
     </div>

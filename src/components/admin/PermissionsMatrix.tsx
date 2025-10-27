@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Check, X, Loader2, Save } from 'lucide-react';
+import { useState, useEffect, Fragment } from 'react';
+import { Check, X, Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Permission {
@@ -31,7 +31,10 @@ export function PermissionsMatrix() {
   const [rolePermissions, setRolePermissions] = useState<
     Record<string, Set<string>>
   >({});
-  const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning';
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     loadPermissions();
@@ -40,7 +43,7 @@ export function PermissionsMatrix() {
   const loadPermissions = async () => {
     try {
       setLoading(true);
-      setError(null);
+      setNotification(null);
 
       // Load all permissions
       const permsRes = await fetch('/api/admin/permissions');
@@ -65,9 +68,19 @@ export function PermissionsMatrix() {
       );
 
       setRolePermissions(rolePermsMap);
+      
+      if (permsData.permissions.length === 0) {
+        setNotification({
+          type: 'warning',
+          message: 'No permissions found. Please run database migrations to seed permissions.',
+        });
+      }
     } catch (err) {
       console.error('Error loading permissions:', err);
-      setError('Failed to load permissions');
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to load permissions',
+      });
     } finally {
       setLoading(false);
     }
@@ -76,11 +89,13 @@ export function PermissionsMatrix() {
   const togglePermission = async (role: string, permissionId: string) => {
     try {
       setSaving(role);
+      setNotification(null);
 
       const currentPerms = rolePermissions[role] || new Set();
       const newPerms = new Set(currentPerms);
+      const isRemoving = newPerms.has(permissionId);
 
-      if (newPerms.has(permissionId)) {
+      if (isRemoving) {
         newPerms.delete(permissionId);
       } else {
         newPerms.add(permissionId);
@@ -95,16 +110,33 @@ export function PermissionsMatrix() {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to update permissions');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to update permissions');
+      }
 
       // Update local state
       setRolePermissions({
         ...rolePermissions,
         [role]: newPerms,
       });
+
+      // Show success notification
+      const permission = permissions.find((p) => p.id === permissionId);
+      const roleName = ROLES.find((r) => r.value === role)?.label || role;
+      setNotification({
+        type: 'success',
+        message: `${isRemoving ? 'Revoked' : 'Granted'} "${permission?.name || 'permission'}" for ${roleName}`,
+      });
+
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
       console.error('Error updating permission:', err);
-      setError('Failed to update permission');
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to update permission',
+      });
     } finally {
       setSaving(null);
     }
@@ -133,9 +165,43 @@ export function PermissionsMatrix() {
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+      {/* Inline Notification */}
+      {notification && (
+        <div
+          className={`rounded-lg p-4 flex items-start gap-3 ${
+            notification.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+              : notification.type === 'warning'
+              ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+              : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
+          }`}
+        >
+          {notification.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+          ) : notification.type === 'warning' ? (
+            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1">
+            <p
+              className={`text-sm font-medium ${
+                notification.type === 'success'
+                  ? 'text-green-800 dark:text-green-200'
+                  : notification.type === 'warning'
+                  ? 'text-yellow-800 dark:text-yellow-200'
+                  : 'text-red-800 dark:text-red-200'
+              }`}
+            >
+              {notification.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setNotification(null)}
+            className="text-xs underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -158,7 +224,7 @@ export function PermissionsMatrix() {
           </thead>
           <tbody>
             {Object.entries(groupedPermissions).map(([category, perms]) => (
-              <React.Fragment key={category}>
+              <Fragment key={category}>
                 {/* Category Header */}
                 <tr className="bg-gray-50 dark:bg-gray-800/50">
                   <td
@@ -218,7 +284,7 @@ export function PermissionsMatrix() {
                     ))}
                   </tr>
                 ))}
-              </React.Fragment>
+              </Fragment>
             ))}
           </tbody>
         </table>
