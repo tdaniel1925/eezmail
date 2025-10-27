@@ -5,6 +5,7 @@
 **Error**: `getaddrinfo ENOTFOUND db.hfduyqvdajtvnsldqmro.supabase.co`
 
 This means:
+
 - Vercel CAN'T reach your Supabase database
 - The `DATABASE_URL` environment variable is set but incorrect
 - OR the Supabase project `hfduyqvdajtvnsldqmro` doesn't exist/was deleted
@@ -23,6 +24,7 @@ This means:
 6. **Note**: Replace `[YOUR-PASSWORD]` with your actual database password
 
 Example format:
+
 ```
 postgresql://postgres.hfduyqvdajtvnsldqmro:[YOUR-PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres
 ```
@@ -30,6 +32,7 @@ postgresql://postgres.hfduyqvdajtvnsldqmro:[YOUR-PASSWORD]@aws-0-us-west-1.poole
 ### Step 2: Get Your Supabase API Credentials
 
 While in Supabase Dashboard:
+
 1. **Go to** "Settings" → "API"
 2. **Copy** the following:
    - **Project URL**: `https://hfduyqvdajtvnsldqmro.supabase.co`
@@ -115,16 +118,21 @@ After deployment, you can verify env vars are working:
 ## 🚨 Common Issues
 
 ### Issue: "relation does not exist" errors
+
 **Solution**: Run migrations in Supabase SQL Editor:
+
 - `drizzle/0010_auth_overhaul.sql`
 - `drizzle/0012_onboarding_resume.sql`
 - `drizzle/0013_simplify_categories.sql`
 
 ### Issue: "column does not exist" errors
+
 **Solution**: Same as above - migrations not run
 
 ### Issue: Still can't connect after updating
+
 **Checklist**:
+
 - ✅ Password in `DATABASE_URL` is correct (no special chars that need encoding)
 - ✅ Using the **pooler** connection string (port 6543), not direct (port 5432)
 - ✅ Environment variables are set for **Production** environment
@@ -134,19 +142,20 @@ After deployment, you can verify env vars are working:
 
 ## 📝 Quick Reference: Where to Find What
 
-| What You Need | Where to Find It |
-|--------------|------------------|
-| Database Connection String | Supabase → Settings → Database → Connection string |
-| Project URL | Supabase → Settings → API → Configuration |
-| Anon Key | Supabase → Settings → API → Project API keys |
-| Service Role Key | Supabase → Settings → API → Project API keys |
-| Vercel Env Vars | Vercel → Your Project → Settings → Environment Variables |
+| What You Need              | Where to Find It                                         |
+| -------------------------- | -------------------------------------------------------- |
+| Database Connection String | Supabase → Settings → Database → Connection string       |
+| Project URL                | Supabase → Settings → API → Configuration                |
+| Anon Key                   | Supabase → Settings → API → Project API keys             |
+| Service Role Key           | Supabase → Settings → API → Project API keys             |
+| Vercel Env Vars            | Vercel → Your Project → Settings → Environment Variables |
 
 ---
 
 ## ✅ Test Checklist
 
 After setup:
+
 - [ ] Can access the login page
 - [ ] Can sign up with email/password
 - [ ] Can sign in with Google OAuth
@@ -158,4 +167,3 @@ After setup:
 ---
 
 **Need Help?** Check the Vercel deployment logs for specific error messages.
-
