@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin/auth';
 import { getAuditLogs, getAuditStatistics } from '@/lib/audit/logger';
 import { AuditLogsTable } from '@/components/admin/AuditLogsTable';
 import { AuditLogsFilters } from '@/components/admin/AuditLogsFilters';
@@ -37,14 +38,9 @@ export default async function AuditLogsPage({
     redirect('/login');
   }
 
-  // Check if user is super admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin') {
+  // Check if user is admin using proper auth helper
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
     redirect('/dashboard');
   }
 

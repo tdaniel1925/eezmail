@@ -102,12 +102,12 @@ export function OnboardingResumeBanner({
             >
               <X className="h-4 w-4" />
             </Button>
-            <Link href={getResumeUrl()}>
-              <Button size="sm" className="flex items-center gap-1">
+            <Button size="sm" className="flex items-center gap-1" asChild>
+              <Link href={getResumeUrl()}>
                 <span>Continue Setup</span>
                 <ChevronRight className="h-4 w-4" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

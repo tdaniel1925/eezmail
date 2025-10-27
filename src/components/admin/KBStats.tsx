@@ -54,18 +54,18 @@ function StatCard({
   color: 'blue' | 'green' | 'yellow' | 'purple';
 }) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    purple: 'bg-purple-50 text-purple-600',
+    blue: 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+    green: 'bg-green-500/10 text-green-400 border border-green-500/20',
+    yellow: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20',
+    purple: 'bg-purple-500/10 text-purple-400 border border-purple-500/20',
   };
 
   return (
-    <div className="rounded-lg border bg-white p-6 shadow-sm">
+    <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="mt-2 text-3xl font-bold">{value}</p>
+          <p className="text-sm text-gray-400">{label}</p>
+          <p className="mt-2 text-3xl font-bold text-white">{value}</p>
         </div>
         <div className={`rounded-lg p-3 ${colorClasses[color]}`}>
           <Icon className="h-6 w-6" />

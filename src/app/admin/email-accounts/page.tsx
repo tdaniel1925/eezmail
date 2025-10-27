@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
 import { emailAccounts, users } from '@/db/schema';
 import { desc, sql, eq } from 'drizzle-orm';
@@ -24,14 +25,9 @@ export default async function EmailAccountsPage() {
     redirect('/login');
   }
 
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
+  // Check if user is admin using proper auth helper
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
     redirect('/dashboard');
   }
 

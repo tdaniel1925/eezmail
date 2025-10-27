@@ -3,13 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, GripVertical, Check, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  createCustomFolder,
-  deleteCustomFolder,
-  reorderCustomFolders,
-  getCustomFolders,
-} from '@/lib/folders/actions';
-import { toast } from '@/lib/toast';
+import { InlineNotification } from '@/components/ui/inline-notification';
 import type { CustomFolder } from '@/db/schema';
 
 interface FolderSettingsProps {
@@ -55,6 +49,11 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
   const [newFolderColor, setNewFolderColor] = useState('gray');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [initialFolders, setInitialFolders] = useState<CustomFolder[]>([]);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
 
   // Load custom folders on mount
   useEffect(() => {
@@ -63,16 +62,38 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
 
   const loadFolders = async () => {
     setIsLoading(true);
+    setNotification(null);
     try {
-      const result = await getCustomFolders();
-      if (result.success && result.folders) {
-        setFolders(result.folders);
+      const response = await fetch('/api/folders/custom');
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          setNotification({
+            type: 'error',
+            message: 'Session expired. Please log in again.',
+          });
+          return;
+        }
+        throw new Error('Failed to load folders');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setFolders(result.folders || []);
+        setInitialFolders(result.folders || []);
       } else {
-        toast.error('Failed to load custom folders');
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to load custom folders',
+        });
       }
     } catch (error) {
       console.error('Error loading folders:', error);
-      toast.error('Failed to load custom folders');
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to load custom folders',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,27 +101,49 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
 
   const handleCreate = async (): Promise<void> => {
     if (!newFolderName.trim()) {
-      toast.error('Please enter a folder name');
+      setNotification({
+        type: 'error',
+        message: 'Please enter a folder name',
+      });
       return;
     }
 
-    const result = await createCustomFolder({
-      userId,
-      name: newFolderName.trim(),
-      icon: newFolderIcon,
-      color: newFolderColor,
-    });
+    setNotification(null);
+    try {
+      const response = await fetch('/api/folders/custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newFolderName.trim(),
+          icon: newFolderIcon,
+          color: newFolderColor,
+        }),
+      });
 
-    if (result.success && result.folderId) {
-      toast.success('Folder created successfully');
-      setIsCreating(false);
-      setNewFolderName('');
-      setNewFolderIcon('📁');
-      setNewFolderColor('gray');
-      // Reload folders using proper React state management
-      await loadFolders();
-    } else {
-      toast.error(result.error || 'Failed to create folder');
+      const result = await response.json();
+
+      if (result.success) {
+        setNotification({
+          type: 'success',
+          message: 'Folder created successfully',
+        });
+        setIsCreating(false);
+        setNewFolderName('');
+        setNewFolderIcon('📁');
+        setNewFolderColor('gray');
+        await loadFolders();
+      } else {
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to create folder',
+        });
+      }
+    } catch (error) {
+      console.error('Error creating folder:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to create folder',
+      });
     }
   };
 
@@ -113,19 +156,38 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
       return;
     }
 
-    const result = await deleteCustomFolder(folderId, userId);
+    setNotification(null);
+    try {
+      const response = await fetch(`/api/folders/custom/${folderId}`, {
+        method: 'DELETE',
+      });
 
-    if (result.success) {
-      toast.success('Folder deleted successfully');
-      // Reload folders using proper React state management
-      await loadFolders();
-    } else {
-      toast.error(result.error || 'Failed to delete folder');
+      const result = await response.json();
+
+      if (result.success) {
+        setNotification({
+          type: 'success',
+          message: 'Folder deleted successfully',
+        });
+        await loadFolders();
+      } else {
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to delete folder',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to delete folder',
+      });
     }
   };
 
   const handleDragStart = (index: number): void => {
     setDraggedIndex(index);
+    setInitialFolders([...folders]); // Store initial state for potential revert
   };
 
   const handleDragOver = (e: React.DragEvent, index: number): void => {
@@ -144,13 +206,38 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
   const handleDragEnd = async (): Promise<void> => {
     if (draggedIndex === null) return;
 
+    setNotification(null);
     const folderIds = folders.map((f) => f.id);
-    const result = await reorderCustomFolders(userId, folderIds);
 
-    if (result.success) {
-      toast.success('Folders reordered successfully');
-    } else {
-      toast.error(result.error || 'Failed to reorder folders');
+    try {
+      const response = await fetch('/api/folders/custom', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ folderIds }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setNotification({
+          type: 'success',
+          message: 'Folders reordered successfully',
+        });
+        setInitialFolders([...folders]); // Update initial state
+      } else {
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to reorder folders',
+        });
+        // Revert to original order
+        setFolders(initialFolders);
+      }
+    } catch (error) {
+      console.error('Error reordering folders:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to reorder folders',
+      });
       // Revert to original order
       setFolders(initialFolders);
     }
@@ -160,6 +247,15 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
 
   return (
     <div className="space-y-6">
+      {/* Inline Notification */}
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -274,7 +370,7 @@ export function FolderSettings({ userId }: FolderSettingsProps): JSX.Element {
                   setNewFolderIcon('📁');
                   setNewFolderColor('gray');
                 }}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
               >
                 <X size={16} />
                 Cancel

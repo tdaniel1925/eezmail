@@ -20,10 +20,10 @@ import {
   Database,
   LifeBuoy,
   BookOpen,
-  ShoppingBag,
   AlertTriangle,
   Mail,
   Bell,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,9 +53,9 @@ const systemSection = [
     href: '/admin/notification-templates',
     icon: Bell,
   },
+  { name: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { name: 'Support Tickets', href: '/admin/support', icon: LifeBuoy },
   { name: 'Knowledge Base', href: '/admin/knowledge-base', icon: BookOpen },
-  { name: 'Products', href: '/admin/products', icon: ShoppingBag },
   { name: 'Monitoring', href: '/admin/monitoring', icon: AlertTriangle },
   { name: 'Analytics', href: '/admin/analytics/advanced', icon: TrendingUp },
   { name: 'Privacy (GDPR)', href: '/admin/privacy', icon: Shield },

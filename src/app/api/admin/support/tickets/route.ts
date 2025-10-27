@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
-import { supportTickets } from '@/db/schema';
-import { desc } from 'drizzle-orm';
+import { supportTickets, users } from '@/db/schema';
+import { desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 const createTicketSchema = z.object({
@@ -28,14 +28,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Check admin role using Drizzle
+    const [dbUser] = await db
+      .select({
+        role: users.role,
+        roleHierarchy: users.roleHierarchy,
+      })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
 
-    if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
+    const isAdminUser =
+      dbUser?.role === 'super_admin' ||
+      dbUser?.role === 'admin' ||
+      dbUser?.roleHierarchy === 'system_super_admin' ||
+      dbUser?.roleHierarchy === 'system_admin';
+
+    if (!isAdminUser) {
+      console.log('[Support API POST] User is not admin, denying access');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -96,24 +106,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check admin role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Get user from database using Drizzle
+    const [dbUser] = await db
+      .select({
+        role: users.role,
+        roleHierarchy: users.roleHierarchy,
+      })
+      .from(users)
+      .where(eq(users.id, user.id))
+      .limit(1);
 
-    if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
+    console.log('[Support API] User role check:', {
+      email: user.email,
+      role: dbUser?.role,
+      role_hierarchy: dbUser?.roleHierarchy,
+    });
+
+    const isAdminUser =
+      dbUser?.role === 'super_admin' ||
+      dbUser?.role === 'admin' ||
+      dbUser?.roleHierarchy === 'system_super_admin' ||
+      dbUser?.roleHierarchy === 'system_admin';
+
+    if (!isAdminUser) {
+      console.log('[Support API] User is not admin, denying access');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const tickets = await db
-      .select()
+    // Get tickets with assignee info using LEFT JOIN
+    const ticketsWithAssignees = await db
+      .select({
+        ticket: supportTickets,
+        assignee: users,
+      })
       .from(supportTickets)
+      .leftJoin(users, eq(supportTickets.assignedTo, users.id))
       .orderBy(desc(supportTickets.createdAt))
       .limit(100);
 
-    return NextResponse.json(tickets);
+    // Calculate stats from all tickets
+    const allTickets = ticketsWithAssignees.map((t) => t.ticket);
+    const stats = {
+      total: allTickets.length,
+      open: allTickets.filter((t) => t.status === 'open' || t.status === 'new')
+        .length,
+      pending: allTickets.filter((t) => t.status === 'pending').length,
+      urgent: allTickets.filter((t) => t.priority === 'urgent').length,
+      breachingSLA: allTickets.filter(
+        (t) =>
+          t.slaResponseBy &&
+          new Date(t.slaResponseBy) < new Date() &&
+          !t.firstResponseAt
+      ).length,
+    };
+
+    return NextResponse.json({ tickets: ticketsWithAssignees, stats });
   } catch (error) {
     console.error('[Support API] Error:', error);
     return NextResponse.json(

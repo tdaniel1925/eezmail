@@ -57,29 +57,31 @@ export function SyncJobsList({
     setLoading(true);
     setError(null);
     setSuccess(null);
-    
+
     try {
       const params = new URLSearchParams();
       if (status !== 'all') params.append('status', status);
       if (search) params.append('search', search);
 
       const response = await fetch(`/api/admin/sync-trace?${params}`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch jobs: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
 
       setJobs(data.jobs || []);
       setTotal(data.total || 0);
       setSuccess('Sync jobs refreshed successfully');
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
       console.error('Failed to fetch jobs:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load sync jobs');
+      setError(
+        error instanceof Error ? error.message : 'Failed to load sync jobs'
+      );
     } finally {
       setLoading(false);
     }
@@ -131,7 +133,7 @@ export function SyncJobsList({
           </p>
         </div>
       )}
-      
+
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
           <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
@@ -148,7 +150,7 @@ export function SyncJobsList({
           </div>
         </div>
       )}
-      
+
       {/* Filters */}
       <div className="flex gap-4">
         <div className="flex-1">
@@ -249,11 +251,11 @@ export function SyncJobsList({
                     {new Date(job.createdAt).toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/admin/debug/sync-trace/${job.id}`}>
-                      <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link href={`/admin/debug/sync-trace/${job.id}`}>
                         <Eye className="h-4 w-4" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))

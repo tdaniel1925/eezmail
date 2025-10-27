@@ -5,8 +5,9 @@
 
 import { Suspense } from 'react';
 import { redirect, notFound } from 'next/navigation';
+import { isAdmin } from '@/lib/admin/auth';
 import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { supportTickets, ticketComments, users } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { TicketHeader } from '@/components/admin/TicketHeader';
@@ -21,6 +22,14 @@ interface TicketDetailPageProps {
 export default async function TicketDetailPage({
   params,
 }: TicketDetailPageProps) {
+  // Check admin access first
+  const hasAdminAccess = await isAdmin();
+
+  if (!hasAdminAccess) {
+    redirect('/dashboard');
+  }
+
+  // Get current user
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,17 +37,6 @@ export default async function TicketDetailPage({
 
   if (!user) {
     redirect('/login');
-  }
-
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
-    redirect('/dashboard');
   }
 
   const { id } = await params;
@@ -79,6 +77,7 @@ export default async function TicketDetailPage({
       .from(users)
       .where(eq(users.id, ticket.assignedTo))
       .limit(1);
+
     assignee = assigneeData[0] || null;
   }
 

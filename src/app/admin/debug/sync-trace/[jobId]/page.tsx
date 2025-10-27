@@ -166,12 +166,12 @@ export default async function SyncJobDetailPage({
   return (
     <div className="container mx-auto py-8">
       <div className="mb-6">
-        <Link href="/admin/debug/sync-trace">
-          <Button variant="ghost" size="sm" className="mb-4">
+        <Button variant="ghost" size="sm" className="mb-4" asChild>
+          <Link href="/admin/debug/sync-trace">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Sync Jobs
-          </Button>
-        </Link>
+            <span>Back to Sync Jobs</span>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">Sync Job Details</h1>
         <p className="text-muted-foreground">Job ID: {jobId}</p>
       </div>

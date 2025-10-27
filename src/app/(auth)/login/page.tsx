@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { loginAction } from '@/app/actions/auth';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, Sparkles, ArrowRight } from 'lucide-react';
+import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
 import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
@@ -14,7 +13,6 @@ export default function LoginPage(): JSX.Element {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

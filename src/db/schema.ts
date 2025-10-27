@@ -4332,6 +4332,48 @@ export const userSettings = pgTable('user_settings', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// ============================================================================
+// GDPR & DATA PRIVACY
+// ============================================================================
+
+/**
+ * GDPR Data Export Requests Table
+ * Tracks user requests to export their personal data
+ */
+export const dataExportRequests = pgTable('data_export_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  userEmail: text('user_email').notNull(),
+  status: text('status').notNull().default('pending'), // pending, processing, completed, failed
+  requestedAt: timestamp('requested_at').notNull().defaultNow(),
+  completedAt: timestamp('completed_at'),
+  downloadUrl: text('download_url'),
+  errorMessage: text('error_message'),
+  expiresAt: timestamp('expires_at'), // Download link expires after 7 days
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+/**
+ * GDPR Data Deletion Requests Table
+ * Tracks user requests to be forgotten (right to erasure)
+ */
+export const dataDeletionRequests = pgTable('data_deletion_requests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  userEmail: text('user_email').notNull(),
+  reason: text('reason'),
+  status: text('status').notNull().default('pending'), // pending, processing, completed, failed, cancelled
+  requestedAt: timestamp('requested_at').notNull().defaultNow(),
+  scheduledFor: timestamp('scheduled_for').notNull(), // Deletion date (30 days after request)
+  completedAt: timestamp('completed_at'),
+  cancelledAt: timestamp('cancelled_at'),
+  deletionReport: jsonb('deletion_report'), // Stores deletion verification report
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
 // Type exports
 export type KnowledgeBaseCategory = typeof knowledgeBaseCategories.$inferSelect;
 export type NewKnowledgeBaseCategory =
@@ -4350,3 +4392,7 @@ export type TicketComment = typeof ticketComments.$inferSelect;
 export type NewTicketComment = typeof ticketComments.$inferInsert;
 export type UserSetting = typeof userSettings.$inferSelect;
 export type NewUserSetting = typeof userSettings.$inferInsert;
+export type DataExportRequest = typeof dataExportRequests.$inferSelect;
+export type NewDataExportRequest = typeof dataExportRequests.$inferInsert;
+export type DataDeletionRequest = typeof dataDeletionRequests.$inferSelect;
+export type NewDataDeletionRequest = typeof dataDeletionRequests.$inferInsert;

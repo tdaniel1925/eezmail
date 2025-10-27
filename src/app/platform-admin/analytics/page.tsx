@@ -57,12 +57,12 @@ export default async function AnalyticsPage() {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/platform-admin">
-            <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <Link href="/platform-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 p-3">
               <TrendingUp className="h-6 w-6 text-primary" />
@@ -290,4 +290,3 @@ export default async function AnalyticsPage() {
     </div>
   );
 }
-

@@ -1,7 +1,6 @@
 'use client';
 
 import useSWR from 'swr';
-import { getUserSettingsData } from '@/lib/settings/data';
 
 export interface UserSettingsData {
   user: {
@@ -22,48 +21,75 @@ export interface UserSettingsData {
   defaultAccountId: string | null;
 }
 
+// Fetcher function for SWR
+const fetcher = async (url: string) => {
+  console.log('[useSettingsData] Fetching from:', url);
+
+  const response = await fetch(url, {
+    credentials: 'include', // Include cookies for authentication
+  });
+
+  console.log('[useSettingsData] Response status:', response.status);
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      console.error('[useSettingsData] Not authenticated');
+      throw new Error('Not authenticated');
+    }
+    const errorText = await response.text();
+    console.error('[useSettingsData] Request failed:', errorText);
+    throw new Error('Failed to load settings');
+  }
+
+  const result = await response.json();
+  console.log('[useSettingsData] Result:', {
+    success: result.success,
+    hasData: !!result.data,
+    error: result.error,
+  });
+
+  if (!result.success || !result.data) {
+    console.error('[useSettingsData] Invalid result:', result);
+    throw new Error(result.error || 'Failed to load settings');
+  }
+
+  // Transform to camelCase
+  const transformed = {
+    user: {
+      id: result.data.user.id,
+      email: result.data.user.email,
+      fullName: result.data.user.fullName || '',
+      avatarUrl: result.data.user.avatarUrl || '',
+      name: result.data.user.fullName || result.data.user.email.split('@')[0],
+      createdAt: result.data.user.createdAt,
+    },
+    emailAccounts: result.data.emailAccounts || [],
+    settings: result.data.settings || {
+      aiScreeningEnabled: true,
+      screeningMode: 'strict',
+      notificationsEnabled: true,
+    },
+    subscription: result.data.subscription,
+    defaultAccountId: result.data.defaultAccountId,
+  } as UserSettingsData;
+
+  console.log('[useSettingsData] Transformed data successfully');
+  return transformed;
+};
+
 // Custom hook for fetching and caching settings data
 export function useSettingsData() {
-  const { data, error, isLoading, mutate } = useSWR(
-    'user-settings',
-    async () => {
-      const response = await getUserSettingsData();
-      
-      if (!response.success || !response.data) {
-        throw new Error(response.error || 'Failed to load settings');
-      }
-
-      // Transform to camelCase
-      return {
-        user: {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          fullName: response.data.user.fullName || '',
-          avatarUrl: response.data.user.avatarUrl || '',
-          name:
-            response.data.user.fullName ||
-            response.data.user.email.split('@')[0],
-          createdAt: response.data.user.createdAt,
-        },
-        emailAccounts: response.data.emailAccounts,
-        settings: response.data.settings || {
-          aiScreeningEnabled: true,
-          screeningMode: 'strict',
-          notificationsEnabled: true,
-        },
-        subscription: response.data.subscription,
-        defaultAccountId: response.data.defaultAccountId,
-      } as UserSettingsData;
-    },
-    {
-      // Revalidate every 5 minutes
-      refreshInterval: 300000,
-      // Don't revalidate on mount if cached
-      revalidateIfStale: false,
-      // Keep previous data while revalidating
-      keepPreviousData: true,
-    }
-  );
+  const { data, error, isLoading, mutate } = useSWR('/api/settings', fetcher, {
+    // Revalidate every 5 minutes
+    refreshInterval: 300000,
+    // Don't revalidate on mount if cached
+    revalidateIfStale: false,
+    // Keep previous data while revalidating
+    keepPreviousData: true,
+    // Retry on error
+    errorRetryCount: 3,
+    errorRetryInterval: 1000,
+  });
 
   return {
     userData: data,
@@ -72,4 +98,3 @@ export function useSettingsData() {
     refreshSettings: mutate,
   };
 }
-

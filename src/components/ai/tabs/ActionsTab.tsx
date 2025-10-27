@@ -12,7 +12,6 @@ import {
   Zap,
   FileText,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { EmailComposer } from '@/components/email/EmailComposer';
 
 interface ActionButtonProps {
@@ -62,13 +61,11 @@ export function ActionsTab(): JSX.Element {
   const handleOpenVoiceRecorder = () => {
     setComposerMode('voice');
     setIsComposerOpen(true);
-    toast.success('Opening voice recorder...');
   };
 
   const handleOpenDictation = () => {
     setComposerMode('dictation');
     setIsComposerOpen(true);
-    toast.success('Starting dictation...');
   };
 
   // Trigger voice recording or dictation after composer opens
@@ -133,7 +130,7 @@ export function ActionsTab(): JSX.Element {
                 label="Email Rules"
                 description="Automate email actions with rules"
                 onClick={() => {
-                  window.location.href = '/dashboard/settings?tab=rules';
+                  window.location.href = '/dashboard/settings?tab=organization';
                 }}
               />
               <ActionButton

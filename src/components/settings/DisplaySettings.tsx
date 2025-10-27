@@ -187,12 +187,12 @@ export function DisplaySettings({
                 onChange={(e) =>
                   handleDataChange({ emailsPerPage: Number(e.target.value) })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value={25}>25 emails</option>
-                <option value={50}>50 emails</option>
-                <option value={100}>100 emails</option>
-                <option value={200}>200 emails</option>
+                <option value={25} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">25 emails</option>
+                <option value={50} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">50 emails</option>
+                <option value={100} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">100 emails</option>
+                <option value={200} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">200 emails</option>
               </select>
             </div>
 
@@ -207,11 +207,11 @@ export function DisplaySettings({
                     density: e.target.value as 'compact' | 'comfortable' | 'relaxed',
                   })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="compact">Compact</option>
-                <option value="comfortable">Comfortable</option>
-                <option value="relaxed">Relaxed</option>
+                <option value="compact" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Compact</option>
+                <option value="comfortable" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Comfortable</option>
+                <option value="relaxed" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Relaxed</option>
               </select>
             </div>
 
@@ -226,11 +226,11 @@ export function DisplaySettings({
                     readingPanePosition: e.target.value as 'right' | 'bottom' | 'hidden',
                   })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="right">Right side</option>
-                <option value="bottom">Bottom</option>
-                <option value="hidden">Hidden</option>
+                <option value="right" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Right side</option>
+                <option value="bottom" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Bottom</option>
+                <option value="hidden" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Hidden</option>
               </select>
             </div>
 
@@ -243,12 +243,12 @@ export function DisplaySettings({
                 onChange={(e) =>
                   handleDataChange({ markAsReadDelay: Number(e.target.value) })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value={0}>Immediately</option>
-                <option value={1000}>After 1 second</option>
-                <option value={3000}>After 3 seconds</option>
-                <option value={5000}>After 5 seconds</option>
+                <option value={0} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Immediately</option>
+                <option value={1000} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">After 1 second</option>
+                <option value={3000} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">After 3 seconds</option>
+                <option value={5000} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">After 5 seconds</option>
               </select>
             </div>
           </div>
@@ -273,11 +273,11 @@ export function DisplaySettings({
                 onChange={(e) =>
                   handleDataChange({ defaultFontFamily: e.target.value })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="sans-serif">Sans Serif</option>
-                <option value="serif">Serif</option>
-                <option value="monospace">Monospace</option>
+                <option value="sans-serif" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Sans Serif</option>
+                <option value="serif" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Serif</option>
+                <option value="monospace" className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Monospace</option>
               </select>
             </div>
 
@@ -290,12 +290,12 @@ export function DisplaySettings({
                 onChange={(e) =>
                   handleDataChange({ defaultFontSize: Number(e.target.value) })
                 }
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value={12}>Small (12px)</option>
-                <option value={14}>Medium (14px)</option>
-                <option value={16}>Large (16px)</option>
-                <option value={18}>Extra Large (18px)</option>
+                <option value={12} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Small (12px)</option>
+                <option value={14} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Medium (14px)</option>
+                <option value={16} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Large (16px)</option>
+                <option value={18} className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">Extra Large (18px)</option>
               </select>
             </div>
           </div>

@@ -45,21 +45,21 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      new: 'bg-blue-100 text-blue-800',
-      open: 'bg-yellow-100 text-yellow-800',
-      pending: 'bg-orange-100 text-orange-800',
-      resolved: 'bg-green-100 text-green-800',
-      closed: 'bg-gray-100 text-gray-800',
+      new: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      open: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+      pending: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+      resolved: 'bg-green-500/10 text-green-400 border-green-500/20',
+      closed: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
     };
     return variants[status as keyof typeof variants] || variants.new;
   };
 
   const getPriorityBadge = (priority: string) => {
     const variants = {
-      urgent: 'bg-red-100 text-red-800 border-red-300',
-      high: 'bg-orange-100 text-orange-800 border-orange-300',
-      normal: 'bg-blue-100 text-blue-800 border-blue-300',
-      low: 'bg-gray-100 text-gray-800 border-gray-300',
+      urgent: 'bg-red-500/10 text-red-400 border-red-500/20',
+      high: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+      normal: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+      low: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
     };
     return variants[priority as keyof typeof variants] || variants.normal;
   };
@@ -70,24 +70,24 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-white shadow-sm overflow-hidden">
+    <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm shadow-sm overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50">
-            <TableHead>Ticket #</TableHead>
-            <TableHead>Subject</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Assigned To</TableHead>
-            <TableHead>SLA</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+          <TableRow className="bg-slate-700/50 border-slate-700">
+            <TableHead className="text-gray-300">Ticket #</TableHead>
+            <TableHead className="text-gray-300">Subject</TableHead>
+            <TableHead className="text-gray-300">Status</TableHead>
+            <TableHead className="text-gray-300">Priority</TableHead>
+            <TableHead className="text-gray-300">Assigned To</TableHead>
+            <TableHead className="text-gray-300">SLA</TableHead>
+            <TableHead className="text-gray-300">Created</TableHead>
+            <TableHead className="text-right text-gray-300">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {tickets.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={8} className="text-center py-8 text-gray-400">
                 No tickets found
               </TableCell>
             </TableRow>
@@ -95,22 +95,22 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
             tickets.map(({ ticket, assignee }) => (
               <TableRow
                 key={ticket.id}
-                className="hover:bg-gray-50 cursor-pointer transition-colors"
+                className="hover:bg-slate-700/30 cursor-pointer transition-colors border-slate-700"
                 onClick={() => router.push(`/admin/support/${ticket.id}`)}
               >
-                <TableCell className="font-mono text-sm">
+                <TableCell className="font-mono text-sm text-gray-300">
                   #{ticket.ticketNumber}
                 </TableCell>
                 <TableCell>
                   <div className="max-w-md">
-                    <div className="font-medium text-sm truncate">
+                    <div className="font-medium text-sm truncate text-white">
                       {ticket.subject}
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge
-                    variant="secondary"
+                    variant="outline"
                     className={getStatusBadge(ticket.status)}
                   >
                     {ticket.status}
@@ -128,7 +128,7 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
                   {assignee ? (
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">
+                      <span className="text-sm text-gray-300">
                         {assignee.name || assignee.email}
                       </span>
                     </div>
@@ -140,7 +140,7 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
                   {ticket.slaResponseBy && !ticket.firstResponseAt ? (
                     <div
                       className={`flex items-center gap-2 ${
-                        isSLABreach(ticket) ? 'text-red-600' : 'text-gray-600'
+                        isSLABreach(ticket) ? 'text-red-400' : 'text-gray-400'
                       }`}
                     >
                       {isSLABreach(ticket) ? (
@@ -155,7 +155,7 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
                       </span>
                     </div>
                   ) : ticket.firstResponseAt ? (
-                    <div className="flex items-center gap-2 text-green-600">
+                    <div className="flex items-center gap-2 text-green-400">
                       <CheckCircle2 className="h-4 w-4" />
                       <span className="text-xs">Met</span>
                     </div>
@@ -163,7 +163,7 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
                     <span className="text-xs text-gray-400">N/A</span>
                   )}
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm text-gray-400">
                   {formatDistanceToNow(new Date(ticket.createdAt), {
                     addSuffix: true,
                   })}
@@ -172,6 +172,7 @@ export function TicketsTable({ tickets, currentPage }: TicketsTableProps) {
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="text-gray-300 hover:text-white hover:bg-slate-700"
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(`/admin/support/${ticket.id}`);

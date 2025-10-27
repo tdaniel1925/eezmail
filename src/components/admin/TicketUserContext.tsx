@@ -71,16 +71,16 @@ export function TicketUserContext({ user }: TicketUserContextProps) {
 
       {/* Quick Actions */}
       <div className="pt-4 border-t space-y-2">
-        <Link href={`/admin/users?search=${user.email}`}>
-          <Button variant="outline" className="w-full" size="sm">
+        <Button variant="outline" className="w-full" size="sm" asChild>
+          <Link href={`/admin/users?search=${user.email}`}>
             View Full Profile
-          </Button>
-        </Link>
-        <Link href={`/admin/audit-logs?actor=${user.id}`}>
-          <Button variant="outline" className="w-full" size="sm">
+          </Link>
+        </Button>
+        <Button variant="outline" className="w-full" size="sm" asChild>
+          <Link href={`/admin/audit-logs?actor=${user.id}`}>
             View Activity Log
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </div>
   );

@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, Eye, Link } from 'lucide-react';
+import { Shield, Eye, Link as LinkIcon, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { updatePrivacySettings } from '@/lib/settings/actions';
+import { InlineNotification } from '@/components/ui/inline-notification';
 import type { EmailSetting } from '@/db/schema';
+import { useUnsavedChanges, StickySaveBar } from '@/hooks/useUnsavedChanges';
 
 interface PrivacySettingsProps {
   settings: EmailSetting | null;
@@ -17,36 +19,78 @@ export function PrivacySettings({
   accountId,
 }: PrivacySettingsProps): JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
   } | null>(null);
+
+  const { hasUnsavedChanges, setHasUnsavedChanges, resetUnsavedChanges } =
+    useUnsavedChanges();
 
   const [data, setData] = useState({
     blockTrackers: settings?.blockTrackers ?? true,
     blockExternalImages: settings?.blockExternalImages ?? false,
     stripUtmParameters: settings?.stripUtmParameters ?? true,
-    enableReadReceipts: false,
   });
 
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
+  const handleDataChange = (updates: Partial<typeof data>) => {
+    setData((prev) => ({ ...prev, ...updates }));
+    setHasUnsavedChanges(true);
+    // Clear notification when user makes changes
+    setNotification(null);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent): Promise<void> => {
+    if (e) e.preventDefault();
     setIsSubmitting(true);
-    setMessage(null);
+    setNotification(null);
 
-    const result = await updatePrivacySettings(accountId, data);
+    try {
+      const result = await updatePrivacySettings(accountId, data);
 
-    if (result.success) {
-      setMessage({ type: 'success', text: 'Privacy settings updated!' });
-    } else {
-      setMessage({ type: 'error', text: result.error || 'Failed to update' });
+      if (result.success) {
+        setNotification({
+          type: 'success',
+          message: 'Privacy settings updated successfully!',
+        });
+        resetUnsavedChanges();
+        
+        // Auto-dismiss success message after 5 seconds
+        setTimeout(() => setNotification(null), 5000);
+      } else {
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to update privacy settings',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating privacy settings:', error);
+      setNotification({
+        type: 'error',
+        message: 'An unexpected error occurred. Please try again.',
+      });
     }
 
     setIsSubmitting(false);
   };
 
+  const handleDiscard = () => {
+    setData({
+      blockTrackers: settings?.blockTrackers ?? true,
+      blockExternalImages: settings?.blockExternalImages ?? false,
+      stripUtmParameters: settings?.stripUtmParameters ?? true,
+    });
+    resetUnsavedChanges();
+    setNotification(null);
+  };
+
+  const handlePrivacyPolicyClick = () => {
+    // Open privacy policy in new tab
+    window.open('/privacy-policy', '_blank');
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -57,17 +101,13 @@ export function PrivacySettings({
         </p>
       </div>
 
-      {/* Messages */}
-      {message && (
-        <div
-          className={`rounded-lg border p-4 ${
-            message.type === 'success'
-              ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-900 dark:text-green-100'
-              : 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-900 dark:text-red-100'
-          }`}
-        >
-          {message.text}
-        </div>
+      {/* Inline Notification */}
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -93,7 +133,7 @@ export function PrivacySettings({
               <Switch
                 checked={data.blockTrackers}
                 onCheckedChange={(checked) =>
-                  setData({ ...data, blockTrackers: checked })
+                  handleDataChange({ blockTrackers: checked })
                 }
               />
             </div>
@@ -110,7 +150,7 @@ export function PrivacySettings({
               <Switch
                 checked={data.stripUtmParameters}
                 onCheckedChange={(checked) =>
-                  setData({ ...data, stripUtmParameters: checked })
+                  handleDataChange({ stripUtmParameters: checked })
                 }
               />
             </div>
@@ -148,7 +188,7 @@ export function PrivacySettings({
               <Switch
                 checked={data.blockExternalImages}
                 onCheckedChange={(checked) =>
-                  setData({ ...data, blockExternalImages: checked })
+                  handleDataChange({ blockExternalImages: checked })
                 }
               />
             </div>
@@ -162,38 +202,42 @@ export function PrivacySettings({
           </div>
         </div>
 
-        {/* Read Receipts */}
+        {/* Read Receipts - Info Only */}
         <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md p-6">
           <div className="mb-4 flex items-center gap-3">
-            <Link className="h-5 w-5 text-gray-700 dark:text-white/70" />
+            <LinkIcon className="h-5 w-5 text-gray-700 dark:text-white/70" />
             <h3 className="font-semibold text-gray-900 dark:text-white">
               Read Receipts
             </h3>
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="font-medium text-gray-900 dark:text-white">
-                  Send read receipts
-                </div>
-                <div className="text-sm text-gray-600 dark:text-white/60">
-                  Let senders know when you&apos;ve read their emails
+            <div className="p-4 bg-green-50/50 dark:bg-green-900/10 rounded-lg border border-green-200 dark:border-green-900">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-900 dark:text-green-100 mb-1">
+                    Read receipts are disabled by default
+                  </p>
+                  <p className="text-xs text-green-800 dark:text-green-200">
+                    We protect your privacy by never sending read receipts to senders. They cannot track when or if you&apos;ve opened their emails.
+                  </p>
                 </div>
               </div>
-              <Switch
-                checked={data.enableReadReceipts}
-                onCheckedChange={(checked) =>
-                  setData({ ...data, enableReadReceipts: checked })
-                }
-              />
             </div>
 
-            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg">
-              <p className="text-xs text-blue-900 dark:text-blue-100">
-                <strong>Recommended:</strong> Keep this disabled to maintain
-                your privacy and control over your reading habits.
-              </p>
+            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-900">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-xs text-blue-900 dark:text-blue-100 font-medium mb-1">
+                    Your privacy matters
+                  </p>
+                  <p className="text-xs text-blue-800 dark:text-blue-200">
+                    Combined with tracking pixel blocking, senders have no way to know if you&apos;ve read their emails. You maintain complete control over your reading habits.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -226,19 +270,25 @@ export function PrivacySettings({
           </div>
 
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-            <Button variant="ghost" size="sm">
-              View Privacy Policy →
-            </Button>
+            <button
+              type="button"
+              onClick={handlePrivacyPolicyClick}
+              className="flex items-center gap-2 text-sm text-primary hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors"
+            >
+              <span>View Privacy Policy</span>
+              <ExternalLink className="h-4 w-4" />
+            </button>
           </div>
         </div>
-
-        {/* Submit */}
-        <div className="flex justify-end gap-2">
-          <Button type="submit" variant="primary" isLoading={isSubmitting}>
-            Save Privacy Settings
-          </Button>
-        </div>
       </form>
+
+      {/* Sticky Save Bar */}
+      <StickySaveBar
+        show={hasUnsavedChanges}
+        onSave={handleSubmit}
+        onDiscard={handleDiscard}
+        isSaving={isSubmitting}
+      />
     </div>
   );
 }

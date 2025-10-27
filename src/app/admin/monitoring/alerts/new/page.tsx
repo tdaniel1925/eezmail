@@ -5,6 +5,7 @@
 
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin/auth';
 import { AlertRuleForm } from '@/components/admin/AlertRuleForm';
 import { ArrowLeft, Shield } from 'lucide-react';
 import Link from 'next/link';
@@ -20,14 +21,9 @@ export default async function NewAlertRulePage() {
     redirect('/login');
   }
 
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
+  // Check if user is admin using proper auth helper
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
     redirect('/dashboard');
   }
 
@@ -37,12 +33,12 @@ export default async function NewAlertRulePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/admin/monitoring/alerts">
-              <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2" asChild>
+              <Link href="/admin/monitoring/alerts">
                 <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </Link>
+                <span>Back</span>
+              </Link>
+            </Button>
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-3">
                 <Shield className="h-6 w-6 text-primary" />

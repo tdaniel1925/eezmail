@@ -1,15 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
 import { knowledgeBaseArticles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { logAuditAction } from '@/lib/audit/logger';
+import { z } from 'zod';
 
+const articleSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  slug: z.string().min(1, 'Slug is required'),
+  content: z.string().min(1, 'Content is required'),
+  excerpt: z.string().optional(),
+  categoryId: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  authorId: z.string(),
+  status: z.enum(['draft', 'published', 'archived']).default('draft'),
+  visibility: z
+    .enum(['public', 'internal', 'customers_only'])
+    .default('public'),
+  featured: z.boolean().default(false),
+  seoTitle: z.string().optional(),
+  seoDescription: z.string().optional(),
+  seoKeywords: z.array(z.string()).optional(),
+  publishedAt: z.string().optional(),
+});
+
+// GET single article
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminCheck = await isAdmin();
+    if (!adminCheck) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
 
     const article = await db.query.knowledgeBaseArticles.findFirst({
@@ -22,7 +57,7 @@ export async function GET(
 
     return NextResponse.json(article);
   } catch (error) {
-    console.error('Get article error:', error);
+    console.error('[KB Article GET] Error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch article' },
       { status: 500 }
@@ -30,6 +65,7 @@ export async function GET(
   }
 }
 
+// PATCH - Update article
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,60 +80,46 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is admin
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!userData || !['admin', 'super_admin'].includes(userData.role)) {
+    const adminCheck = await isAdmin();
+    if (!adminCheck) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
     const body = await request.json();
 
+    const validatedData = articleSchema.parse(body);
+
     const [updatedArticle] = await db
       .update(knowledgeBaseArticles)
       .set({
-        ...body,
+        ...validatedData,
+        categoryId: validatedData.categoryId || null,
+        publishedAt: validatedData.publishedAt
+          ? new Date(validatedData.publishedAt)
+          : null,
         updatedAt: new Date(),
-        publishedAt: body.publishedAt ? new Date(body.publishedAt) : undefined,
       })
       .where(eq(knowledgeBaseArticles.id, id))
       .returning();
 
-    if (!updatedArticle) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404 });
-    }
-
-    // Log to audit
-    await logAuditAction({
-      actorId: user.id,
-      actorType: 'user',
-      actorEmail: user.email!,
-      action: 'kb_article.updated',
-      resourceType: 'kb_article',
-      resourceId: id,
-      changes: body,
-      metadata: {
-        title: updatedArticle.title,
-        status: updatedArticle.status,
-      },
-      riskLevel: 'low',
-    });
-
     return NextResponse.json(updatedArticle);
-  } catch (error: any) {
-    console.error('Update article error:', error);
+  } catch (error) {
+    console.error('[KB Article PATCH] Error:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Validation error', details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: error.message || 'Failed to update article' },
+      { error: 'Failed to update article' },
       { status: 500 }
     );
   }
 }
 
+// DELETE article
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -112,51 +134,22 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is admin
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (!userData || !['admin', 'super_admin'].includes(userData.role)) {
+    const adminCheck = await isAdmin();
+    if (!adminCheck) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { id } = await params;
 
-    // Get article first for logging
-    const article = await db.query.knowledgeBaseArticles.findFirst({
-      where: eq(knowledgeBaseArticles.id, id),
-    });
-
-    if (!article) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404 });
-    }
-
     await db
       .delete(knowledgeBaseArticles)
       .where(eq(knowledgeBaseArticles.id, id));
 
-    // Log to audit
-    await logAuditAction({
-      actorId: user.id,
-      actorType: 'user',
-      actorEmail: user.email!,
-      action: 'kb_article.deleted',
-      resourceType: 'kb_article',
-      resourceId: id,
-      metadata: {
-        title: article.title,
-      },
-      riskLevel: 'medium',
-    });
-
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Delete article error:', error);
+  } catch (error) {
+    console.error('[KB Article DELETE] Error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to delete article' },
+      { error: 'Failed to delete article' },
       { status: 500 }
     );
   }

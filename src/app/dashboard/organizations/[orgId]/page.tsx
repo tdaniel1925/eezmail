@@ -55,17 +55,19 @@ export default async function OrganizationPage({
                 <Building2 className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">{org.name}</h1>
+                <h1 className="text-3xl font-bold text-slate-900">
+                  {org.name}
+                </h1>
                 <p className="text-slate-600">/{org.slug}</p>
               </div>
             </div>
             <div className="flex gap-3">
-              <Link href={`/dashboard/organizations/${params.orgId}/members`}>
-                <Button>
+              <Button asChild>
+                <Link href={`/dashboard/organizations/${params.orgId}/members`}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Manage Members
-                </Button>
-              </Link>
+                </Link>
+              </Button>
               <Button variant="outline">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -133,9 +135,7 @@ export default async function OrganizationPage({
               <DollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <Badge className="text-sm">
-                {org.pricingTier || 'standard'}
-              </Badge>
+              <Badge className="text-sm">{org.pricingTier || 'standard'}</Badge>
               <p className="text-xs text-slate-500 mt-2">SMS rate tier</p>
             </CardContent>
           </Card>
@@ -161,7 +161,9 @@ export default async function OrganizationPage({
                       <div className="font-semibold text-slate-900">
                         {member.fullName || member.email}
                       </div>
-                      <div className="text-sm text-slate-600">{member.email}</div>
+                      <div className="text-sm text-slate-600">
+                        {member.email}
+                      </div>
                     </div>
                     <Badge>{member.role}</Badge>
                   </div>
@@ -175,11 +177,11 @@ export default async function OrganizationPage({
             )}
 
             {members && members.length > 5 && (
-              <Link href={`/dashboard/organizations/${params.orgId}/members`}>
-                <Button variant="outline" className="w-full mt-4">
+              <Button variant="outline" className="w-full mt-4" asChild>
+                <Link href={`/dashboard/organizations/${params.orgId}/members`}>
                   View All Members
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             )}
           </CardContent>
         </Card>
@@ -187,4 +189,3 @@ export default async function OrganizationPage({
     </div>
   );
 }
-

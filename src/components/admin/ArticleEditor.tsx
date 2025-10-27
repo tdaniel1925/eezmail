@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,7 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, Eye, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface Article {
   id: string;
@@ -61,8 +60,11 @@ export function ArticleEditor({
   userId,
 }: ArticleEditorProps) {
   const router = useRouter();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     title: article?.title || '',
     slug: article?.slug || '',
@@ -93,6 +95,7 @@ export function ArticleEditor({
 
   const handleSave = async (publish = false) => {
     setIsSaving(true);
+    setNotification(null);
 
     try {
       const payload = {
@@ -126,19 +129,20 @@ export function ArticleEditor({
         throw new Error('Failed to save article');
       }
 
-      toast({
-        title: publish ? 'Article Published' : 'Article Saved',
-        description: publish
-          ? 'Your article is now live'
-          : 'Your changes have been saved',
+      setNotification({
+        type: 'success',
+        message: publish
+          ? 'Article published successfully! Redirecting...'
+          : 'Article saved as draft successfully! Redirecting...',
       });
 
-      router.push('/admin/knowledge-base');
+      setTimeout(() => {
+        router.push('/admin/knowledge-base');
+      }, 1500);
     } catch (error: any) {
-      toast({
-        title: 'Save Failed',
-        description: error.message || 'Failed to save article',
-        variant: 'destructive',
+      setNotification({
+        type: 'error',
+        message: error.message || 'Failed to save article. Please try again.',
       });
     } finally {
       setIsSaving(false);
@@ -147,20 +151,34 @@ export function ArticleEditor({
 
   return (
     <div className="mx-auto max-w-6xl p-8">
+      {/* Inline Notification */}
+      {notification && (
+        <div className="mb-6">
+          <InlineNotification
+            type={notification.type}
+            message={notification.message}
+            onDismiss={() => setNotification(null)}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/admin/knowledge-base">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white hover:bg-slate-700"
+            onClick={() => router.push('/admin/knowledge-base')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-3xl font-bold text-white">
               {article ? 'Edit Article' : 'New Article'}
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-400">
               {article
                 ? `Editing: ${article.title}`
                 : 'Create a new knowledge base article'}
@@ -171,6 +189,7 @@ export function ArticleEditor({
         <div className="flex gap-2">
           <Button
             variant="outline"
+            className="border-slate-600 text-gray-300 hover:bg-slate-700 hover:text-white"
             onClick={() => handleSave(false)}
             disabled={isSaving}
           >
@@ -181,7 +200,11 @@ export function ArticleEditor({
             )}
             Save Draft
           </Button>
-          <Button onClick={() => handleSave(true)} disabled={isSaving}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => handleSave(true)}
+            disabled={isSaving}
+          >
             <Eye className="h-4 w-4 mr-2" />
             Publish
           </Button>
@@ -189,65 +212,90 @@ export function ArticleEditor({
       </div>
 
       <Tabs defaultValue="content" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
+        <TabsList className="bg-slate-800 border-slate-700">
+          <TabsTrigger
+            value="content"
+            className="text-gray-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
+          >
+            Content
+          </TabsTrigger>
+          <TabsTrigger
+            value="settings"
+            className="text-gray-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
+          >
+            Settings
+          </TabsTrigger>
+          <TabsTrigger
+            value="seo"
+            className="text-gray-300 data-[state=active]:bg-slate-700 data-[state=active]:text-white"
+          >
+            SEO
+          </TabsTrigger>
         </TabsList>
 
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-6">
-          <Card>
+          <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Article Content</CardTitle>
+              <CardTitle className="text-white">Article Content</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-gray-300">
+                  Title *
+                </Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleChange('title', e.target.value)}
                   placeholder="How to use..."
-                  className="text-lg font-semibold"
+                  className="text-lg font-semibold bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="slug">URL Slug *</Label>
+                <Label htmlFor="slug" className="text-gray-300">
+                  URL Slug *
+                </Label>
                 <Input
                   id="slug"
                   value={formData.slug}
                   onChange={(e) => handleChange('slug', e.target.value)}
                   placeholder="how-to-use"
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Article URL: /help/{formData.slug || 'your-slug'}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="excerpt">Excerpt</Label>
+                <Label htmlFor="excerpt" className="text-gray-300">
+                  Excerpt
+                </Label>
                 <Textarea
                   id="excerpt"
                   value={formData.excerpt}
                   onChange={(e) => handleChange('excerpt', e.target.value)}
                   placeholder="Brief description of the article (shown in search results)"
                   rows={3}
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div>
-                <Label htmlFor="content">Content * (Markdown supported)</Label>
+                <Label htmlFor="content" className="text-gray-300">
+                  Content * (Markdown supported)
+                </Label>
                 <Textarea
                   id="content"
                   value={formData.content}
                   onChange={(e) => handleChange('content', e.target.value)}
                   placeholder="Write your article content here... You can use Markdown formatting."
                   rows={20}
-                  className="font-mono text-sm"
+                  className="font-mono text-sm bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   Supports Markdown: **bold**, *italic*, # headings, - lists,
                   [links](url), ```code```
                 </p>
@@ -258,24 +306,29 @@ export function ArticleEditor({
 
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
-          <Card>
+          <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>Article Settings</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">Article Settings</CardTitle>
+              <CardDescription className="text-gray-400">
                 Configure how your article is displayed and accessed
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category" className="text-gray-300">
+                  Category
+                </Label>
                 <Select
                   value={formData.categoryId}
                   onValueChange={(value) => handleChange('categoryId', value)}
                 >
-                  <SelectTrigger id="category">
+                  <SelectTrigger
+                    id="category"
+                    className="bg-slate-700/50 border-slate-600 text-white"
+                  >
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-slate-800 border-slate-700">
                     <SelectItem value="">Uncategorized</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
@@ -287,26 +340,34 @@ export function ArticleEditor({
               </div>
 
               <div>
-                <Label htmlFor="tags">Tags (comma-separated)</Label>
+                <Label htmlFor="tags" className="text-gray-300">
+                  Tags (comma-separated)
+                </Label>
                 <Input
                   id="tags"
                   value={formData.tags}
                   onChange={(e) => handleChange('tags', e.target.value)}
                   placeholder="getting-started, tutorial, advanced"
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status" className="text-gray-300">
+                    Status
+                  </Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => handleChange('status', value)}
                   >
-                    <SelectTrigger id="status">
+                    <SelectTrigger
+                      id="status"
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                    >
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-800 border-slate-700">
                       <SelectItem value="draft">Draft</SelectItem>
                       <SelectItem value="published">Published</SelectItem>
                       <SelectItem value="archived">Archived</SelectItem>
@@ -315,15 +376,20 @@ export function ArticleEditor({
                 </div>
 
                 <div>
-                  <Label htmlFor="visibility">Visibility</Label>
+                  <Label htmlFor="visibility" className="text-gray-300">
+                    Visibility
+                  </Label>
                   <Select
                     value={formData.visibility}
                     onValueChange={(value) => handleChange('visibility', value)}
                   >
-                    <SelectTrigger id="visibility">
+                    <SelectTrigger
+                      id="visibility"
+                      className="bg-slate-700/50 border-slate-600 text-white"
+                    >
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-800 border-slate-700">
                       <SelectItem value="public">Public</SelectItem>
                       <SelectItem value="internal">Internal Only</SelectItem>
                       <SelectItem value="customers_only">
@@ -334,10 +400,12 @@ export function ArticleEditor({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center justify-between rounded-lg border border-slate-700 bg-slate-700/30 p-4">
                 <div>
-                  <Label htmlFor="featured">Featured Article</Label>
-                  <p className="text-sm text-gray-500">
+                  <Label htmlFor="featured" className="text-gray-300">
+                    Featured Article
+                  </Label>
+                  <p className="text-sm text-gray-400">
                     Show this article prominently on the help homepage
                   </p>
                 </div>
@@ -355,16 +423,18 @@ export function ArticleEditor({
 
         {/* SEO Tab */}
         <TabsContent value="seo" className="space-y-6">
-          <Card>
+          <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
             <CardHeader>
-              <CardTitle>SEO Optimization</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-white">SEO Optimization</CardTitle>
+              <CardDescription className="text-gray-400">
                 Improve search engine visibility
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="seoTitle">SEO Title</Label>
+                <Label htmlFor="seoTitle" className="text-gray-300">
+                  SEO Title
+                </Label>
                 <Input
                   id="seoTitle"
                   value={formData.seoTitle}
@@ -373,14 +443,17 @@ export function ArticleEditor({
                     formData.title || 'Article title for search engines'
                   }
                   maxLength={60}
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   {formData.seoTitle.length}/60 characters (optimal: 50-60)
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="seoDescription">Meta Description</Label>
+                <Label htmlFor="seoDescription" className="text-gray-300">
+                  Meta Description
+                </Label>
                 <Textarea
                   id="seoDescription"
                   value={formData.seoDescription}
@@ -392,20 +465,24 @@ export function ArticleEditor({
                   }
                   rows={3}
                   maxLength={160}
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-400 mt-1">
                   {formData.seoDescription.length}/160 characters (optimal:
                   150-160)
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="seoKeywords">Keywords (comma-separated)</Label>
+                <Label htmlFor="seoKeywords" className="text-gray-300">
+                  Keywords (comma-separated)
+                </Label>
                 <Input
                   id="seoKeywords"
                   value={formData.seoKeywords}
                   onChange={(e) => handleChange('seoKeywords', e.target.value)}
                   placeholder="keyword1, keyword2, keyword3"
+                  className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
                 />
               </div>
             </CardContent>

@@ -4,24 +4,13 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ChevronUp,
-  User,
   Settings,
-  Sliders,
-  Keyboard,
   HelpCircle,
-  MessageSquare,
   LogOut,
-  Monitor,
-  Languages,
-  Bell,
-  Volume2,
-  Database,
   Phone,
   Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePreferencesStore } from '@/stores/preferencesStore';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface ProfileDropUpProps {
@@ -50,15 +39,6 @@ export function ProfileDropUp({
 }: ProfileDropUpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const {
-    density,
-    setDensity,
-    language,
-    desktopNotifications,
-    toggleDesktopNotifications,
-    soundEffects,
-    toggleSoundEffects,
-  } = usePreferencesStore();
 
   // Check if user is a system admin
   const isSystemAdmin =
@@ -215,26 +195,10 @@ export function ProfileDropUp({
                   }}
                 />
                 <MenuItem
-                  icon={Sliders}
-                  label="Preferences"
-                  onClick={() => {
-                    onNavigate?.('/dashboard/settings?tab=ai-preferences');
-                    setIsOpen(false);
-                  }}
-                />
-                <MenuItem
-                  icon={Keyboard}
-                  label="Keyboard Shortcuts"
-                  onClick={() => {
-                    onNavigate?.('/dashboard/settings?tab=help');
-                    setIsOpen(false);
-                  }}
-                />
-                <MenuItem
                   icon={HelpCircle}
                   label="Help & Support"
                   onClick={() => {
-                    onNavigate?.('/dashboard/settings?tab=help');
+                    onNavigate?.('/dashboard/support');
                     setIsOpen(false);
                   }}
                 />
@@ -242,70 +206,9 @@ export function ProfileDropUp({
                   icon={Phone}
                   label="24/7 Phone Support"
                   onClick={() => {
-                    // Copy phone number to clipboard
-                    navigator.clipboard.writeText(
-                      'TBD - Phone number to be provided'
-                    );
+                    onNavigate?.('/dashboard/support');
                     setIsOpen(false);
                   }}
-                />
-                <MenuItem
-                  icon={MessageSquare}
-                  label="Send Feedback"
-                  onClick={() => {
-                    onNavigate?.('/dashboard/feedback');
-                    setIsOpen(false);
-                  }}
-                />
-              </div>
-
-              {/* App Settings */}
-              <div className="border-t border-gray-200 dark:border-gray-700 py-2">
-                {/* Density Toggle */}
-                <div className="px-4 py-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Monitor
-                        size={14}
-                        className="text-gray-600 dark:text-gray-400"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
-                        Density
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-1">
-                    {(['comfortable', 'default', 'compact'] as const).map(
-                      (d) => (
-                        <button
-                          key={d}
-                          onClick={() => setDensity(d)}
-                          className={cn(
-                            'flex-1 px-2 py-1 text-xs rounded transition-colors',
-                            density === d
-                              ? 'bg-primary text-white'
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                          )}
-                        >
-                          {d.charAt(0).toUpperCase() + d.slice(1)}
-                        </button>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                {/* Toggles */}
-                <ToggleMenuItem
-                  icon={Bell}
-                  label="Desktop Notifications"
-                  checked={desktopNotifications}
-                  onChange={toggleDesktopNotifications}
-                />
-                <ToggleMenuItem
-                  icon={Volume2}
-                  label="Sound Effects"
-                  checked={soundEffects}
-                  onChange={toggleSoundEffects}
                 />
               </div>
 
@@ -360,43 +263,6 @@ function MenuItem({
     >
       <Icon size={16} />
       <span>{label}</span>
-    </button>
-  );
-}
-
-interface ToggleMenuItemProps {
-  icon: React.ElementType;
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}
-
-function ToggleMenuItem({
-  icon: Icon,
-  label,
-  checked,
-  onChange,
-}: ToggleMenuItemProps) {
-  return (
-    <button
-      onClick={onChange}
-      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-    >
-      <Icon size={16} />
-      <span className="flex-1 text-left">{label}</span>
-      <div
-        className={cn(
-          'w-9 h-5 rounded-full transition-colors relative',
-          checked ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
-        )}
-      >
-        <div
-          className={cn(
-            'absolute top-0.5 w-4 h-4 bg-white rounded-full transition-transform',
-            checked ? 'translate-x-4' : 'translate-x-0.5'
-          )}
-        />
-      </div>
     </button>
   );
 }

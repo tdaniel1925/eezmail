@@ -34,12 +34,12 @@ export default async function CustomersPage() {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/platform-admin">
-            <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <Link href="/platform-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-slate-900">
@@ -124,12 +124,12 @@ export default async function CustomersPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Link href={`/platform-admin/customers/${customer.id}`}>
-                        <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/platform-admin/customers/${customer.id}`}>
                           <Settings className="h-4 w-4 mr-2" />
                           Manage
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -203,7 +203,9 @@ export default async function CustomersPage() {
                           days
                         </div>
                         <p className="text-xs text-amber-700">
-                          {new Date(customer.trialExpiresAt).toLocaleDateString()}
+                          {new Date(
+                            customer.trialExpiresAt
+                          ).toLocaleDateString()}
                         </p>
                       </div>
                     )}
@@ -229,4 +231,3 @@ export default async function CustomersPage() {
     </div>
   );
 }
-

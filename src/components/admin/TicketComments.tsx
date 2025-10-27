@@ -13,6 +13,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Lock, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface TicketCommentsProps {
   ticketId: string;
@@ -40,12 +41,23 @@ export function TicketComments({
   const [newComment, setNewComment] = useState('');
   const [isInternal, setIsInternal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim()) {
+      setNotification({
+        type: 'error',
+        message: 'Please enter a comment',
+      });
+      return;
+    }
 
     setIsSubmitting(true);
+    setNotification(null);
     try {
       const response = await fetch(
         `/api/admin/support/tickets/${ticketId}/comments`,
@@ -59,13 +71,29 @@ export function TicketComments({
         }
       );
 
-      if (response.ok) {
-        setNewComment('');
-        setIsInternal(false);
-        router.refresh();
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to add comment');
       }
+
+      setNotification({
+        type: 'success',
+        message: 'Comment added successfully',
+      });
+      setNewComment('');
+      setIsInternal(false);
+
+      // Refresh after a short delay to show success message
+      setTimeout(() => {
+        router.refresh();
+      }, 1000);
     } catch (error) {
       console.error('Failed to add comment:', error);
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to add comment',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -73,6 +101,14 @@ export function TicketComments({
 
   return (
     <div className="rounded-lg border bg-white p-6 space-y-6">
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       <div className="flex items-center gap-2">
         <MessageSquare className="h-5 w-5 text-gray-500" />
         <h2 className="text-lg font-semibold">Comments ({comments.length})</h2>

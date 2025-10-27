@@ -20,12 +20,12 @@ export default async function TrialsPage() {
       <div className="mx-auto max-w-5xl">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/platform-admin">
-            <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <Link href="/platform-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-500/10 p-3">
               <Gift className="h-6 w-6 text-amber-600" />
@@ -51,9 +51,7 @@ export default async function TrialsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-900 mb-2">
-                $5.00
-              </div>
+              <div className="text-3xl font-bold text-blue-900 mb-2">$5.00</div>
               <p className="text-sm text-blue-700">
                 ~500 SMS messages at standard rate
               </p>
@@ -121,7 +119,9 @@ export default async function TrialsPage() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 mb-2">Best Practices</h3>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Best Practices
+              </h3>
               <ul className="list-disc list-inside text-sm text-slate-600 space-y-1">
                 <li>Grant trials to new customers during onboarding</li>
                 <li>Use generous trials for enterprise prospects</li>
@@ -135,4 +135,3 @@ export default async function TrialsPage() {
     </div>
   );
 }
-

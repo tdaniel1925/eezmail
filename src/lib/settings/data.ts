@@ -63,16 +63,29 @@ export async function getUserSettingsData() {
       });
     }
 
+    // Transform user data to match expected format
+    const transformedData = {
+      user: {
+        id: user.id,
+        email: user.email || authUser.email,
+        fullName: user.fullName || user.name || '',
+        avatarUrl: user.avatarUrl || '',
+        createdAt: user.createdAt,
+      },
+      emailAccounts: emailAccounts,
+      settings: settings || {
+        aiScreeningEnabled: true,
+        screeningMode: 'strict',
+        notificationsEnabled: true,
+      },
+      subscription: subscription,
+      defaultAccountId: defaultAccount?.id || null,
+    };
+
     return {
       success: true,
       error: null,
-      data: {
-        user,
-        emailAccounts,
-        settings,
-        subscription,
-        defaultAccountId: defaultAccount?.id || null,
-      },
+      data: transformedData,
     };
   } catch (error) {
     console.error('Error fetching user settings data:', error);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc, or, ilike } from 'drizzle-orm';
 import { z } from 'zod';
 import { isAdmin } from '@/lib/admin/auth';
 
@@ -13,7 +13,82 @@ const createUserSchema = z.object({
   role: z.enum(['user', 'admin', 'super_admin']).default('user'),
   tier: z.enum(['individual', 'team', 'enterprise']).default('individual'),
   sendInvite: z.boolean().default(true),
+  isSandbox: z.boolean().default(false),
 });
+
+/**
+ * GET /api/admin/users
+ * Fetch all users
+ */
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userIsAdmin = await isAdmin();
+    if (!userIsAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || '';
+    const userType = searchParams.get('type') || 'all'; // all, regular, sandbox
+
+    // Build where clause
+    const whereClause =
+      search
+        ? or(
+            ilike(users.email, `%${search}%`),
+            ilike(users.name, `%${search}%`)
+          )
+        : undefined;
+
+    // Fetch users from database
+    let allUsers = await db
+      .select()
+      .from(users)
+      .where(whereClause)
+      .orderBy(desc(users.createdAt));
+
+    // Filter by type if specified
+    if (userType === 'regular') {
+      allUsers = allUsers.filter((u) => !u.isSandboxUser);
+    } else if (userType === 'sandbox') {
+      allUsers = allUsers.filter((u) => u.isSandboxUser);
+    }
+
+    // Format users for frontend
+    const formattedUsers = allUsers.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      role: u.role,
+      tier: u.tier,
+      isSandboxUser: u.isSandboxUser || false,
+      roleHierarchy: u.role,
+      createdAt: u.createdAt,
+      lastLoginAt: u.lastLoginAt,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      users: formattedUsers,
+      total: formattedUsers.length,
+    });
+  } catch (error) {
+    console.error('[Admin Users GET API] Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}
 
 /**
  * POST /api/admin/users
@@ -50,7 +125,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { email, name, role, tier, sendInvite } = validation.data;
+    const { email, name, role, tier, sendInvite, isSandbox } = validation.data;
 
     // Use admin client for creating users
     const adminClient = createAdminClient();
@@ -95,6 +170,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             name,
             role,
             tier,
+            isSandbox,
           },
         });
 
@@ -123,6 +199,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         name,
         role: role as 'user' | 'admin' | 'super_admin',
         tier: tier as 'individual' | 'team' | 'enterprise',
+        isSandboxUser: isSandbox,
       })
       .onConflictDoUpdate({
         target: users.id,
@@ -131,6 +208,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           name,
           role: role as 'user' | 'admin' | 'super_admin',
           tier: tier as 'individual' | 'team' | 'enterprise',
+          isSandboxUser: isSandbox,
           updatedAt: new Date(),
         },
       })
@@ -144,6 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // TODO: Send invite email if requested
     if (sendInvite) {
       // Implement email sending logic
+      console.log('[Admin API] TODO: Send invitation email to', email);
     }
 
     return NextResponse.json({

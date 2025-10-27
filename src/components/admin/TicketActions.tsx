@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle2, XCircle, UserPlus, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, UserPlus } from 'lucide-react';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface TicketActionsProps {
   ticket: {
@@ -30,9 +31,14 @@ interface TicketActionsProps {
 export function TicketActions({ ticket, currentUserId }: TicketActionsProps) {
   const router = useRouter();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
 
   const updateTicket = async (updates: Record<string, unknown>) => {
     setIsUpdating(true);
+    setNotification(null);
     try {
       const response = await fetch(`/api/admin/support/tickets/${ticket.id}`, {
         method: 'PATCH',
@@ -40,11 +46,27 @@ export function TicketActions({ ticket, currentUserId }: TicketActionsProps) {
         body: JSON.stringify(updates),
       });
 
-      if (response.ok) {
-        router.refresh();
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update ticket');
       }
+
+      setNotification({
+        type: 'success',
+        message: 'Ticket updated successfully',
+      });
+
+      // Refresh after a short delay to show success message
+      setTimeout(() => {
+        router.refresh();
+      }, 1000);
     } catch (error) {
       console.error('Failed to update ticket:', error);
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to update ticket',
+      });
     } finally {
       setIsUpdating(false);
     }
@@ -55,7 +77,7 @@ export function TicketActions({ ticket, currentUserId }: TicketActionsProps) {
   };
 
   const handleResolve = () => {
-    updateTicket({ status: 'resolved', resolvedAt: new Date() });
+    updateTicket({ status: 'resolved', resolvedAt: new Date().toISOString() });
   };
 
   const handleClose = () => {
@@ -64,6 +86,14 @@ export function TicketActions({ ticket, currentUserId }: TicketActionsProps) {
 
   return (
     <div className="rounded-lg border bg-white p-6 space-y-4">
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       <h2 className="text-lg font-semibold">Quick Actions</h2>
 
       {/* Assign to Me */}

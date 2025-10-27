@@ -48,8 +48,8 @@ import {
   Trash2,
   TrendingUp,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface Template {
   id: string;
@@ -75,6 +75,12 @@ export default function NotificationTemplatesPage() {
   const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([]);
   const [total, setTotal] = useState(0);
 
+  // Notification state
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
+
   // Filters
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -91,6 +97,7 @@ export default function NotificationTemplatesPage() {
 
   const fetchTemplates = async () => {
     setLoading(true);
+    setNotification(null);
     try {
       const params = new URLSearchParams();
       if (typeFilter !== 'all') params.append('type', typeFilter);
@@ -109,7 +116,11 @@ export default function NotificationTemplatesPage() {
       setTotal(data.total || 0);
     } catch (error) {
       console.error('Error fetching templates:', error);
-      toast.error('Failed to load templates');
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to load templates',
+      });
     } finally {
       setLoading(false);
     }
@@ -145,6 +156,7 @@ export default function NotificationTemplatesPage() {
   };
 
   const handleDuplicate = async (templateId: string) => {
+    setNotification(null);
     try {
       const response = await fetch(
         `/api/admin/templates/${templateId}/duplicate`,
@@ -159,31 +171,49 @@ export default function NotificationTemplatesPage() {
         throw new Error(data.error || 'Failed to duplicate template');
       }
 
-      toast.success('Template duplicated successfully');
+      setNotification({
+        type: 'success',
+        message: 'Template duplicated successfully',
+      });
       fetchTemplates();
     } catch (error) {
       console.error('Error duplicating template:', error);
-      toast.error('Failed to duplicate template');
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to duplicate template',
+      });
     }
   };
 
   const handleDelete = async (templateId: string, templateName: string) => {
     if (!confirm(`Are you sure you want to delete "${templateName}"?`)) return;
 
+    setNotification(null);
     try {
       const response = await fetch(`/api/admin/templates/${templateId}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete template');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete template');
       }
 
-      toast.success('Template deleted successfully');
+      setNotification({
+        type: 'success',
+        message: `Template "${templateName}" deleted successfully`,
+      });
       fetchTemplates();
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast.error('Failed to delete template');
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to delete template',
+      });
     }
   };
 
@@ -217,6 +247,15 @@ export default function NotificationTemplatesPage() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
+      {/* Inline Notification */}
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -225,12 +264,12 @@ export default function NotificationTemplatesPage() {
             Manage email templates for your application
           </p>
         </div>
-        <Link href="/admin/notification-templates/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Template
-          </Button>
-        </Link>
+        <Button
+          onClick={() => router.push('/admin/notification-templates/new')}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create Template
+        </Button>
       </div>
 
       {/* Stats */}
@@ -354,14 +393,12 @@ export default function NotificationTemplatesPage() {
           ) : filteredTemplates.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No templates found</p>
-              <Button className="mt-4" asChild>
-                <Link
-                  href="/admin/notification-templates/new"
-                  className="flex items-center"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  <span>Create Your First Template</span>
-                </Link>
+              <Button
+                className="mt-4"
+                onClick={() => router.push('/admin/notification-templates/new')}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Create Your First Template
               </Button>
             </div>
           ) : (

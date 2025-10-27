@@ -10,12 +10,13 @@ import {
   SortAsc,
   SortDesc,
   Sparkles,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AttachmentListView } from '@/components/attachments/AttachmentListView';
 import { PaginationControls } from '@/components/attachments/PaginationControls';
 import { AttachmentPreviewModal } from '@/components/attachments/AttachmentPreviewModal';
-import { toast } from 'sonner';
+import { InlineNotification } from '@/components/ui/inline-notification';
 import type { EmailAttachment } from '@/db/schema';
 import { generateMissingDescriptions } from '@/lib/attachments/actions';
 
@@ -39,6 +40,11 @@ export default function AttachmentsPage(): JSX.Element {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingDescriptions, setIsGeneratingDescriptions] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,33 +59,55 @@ export default function AttachmentsPage(): JSX.Element {
 
   const fetchAttachments = async () => {
     setIsLoading(true);
+    setNotification(null);
     try {
       const response = await fetch(
         `/api/attachments?page=${currentPage}&limit=${itemsPerPage}`
       );
       
-      if (response.ok) {
-        const data = await response.json();
-        setAttachments(data.attachments || []);
-        setTotalItems(data.total || 0);
-        setTotalPages(data.totalPages || 0);
-      } else {
-        console.error('Failed to fetch attachments');
-        setAttachments([]);
-        toast.error('Failed to load attachments');
+      if (!response.ok) {
+        if (response.status === 401) {
+          setNotification({
+            type: 'error',
+            message: 'Session expired. Please log in again.',
+          });
+          return;
+        }
+        throw new Error('Failed to fetch attachments');
       }
+
+      const data = await response.json();
+      setAttachments(data.attachments || []);
+      setTotalItems(data.total || 0);
+      setTotalPages(data.totalPages || 0);
     } catch (error) {
       console.error('Error fetching attachments:', error);
       setAttachments([]);
-      toast.error('Error loading attachments');
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to load attachments',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Handle refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    setNotification(null);
+    await fetchAttachments();
+    setNotification({
+      type: 'success',
+      message: 'Attachments refreshed successfully',
+    });
+    setIsRefreshing(false);
+  };
+
   // Generate AI descriptions for attachments without them
   const handleGenerateDescriptions = async () => {
     setIsGeneratingDescriptions(true);
+    setNotification(null);
     try {
       console.log('🤖 Starting AI description generation...');
       const result = await generateMissingDescriptions(20);
@@ -87,18 +115,30 @@ export default function AttachmentsPage(): JSX.Element {
       console.log('🤖 Generation result:', result);
       
       if (result.success && result.generated > 0) {
-        toast.success(`Generated ${result.generated} descriptions`);
+        setNotification({
+          type: 'success',
+          message: `Generated ${result.generated} AI descriptions successfully`,
+        });
         // Refresh to show new descriptions
         await fetchAttachments();
       } else if (result.generated === 0) {
-        toast.info('All attachments already have descriptions');
+        setNotification({
+          type: 'info',
+          message: 'All attachments already have descriptions',
+        });
       } else {
-        toast.error(result.error || 'Failed to generate descriptions');
+        setNotification({
+          type: 'error',
+          message: result.error || 'Failed to generate descriptions',
+        });
         console.error('❌ Generation failed:', result.error);
       }
     } catch (error) {
       console.error('Error generating descriptions:', error);
-      toast.error(error instanceof Error ? error.message : 'Error generating descriptions');
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Error generating descriptions',
+      });
     } finally {
       setIsGeneratingDescriptions(false);
     }
@@ -168,15 +208,68 @@ export default function AttachmentsPage(): JSX.Element {
     setIsPreviewOpen(true);
   };
 
-  const handleDownload = (attachment: EmailAttachment) => {
-    toast.success(`Downloading ${attachment.filename}`);
-    // TODO: Implement download
+  const handleDownload = async (attachment: EmailAttachment) => {
+    setNotification(null);
+    try {
+      const response = await fetch(`/api/attachments/${attachment.id}/download`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download attachment');
+      }
+
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.filename || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      setNotification({
+        type: 'success',
+        message: `Downloaded ${attachment.filename}`,
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to download attachment',
+      });
+    }
   };
 
-  const handleDelete = (attachment: EmailAttachment) => {
-    if (confirm(`Are you sure you want to delete ${attachment.filename}?`)) {
+  const handleDelete = async (attachment: EmailAttachment) => {
+    if (!confirm(`Are you sure you want to delete ${attachment.filename}?`)) {
+      return;
+    }
+
+    setNotification(null);
+    try {
+      const response = await fetch(`/api/attachments/${attachment.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete attachment');
+      }
+
+      // Remove from local state
       setAttachments(attachments.filter((a) => a.id !== attachment.id));
-      toast.success('Attachment deleted');
+      setNotification({
+        type: 'success',
+        message: `Deleted ${attachment.filename}`,
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to delete attachment',
+      });
     }
   };
 
@@ -201,6 +294,17 @@ export default function AttachmentsPage(): JSX.Element {
 
   return (
     <div className="flex h-screen flex-col bg-white dark:bg-gray-900">
+      {/* Inline Notification */}
+      {notification && (
+        <div className="px-6 pt-4">
+          <InlineNotification
+            type={notification.type}
+            message={notification.message}
+            onDismiss={() => setNotification(null)}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <header className="h-16 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-6 py-3">
         <div className="flex items-center gap-4">
@@ -215,24 +319,41 @@ export default function AttachmentsPage(): JSX.Element {
           </div>
         </div>
 
-        {/* Generate Descriptions Button */}
-        <button
-          onClick={handleGenerateDescriptions}
-          disabled={isGeneratingDescriptions}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isGeneratingDescriptions ? (
-            <>
-              <Sparkles className="h-4 w-4 animate-pulse" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              Generate Descriptions
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh attachments"
+          >
+            {isRefreshing ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Refresh
+          </button>
+
+          {/* Generate Descriptions Button */}
+          <button
+            onClick={handleGenerateDescriptions}
+            disabled={isGeneratingDescriptions}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGeneratingDescriptions ? (
+              <>
+                <Sparkles className="h-4 w-4 animate-pulse" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                Generate Descriptions
+              </>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Filters & Search */}

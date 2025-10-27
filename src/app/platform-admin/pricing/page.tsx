@@ -1,6 +1,12 @@
 import { redirect } from 'next/navigation';
 import { requirePlatformAdmin } from '@/lib/admin/platform-middleware';
-import { DollarSign, MessageSquare, Brain, Save, ArrowLeft } from 'lucide-react';
+import {
+  DollarSign,
+  MessageSquare,
+  Brain,
+  Save,
+  ArrowLeft,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -20,12 +26,12 @@ export default async function PricingPage() {
       <div className="mx-auto max-w-5xl">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/platform-admin">
-            <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4" asChild>
+            <Link href="/platform-admin">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <h1 className="text-3xl font-bold text-slate-900">
             Pricing Management
           </h1>
@@ -176,4 +182,3 @@ export default async function PricingPage() {
     </div>
   );
 }
-

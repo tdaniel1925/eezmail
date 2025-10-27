@@ -8,7 +8,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Calendar, User, Clock } from 'lucide-react';
-import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 
 interface TicketHeaderProps {
@@ -55,12 +54,15 @@ export function TicketHeader({ ticket, assignee }: TicketHeaderProps) {
       <div className="flex items-start justify-between">
         <div className="space-y-3 flex-1">
           <div className="flex items-center gap-4">
-            <Link href="/admin/support">
-              <Button variant="ghost" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
+              onClick={() => (window.location.href = '/admin/support')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
             <span className="text-sm text-gray-500 font-mono">
               #{ticket.ticketNumber}
             </span>

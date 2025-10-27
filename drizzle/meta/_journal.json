@@ -105,14 +105,14 @@
                         "breakpoints":  true,
                         "when":  1761553078968,
                         "version":  "7",
-                        "tag":  ""
+                        "tag":  "0014_add_knowledge_base_tables"
                     },
                     {
                         "idx":  15,
                         "breakpoints":  true,
-                        "when":  1761553089421,
+                        "when":  1730080000000,
                         "version":  "7",
-                        "tag":  ""
+                        "tag":  "0015_recent_session_updates"
                     }
                 ]
 }

@@ -309,7 +309,9 @@ export async function getRevenueBytier(): Promise<{
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : 'Failed to get revenue by tier',
+        error instanceof Error
+          ? error.message
+          : 'Failed to get revenue by tier',
     };
   }
 }

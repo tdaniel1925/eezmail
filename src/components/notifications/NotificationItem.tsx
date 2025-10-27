@@ -12,7 +12,10 @@ import {
 import type { Notification } from '@/db/schema';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { markNotificationAsRead, deleteNotification } from '@/lib/notifications/actions';
+import {
+  markNotificationAsRead,
+  deleteNotification,
+} from '@/lib/notifications/actions';
 import { useNotificationStore } from '@/stores/notificationStore';
 import Link from 'next/link';
 
@@ -107,27 +110,32 @@ export function NotificationItem({ notification }: NotificationItemProps) {
           {(notification.actionUrl || notification.secondaryActionUrl) && (
             <div className="mt-3 flex flex-wrap gap-2">
               {notification.actionUrl && notification.actionLabel && (
-                <Link href={notification.actionUrl} onClick={handleActionClick}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-8 text-xs"
-                  >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={handleActionClick}
+                  asChild
+                >
+                  <Link href={notification.actionUrl}>
                     {notification.actionLabel}
                     <ExternalLink className="ml-1 h-3 w-3" />
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               )}
               {notification.secondaryActionUrl &&
                 notification.secondaryActionLabel && (
-                  <Link
-                    href={notification.secondaryActionUrl}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs"
                     onClick={handleActionClick}
+                    asChild
                   >
-                    <Button variant="ghost" size="sm" className="h-8 text-xs">
+                    <Link href={notification.secondaryActionUrl}>
                       {notification.secondaryActionLabel}
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 )}
             </div>
           )}
@@ -141,4 +149,3 @@ export function NotificationItem({ notification }: NotificationItemProps) {
     </div>
   );
 }
-

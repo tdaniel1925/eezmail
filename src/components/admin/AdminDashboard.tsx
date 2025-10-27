@@ -5,7 +5,7 @@
  * Main UI for managing sandbox companies and users
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Building2,
   Users,
@@ -21,9 +21,9 @@ import {
   XCircle,
 } from 'lucide-react';
 import { type AdminUser } from '@/lib/auth/admin-auth';
-import { toast } from 'sonner';
 import { CreateSandboxCompanyModal } from './CreateSandboxCompanyModal';
 import { SandboxCompanyCard } from './SandboxCompanyCard';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface SandboxCompany {
   id: string;
@@ -41,46 +41,134 @@ interface AdminDashboardProps {
   user: AdminUser;
 }
 
+type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+interface Notification {
+  type: NotificationType;
+  message: string;
+}
+
 export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
   const [companies, setCompanies] = useState<SandboxCompany[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [notification, setNotification] = useState<Notification | null>(null);
+  
+  // Debounce search
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search input
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
 
   // Fetch sandbox companies
-  const fetchCompanies = async (): Promise<void> => {
+  const fetchCompanies = useCallback(async (): Promise<void> => {
     try {
       setIsLoading(true);
+      setNotification(null);
+      
       const params = new URLSearchParams();
-      if (searchQuery) params.set('search', searchQuery);
+      if (debouncedSearch) params.set('search', debouncedSearch);
       if (statusFilter) params.set('status', statusFilter);
 
       const response = await fetch(`/api/admin/sandbox-companies?${params.toString()}`);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch companies');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch companies');
       }
 
       const data = await response.json();
       setCompanies(data.companies);
     } catch (error) {
       console.error('Error fetching companies:', error);
-      toast.error('Failed to load sandbox companies');
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to load sandbox companies',
+      });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [debouncedSearch, statusFilter]);
 
   useEffect(() => {
     fetchCompanies();
-  }, [searchQuery, statusFilter]);
+  }, [fetchCompanies]);
 
-  const handleCompanyCreated = (): void => {
+  const handleCompanyCreated = useCallback((): void => {
     setShowCreateModal(false);
+    setNotification({
+      type: 'success',
+      message: 'Sandbox company created successfully!',
+    });
     fetchCompanies();
-    toast.success('Sandbox company created successfully');
-  };
+  }, [fetchCompanies]);
+
+  const handleCompanyUpdated = useCallback((): void => {
+    setNotification({
+      type: 'success',
+      message: 'Company updated successfully!',
+    });
+    fetchCompanies();
+  }, [fetchCompanies]);
+
+  const handleCompanyDeleted = useCallback((): void => {
+    setNotification({
+      type: 'success',
+      message: 'Company deleted successfully!',
+    });
+    fetchCompanies();
+  }, [fetchCompanies]);
+
+  const handleError = useCallback((message: string): void => {
+    setNotification({
+      type: 'error',
+      message,
+    });
+  }, []);
+
+  const clearNotification = useCallback((): void => {
+    setNotification(null);
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      // Cmd+K or Ctrl+K to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('search-companies')?.focus();
+      }
+      // Cmd+N or Ctrl+N to create new company
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        setShowCreateModal(true);
+      }
+      // Escape to close modal
+      if (e.key === 'Escape' && showCreateModal) {
+        setShowCreateModal(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showCreateModal]);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -104,6 +192,17 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Inline Notification */}
+      {notification && (
+        <div className="mb-6">
+          <InlineNotification
+            type={notification.type}
+            message={notification.message}
+            onClose={clearNotification}
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -178,17 +277,20 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
             <input
+              id="search-companies"
               type="text"
-              placeholder="Search companies..."
+              placeholder="Search companies... (⌘K)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+              aria-label="Search companies"
             />
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+            aria-label="Filter by status"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>
@@ -198,7 +300,9 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          title="Create new company (⌘N)"
+          aria-label="Create new company"
         >
           <Plus className="h-4 w-4" />
           New Company
@@ -214,10 +318,14 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
         <div className="flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700">
           <Building2 className="mb-4 h-12 w-12 text-gray-400" />
           <p className="mb-2 text-lg font-medium text-gray-900 dark:text-white">
-            No sandbox companies yet
+            {debouncedSearch || statusFilter
+              ? 'No companies found'
+              : 'No sandbox companies yet'}
           </p>
           <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-            Create your first sandbox company to get started
+            {debouncedSearch || statusFilter
+              ? 'Try adjusting your search or filters'
+              : 'Create your first sandbox company to get started'}
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -233,7 +341,9 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
             <SandboxCompanyCard
               key={company.id}
               company={company}
-              onUpdate={fetchCompanies}
+              onUpdate={handleCompanyUpdated}
+              onDelete={handleCompanyDeleted}
+              onError={handleError}
             />
           ))}
         </div>
@@ -244,9 +354,9 @@ export function AdminDashboard({ user }: AdminDashboardProps): JSX.Element {
         <CreateSandboxCompanyModal
           onClose={() => setShowCreateModal(false)}
           onSuccess={handleCompanyCreated}
+          onError={handleError}
         />
       )}
     </div>
   );
 }
-

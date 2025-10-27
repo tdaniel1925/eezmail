@@ -46,15 +46,15 @@ export function TicketsFilters({ initialFilter }: TicketsFiltersProps) {
   };
 
   return (
-    <div className="rounded-lg border bg-white p-6 space-y-4">
-      <h2 className="text-lg font-semibold">Filters</h2>
+    <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6 space-y-4">
+      <h2 className="text-lg font-semibold text-white">Filters</h2>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search tickets..."
-            className="pl-10"
+            className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
             defaultValue={initialFilter.search}
             onChange={(e) =>
               setTimeout(

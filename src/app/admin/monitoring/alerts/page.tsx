@@ -1,110 +1,114 @@
+'use client';
+
 /**
  * Alert Rules Configuration Page
  * Create and manage alert rules visually
  */
 
-import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
-import { alertRules } from '@/db/schema';
-import { desc } from 'drizzle-orm';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertRulesTable } from '@/components/admin/AlertRulesTable';
 import { Button } from '@/components/ui/button';
 import { Plus, Shield } from 'lucide-react';
-import Link from 'next/link';
 
-export default async function AlertRulesPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function AlertRulesPage() {
+  const router = useRouter();
+  const [rules, setRules] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    enabled: 0,
+    critical: 0,
+    triggered: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
-    redirect('/dashboard');
-  }
-
-  // Get all alert rules
-  const rules = await db
-    .select()
-    .from(alertRules)
-    .orderBy(desc(alertRules.createdAt));
-
-  const stats = {
-    total: rules.length,
-    enabled: rules.filter((r) => r.enabled).length,
-    critical: rules.filter((r) => r.severity === 'critical').length,
-    triggered: rules.filter((r) => r.lastTriggeredAt !== null).length,
-  };
+  useEffect(() => {
+    async function loadRules() {
+      try {
+        const response = await fetch('/api/admin/monitoring/alerts');
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
+          if (response.status === 403) {
+            router.push('/dashboard');
+            return;
+          }
+          throw new Error('Failed to load alert rules');
+        }
+        const data = await response.json();
+        setRules(data.rules || []);
+        setStats(data.stats || stats);
+      } catch (error) {
+        console.error('Error loading alert rules:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadRules();
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <Shield className="h-6 w-6 text-primary" />
+            <div className="rounded-lg bg-blue-500/10 p-3 border border-blue-500/20">
+              <Shield className="h-6 w-6 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Alert Rules</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-3xl font-bold text-white">Alert Rules</h1>
+              <p className="text-sm text-gray-400">
                 Configure automated alerting thresholds
               </p>
             </div>
           </div>
 
-          <Link href="/admin/monitoring/alerts/new">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Rule
-            </Button>
-          </Link>
+          <Button
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+            onClick={() => router.push('/admin/monitoring/alerts/new')}
+          >
+            <Plus className="h-4 w-4" />
+            Create Rule
+          </Button>
         </div>
 
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="rounded-lg border bg-white p-6">
-            <p className="text-sm text-gray-500">Total Rules</p>
-            <p className="text-3xl font-bold text-gray-900 mt-2">
-              {stats.total}
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
+            <p className="text-sm text-gray-400">Total Rules</p>
+            <p className="text-3xl font-bold text-white mt-2">
+              {loading ? '-' : stats.total}
             </p>
           </div>
-          <div className="rounded-lg border bg-white p-6">
-            <p className="text-sm text-gray-500">Enabled</p>
-            <p className="text-3xl font-bold text-green-600 mt-2">
-              {stats.enabled}
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
+            <p className="text-sm text-gray-400">Enabled</p>
+            <p className="text-3xl font-bold text-green-400 mt-2">
+              {loading ? '-' : stats.enabled}
             </p>
           </div>
-          <div className="rounded-lg border bg-white p-6">
-            <p className="text-sm text-gray-500">Critical Level</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">
-              {stats.critical}
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
+            <p className="text-sm text-gray-400">Critical Level</p>
+            <p className="text-3xl font-bold text-red-400 mt-2">
+              {loading ? '-' : stats.critical}
             </p>
           </div>
-          <div className="rounded-lg border bg-white p-6">
-            <p className="text-sm text-gray-500">Recently Triggered</p>
-            <p className="text-3xl font-bold text-orange-600 mt-2">
-              {stats.triggered}
+          <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm p-6">
+            <p className="text-sm text-gray-400">Recently Triggered</p>
+            <p className="text-3xl font-bold text-orange-400 mt-2">
+              {loading ? '-' : stats.triggered}
             </p>
           </div>
         </div>
 
         {/* Alert Rules Table */}
-        <Suspense fallback={<div>Loading rules...</div>}>
+        {loading ? (
+          <div className="text-gray-400 text-center py-8">Loading rules...</div>
+        ) : (
           <AlertRulesTable rules={rules} />
-        </Suspense>
+        )}
       </div>
     </div>
   );

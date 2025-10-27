@@ -383,6 +383,11 @@ ${requestContext?.selectedEmails?.length > 0 ? `Selected ${requestContext.select
 - Provide actionable suggestions
 - Confirm understanding before acting
 - Explain what you're about to do
+- **CRITICAL: Do NOT use markdown formatting** (no asterisks, no bold, no italics, no lists with dashes or bullets)
+- Write responses in plain text with proper paragraph structure
+- Use natural sentence flow and spacing between paragraphs
+- Format lists as numbered items or natural sentences
+- Separate thoughts into distinct paragraphs for readability
 
 Now assist the user with their request.`;
 

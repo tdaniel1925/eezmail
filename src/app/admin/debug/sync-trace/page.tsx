@@ -132,28 +132,49 @@ export default async function SyncTracePage(): Promise<JSX.Element> {
             <strong>📊 What is this page for?</strong>
           </p>
           <p className="text-sm text-blue-800 dark:text-blue-300 mb-3">
-            This page monitors all email synchronization jobs running in the background across Gmail, Microsoft, and IMAP accounts. 
-            Each time the system fetches new emails, it creates a "sync job" tracked here.
+            This page monitors all email synchronization jobs running in the
+            background across Gmail, Microsoft, and IMAP accounts. Each time the
+            system fetches new emails, it creates a "sync job" tracked here.
           </p>
           <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-disc list-inside">
-            <li><strong>Active:</strong> Jobs currently running and fetching emails</li>
-            <li><strong>Completed:</strong> Successfully finished sync operations</li>
-            <li><strong>Failed:</strong> Jobs that encountered errors (check details for troubleshooting)</li>
-            <li><strong>Progress:</strong> Real-time view of how many emails have been processed</li>
-            <li><strong>Duration:</strong> How long each sync operation takes (helps identify slow accounts)</li>
+            <li>
+              <strong>Active:</strong> Jobs currently running and fetching
+              emails
+            </li>
+            <li>
+              <strong>Completed:</strong> Successfully finished sync operations
+            </li>
+            <li>
+              <strong>Failed:</strong> Jobs that encountered errors (check
+              details for troubleshooting)
+            </li>
+            <li>
+              <strong>Progress:</strong> Real-time view of how many emails have
+              been processed
+            </li>
+            <li>
+              <strong>Duration:</strong> How long each sync operation takes
+              (helps identify slow accounts)
+            </li>
           </ul>
           <p className="text-sm text-blue-800 dark:text-blue-300 mt-3">
-            💡 <strong>Use this to:</strong> Debug sync issues, monitor performance, identify stuck jobs, and track which accounts sync most frequently.
+            💡 <strong>Use this to:</strong> Debug sync issues, monitor
+            performance, identify stuck jobs, and track which accounts sync most
+            frequently.
           </p>
         </div>
       </div>
 
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Loading sync jobs...</span>
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <span className="ml-3 text-gray-600 dark:text-gray-400">
+              Loading sync jobs...
+            </span>
+          </div>
+        }
+      >
         <SyncJobsContent />
       </Suspense>
     </div>

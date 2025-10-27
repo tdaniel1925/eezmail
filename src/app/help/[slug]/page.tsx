@@ -66,12 +66,12 @@ export default async function ArticlePage({ params }: PageProps) {
       <div className="mx-auto max-w-4xl px-6 py-12">
         {/* Breadcrumb */}
         <div className="mb-6">
-          <Link href="/help">
-            <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/help">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Back to Help Center
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Article Header */}

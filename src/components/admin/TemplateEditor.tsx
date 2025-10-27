@@ -35,8 +35,8 @@ import {
   X,
   AlertCircle,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InlineNotification } from '@/components/ui/inline-notification';
 
 interface TemplateEditorProps {
   templateId?: string;
@@ -51,6 +51,15 @@ export function TemplateEditor({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('edit');
+
+  // Notification state
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
+
+  // Validation errors
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Form state
   const [formData, setFormData] = useState({
@@ -99,7 +108,26 @@ export function TemplateEditor({
   }, [formData.htmlContent]);
 
   const handleSave = async (asDraft = false) => {
+    // Validate required fields
+    const newErrors: Record<string, string> = {};
+    if (!formData.name) newErrors.name = 'Template name is required';
+    if (!formData.slug) newErrors.slug = 'Slug is required';
+    if (!formData.subject) newErrors.subject = 'Subject line is required';
+    if (!formData.htmlContent)
+      newErrors.htmlContent = 'HTML content is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setNotification({
+        type: 'error',
+        message: 'Please fill in all required fields',
+      });
+      return;
+    }
+
+    setErrors({});
     setSaving(true);
+    setNotification(null);
     try {
       const url = templateId
         ? `/api/admin/templates/${templateId}`
@@ -124,38 +152,56 @@ export function TemplateEditor({
         throw new Error(data.error || 'Failed to save template');
       }
 
-      toast.success(
-        templateId
+      setNotification({
+        type: 'success',
+        message: templateId
           ? 'Template updated successfully'
-          : 'Template created successfully'
-      );
+          : 'Template created successfully',
+      });
 
       if (!templateId && data.template) {
-        router.push(`/admin/notification-templates/${data.template.id}`);
+        // Wait a bit to show the success message, then redirect
+        setTimeout(() => {
+          router.push(`/admin/notification-templates/${data.template.id}`);
+        }, 1500);
       }
     } catch (error) {
       console.error('Error saving template:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to save template'
-      );
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to save template',
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleSendTest = async () => {
+    if (!templateId) {
+      setNotification({
+        type: 'error',
+        message: 'Please save the template before sending a test email',
+      });
+      return;
+    }
+
     if (!formData.fromEmail) {
-      toast.error('Please enter a test email address');
+      setNotification({
+        type: 'error',
+        message: 'Please enter a test email address',
+      });
       return;
     }
 
     setLoading(true);
+    setNotification(null);
     try {
       const response = await fetch(`/api/admin/templates/${templateId}/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          recipientEmail: formData.fromEmail, // Using fromEmail as test email for now
+          recipientEmail: formData.fromEmail,
           variables: previewData,
         }),
       });
@@ -166,12 +212,17 @@ export function TemplateEditor({
         throw new Error(data.error || 'Failed to send test email');
       }
 
-      toast.success('Test email sent successfully!');
+      setNotification({
+        type: 'success',
+        message: `Test email sent successfully to ${formData.fromEmail}!`,
+      });
     } catch (error) {
       console.error('Error sending test email:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to send test email'
-      );
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to send test email',
+      });
     } finally {
       setLoading(false);
     }
@@ -181,6 +232,7 @@ export function TemplateEditor({
     if (!templateId) return;
 
     setLoading(true);
+    setNotification(null);
     try {
       const response = await fetch(
         `/api/admin/templates/${templateId}/duplicate`,
@@ -195,13 +247,23 @@ export function TemplateEditor({
         throw new Error(data.error || 'Failed to duplicate template');
       }
 
-      toast.success('Template duplicated successfully');
-      router.push(`/admin/notification-templates/${data.newTemplate.id}`);
+      setNotification({
+        type: 'success',
+        message: 'Template duplicated successfully. Redirecting...',
+      });
+
+      setTimeout(() => {
+        router.push(`/admin/notification-templates/${data.newTemplate.id}`);
+      }, 1500);
     } catch (error) {
       console.error('Error duplicating template:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to duplicate template'
-      );
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to duplicate template',
+      });
     } finally {
       setLoading(false);
     }
@@ -209,23 +271,40 @@ export function TemplateEditor({
 
   const handleDelete = async () => {
     if (!templateId) return;
-    if (!confirm('Are you sure you want to delete this template?')) return;
+    if (
+      !confirm(
+        'Are you sure you want to delete this template? This action cannot be undone.'
+      )
+    )
+      return;
 
     setLoading(true);
+    setNotification(null);
     try {
       const response = await fetch(`/api/admin/templates/${templateId}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete template');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete template');
       }
 
-      toast.success('Template deleted successfully');
-      router.push('/admin/notification-templates');
+      setNotification({
+        type: 'success',
+        message: 'Template deleted successfully. Redirecting...',
+      });
+
+      setTimeout(() => {
+        router.push('/admin/notification-templates');
+      }, 1500);
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast.error('Failed to delete template');
+      setNotification({
+        type: 'error',
+        message:
+          error instanceof Error ? error.message : 'Failed to delete template',
+      });
     } finally {
       setLoading(false);
     }
@@ -276,6 +355,15 @@ export function TemplateEditor({
 
   return (
     <div className="space-y-6">
+      {/* Inline Notification */}
+      {notification && (
+        <InlineNotification
+          type={notification.type}
+          message={notification.message}
+          onDismiss={() => setNotification(null)}
+        />
+      )}
+
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
@@ -359,27 +447,51 @@ export function TemplateEditor({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Template Name *</Label>
+                  <Label htmlFor="name">
+                    Template Name *{' '}
+                    {errors.name && (
+                      <span className="text-destructive text-xs ml-2">
+                        {errors.name}
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, name: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }));
+                      setErrors((prev) => ({ ...prev, name: '' }));
+                    }}
                     placeholder="Welcome Email"
+                    className={errors.name ? 'border-destructive' : ''}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="slug">Slug *</Label>
+                  <Label htmlFor="slug">
+                    Slug *{' '}
+                    {errors.slug && (
+                      <span className="text-destructive text-xs ml-2">
+                        {errors.slug}
+                      </span>
+                    )}
+                  </Label>
                   <Input
                     id="slug"
                     value={formData.slug}
-                    onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, slug: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        slug: e.target.value,
+                      }));
+                      setErrors((prev) => ({ ...prev, slug: '' }));
+                    }}
                     placeholder="welcome-email"
                     disabled={!!templateId}
+                    className={errors.slug ? 'border-destructive' : ''}
                   />
                 </div>
               </div>
@@ -476,17 +588,26 @@ export function TemplateEditor({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject Line *</Label>
+                <Label htmlFor="subject">
+                  Subject Line *{' '}
+                  {errors.subject && (
+                    <span className="text-destructive text-xs ml-2">
+                      {errors.subject}
+                    </span>
+                  )}
+                </Label>
                 <Input
                   id="subject"
                   value={formData.subject}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData((prev) => ({
                       ...prev,
                       subject: e.target.value,
-                    }))
-                  }
+                    }));
+                    setErrors((prev) => ({ ...prev, subject: '' }));
+                  }}
                   placeholder="Welcome to EaseMail!"
+                  className={errors.subject ? 'border-destructive' : ''}
                 />
               </div>
 
@@ -506,19 +627,27 @@ export function TemplateEditor({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="htmlContent">HTML Content *</Label>
+                <Label htmlFor="htmlContent">
+                  HTML Content *{' '}
+                  {errors.htmlContent && (
+                    <span className="text-destructive text-xs ml-2">
+                      {errors.htmlContent}
+                    </span>
+                  )}
+                </Label>
                 <Textarea
                   id="htmlContent"
                   value={formData.htmlContent}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData((prev) => ({
                       ...prev,
                       htmlContent: e.target.value,
-                    }))
-                  }
+                    }));
+                    setErrors((prev) => ({ ...prev, htmlContent: '' }));
+                  }}
                   placeholder="<html>...</html>"
                   rows={15}
-                  className="font-mono text-sm"
+                  className={`font-mono text-sm ${errors.htmlContent ? 'border-destructive' : ''}`}
                 />
                 <p className="text-xs text-muted-foreground">
                   Use variables like {'{'}

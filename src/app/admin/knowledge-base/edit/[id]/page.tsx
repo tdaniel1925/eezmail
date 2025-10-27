@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
 import { knowledgeBaseArticles, knowledgeBaseCategories } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -25,14 +26,9 @@ export default async function ArticleEditorPage({ params }: PageProps) {
     redirect('/login');
   }
 
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
+  // Check if user is admin using proper auth helper
+  const adminCheck = await isAdmin();
+  if (!adminCheck) {
     redirect('/dashboard');
   }
 
@@ -59,8 +55,10 @@ export default async function ArticleEditorPage({ params }: PageProps) {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <Suspense fallback={<div>Loading editor...</div>}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <Suspense
+        fallback={<div className="text-gray-400 p-8">Loading editor...</div>}
+      >
         <ArticleEditor
           article={article}
           categories={categories}

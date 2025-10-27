@@ -136,13 +136,13 @@ export function KBArticlesTable({
           placeholder="Search articles..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
+          className="max-w-sm bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-slate-700/50 border-slate-600 text-white">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-slate-800 border-slate-700">
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="draft">Draft</SelectItem>
             <SelectItem value="published">Published</SelectItem>
@@ -150,10 +150,10 @@ export function KBArticlesTable({
           </SelectContent>
         </Select>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-slate-700/50 border-slate-600 text-white">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-slate-800 border-slate-700">
             <SelectItem value="all">All Categories</SelectItem>
             {categories.map((cat) => (
               <SelectItem key={cat.id} value={cat.id}>
@@ -165,90 +165,106 @@ export function KBArticlesTable({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border bg-white shadow-sm">
+      <div className="rounded-lg border border-slate-700 bg-slate-800/50 backdrop-blur-sm shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Visibility</TableHead>
-              <TableHead className="text-right">Views</TableHead>
-              <TableHead className="text-right">Helpful</TableHead>
-              <TableHead>Published</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-slate-700/50 border-slate-700">
+              <TableHead className="text-gray-300">Title</TableHead>
+              <TableHead className="text-gray-300">Category</TableHead>
+              <TableHead className="text-gray-300">Status</TableHead>
+              <TableHead className="text-gray-300">Visibility</TableHead>
+              <TableHead className="text-right text-gray-300">Views</TableHead>
+              <TableHead className="text-right text-gray-300">
+                Helpful
+              </TableHead>
+              <TableHead className="text-gray-300">Published</TableHead>
+              <TableHead className="text-right text-gray-300">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredArticles.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-gray-500">
+                <TableCell colSpan={8} className="text-center text-gray-400">
                   No articles found
                 </TableCell>
               </TableRow>
             ) : (
               filteredArticles.map((item) => (
-                <TableRow key={item.article.id}>
+                <TableRow
+                  key={item.article.id}
+                  className="border-slate-700 hover:bg-slate-700/30"
+                >
                   <TableCell>
                     <div>
                       <div className="flex items-center gap-2">
                         <Link
                           href={`/admin/knowledge-base/edit/${item.article.id}`}
-                          className="font-medium hover:underline"
+                          className="font-medium text-white hover:underline"
                         >
                           {item.article.title}
                         </Link>
                         {item.article.featured && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+                          >
                             Featured
                           </Badge>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-400">
                         /{item.article.slug}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     {item.category ? (
-                      <Badge variant="outline">{item.category.name}</Badge>
+                      <Badge
+                        variant="outline"
+                        className="bg-blue-500/10 text-blue-400 border-blue-500/20"
+                      >
+                        {item.category.name}
+                      </Badge>
                     ) : (
                       <span className="text-gray-400">Uncategorized</span>
                     )}
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={
+                      variant="outline"
+                      className={
                         item.article.status === 'published'
-                          ? 'default'
+                          ? 'bg-green-500/10 text-green-400 border-green-500/20'
                           : item.article.status === 'draft'
-                            ? 'secondary'
-                            : 'outline'
+                            ? 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                            : 'bg-orange-500/10 text-orange-400 border-orange-500/20'
                       }
                     >
                       {item.article.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm capitalize">
+                    <span className="text-sm capitalize text-gray-300">
                       {item.article.visibility}
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right text-gray-300">
                     {item.article.views || 0}
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="text-green-600">
+                    <span className="text-green-400">
                       {item.article.helpfulCount || 0}
                     </span>
                     <span className="text-gray-400 mx-1">/</span>
-                    <span className="text-red-600">
+                    <span className="text-red-400">
                       {item.article.notHelpfulCount || 0}
                     </span>
                   </TableCell>
                   <TableCell>
                     {item.article.publishedAt ? (
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-400">
                         {format(
                           new Date(item.article.publishedAt),
                           'MMM d, yyyy'
@@ -263,15 +279,22 @@ export function KBArticlesTable({
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-gray-300 hover:text-white hover:bg-slate-700"
+                        >
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-slate-800 border-slate-700"
+                      >
+                        <DropdownMenuItem className="text-gray-300 hover:bg-slate-700 hover:text-white">
                           <Link
                             href={`/admin/knowledge-base/edit/${item.article.id}`}
-                            className="flex items-center"
+                            className="flex items-center w-full"
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             <span>Edit</span>
@@ -284,16 +307,17 @@ export function KBArticlesTable({
                               item.article.featured
                             )
                           }
+                          className="text-gray-300 hover:bg-slate-700 hover:text-white"
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           {item.article.featured ? 'Unfeature' : 'Feature'}
                         </DropdownMenuItem>
                         {item.article.status === 'published' && (
-                          <DropdownMenuItem asChild>
+                          <DropdownMenuItem className="text-gray-300 hover:bg-slate-700 hover:text-white">
                             <Link
                               href={`/help/${item.article.slug}`}
                               target="_blank"
-                              className="flex items-center"
+                              className="flex items-center w-full"
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
                               <span>View Public</span>
@@ -302,7 +326,7 @@ export function KBArticlesTable({
                         )}
                         <DropdownMenuItem
                           onClick={() => handleDelete(item.article.id)}
-                          className="text-red-600"
+                          className="text-red-400 hover:bg-slate-700"
                         >
                           <Trash className="h-4 w-4 mr-2" />
                           Delete

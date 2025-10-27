@@ -1,102 +1,108 @@
+'use client';
+
 /**
  * Knowledge Base Admin Page
  * Manage articles and categories
  */
 
-import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
-import { db } from '@/db';
-import { knowledgeBaseArticles, knowledgeBaseCategories } from '@/db/schema';
-import { desc, eq, count } from 'drizzle-orm';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { KBArticlesTable } from '@/components/admin/KBArticlesTable';
 import { KBStats } from '@/components/admin/KBStats';
 import { Button } from '@/components/ui/button';
 import { Plus, BookOpen } from 'lucide-react';
-import Link from 'next/link';
 
-export default async function KnowledgeBasePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function KnowledgeBasePage() {
+  const router = useRouter();
+  const [articles, setArticles] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    published: 0,
+    draft: 0,
+    views: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  if (!user) {
-    redirect('/login');
-  }
-
-  // Check if user is admin
-  const { data: userData } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-
-  if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
-    redirect('/dashboard');
-  }
-
-  // Get articles with category info
-  const articles = await db
-    .select({
-      article: knowledgeBaseArticles,
-      category: knowledgeBaseCategories,
-    })
-    .from(knowledgeBaseArticles)
-    .leftJoin(
-      knowledgeBaseCategories,
-      eq(knowledgeBaseArticles.categoryId, knowledgeBaseCategories.id)
-    )
-    .orderBy(desc(knowledgeBaseArticles.createdAt))
-    .limit(100);
-
-  // Get statistics
-  const stats = {
-    total: articles.length,
-    published: articles.filter((a) => a.article.status === 'published').length,
-    draft: articles.filter((a) => a.article.status === 'draft').length,
-    views: articles.reduce((sum, a) => sum + (a.article.views || 0), 0),
-  };
+  useEffect(() => {
+    async function loadArticles() {
+      try {
+        const response = await fetch('/api/admin/kb/articles');
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
+          if (response.status === 403) {
+            router.push('/dashboard');
+            return;
+          }
+          throw new Error('Failed to load articles');
+        }
+        const data = await response.json();
+        setArticles(data.articles || []);
+        setStats(data.stats || { total: 0, published: 0, draft: 0, views: 0 });
+      } catch (error) {
+        console.error('Error loading articles:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadArticles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-3">
-              <BookOpen className="h-6 w-6 text-primary" />
+            <div className="rounded-lg bg-blue-500/10 p-3 border border-blue-500/20">
+              <BookOpen className="h-6 w-6 text-blue-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Knowledge Base
-              </h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-3xl font-bold text-white">Knowledge Base</h1>
+              <p className="text-sm text-gray-400">
                 Manage help articles and documentation
               </p>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <Link href="/admin/knowledge-base/categories">
-              <Button variant="outline">Manage Categories</Button>
-            </Link>
-            <Link href="/admin/knowledge-base/new">
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                New Article
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              className="border-slate-600 text-gray-300 hover:bg-slate-700 hover:text-white"
+              onClick={() => router.push('/admin/knowledge-base/categories')}
+            >
+              Manage Categories
+            </Button>
+            <Button
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => router.push('/admin/knowledge-base/new')}
+            >
+              <Plus className="h-4 w-4" />
+              New Article
+            </Button>
           </div>
         </div>
 
         {/* Statistics */}
-        <KBStats stats={stats} />
+        {loading ? (
+          <div className="text-gray-400">Loading statistics...</div>
+        ) : (
+          <KBStats stats={stats} />
+        )}
 
         {/* Articles Table */}
-        <Suspense fallback={<div>Loading articles...</div>}>
-          <KBArticlesTable articles={articles} />
-        </Suspense>
+        {loading ? (
+          <div className="text-gray-400">Loading articles...</div>
+        ) : (
+          <Suspense
+            fallback={<div className="text-gray-400">Loading articles...</div>}
+          >
+            <KBArticlesTable articles={articles} />
+          </Suspense>
+        )}
       </div>
     </div>
   );
