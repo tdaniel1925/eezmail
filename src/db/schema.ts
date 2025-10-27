@@ -297,10 +297,23 @@ export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   fullName: text('full_name'),
+  firstName: text('first_name'),
+  lastName: text('last_name'),
   avatarUrl: text('avatar_url'),
 
-  // NEW: Username-based authentication
-  username: text('username').unique(),
+  // Username-based authentication (REQUIRED - users login with username only)
+  username: text('username').notNull().unique(),
+
+  // Username change management
+  usernameChangeToken: text('username_change_token'),
+  usernameChangeTokenExpiry: timestamp('username_change_token_expiry'),
+
+  // Account status
+  isSuspended: boolean('is_suspended').default(false),
+  suspendedAt: timestamp('suspended_at'),
+  suspensionReason: text('suspension_reason'),
+  isDeleted: boolean('is_deleted').default(false),
+  deletedAt: timestamp('deleted_at'),
 
   // Account type and organization
   accountType: accountTypeEnum('account_type').default('individual'),

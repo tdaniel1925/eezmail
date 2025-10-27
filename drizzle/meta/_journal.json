@@ -113,6 +113,20 @@
                         "when":  1730080000000,
                         "version":  "7",
                         "tag":  "0015_recent_session_updates"
+                    },
+                    {
+                        "idx":  16,
+                        "breakpoints":  true,
+                        "when":  1730256000000,
+                        "version":  "7",
+                        "tag":  "0016_username_only_auth"
+                    },
+                    {
+                        "idx":  17,
+                        "breakpoints":  true,
+                        "when":  1730257000000,
+                        "version":  "7",
+                        "tag":  "0017_add_first_last_name"
                     }
                 ]
 }

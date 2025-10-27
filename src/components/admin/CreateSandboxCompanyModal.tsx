@@ -217,10 +217,15 @@ export function CreateSandboxCompanyModal({
                       : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600'
                   }`}
                   aria-invalid={errors.name && touched.name ? 'true' : 'false'}
-                  aria-describedby={errors.name && touched.name ? 'name-error' : undefined}
+                  aria-describedby={
+                    errors.name && touched.name ? 'name-error' : undefined
+                  }
                 />
                 {errors.name && touched.name && (
-                  <p id="name-error" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  <p
+                    id="name-error"
+                    className="mt-1 text-sm text-red-600 dark:text-red-400"
+                  >
                     {errors.name}
                   </p>
                 )}
@@ -291,7 +296,9 @@ export function CreateSandboxCompanyModal({
                         : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600'
                     }`}
                     aria-invalid={
-                      errors.contactEmail && touched.contactEmail ? 'true' : 'false'
+                      errors.contactEmail && touched.contactEmail
+                        ? 'true'
+                        : 'false'
                     }
                     aria-describedby={
                       errors.contactEmail && touched.contactEmail

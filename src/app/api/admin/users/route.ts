@@ -9,6 +9,14 @@ import { isAdmin } from '@/lib/admin/auth';
 // Schema for user creation
 const createUserSchema = z.object({
   email: z.string().email(),
+  username: z
+    .string()
+    .regex(
+      /^[a-z0-9_]{3,30}$/,
+      'Username must be 3-30 characters (lowercase, numbers, underscores only)'
+    ),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
   name: z.string().min(1),
   role: z.enum(['user', 'admin', 'super_admin']).default('user'),
   tier: z.enum(['individual', 'team', 'enterprise']).default('individual'),
@@ -41,13 +49,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const userType = searchParams.get('type') || 'all'; // all, regular, sandbox
 
     // Build where clause
-    const whereClause =
-      search
-        ? or(
-            ilike(users.email, `%${search}%`),
-            ilike(users.name, `%${search}%`)
-          )
-        : undefined;
+    const whereClause = search
+      ? or(ilike(users.email, `%${search}%`), ilike(users.name, `%${search}%`))
+      : undefined;
 
     // Fetch users from database
     let allUsers = await db
@@ -125,7 +129,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { email, name, role, tier, sendInvite, isSandbox } = validation.data;
+    const {
+      email,
+      username,
+      firstName,
+      lastName,
+      name,
+      role,
+      tier,
+      sendInvite,
+      isSandbox,
+    } = validation.data;
+
+    // Check if username already exists
+    const existingUsername = await db.query.users.findFirst({
+      where: eq(users.username, username.toLowerCase()),
+    });
+
+    if (existingUsername) {
+      return NextResponse.json(
+        { error: `Username "${username}" is already taken` },
+        { status: 400 }
+      );
+    }
 
     // Use admin client for creating users
     const adminClient = createAdminClient();
@@ -168,6 +194,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           email_confirm: !sendInvite, // Auto-confirm if not sending invite
           user_metadata: {
             name,
+            username: username.toLowerCase(),
             role,
             tier,
             isSandbox,
@@ -196,7 +223,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .values({
         id: authUserId,
         email,
+        username: username.toLowerCase(),
+        firstName,
+        lastName,
         name,
+        fullName: name,
         role: role as 'user' | 'admin' | 'super_admin',
         tier: tier as 'individual' | 'team' | 'enterprise',
         isSandboxUser: isSandbox,
@@ -205,7 +236,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         target: users.id,
         set: {
           email,
+          username: username.toLowerCase(),
+          firstName,
+          lastName,
           name,
+          fullName: name,
           role: role as 'user' | 'admin' | 'super_admin',
           tier: tier as 'individual' | 'team' | 'enterprise',
           isSandboxUser: isSandbox,

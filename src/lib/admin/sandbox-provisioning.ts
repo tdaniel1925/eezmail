@@ -37,7 +37,7 @@ export function generateSecurePassword(): string {
 }
 
 interface CreateSandboxUserData {
-  email?: string;
+  email: string; // REQUIRED - no longer optional
   preferredUsername?: string;
   accountType: 'individual' | 'team' | 'enterprise';
   roleHierarchy:
@@ -65,20 +65,15 @@ export async function createSandboxUser(data: CreateSandboxUserData): Promise<{
   try {
     const supabase = await createClient();
 
-    // Generate username
-    const { username, error: usernameError } = await generateUsername(
-      data.preferredUsername
-    );
-    if (usernameError) {
-      return { success: false, error: usernameError };
-    }
+    // Generate username from preferred or email
+    const baseUsername = data.preferredUsername || data.email.split('@')[0];
+    const username = await generateUsername(baseUsername);
 
     // Generate secure password
     const password = generateSecurePassword();
 
-    // Generate email if not provided
-    // Use a sandbox-specific domain, not @easemail.com
-    const email = data.email || `${username}@sandbox.local`;
+    // Use provided email (now required)
+    const email = data.email;
 
     // Create Supabase Auth user
     const { data: authData, error: authError } =

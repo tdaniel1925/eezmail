@@ -54,7 +54,9 @@ export function AddUserModal({
 
   const [formData, setFormData] = useState({
     email: '',
-    name: '',
+    username: '',
+    firstName: '',
+    lastName: '',
     role: 'user',
     tier: 'individual',
     organizationName: '',
@@ -97,7 +99,10 @@ export function AddUserModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: formData.email,
-          name: formData.name,
+          username: formData.username,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          name: `${formData.firstName} ${formData.lastName}`,
           role: finalRole,
           tier: finalTier,
           isSandbox,
@@ -140,7 +145,9 @@ export function AddUserModal({
   const resetForm = () => {
     setFormData({
       email: '',
-      name: '',
+      username: '',
+      firstName: '',
+      lastName: '',
       role: 'user',
       tier: 'individual',
       organizationName: '',
@@ -269,18 +276,67 @@ export function AddUserModal({
                 disabled={loading}
                 className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
               />
+              <p className="text-xs text-gray-400">
+                Used for notifications and password recovery
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-300">
-                Full Name *
+              <Label htmlFor="username" className="text-gray-300">
+                Username *
               </Label>
               <Input
-                id="name"
-                placeholder="John Doe"
-                value={formData.name}
+                id="username"
+                type="text"
+                placeholder="john_doe"
+                value={formData.username}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({
+                    ...formData,
+                    username: e.target.value
+                      .toLowerCase()
+                      .replace(/[^a-z0-9_]/g, ''),
+                  })
+                }
+                required
+                disabled={loading}
+                pattern="[a-z0-9_]{3,30}"
+                minLength={3}
+                maxLength={30}
+                className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
+              />
+              <p className="text-xs text-gray-400">
+                Used for login (3-30 chars, lowercase, numbers, underscores)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="firstName" className="text-gray-300">
+                First Name *
+              </Label>
+              <Input
+                id="firstName"
+                placeholder="John"
+                value={formData.firstName}
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
+                required
+                disabled={loading}
+                className="bg-slate-700/50 border-slate-600 text-white placeholder:text-gray-400"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lastName" className="text-gray-300">
+                Last Name *
+              </Label>
+              <Input
+                id="lastName"
+                placeholder="Doe"
+                value={formData.lastName}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
                 }
                 required
                 disabled={loading}

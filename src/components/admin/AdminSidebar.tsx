@@ -46,6 +46,7 @@ const debugSection = [
 
 const systemSection = [
   { name: 'Permissions', href: '/admin/permissions', icon: Shield },
+  { name: 'All Usernames', href: '/admin/usernames', icon: Users },
   { name: 'Email Accounts', href: '/admin/email-accounts', icon: Mail },
   { name: 'Email Templates', href: '/admin/email-templates', icon: Mail },
   {

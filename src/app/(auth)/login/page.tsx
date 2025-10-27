@@ -4,12 +4,11 @@ import { useState } from 'react';
 import { loginAction } from '@/app/actions/auth';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, ArrowRight } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, LogIn } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
-import { OAuthButtons } from '@/components/auth/OAuthButtons';
 
 export default function LoginPage(): JSX.Element {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,11 +19,11 @@ export default function LoginPage(): JSX.Element {
     setLoading(true);
 
     console.log('[AUTH] ========== SERVER-SIDE LOGIN STARTED ==========');
-    console.log('[AUTH] Login attempt for:', email);
+    console.log('[AUTH] Login attempt for username:', username);
 
     try {
       const formData = new FormData();
-      formData.append('email', email);
+      formData.append('username', username);
       formData.append('password', password);
 
       const result = await loginAction(formData);
@@ -74,21 +73,6 @@ export default function LoginPage(): JSX.Element {
 
         {/* Login Card */}
         <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md p-8 shadow-lg">
-          {/* OAuth Buttons */}
-          <OAuthButtons mode="signin" />
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="bg-white/60 dark:bg-white/5 px-4 text-gray-600 dark:text-white/60">
-                Or sign in with email
-              </span>
-            </div>
-          </div>
-
           <form onSubmit={handleLogin} className="space-y-6">
             {error && (
               <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4">
@@ -98,28 +82,44 @@ export default function LoginPage(): JSX.Element {
               </div>
             )}
 
-            {/* Email/Username Input */}
+            {/* Username Input */}
             <div>
               <label
-                htmlFor="email"
+                htmlFor="username"
                 className="block text-sm font-medium text-gray-900 dark:text-white mb-2"
               >
-                Email or Username
+                Username
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <Mail className="h-5 w-5 text-gray-500 dark:text-white/40" />
+                  <User className="h-5 w-5 text-gray-500 dark:text-white/40" />
                 </div>
                 <input
-                  id="email"
+                  id="username"
                   type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   required
-                  autoComplete="username email"
+                  autoComplete="username"
                   className="block w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 backdrop-blur-md transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-                  placeholder="you@example.com or username"
+                  placeholder="your_username"
                 />
+              </div>
+              
+              {/* Important Notice */}
+              <div className="mt-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-1">
+                  ⚠️ Username Required
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-400">
+                  You must login with your <strong>username</strong>, not your email address.
+                </p>
+                <Link
+                  href="/forgot-username"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline mt-1 inline-block"
+                >
+                  Forgot your username? Look it up with your email →
+                </Link>
               </div>
             </div>
 
