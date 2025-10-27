@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { AnimatedButton } from '@/components/ui/animated-button';
 
-export default function ChangeUsernamePage() {
+function ChangeUsernameContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -270,5 +270,22 @@ export default function ChangeUsernamePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChangeUsernamePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-white dark:bg-black">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-500 mb-4" />
+            <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <ChangeUsernameContent />
+    </Suspense>
   );
 }
