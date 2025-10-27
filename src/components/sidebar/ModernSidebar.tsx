@@ -19,6 +19,8 @@ interface ModernSidebarProps {
     name: string;
     email: string;
     avatar?: string;
+    role?: string; // Legacy role field
+    roleHierarchy?: string; // New hierarchical role field
   };
   accounts: EmailAccount[];
   currentAccountId: string | null;

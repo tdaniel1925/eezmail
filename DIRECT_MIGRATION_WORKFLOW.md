@@ -3,6 +3,7 @@
 ## When to Use Direct Migrations
 
 Use direct SQL migrations in Supabase SQL Editor when:
+
 - Drizzle Kit is too slow (large database)
 - Enum conflicts occur with `drizzle-kit migrate`
 - You need to run custom SQL that Drizzle doesn't generate
@@ -13,6 +14,7 @@ Use direct SQL migrations in Supabase SQL Editor when:
 ### Step 1: Create the SQL Migration File
 
 Place your migration in the `drizzle/` folder with proper naming:
+
 ```
 drizzle/XXXX_descriptive_name.sql
 ```
@@ -20,6 +22,7 @@ drizzle/XXXX_descriptive_name.sql
 Example: `drizzle/0009_fix_notification_system.sql`
 
 **Important:** Always use safe SQL patterns:
+
 ```sql
 -- Safe enum creation (won't fail if already exists)
 DO $$ BEGIN
@@ -51,15 +54,16 @@ Edit `drizzle/meta/_journal.json` and add a new entry:
 
 ```json
 {
-  "idx": 9,  // Increment from the last entry
+  "idx": 9, // Increment from the last entry
   "version": "7",
-  "when": 1761538200000,  // Current timestamp (milliseconds)
-  "tag": "0009_fix_notification_system",  // Your migration name
+  "when": 1761538200000, // Current timestamp (milliseconds)
+  "tag": "0009_fix_notification_system", // Your migration name
   "breakpoints": true
 }
 ```
 
 **Pro tip:** Get current timestamp in PowerShell:
+
 ```powershell
 [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 ```
@@ -67,6 +71,7 @@ Edit `drizzle/meta/_journal.json` and add a new entry:
 ### Step 4: Update Snapshot (Optional but Recommended)
 
 Generate a new Drizzle snapshot to match your database:
+
 ```bash
 npx drizzle-kit generate
 ```
@@ -76,6 +81,7 @@ This creates a new snapshot file in `drizzle/meta/` that matches your current sc
 ### Step 5: Commit All Files
 
 Commit these files together:
+
 ```
 git add drizzle/XXXX_your_migration.sql
 git add drizzle/meta/_journal.json
@@ -86,6 +92,7 @@ git commit -m "feat: add notification system tables via direct migration"
 ### Step 6: Verify on Deploy
 
 After pushing to Vercel:
+
 1. Check that the build succeeds
 2. Verify the migration doesn't run again
 3. Test the new tables/features work
@@ -93,12 +100,14 @@ After pushing to Vercel:
 ## Why This Is Necessary
 
 ### The Problem
+
 - Drizzle tracks which migrations have been applied via `_journal.json`
 - When you run SQL directly in Supabase, Drizzle doesn't know about it
 - During Vercel build, Drizzle sees the SQL file and tries to run it again
 - This causes **enum conflicts, duplicate table errors, and build failures**
 
 ### The Solution
+
 - Updating `_journal.json` tells Drizzle "this migration is already applied"
 - Drizzle skips it during builds
 - Your deployments succeed
@@ -106,12 +115,14 @@ After pushing to Vercel:
 ## Common Mistakes to Avoid
 
 ❌ **DON'T:**
+
 - Run direct SQL without updating `_journal.json`
 - Forget to increment the `idx` number
 - Use duplicate timestamps
 - Skip committing the journal update
 
 ✅ **DO:**
+
 - Always update the journal immediately after running SQL
 - Use safe SQL patterns (`IF NOT EXISTS`, exception handling)
 - Test locally before deploying
@@ -160,18 +171,22 @@ git push origin your-branch
 ## Troubleshooting
 
 ### "Migration already applied" error on Vercel
+
 - You forgot to update `_journal.json`
 - **Fix:** Add the entry and redeploy
 
 ### "Enum already exists" error
+
 - Your SQL doesn't use safe patterns
 - **Fix:** Wrap enum creation in `DO $$ BEGIN ... EXCEPTION` block
 
 ### Journal has wrong `idx` number
+
 - You used a duplicate or skipped number
 - **Fix:** Make sure `idx` increments sequentially (0, 1, 2, 3...)
 
 ### Can't find migration file during build
+
 - File name doesn't match journal entry
 - **Fix:** Ensure `tag` in journal matches filename exactly
 
@@ -180,4 +195,3 @@ git push origin your-branch
 **Remember:** Direct migrations are powerful but require manual journal updates. Always do Steps 1-5 together!
 
 _Context improved by Giga AI - Information used: Drizzle migration tracking, Vercel deployment workflows, PostgreSQL best practices_
-

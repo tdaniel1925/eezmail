@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 
 /**
- * Check if the current user is an admin
+ * Check if the current user is an admin (supports both old and new role systems)
  */
 export async function isAdmin(): Promise<boolean> {
   try {
@@ -17,36 +17,42 @@ export async function isAdmin(): Promise<boolean> {
       return false;
     }
 
-    // Get user role from metadata or database
-    // First check user metadata (set during signup or by another admin)
-    const role = user.user_metadata?.role || user.app_metadata?.role;
     console.log('[isAdmin] 🔍 Checking user:', user.email);
-    console.log('[isAdmin] 📋 Metadata role:', role);
 
-    if (role === 'admin') {
-      console.log('[isAdmin] ✅ Admin via metadata');
-      return true;
-    }
-
-    // Fallback: check database (if role is stored in a separate table)
+    // Check database for both old role and new roleHierarchy
     const { data, error } = await supabase
       .from('users')
-      .select('role')
+      .select('role, role_hierarchy')
       .eq('id', user.id)
       .single();
 
-    console.log('[isAdmin] 🗄️  Database role:', data?.role);
     if (error) {
       console.error('[isAdmin] ⚠️  Database error:', error);
+      return false;
     }
 
-    const isAdminUser = data?.role === 'admin';
-    console.log(
-      '[isAdmin]',
-      isAdminUser ? '✅ Admin via database' : '❌ Not admin'
-    );
+    console.log('[isAdmin] 🗄️  Database role:', data?.role);
+    console.log('[isAdmin] 🗄️  Role hierarchy:', data?.role_hierarchy);
 
-    return isAdminUser;
+    // Check new role hierarchy system (preferred)
+    const roleHierarchy = data?.role_hierarchy;
+    if (
+      roleHierarchy === 'system_admin' ||
+      roleHierarchy === 'system_super_admin'
+    ) {
+      console.log('[isAdmin] ✅ Admin via role hierarchy');
+      return true;
+    }
+
+    // Fallback: check old role system for backwards compatibility
+    const role = data?.role;
+    if (role === 'admin' || role === 'super_admin') {
+      console.log('[isAdmin] ✅ Admin via legacy role');
+      return true;
+    }
+
+    console.log('[isAdmin] ❌ Not admin');
+    return false;
   } catch (error) {
     console.error('[isAdmin] ❌ Error checking admin status:', error);
     return false;

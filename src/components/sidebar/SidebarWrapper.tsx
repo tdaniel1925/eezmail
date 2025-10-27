@@ -91,7 +91,7 @@ export function SidebarWrapper({ initialData }: SidebarWrapperProps) {
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/signin');
+    router.push('/login');
     toast.success('Signed out successfully');
   };
 

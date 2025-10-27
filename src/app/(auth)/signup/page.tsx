@@ -42,7 +42,10 @@ export default function SignupPage(): JSX.Element {
       }
 
       console.log('[SIGNUP] Signup successful:', data.user?.email);
-      console.log('[SIGNUP] Session:', data.session ? 'created' : 'pending confirmation');
+      console.log(
+        '[SIGNUP] Session:',
+        data.session ? 'created' : 'pending confirmation'
+      );
 
       // If session exists, user is auto-confirmed
       if (data.session) {
@@ -52,7 +55,9 @@ export default function SignupPage(): JSX.Element {
         window.location.href = '/dashboard';
       } else {
         // Email confirmation required
-        setError('Please check your email to confirm your account before signing in.');
+        setError(
+          'Please check your email to confirm your account before signing in.'
+        );
       }
     } catch (err) {
       console.error('[SIGNUP] Caught error:', err);

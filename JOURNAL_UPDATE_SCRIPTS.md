@@ -5,6 +5,7 @@ These PowerShell scripts automate updating the Drizzle migration journal after r
 ## Why You Need This
 
 When you run SQL migrations directly in Supabase (bypassing Drizzle Kit), you **must** update the Drizzle journal file (`drizzle/meta/_journal.json`). Otherwise:
+
 - Vercel deployments will fail
 - Drizzle will try to run the migration again
 - You'll get enum conflicts and duplicate table errors
@@ -24,6 +25,7 @@ When you run SQL migrations directly in Supabase (bypassing Drizzle Kit), you **
 ```
 
 **What it does:**
+
 1. Lists 5 most recent migration files
 2. Adds entry to journal
 3. Optionally commits & pushes to GitHub
@@ -44,6 +46,7 @@ When you run SQL migrations directly in Supabase (bypassing Drizzle Kit), you **
 ```
 
 **Features:**
+
 - ✅ Validates migration file exists
 - ✅ Checks for duplicate entries
 - ✅ Shows detailed output with colors
@@ -76,6 +79,7 @@ Push? (y/n): y
 
 1. Open `drizzle/meta/_journal.json`
 2. Add new entry to `entries` array:
+
 ```json
 {
   "idx": 10,
@@ -85,6 +89,7 @@ Push? (y/n): y
   "breakpoints": true
 }
 ```
+
 3. Get timestamp: `[DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()`
 4. Commit both files together
 
@@ -93,6 +98,7 @@ Push? (y/n): y
 **Format:** `XXXX_descriptive_name.sql`
 
 Examples:
+
 - ✅ `0010_add_notification_tables.sql`
 - ✅ `0011_fix_user_roles.sql`
 - ✅ `0012_update_indexes.sql`
@@ -102,18 +108,22 @@ Examples:
 ## Troubleshooting
 
 ### "Migration file not found"
+
 - The script looks in `drizzle/` folder
 - Make sure your `.sql` file is in the correct location
 
 ### "Migration already exists in journal"
+
 - The full script will detect this and ask if you want to overwrite
 - Use the quick script if you're sure it's not a duplicate
 
 ### "Invalid format"
+
 - Migration names must follow: `XXXX_name_here` format
 - Use 4 digits, underscore, then descriptive name
 
 ### Git errors
+
 - Make sure you're in the project root directory
 - Check that you have git configured
 
@@ -127,6 +137,7 @@ Examples:
 ## What Gets Committed
 
 The scripts will commit:
+
 - `drizzle/meta/_journal.json` (updated with new entry)
 - `drizzle/XXXX_migration_name.sql` (if it exists)
 
@@ -177,6 +188,7 @@ To https://github.com/tdaniel1925/eezmail.git
 ## Safety Features
 
 Both scripts:
+
 - ✅ Never delete existing entries (unless explicitly confirmed)
 - ✅ Validate file formats
 - ✅ Show what will be committed before committing
@@ -190,4 +202,3 @@ See `DIRECT_MIGRATION_WORKFLOW.md` for the complete guide on direct SQL migratio
 ---
 
 **Remember:** Every direct SQL migration in Supabase needs a journal update. Use these scripts to make it automatic! 🚀
-

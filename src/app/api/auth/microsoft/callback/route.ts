@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/lib/db';
 import { emailAccounts, users } from '@/db/schema';
 import { MicrosoftGraphService } from '@/lib/email/microsoft-graph';
-import { triggerSync } from '@/lib/sync/sync-orchestrator';
+import { applySmartDefaults } from '@/lib/folders/smart-defaults';
+import { cleanupOrphanedFolders } from '@/lib/folders/cleanup';
+import { eq, sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   console.log('🚀 MICROSOFT EMAIL CALLBACK TRIGGERED');
@@ -126,44 +128,53 @@ export async function GET(request: NextRequest) {
     console.log('✅ Email account saved successfully!', inserted[0]?.id);
     console.log('📧 Email:', email);
 
-    // Trigger sync via orchestrator
-    console.log('🔄 Triggering sync via orchestrator...');
-    const syncResult = await triggerSync({
-      accountId: inserted[0].id,
-      userId: user.id,
-      trigger: 'oauth',
-    });
+    // Clean up any orphaned folders before proceeding
+    await cleanupOrphanedFolders(user.id);
 
-    if (syncResult.success) {
-      console.log('✅ Sync triggered successfully!');
-      console.log(`   Run ID: ${syncResult.runId}`);
-    } else {
-      console.error('❌ Failed to trigger sync:', syncResult.error);
-    }
+    // Count user's total email accounts (including the one just added)
+    const accountCountResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(emailAccounts)
+      .where(eq(emailAccounts.userId, user.id));
 
-    // Check if first-time user and redirect to onboarding
-    const { getOnboardingProgress, updateOnboardingProgress } = await import(
-      '@/lib/onboarding/actions'
-    );
-    const progress = await getOnboardingProgress(user.id);
+    const totalAccounts = Number(accountCountResult[0]?.count || 1);
+    console.log(`📊 User has ${totalAccounts} total accounts`);
 
-    if (!progress.emailConnected) {
-      // Mark email as connected
-      await updateOnboardingProgress(user.id, { emailConnected: true });
-
-      // Redirect to onboarding
+    // Tiered folder selection based on account count
+    if (totalAccounts === 1) {
+      // First account - mandatory folder selection with "Use Recommended" option
+      console.log(
+        '👤 First account - redirecting to folder selection (required)'
+      );
       return NextResponse.redirect(
-        new URL('/dashboard/onboarding?from=oauth', request.url)
+        new URL(
+          `/dashboard/onboarding/folders?accountId=${inserted[0].id}&required=true`,
+          request.url
+        )
+      );
+    } else if (totalAccounts <= 3) {
+      // 2nd-3rd account - optional folder selection with smart defaults
+      console.log(
+        '👥 Additional account (2-3) - redirecting to folder selection (optional)'
+      );
+      return NextResponse.redirect(
+        new URL(
+          `/dashboard/onboarding/folders?accountId=${inserted[0].id}&optional=true`,
+          request.url
+        )
+      );
+    } else {
+      // 4+ accounts - auto-apply smart defaults and skip UI
+      console.log('👨‍👩‍👧‍👦 Power user (4+) - applying smart defaults');
+      await applySmartDefaults(inserted[0].id, user.id);
+
+      return NextResponse.redirect(
+        new URL(
+          `/dashboard/inbox?newAccount=${inserted[0].id}&email=${encodeURIComponent(email)}`,
+          request.url
+        )
       );
     }
-
-    // Returning user - redirect to inbox with syncing status
-    return NextResponse.redirect(
-      new URL(
-        `/dashboard/inbox?syncing=${inserted[0].id}&email=${encodeURIComponent(email)}`,
-        request.url
-      )
-    );
   } catch (error) {
     console.error('❌ Microsoft callback error:', error);
     const errorMessage =

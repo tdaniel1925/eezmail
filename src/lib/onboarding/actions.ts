@@ -156,3 +156,45 @@ export async function dismissOnboarding(userId: string) {
     .where(eq(onboardingProgress.userId, userId));
 }
 
+/**
+ * Advance onboarding to the next step
+ * State machine for step-by-step onboarding flow
+ */
+export async function advanceOnboardingStep(
+  userId: string,
+  completedStep: 'account_connection' | 'folder_selection' | 'profile_setup'
+) {
+  const steps = [
+    'account_connection',
+    'folder_selection',
+    'profile_setup',
+    'complete',
+  ];
+  const currentIndex = steps.indexOf(completedStep);
+  const nextStep = steps[currentIndex + 1] || 'complete';
+
+  const updates: Partial<OnboardingProgress> = {
+    onboardingStep: nextStep as any,
+    lastCheckpoint: new Date(),
+  };
+
+  // Set specific flags based on completed step
+  if (completedStep === 'account_connection') {
+    updates.emailConnected = true;
+  } else if (completedStep === 'folder_selection') {
+    updates.foldersConfigured = true;
+  } else if (completedStep === 'profile_setup') {
+    updates.profileCompleted = true;
+  }
+
+  // Mark as complete if we've reached the end
+  if (nextStep === 'complete') {
+    updates.onboardingCompleted = true;
+    updates.completedAt = new Date();
+  }
+
+  await db
+    .update(onboardingProgress)
+    .set(updates)
+    .where(eq(onboardingProgress.userId, userId));
+}

@@ -30,15 +30,19 @@ export default function LoginPage(): JSX.Element {
       formData.append('password', password);
 
       const result = await loginAction(formData);
-      
+
       if (result?.error) {
         console.error('[AUTH] Login failed:', result.error);
-        
+
         // Provide more helpful error messages
         if (result.error.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials and try again.');
+          setError(
+            'Invalid email or password. Please check your credentials and try again.'
+          );
         } else if (result.error.includes('Email not confirmed')) {
-          setError('Please confirm your email address. Check your inbox for a confirmation link.');
+          setError(
+            'Please confirm your email address. Check your inbox for a confirmation link.'
+          );
         } else {
           setError(result.error);
         }
@@ -106,13 +110,13 @@ export default function LoginPage(): JSX.Element {
               </div>
             )}
 
-            {/* Email Input */}
+            {/* Email/Username Input */}
             <div>
               <label
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-900 dark:text-white mb-2"
               >
-                Email Address
+                Email or Username
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -120,13 +124,13 @@ export default function LoginPage(): JSX.Element {
                 </div>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
+                  autoComplete="username email"
                   className="block w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 backdrop-blur-md transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-                  placeholder="you@example.com"
+                  placeholder="you@example.com or username"
                 />
               </div>
             </div>

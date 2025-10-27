@@ -30,9 +30,8 @@ function categorizeFolderName(folderName: string): string {
     return 'spam';
   if (normalized === 'archive' || normalized === 'archived') return 'archived';
 
-  // Sent items → keep as inbox category but flag with folder_name for filtering
-  // This allows sent emails to be accessible via /dashboard/sent
-  if (normalized === 'sent' || normalized === 'sentitems') return 'inbox';
+  // Sent items → sent category (fixed)
+  if (normalized === 'sent' || normalized === 'sentitems') return 'sent';
 
   // Drafts → unscreened (they haven't been sent/screened yet)
   if (normalized === 'drafts') return 'unscreened';
@@ -80,7 +79,32 @@ export const syncMicrosoftAccount = inngest.createFunction(
     console.log(`   Trigger: ${trigger}`);
 
     try {
-      // STEP 1: Validate Account
+      // STEP 1: Validate Account Exists (early exit if deleted)
+      const accountExists = await step.run('check-account-exists', async () => {
+        const acc = await db
+          .select()
+          .from(emailAccounts)
+          .where(eq(emailAccounts.id, accountId))
+          .limit(1);
+
+        if (!acc || acc.length === 0) {
+          console.error(
+            `❌ Account ${accountId} not found - may have been deleted`
+          );
+          return null;
+        }
+        return acc[0];
+      });
+
+      if (!accountExists) {
+        return {
+          success: false,
+          error: 'Account not found - may have been deleted',
+          shouldRetry: false,
+        };
+      }
+
+      // STEP 2: Validate Account Details
       const account = await step.run('validate-account', async () => {
         const acc = await db.query.emailAccounts.findFirst({
           where: and(
@@ -97,7 +121,7 @@ export const syncMicrosoftAccount = inngest.createFunction(
         return acc;
       });
 
-      // STEP 2: Get Valid Access Token
+      // STEP 3: Get Valid Access Token
       const accessToken = await step.run('refresh-token', async () => {
         // Check if token is expired or expiring soon (within 5 minutes)
         const now = new Date();

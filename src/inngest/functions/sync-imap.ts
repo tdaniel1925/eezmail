@@ -32,7 +32,32 @@ export const syncImapAccount = inngest.createFunction(
   async ({ event, step }) => {
     const { accountId, userId, fullSync = false } = event.data;
 
-    // Step 1: Create sync job
+    // STEP 1: Validate Account Exists (early exit if deleted)
+    const accountExists = await step.run('check-account-exists', async () => {
+      const acc = await db
+        .select()
+        .from(emailAccounts)
+        .where(eq(emailAccounts.id, accountId))
+        .limit(1);
+
+      if (!acc || acc.length === 0) {
+        console.error(
+          `❌ Account ${accountId} not found - may have been deleted`
+        );
+        return null;
+      }
+      return acc[0];
+    });
+
+    if (!accountExists) {
+      return {
+        success: false,
+        error: 'Account not found - may have been deleted',
+        shouldRetry: false,
+      };
+    }
+
+    // Step 2: Create sync job
     const jobId = await step.run('create-sync-job', async () => {
       const [job] = await db
         .insert(syncJobs)

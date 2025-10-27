@@ -233,7 +233,7 @@ export const FOLDER_NAME_MAPPINGS: Record<CoreFolderType, string[]> = {
     'Trash.',
     '.Trash',
   ],
-  spam: [
+  junk: [
     // English
     'spam',
     'Spam',
@@ -287,56 +287,34 @@ export const FOLDER_NAME_MAPPINGS: Record<CoreFolderType, string[]> = {
     'INBOX.Spam',
     'Junk.',
   ],
-  archive: [
-    // English
-    'archive',
-    'Archive',
-    'All Mail',
-    'Archives',
-    // Spanish
-    'archivo',
-    'Archivo',
-    'Todo el correo',
-    // French
-    'archives',
-    'Archives',
-    'Tous les messages',
-    // German
-    'archiv',
-    'Archiv',
-    'Alle Nachrichten',
-    // Italian
-    'archivio',
-    'Archivio',
-    'Tutti i messaggi',
-    // Portuguese
-    'arquivo',
-    'Arquivo',
-    'Todos os e-mails',
-    // Dutch
-    'archief',
-    'Archief',
-    'Alle berichten',
-    // Russian
-    'архив',
-    'Архив',
-    // Japanese
-    'アーカイブ',
-    'すべてのメール',
-    // Chinese
-    '归档',
-    '所有邮件',
-    '全部郵件',
-    // Korean
-    '보관함',
-    '모든 메일',
-    // Arabic
-    'الأرشيف',
-    'كل البريد',
-    // Provider-specific
-    '[Gmail]/All Mail',
-    'INBOX.Archive',
-    'Archive.',
+  outbox: ['Outbox', 'outbox', 'OUTBOX', 'Out Box', 'Enviando', 'Sending'],
+  deleted: [
+    // Alias for trash - same mappings
+    'trash',
+    'Trash',
+    'Deleted Items',
+    'Deleted',
+    'Bin',
+    'Recycle Bin',
+    'papelera',
+    'Elementos eliminados',
+    'corbeille',
+    'Corbeille',
+    'papierkorb',
+    'Gelöschte Elemente',
+    'cestino',
+    'lixeira',
+    'prullenbak',
+    'Verwijderde items',
+    'корзина',
+    'Удаленные',
+    'ごみ箱',
+    '垃圾桶',
+    '휴지통',
+    'سلة المحذوفات',
+    '[Gmail]/Trash',
+    'INBOX.Trash',
+    'Trash.',
   ],
   starred: [
     // English

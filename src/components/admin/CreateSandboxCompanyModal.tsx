@@ -37,7 +37,10 @@ export function CreateSandboxCompanyModal({
       return;
     }
 
-    if (formData.contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)) {
+    if (
+      formData.contactEmail &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.contactEmail)
+    ) {
       toast.error('Invalid email address');
       return;
     }
@@ -64,7 +67,11 @@ export function CreateSandboxCompanyModal({
       onClose();
     } catch (error) {
       console.error('Error creating sandbox company:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create sandbox company');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to create sandbox company'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -204,7 +211,8 @@ export function CreateSandboxCompanyModal({
                     🔑 System Credentials (Automatic)
                   </h4>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Sandbox companies automatically use the Twilio and OpenAI credentials from your{' '}
+                    Sandbox companies automatically use the Twilio and OpenAI
+                    credentials from your{' '}
                     <code className="rounded bg-blue-100 px-1 py-0.5 dark:bg-blue-800">
                       .env.local
                     </code>{' '}

@@ -2,19 +2,52 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 /**
  * Server action for login
  * Handles authentication server-side to ensure cookies are set correctly
+ * Supports both email and username login
  */
 export async function loginAction(formData: FormData) {
-  const email = formData.get('email') as string;
+  let emailOrUsername = formData.get('email') as string;
   const password = formData.get('password') as string;
 
-  console.log('[SERVER AUTH] Login attempt for:', email);
+  console.log('[SERVER AUTH] Login attempt for:', emailOrUsername);
+
+  // Check if input is a username (no @ symbol) or email
+  let email = emailOrUsername;
+  if (!emailOrUsername.includes('@')) {
+    console.log(
+      '[SERVER AUTH] Input appears to be username, looking up email...'
+    );
+
+    // Look up email from username
+    try {
+      const user = await db.query.users.findFirst({
+        where: eq(users.username, emailOrUsername),
+        columns: {
+          email: true,
+        },
+      });
+
+      if (!user) {
+        console.error('[SERVER AUTH] Username not found:', emailOrUsername);
+        return { error: 'Invalid username or password' };
+      }
+
+      email = user.email;
+      console.log('[SERVER AUTH] Found email for username:', email);
+    } catch (error) {
+      console.error('[SERVER AUTH] Error looking up username:', error);
+      return { error: 'An error occurred during login' };
+    }
+  }
 
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -44,7 +77,7 @@ export async function signupAction(formData: FormData) {
   console.log('[SERVER AUTH] Signup attempt for:', email);
 
   const supabase = await createClient();
-  
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -68,9 +101,8 @@ export async function signupAction(formData: FormData) {
   }
 
   // Otherwise, show confirmation message
-  return { 
-    success: true, 
-    message: 'Please check your email to confirm your account.' 
+  return {
+    success: true,
+    message: 'Please check your email to confirm your account.',
   };
 }
-

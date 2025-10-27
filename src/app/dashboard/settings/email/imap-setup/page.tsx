@@ -138,41 +138,39 @@ function IMAPSetupPageContent(): JSX.Element {
 
         toast.success('✅ Account saved successfully!');
 
-        // Step 2: Trigger initial email sync
-        toast.info('📥 Starting email sync...');
-
+        // Step 2: Get account count to determine folder selection flow
         try {
-          const syncResponse = await fetch('/api/email/sync', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              accountId,
-              initialSync: true,
-            }),
-          });
+          const countResponse = await fetch('/api/email/accounts/count');
+          const countData = await countResponse.json();
+          const totalAccounts = countData.count || 1;
 
-          const syncResult = await syncResponse.json();
-
-          if (syncResult.success) {
-            toast.success('🎉 Email sync started! Loading your emails...');
+          if (totalAccounts === 1) {
+            // First account - mandatory folder selection
+            window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&required=true`;
+          } else if (totalAccounts <= 3) {
+            // 2nd-3rd account - optional folder selection
+            window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&optional=true`;
           } else {
-            toast.warning(
-              'Account saved, but sync failed to start. Try refreshing.'
-            );
-          }
-        } catch (syncError) {
-          console.error('Sync error:', syncError);
-          toast.warning(
-            'Account saved, but sync failed to start. Try refreshing.'
-          );
-        }
+            // 4+ accounts - apply smart defaults and go to inbox
+            toast.info('📁 Configuring folders with smart defaults...');
 
-        // Redirect after a brief delay to show messages
-        setTimeout(() => {
+            await fetch('/api/folders/smart-defaults', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ accountId }),
+            });
+
+            setTimeout(() => {
+              window.location.href = '/dashboard/inbox?setup=complete';
+            }, 1500);
+          }
+        } catch (error) {
+          console.error('Error with folder setup:', error);
+          // Fallback to inbox on error
           window.location.href = '/dashboard/inbox';
-        }, 2000);
+        }
       } else {
         toast.error(result.error || 'Failed to save account');
       }

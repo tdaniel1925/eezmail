@@ -17,15 +17,20 @@ import {
   Volume2,
   Database,
   Phone,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePreferencesStore } from '@/stores/preferencesStore';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface ProfileDropUpProps {
   user: {
     name: string;
     email: string;
     avatar?: string;
+    role?: string; // Legacy role field
+    roleHierarchy?: string; // New hierarchical role field
   };
   storage: {
     used: number;
@@ -44,6 +49,7 @@ export function ProfileDropUp({
   isCollapsed = false,
 }: ProfileDropUpProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const {
     density,
     setDensity,
@@ -53,6 +59,13 @@ export function ProfileDropUp({
     soundEffects,
     toggleSoundEffects,
   } = usePreferencesStore();
+
+  // Check if user is a system admin
+  const isSystemAdmin =
+    user.roleHierarchy === 'system_admin' ||
+    user.roleHierarchy === 'system_super_admin' ||
+    user.role === 'admin' || // Backwards compatibility
+    user.role === 'super_admin';
 
   const storagePercent = (storage.used / storage.total) * 100;
 
@@ -176,6 +189,23 @@ export function ProfileDropUp({
 
               {/* Quick Actions */}
               <div className="py-2">
+                {/* Admin Dashboard Link (only for system admins) */}
+                {isSystemAdmin && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setIsOpen(false);
+                        router.push('/admin');
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                    >
+                      <Shield size={16} className="text-primary" />
+                      <span>Admin Dashboard</span>
+                    </button>
+                    <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
+                  </>
+                )}
+
                 <MenuItem
                   icon={Settings}
                   label="Account Settings"

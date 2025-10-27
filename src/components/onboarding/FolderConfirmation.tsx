@@ -35,9 +35,15 @@ import {
 
 interface FolderConfirmationProps {
   accountId: string;
+  isOptional?: boolean;
+  isRequired?: boolean;
 }
 
-export function FolderConfirmation({ accountId }: FolderConfirmationProps) {
+export function FolderConfirmation({
+  accountId,
+  isOptional = false,
+  isRequired = false,
+}: FolderConfirmationProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -130,6 +136,34 @@ export function FolderConfirmation({ accountId }: FolderConfirmationProps) {
     );
   };
 
+  const handleUseSmartDefaults = async () => {
+    try {
+      setSaving(true);
+
+      // Apply smart defaults via API
+      const response = await fetch('/api/folders/smart-defaults', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to apply smart defaults');
+      }
+
+      // Redirect to dashboard with success message
+      router.push('/dashboard?setup=complete&smartDefaults=true');
+    } catch (err) {
+      console.error('Error applying smart defaults:', err);
+      setError(
+        err instanceof Error ? err.message : 'Failed to apply smart defaults'
+      );
+      setSaving(false);
+    }
+  };
+
   const stats = {
     total: folders.length,
     enabled: folders.filter((f) => f.enabled).length,
@@ -181,6 +215,41 @@ export function FolderConfirmation({ accountId }: FolderConfirmationProps) {
             <strong>{account?.emailAddress}</strong>
           </p>
         </div>
+
+        {/* Smart Defaults Option (for optional mode) */}
+        {isOptional && (
+          <Card className="mb-6 border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                    Quick Setup Available
+                  </h3>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                    We can automatically configure standard folders (Inbox,
+                    Sent, Drafts, Archive, Spam, Trash) for you, or you can
+                    customize below.
+                  </p>
+                  <Button
+                    onClick={handleUseSmartDefaults}
+                    disabled={saving}
+                    variant="outline"
+                    className="w-full border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Applying...
+                      </>
+                    ) : (
+                      <>⚡ Use Smart Defaults & Start Syncing</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Card */}
         <Card className="mb-6">

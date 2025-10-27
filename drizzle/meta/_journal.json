@@ -1,76 +1,97 @@
 {
-  "version": "7",
-  "dialect": "postgresql",
-  "entries": [
-    {
-      "idx": 0,
-      "version": "7",
-      "when": 1760502506085,
-      "tag": "0000_last_zombie",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1760502515762,
-      "tag": "0001_bitter_bedlam",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1760516195362,
-      "tag": "0002_shocking_slyde",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1760580562835,
-      "tag": "0003_tranquil_ikaris",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1760635533106,
-      "tag": "0004_clammy_robin_chapel",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1760912512035,
-      "tag": "0005_add_webhook_subscriptions",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1761502138201,
-      "tag": "0006_careful_spectrum",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1761521366652,
-      "tag": "0007_many_gamora",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "7",
-      "when": 1761535828444,
-      "tag": "0008_living_steve_rogers",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "7",
-      "when": 1761538200000,
-      "tag": "0009_fix_notification_system",
-      "breakpoints": true
-    }
-  ]
+    "version":  "7",
+    "dialect":  "postgresql",
+    "entries":  [
+                    {
+                        "idx":  0,
+                        "version":  "7",
+                        "when":  1760502506085,
+                        "tag":  "0000_last_zombie",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  1,
+                        "version":  "7",
+                        "when":  1760502515762,
+                        "tag":  "0001_bitter_bedlam",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  2,
+                        "version":  "7",
+                        "when":  1760516195362,
+                        "tag":  "0002_shocking_slyde",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  3,
+                        "version":  "7",
+                        "when":  1760580562835,
+                        "tag":  "0003_tranquil_ikaris",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  4,
+                        "version":  "7",
+                        "when":  1760635533106,
+                        "tag":  "0004_clammy_robin_chapel",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  5,
+                        "version":  "7",
+                        "when":  1760912512035,
+                        "tag":  "0005_add_webhook_subscriptions",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  6,
+                        "version":  "7",
+                        "when":  1761502138201,
+                        "tag":  "0006_careful_spectrum",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  7,
+                        "version":  "7",
+                        "when":  1761521366652,
+                        "tag":  "0007_many_gamora",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  8,
+                        "version":  "7",
+                        "when":  1761535828444,
+                        "tag":  "0008_living_steve_rogers",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  9,
+                        "version":  "7",
+                        "when":  1761538200000,
+                        "tag":  "0009_fix_notification_system",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  10,
+                        "version":  "7",
+                        "when":  1761543905794,
+                        "tag":  "0010_auth_overhaul",
+                        "breakpoints":  true
+                    },
+                    {
+                        "idx":  11,
+                        "breakpoints":  true,
+                        "when":  1761548173430,
+                        "version":  "7",
+                        "tag":  "0011_add_sent_category"
+                    },
+                    {
+                        "idx":  12,
+                        "breakpoints":  true,
+                        "when":  1761548174430,
+                        "version":  "7",
+                        "tag":  "0012_onboarding_resume"
+                    }
+                ]
 }

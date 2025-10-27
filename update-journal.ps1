@@ -36,7 +36,7 @@ Write-Info "`n📝 Drizzle Journal Updater`n"
 
 # Step 1: Determine migration name
 if ($MigrationFile) {
-    if ($MigrationFile -match "(\d{4}_[\w_]+)\.sql") {
+    if ($MigrationFile -match '(\d{4}_[\w_]+)\.sql') {
         $MigrationName = $matches[1]
     } else {
         Write-Error-Custom "❌ Invalid migration file format. Expected format: 0010_migration_name.sql"
@@ -58,18 +58,18 @@ if ($MigrationFile) {
     Write-Host ""
     $selection = Read-Host "Select a migration file [1-$($recentFiles.Count)] or enter migration name"
     
-    if ($selection -match "^\d+$" -and [int]$selection -le $recentFiles.Count -and [int]$selection -gt 0) {
+    if ($selection -match '^\d+$' -and [int]$selection -le $recentFiles.Count -and [int]$selection -gt 0) {
         $selectedFile = $recentFiles[[int]$selection - 1]
-        if ($selectedFile.BaseName -match "(\d{4}_[\w_]+)") {
+        if ($selectedFile.BaseName -match '(\d{4}_[\w_]+)') {
             $MigrationName = $matches[1]
         }
     } else {
-        $MigrationName = $selection -replace "\.sql$", ""
+        $MigrationName = $selection -replace '\.sql$', ''
     }
 }
 
 # Validate migration name format
-if ($MigrationName -notmatch "^\d{4}_[\w_]+$") {
+if ($MigrationName -notmatch '^\d{4}_[\w_]+$') {
     Write-Error-Custom "❌ Invalid migration name format. Expected format: 0010_migration_name"
     Write-Info "Example: 0010_add_notification_system"
     exit 1

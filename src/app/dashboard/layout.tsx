@@ -11,6 +11,8 @@ import { KeyboardShortcutsProvider } from '@/components/layout/KeyboardShortcuts
 import { ChatbotContextProvider } from '@/components/ai/ChatbotContext';
 import { ReplyLaterProvider } from '@/contexts/ReplyLaterContext';
 import { ErrorBoundary } from '@/components/error/ErrorBoundary';
+import { OnboardingResumeBanner } from '@/components/onboarding/OnboardingResumeBanner';
+import { getOnboardingProgress } from '@/lib/onboarding/actions';
 
 // Lazy load heavy, non-critical components
 const AIAssistantPanel = dynamic(
@@ -105,6 +107,14 @@ export default async function DashboardLayout({
     console.error('Failed to load sidebar data:', error);
   }
 
+  // Load onboarding progress
+  let onboardingProgress = null;
+  try {
+    onboardingProgress = await getOnboardingProgress(user.id);
+  } catch (error) {
+    console.error('Failed to load onboarding progress:', error);
+  }
+
   return (
     <ErrorBoundary>
       <ChatbotContextProvider>
@@ -119,6 +129,14 @@ export default async function DashboardLayout({
 
               {/* Column 2: Main Content Area */}
               <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
+                {/* Onboarding Resume Banner */}
+                {onboardingProgress && (
+                  <OnboardingResumeBanner
+                    progress={onboardingProgress}
+                    userId={user.id}
+                  />
+                )}
+
                 {children}
               </main>
 

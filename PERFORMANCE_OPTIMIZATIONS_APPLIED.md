@@ -245,6 +245,7 @@ onDemandEntries: {
    - Hot reload: 1-2 seconds
 
 4. **Memory Check:**
+
    ```powershell
    Get-Process | Where-Object {$_.ProcessName -like "*node*"} | Select-Object ProcessName, Id, WorkingSet
    ```

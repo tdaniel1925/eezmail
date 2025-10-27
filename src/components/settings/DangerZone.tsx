@@ -1,50 +1,77 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, Trash2, TestTube } from 'lucide-react';
+import {
+  AlertTriangle,
+  Trash2,
+  TestTube,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import {
   wipeAllUserData,
   generateTestEmailData,
   verifyDataWipe,
 } from '@/lib/settings/data-actions';
-import { toast } from '@/lib/toast';
 
 export function DangerZone(): JSX.Element {
   const [confirmText, setConfirmText] = useState('');
   const [isWiping, setIsWiping] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [wipeResult, setWipeResult] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [generateResult, setGenerateResult] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const [verifyResult, setVerifyResult] = useState<{
+    type: 'success' | 'error' | 'warning';
+    message: string;
+  } | null>(null);
 
   const handleVerifyWipe = async (): Promise<void> => {
     setIsVerifying(true);
+    setVerifyResult(null);
 
     try {
       const result = await verifyDataWipe();
 
       if (result.success && result.isClean) {
-        toast.success('✅ All data has been successfully wiped!');
+        setVerifyResult({
+          type: 'success',
+          message: 'All data has been successfully wiped!',
+        });
         console.log('Verification passed - database is clean');
       } else if (result.success) {
         const remaining = Object.entries(result.remainingData)
           .filter(([_, count]) => count > 0)
           .map(([table, count]) => `${table}: ${count}`)
           .join(', ');
-        toast.warning(`⚠️ Some data remains: ${remaining}`);
+        setVerifyResult({
+          type: 'warning',
+          message: `Some data remains: ${remaining}`,
+        });
         console.warn('Remaining data:', result.remainingData);
       } else {
-        toast.error('Failed to verify data wipe');
+        setVerifyResult({
+          type: 'error',
+          message: 'Failed to verify data wipe',
+        });
       }
 
       // Show missing tables warning
       if (result.missingTables && result.missingTables.length > 0) {
-        toast.warning(
-          `⚠️ ${result.missingTables.length} database tables are missing. Check console for details.`
-        );
         console.warn('Missing tables:', result.missingTables);
       }
     } catch (error) {
       console.error('Error verifying data:', error);
-      toast.error('An unexpected error occurred during verification');
+      setVerifyResult({
+        type: 'error',
+        message: 'An unexpected error occurred during verification',
+      });
     } finally {
       setIsVerifying(false);
     }
@@ -52,7 +79,10 @@ export function DangerZone(): JSX.Element {
 
   const handleWipeData = async (): Promise<void> => {
     if (confirmText !== 'DELETE ALL DATA') {
-      toast.error('Please type "DELETE ALL DATA" to confirm');
+      setWipeResult({
+        type: 'error',
+        message: 'Please type "DELETE ALL DATA" to confirm',
+      });
       return;
     }
 
@@ -61,30 +91,39 @@ export function DangerZone(): JSX.Element {
     }
 
     setIsWiping(true);
+    setWipeResult(null);
 
     try {
       const result = await wipeAllUserData();
 
       if (result.success) {
-        toast.success(
-          'All data wiped successfully! You can now reconnect your accounts.'
-        );
+        setWipeResult({
+          type: 'success',
+          message: 'All data wiped successfully! Redirecting...',
+        });
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 2000);
       } else {
-        toast.error(result.error || 'Failed to wipe data');
+        setWipeResult({
+          type: 'error',
+          message: result.error || 'Failed to wipe data',
+        });
         setIsWiping(false);
       }
     } catch (error) {
       console.error('Error wiping data:', error);
-      toast.error('An unexpected error occurred');
+      setWipeResult({
+        type: 'error',
+        message: 'An unexpected error occurred',
+      });
       setIsWiping(false);
     }
   };
 
   const handleGenerateTestEmails = async (): Promise<void> => {
     setIsGenerating(true);
+    setGenerateResult(null);
 
     try {
       // Use the simpler API route
@@ -98,17 +137,26 @@ export function DangerZone(): JSX.Element {
       const result = await response.json();
 
       if (result.success) {
-        toast.success(`Successfully generated ${result.count} test emails!`);
+        setGenerateResult({
+          type: 'success',
+          message: `Successfully generated ${result.count} test emails! Refreshing...`,
+        });
         // Refresh the page after a short delay to show new emails
         setTimeout(() => {
           window.location.reload();
         }, 1500);
       } else {
-        toast.error(result.error || 'Failed to generate test emails');
+        setGenerateResult({
+          type: 'error',
+          message: result.error || 'Failed to generate test emails',
+        });
       }
     } catch (error) {
       console.error('Error generating test emails:', error);
-      toast.error('An unexpected error occurred');
+      setGenerateResult({
+        type: 'error',
+        message: 'An unexpected error occurred',
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -129,6 +177,33 @@ export function DangerZone(): JSX.Element {
               in each folder (Inbox, Newsfeed, Receipts, Spam) with realistic
               content.
             </p>
+
+            {/* Generate Result Notice */}
+            {generateResult && (
+              <div
+                className={`mb-4 rounded-lg border p-3 flex items-start gap-2 ${
+                  generateResult.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}
+              >
+                {generateResult.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <p
+                  className={`text-sm ${
+                    generateResult.type === 'success'
+                      ? 'text-green-700 dark:text-green-300'
+                      : 'text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {generateResult.message}
+                </p>
+              </div>
+            )}
+
             <button
               onClick={handleGenerateTestEmails}
               disabled={isGenerating}
@@ -178,7 +253,8 @@ export function DangerZone(): JSX.Element {
                 ✓ Your user account and login credentials will be preserved
               </p>
               <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                You can reconnect email accounts and start fresh after wiping data
+                You can reconnect email accounts and start fresh after wiping
+                data
               </p>
             </div>
             <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4">
@@ -191,6 +267,65 @@ export function DangerZone(): JSX.Element {
                 start fresh.
               </p>
             </div>
+
+            {/* Wipe Result Notice */}
+            {wipeResult && (
+              <div
+                className={`mb-4 rounded-lg border p-3 flex items-start gap-2 ${
+                  wipeResult.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}
+              >
+                {wipeResult.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <p
+                  className={`text-sm ${
+                    wipeResult.type === 'success'
+                      ? 'text-green-700 dark:text-green-300'
+                      : 'text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {wipeResult.message}
+                </p>
+              </div>
+            )}
+
+            {/* Verify Result Notice */}
+            {verifyResult && (
+              <div
+                className={`mb-4 rounded-lg border p-3 flex items-start gap-2 ${
+                  verifyResult.type === 'success'
+                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                    : verifyResult.type === 'warning'
+                      ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                      : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                }`}
+              >
+                {verifyResult.type === 'success' ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                ) : verifyResult.type === 'warning' ? (
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                )}
+                <p
+                  className={`text-sm ${
+                    verifyResult.type === 'success'
+                      ? 'text-green-700 dark:text-green-300'
+                      : verifyResult.type === 'warning'
+                        ? 'text-yellow-700 dark:text-yellow-300'
+                        : 'text-red-700 dark:text-red-300'
+                  }`}
+                >
+                  {verifyResult.message}
+                </p>
+              </div>
+            )}
+
             <div className="space-y-3">
               <div>
                 <label

@@ -14,7 +14,7 @@ export function OAuthButtons({ mode = 'signin' }: OAuthButtonsProps) {
 
   const handleOAuthSignIn = async (provider: 'google' | 'azure') => {
     setLoading(provider);
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -29,7 +29,9 @@ export function OAuthButtons({ mode = 'signin' }: OAuthButtonsProps) {
 
       if (error) {
         console.error(`OAuth error (${provider}):`, error);
-        alert(`Failed to sign in with ${provider === 'azure' ? 'Microsoft' : 'Google'}`);
+        alert(
+          `Failed to sign in with ${provider === 'azure' ? 'Microsoft' : 'Google'}`
+        );
         setLoading(null);
       }
       // User will be redirected to provider's login page
@@ -101,4 +103,3 @@ export function OAuthButtons({ mode = 'signin' }: OAuthButtonsProps) {
     </div>
   );
 }
-
