@@ -98,16 +98,16 @@ export function OnboardingResumeBanner({
               size="sm"
               onClick={() => setDismissed(true)}
               className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+              aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
-              <span className="sr-only">Dismiss</span>
             </Button>
-            <Button asChild size="sm">
-              <Link href={getResumeUrl()} className="flex items-center gap-1">
+            <Link href={getResumeUrl()}>
+              <Button size="sm" className="flex items-center gap-1">
                 <span>Continue Setup</span>
                 <ChevronRight className="h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
