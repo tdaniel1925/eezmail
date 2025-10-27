@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps
@@ -8,6 +9,7 @@ export interface ButtonProps
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  asChild?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,6 +20,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = 'md',
       isLoading = false,
       disabled,
+      asChild = false,
       children,
       ...props
     },
@@ -40,8 +43,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         'bg-red-500/90 dark:bg-red-500/80 border border-red-600 dark:border-red-400 text-white hover:bg-red-600/90 dark:hover:bg-red-600/80',
     };
 
+    const Comp = asChild ? Slot : 'button';
+
     return (
-      <button
+      <Comp
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
@@ -75,11 +80,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {children}
-      </button>
+      </Comp>
     );
   }
 );
 
 Button.displayName = 'Button';
-
-
