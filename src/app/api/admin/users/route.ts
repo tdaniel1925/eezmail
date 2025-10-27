@@ -57,41 +57,60 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Check if user already exists in Auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers();
-    const existingUser = existingUsers?.users.find(u => u.email === email);
+    const existingAuthUser = existingUsers?.users.find((u) => u.email === email);
 
-    if (existingUser) {
-      console.log('[Admin API] User already exists:', email);
-      return NextResponse.json(
-        { error: `User with email ${email} already exists` },
-        { status: 400 }
-      );
-    }
+    let authUserId: string;
 
-    // Create user in Supabase Auth
-    const { data: newAuthUser, error: authError } =
-      await adminClient.auth.admin.createUser({
-        email,
-        email_confirm: !sendInvite, // Auto-confirm if not sending invite
-        user_metadata: {
-          name,
-          role,
-          tier,
-        },
+    if (existingAuthUser) {
+      console.log('[Admin API] User exists in Auth, syncing to database:', email);
+      authUserId = existingAuthUser.id;
+      
+      // Check if user also exists in database
+      const existingDbUser = await db.query.users.findFirst({
+        where: eq(users.id, existingAuthUser.id),
       });
 
-    if (authError || !newAuthUser.user) {
-      console.error('[Admin API] Auth error:', authError);
-      return NextResponse.json(
-        { error: authError?.message || 'Failed to create user in authentication system' },
-        { status: 500 }
-      );
+      if (existingDbUser) {
+        console.log('[Admin API] User already exists in both Auth and database:', email);
+        return NextResponse.json(
+          { error: `User with email ${email} already exists` },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Create user in Supabase Auth
+      const { data: newAuthUser, error: authError } =
+        await adminClient.auth.admin.createUser({
+          email,
+          email_confirm: !sendInvite, // Auto-confirm if not sending invite
+          user_metadata: {
+            name,
+            role,
+            tier,
+          },
+        });
+
+      if (authError || !newAuthUser.user) {
+        console.error('[Admin API] Auth error:', authError);
+        return NextResponse.json(
+          {
+            error:
+              authError?.message ||
+              'Failed to create user in authentication system',
+          },
+          { status: 500 }
+        );
+      }
+
+      authUserId = newAuthUser.user.id;
+      console.log('[Admin API] User created in Auth:', email);
     }
 
-    // Create user in database with upsert to handle race conditions
+    // Create or sync user in database with upsert to handle all cases
     const [dbUser] = await db
       .insert(users)
       .values({
-        id: newAuthUser.user.id,
+        id: authUserId,
         email,
         name,
         role: role as 'user' | 'admin' | 'super_admin',
@@ -109,7 +128,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning();
 
-    console.log('[Admin API] User created successfully:', dbUser.email);
+    console.log('[Admin API] User synced to database successfully:', dbUser.email);
 
     // TODO: Send invite email if requested
     if (sendInvite) {
