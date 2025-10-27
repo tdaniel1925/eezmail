@@ -81,12 +81,9 @@ export default function SignupPage(): JSX.Element {
               <Sparkles className="h-6 w-6 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Join eezMail
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Join EaseMail
           </h1>
-          <p className="text-gray-600 dark:text-white/60">
-            A Custom Email Client for Darren Miller Law Firm
-          </p>
         </div>
 
         {/* Signup Card */}
