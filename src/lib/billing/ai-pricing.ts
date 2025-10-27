@@ -148,6 +148,30 @@ export async function chargeAI(
       };
     }
 
+    // 🔓 BYPASS BILLING FOR SUPER ADMINS
+    if (user.role === 'super_admin') {
+      console.log(`🔓 Super admin bypass: No AI charge for ${user.email}`);
+      
+      await logAITransaction(
+        userId,
+        userId,
+        'user',
+        tokens,
+        0,
+        feature,
+        model,
+        'admin_free',
+        metadata
+      );
+
+      return {
+        success: true,
+        chargedFrom: 'admin_free',
+        amount: 0,
+        tokens,
+      };
+    }
+
     const billedTo = user.organizationId || userId;
     const billedToType: 'organization' | 'user' = user.organizationId
       ? 'organization'

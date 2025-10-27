@@ -173,6 +173,26 @@ export async function chargeSMS(
       };
     }
 
+    // 🔓 BYPASS BILLING FOR SUPER ADMINS
+    if (user.role === 'super_admin') {
+      console.log(`🔓 Super admin bypass: No charge for ${user.email}`);
+      
+      await logSMSTransaction(
+        userId,
+        userId,
+        'user',
+        0,
+        'admin_free',
+        metadata
+      );
+
+      return {
+        success: true,
+        chargedFrom: 'admin_free',
+        amount: 0,
+      };
+    }
+
     const billedTo = user.organizationId || userId;
     const billedToType: 'organization' | 'user' = user.organizationId
       ? 'organization'
