@@ -34,7 +34,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const userIsAdmin = await isAdmin();
     if (!userIsAdmin) {
       console.log('[Admin API] User is not admin:', user.email);
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -52,6 +55,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Use admin client for creating users
     const adminClient = createAdminClient();
 
+    // Check if user already exists in Auth
+    const { data: existingUsers } = await adminClient.auth.admin.listUsers();
+    const existingUser = existingUsers?.users.find(u => u.email === email);
+
+    if (existingUser) {
+      console.log('[Admin API] User already exists:', email);
+      return NextResponse.json(
+        { error: `User with email ${email} already exists` },
+        { status: 400 }
+      );
+    }
+
     // Create user in Supabase Auth
     const { data: newAuthUser, error: authError } =
       await adminClient.auth.admin.createUser({
@@ -67,12 +82,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (authError || !newAuthUser.user) {
       console.error('[Admin API] Auth error:', authError);
       return NextResponse.json(
-        { error: authError?.message || 'Failed to create user' },
+        { error: authError?.message || 'Failed to create user in authentication system' },
         { status: 500 }
       );
     }
 
-    // Create user in database
+    // Create user in database with upsert to handle race conditions
     const [dbUser] = await db
       .insert(users)
       .values({
@@ -81,6 +96,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         name,
         role: role as 'user' | 'admin' | 'super_admin',
         tier: tier as 'free' | 'starter' | 'pro' | 'enterprise',
+      })
+      .onConflictDoUpdate({
+        target: users.id,
+        set: {
+          email,
+          name,
+          role: role as 'user' | 'admin' | 'super_admin',
+          tier: tier as 'free' | 'starter' | 'pro' | 'enterprise',
+          updatedAt: new Date(),
+        },
       })
       .returning();
 
@@ -104,4 +129,3 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-
