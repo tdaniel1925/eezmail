@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createAdminClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { isAdmin } from '@/lib/admin/auth';
 
 // Schema for user creation
 const createUserSchema = z.object({
@@ -29,15 +30,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is admin
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (userData?.role !== 'super_admin' && userData?.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    // Check if user is admin using the centralized admin check
+    const userIsAdmin = await isAdmin();
+    if (!userIsAdmin) {
+      console.log('[Admin API] User is not admin:', user.email);
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -52,9 +49,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { email, name, role, tier, sendInvite } = validation.data;
 
+    // Use admin client for creating users
+    const adminClient = createAdminClient();
+
     // Create user in Supabase Auth
     const { data: newAuthUser, error: authError } =
-      await supabase.auth.admin.createUser({
+      await adminClient.auth.admin.createUser({
         email,
         email_confirm: !sendInvite, // Auto-confirm if not sending invite
         user_metadata: {
@@ -65,6 +65,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
     if (authError || !newAuthUser.user) {
+      console.error('[Admin API] Auth error:', authError);
       return NextResponse.json(
         { error: authError?.message || 'Failed to create user' },
         { status: 500 }
@@ -83,6 +84,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       })
       .returning();
 
+    console.log('[Admin API] User created successfully:', dbUser.email);
+
     // TODO: Send invite email if requested
     if (sendInvite) {
       // Implement email sending logic
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       inviteSent: sendInvite,
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('[Admin API] Error creating user:', error);
     return NextResponse.json(
       { error: 'Failed to create user' },
       { status: 500 }
