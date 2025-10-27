@@ -35,14 +35,28 @@ export async function loginAction(formData: FormData) {
 
       if (!user) {
         console.error('[SERVER AUTH] Username not found:', emailOrUsername);
-        return { error: 'Invalid username or password' };
+        return { 
+          error: 'Username not found. Please use your email address or check if migrations have been run in the database.' 
+        };
       }
 
       email = user.email;
       console.log('[SERVER AUTH] Found email for username:', email);
     } catch (error) {
       console.error('[SERVER AUTH] Error looking up username:', error);
-      return { error: 'An error occurred during login' };
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[SERVER AUTH] Full error details:', errorMessage);
+      
+      // Provide more specific error messages
+      if (errorMessage.includes('relation') || errorMessage.includes('column')) {
+        return { 
+          error: 'Database schema issue detected. The username column may not exist yet. Please run database migrations or use your email address to login.' 
+        };
+      }
+      
+      return { 
+        error: `Database error: ${errorMessage}. Please try using your email address instead.` 
+      };
     }
   }
 

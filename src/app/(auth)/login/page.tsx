@@ -34,18 +34,8 @@ export default function LoginPage(): JSX.Element {
       if (result?.error) {
         console.error('[AUTH] Login failed:', result.error);
 
-        // Provide more helpful error messages
-        if (result.error.includes('Invalid login credentials')) {
-          setError(
-            'Invalid email or password. Please check your credentials and try again.'
-          );
-        } else if (result.error.includes('Email not confirmed')) {
-          setError(
-            'Please confirm your email address. Check your inbox for a confirmation link.'
-          );
-        } else {
-          setError(result.error);
-        }
+        // Display the error message directly (it now includes helpful context)
+        setError(result.error);
         setLoading(false);
       }
       // If no error, redirect happens automatically in server action
