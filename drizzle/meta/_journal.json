@@ -92,6 +92,13 @@
                         "when":  1761548174430,
                         "version":  "7",
                         "tag":  "0012_onboarding_resume"
+                    },
+                    {
+                        "idx":  13,
+                        "breakpoints":  true,
+                        "when":  1761548175430,
+                        "version":  "7",
+                        "tag":  "0013_simplify_categories"
                     }
                 ]
 }
