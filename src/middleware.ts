@@ -1,10 +1,19 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Track redirect loops
 const redirectCount = new Map<string, number>();
 
 export async function middleware(request: NextRequest) {
+  // Skip middleware for Inngest webhooks in development to improve performance
+  if (
+    process.env.NODE_ENV === 'development' &&
+    request.nextUrl.pathname.startsWith('/api/inngest')
+  ) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -39,14 +48,73 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Debug: Log cookies to see what's being sent
-  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname === '/login') {
+  // Rate limiting for API routes
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    const ip =
+      request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+    const identifier = user ? `user:${user.id}` : `ip:${ip}`;
+
+    // Different limits for different route types
+    let limit = 100; // default: 100 req/min
+
+    if (request.nextUrl.pathname.startsWith('/api/auth/')) {
+      limit = 10; // auth endpoints: 10 req/min
+    } else if (request.nextUrl.pathname.startsWith('/api/ai/')) {
+      limit = 30; // AI endpoints: 30 req/min
+    } else if (request.nextUrl.pathname.startsWith('/api/webhooks/')) {
+      limit = 200; // webhooks: 200 req/min (payment processors)
+    }
+
+    const { success, remaining, reset } = await checkRateLimit(
+      identifier,
+      limit
+    );
+
+    if (!success) {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Rate limit exceeded. Please try again later.',
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': limit.toString(),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': reset.toString(),
+            'Retry-After': Math.ceil((reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+
+    // Add rate limit headers to response
+    supabaseResponse.headers.set('X-RateLimit-Limit', limit.toString());
+    supabaseResponse.headers.set('X-RateLimit-Remaining', remaining.toString());
+    supabaseResponse.headers.set('X-RateLimit-Reset', reset.toString());
+  }
+
+  // Debug logging disabled for performance - enable only when debugging
+  const enableDebugLogging = false;
+  
+  if (enableDebugLogging && (
+    request.nextUrl.pathname.startsWith('/dashboard') ||
+    request.nextUrl.pathname === '/login'
+  )) {
     const allCookies = request.cookies.getAll();
-    const supabaseCookies = allCookies.filter(c => c.name.includes('supabase') || c.name.includes('sb-'));
+    const supabaseCookies = allCookies.filter(
+      (c) => c.name.includes('supabase') || c.name.includes('sb-')
+    );
     console.log('[MIDDLEWARE] Path:', request.nextUrl.pathname);
     console.log('[MIDDLEWARE] Total cookies:', allCookies.length);
-    console.log('[MIDDLEWARE] Supabase cookies:', supabaseCookies.map(c => c.name).join(', ') || 'NONE');
-    console.log('[MIDDLEWARE] User:', user ? `✅ ${user.email}` : '❌ Not authenticated');
+    console.log(
+      '[MIDDLEWARE] Supabase cookies:',
+      supabaseCookies.map((c) => c.name).join(', ') || 'NONE'
+    );
+    console.log(
+      '[MIDDLEWARE] User:',
+      user ? `✅ ${user.email}` : '❌ Not authenticated'
+    );
   }
 
   // Detect redirect loops
@@ -54,21 +122,23 @@ export async function middleware(request: NextRequest) {
   const loopKey = `${clientId}-${request.nextUrl.pathname}`;
   const count = (redirectCount.get(loopKey) || 0) + 1;
   redirectCount.set(loopKey, count);
-  
+
   // Clear old entries after 10 seconds
   setTimeout(() => redirectCount.delete(loopKey), 10000);
-  
+
   if (count > 5) {
-    console.error('[MIDDLEWARE] ⚠️ REDIRECT LOOP DETECTED!', request.nextUrl.pathname, 'Count:', count);
-    console.error('[MIDDLEWARE] User:', user?.email || 'Not authenticated');
+    // Only log actual redirect loops (critical errors)
+    console.error(
+      '[MIDDLEWARE] ⚠️ REDIRECT LOOP DETECTED!',
+      request.nextUrl.pathname,
+      'Count:',
+      count
+    );
     // Break the loop by allowing the request through
     return supabaseResponse;
   }
 
-  // Only log every 3rd request to reduce spam
-  if (count % 3 === 1) {
-    console.log('[MIDDLEWARE]', request.nextUrl.pathname, '- User:', user ? `✅ ${user.email}` : '❌ Not authenticated');
-  }
+  // REMOVED: Verbose "every 3rd request" logging for performance
 
   // Allow API routes (webhooks, auth callbacks, etc.)
   if (request.nextUrl.pathname.startsWith('/api/')) {
@@ -77,7 +147,10 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users from landing to dashboard
   if (user && request.nextUrl.pathname === '/') {
-    if (count % 3 === 1) console.log('[MIDDLEWARE] Redirecting authenticated user from / to /dashboard');
+    if (count % 3 === 1)
+      console.log(
+        '[MIDDLEWARE] Redirecting authenticated user from / to /dashboard'
+      );
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
@@ -85,7 +158,10 @@ export async function middleware(request: NextRequest) {
 
   // Protect dashboard routes
   if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (count % 3 === 1) console.log('[MIDDLEWARE] ⛔ Blocking unauthenticated access to /dashboard, redirecting to /login');
+    if (count % 3 === 1)
+      console.log(
+        '[MIDDLEWARE] ⛔ Blocking unauthenticated access to /dashboard, redirecting to /login'
+      );
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
@@ -97,7 +173,10 @@ export async function middleware(request: NextRequest) {
     (request.nextUrl.pathname === '/login' ||
       request.nextUrl.pathname === '/signup')
   ) {
-    if (count % 3 === 1) console.log('[MIDDLEWARE] Redirecting authenticated user from auth page to /dashboard');
+    if (count % 3 === 1)
+      console.log(
+        '[MIDDLEWARE] Redirecting authenticated user from auth page to /dashboard'
+      );
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
