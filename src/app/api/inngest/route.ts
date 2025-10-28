@@ -1,6 +1,7 @@
 import { serve } from 'inngest/next';
 import { inngest } from '@/inngest/client';
 import { testSync } from '@/inngest/functions/test-sync';
+import { syncOrchestrator } from '@/inngest/functions/sync-orchestrator'; // NEW: Unified sync orchestrator
 import { syncMicrosoftAccount } from '@/inngest/functions/sync-microsoft';
 import { syncGmailAccount } from '@/inngest/functions/sync-gmail';
 import { syncImapAccount } from '@/inngest/functions/sync-imap';
@@ -26,9 +27,10 @@ export const { GET, POST, PUT } = serve({
   functions: [
     // Email sync functions
     testSync,
-    syncMicrosoftAccount, // Microsoft email sync
-    syncGmailAccount, // Gmail email sync
-    syncImapAccount, // IMAP email sync
+    syncOrchestrator, // NEW: Unified sync orchestrator (handles all providers)
+    syncMicrosoftAccount, // OLD: Keeping for backward compatibility
+    syncGmailAccount, // OLD: Keeping for backward compatibility
+    syncImapAccount, // OLD: Keeping for backward compatibility
     sendScheduledEmails, // Scheduled email sender (runs every minute)
     // proactiveMonitoring, // TEMPORARILY DISABLED - SQL errors causing slowdowns
 

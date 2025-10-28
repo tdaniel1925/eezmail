@@ -115,6 +115,13 @@ export default async function DashboardLayout({
     console.error('Failed to load onboarding progress:', error);
   }
 
+  // Run sync health check (resets stuck syncs)
+  try {
+    await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/sync/health`);
+  } catch (error) {
+    console.error('Failed to run sync health check:', error);
+  }
+
   return (
     <ErrorBoundary>
       <ChatbotContextProvider>

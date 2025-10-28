@@ -142,6 +142,27 @@ export async function GET(request: NextRequest) {
     // Clean up any orphaned folders before proceeding
     await cleanupOrphanedFolders(user.id);
 
+    // Trigger sync via new unified orchestrator
+    try {
+      const { syncAccount } = await import('@/lib/sync/sync-orchestrator');
+
+      const syncResult = await syncAccount({
+        accountId: inserted[0].id,
+        syncMode: 'initial',
+        trigger: 'oauth',
+      });
+
+      if (syncResult.success) {
+        console.log(`✅ Sync triggered successfully! Run ID: ${syncResult.runId}`);
+      } else {
+        console.error(`❌ Failed to trigger sync: ${syncResult.error}`);
+        // Don't fail OAuth - user can manually sync later
+      }
+    } catch (syncError) {
+      console.error('❌ Sync trigger error:', syncError);
+      // Don't fail OAuth - user can manually sync later
+    }
+
     // Count user's total email accounts (including the one just added)
     const accountCountResult = await db
       .select({ count: sql<number>`count(*)` })
