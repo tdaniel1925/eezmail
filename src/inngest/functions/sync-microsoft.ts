@@ -15,37 +15,46 @@ import {
 
 /**
  * Helper function to categorize emails based on folder name
- * Maps folder names to valid email_category enum values
+ * Maps folder names to VALID email_category enum values ONLY
+ * 
+ * Valid values: 'inbox', 'sent', 'drafts', 'junk', 'outbox', 'deleted'
  */
 function categorizeFolderName(folderName: string): string {
   const normalized = folderName.toLowerCase();
 
-  // Primary categories
+  // Primary categories (exact match to enum)
   if (normalized === 'inbox') return 'inbox';
+  
+  // Spam/Junk → junk (enum uses 'junk', not 'spam')
   if (
     normalized === 'spam' ||
     normalized === 'junk' ||
     normalized === 'junkemail'
   )
-    return 'spam';
-  if (normalized === 'archive' || normalized === 'archived') return 'archived';
+    return 'junk';
+  
+  // Archive → deleted (closest match in enum)
+  if (normalized === 'archive' || normalized === 'archived') return 'deleted';
 
-  // Sent items → sent category (fixed)
+  // Sent items → sent category
   if (normalized === 'sent' || normalized === 'sentitems') return 'sent';
 
-  // Drafts → unscreened (they haven't been sent/screened yet)
-  if (normalized === 'drafts') return 'unscreened';
+  // Drafts → drafts
+  if (normalized === 'drafts') return 'drafts';
 
-  // Trash/Deleted → archived (they're archived for deletion)
+  // Trash/Deleted → deleted
   if (
     normalized === 'trash' ||
     normalized === 'deleteditems' ||
     normalized === 'deleted'
   )
-    return 'archived';
+    return 'deleted';
+  
+  // Outbox → outbox
+  if (normalized === 'outbox') return 'outbox';
 
-  // Custom folders → unscreened (need to be reviewed)
-  return 'unscreened';
+  // Custom folders → inbox (safest default in the enum)
+  return 'inbox';
 }
 
 /**
