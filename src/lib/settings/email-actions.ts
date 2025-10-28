@@ -63,9 +63,10 @@ export async function initiateEmailConnection(provider: string) {
       // Use environment variable or fallback to localhost for development
       // In production (Vercel), NEXT_PUBLIC_APP_URL should be set
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : 'http://localhost:3000';
+          : 'http://localhost:3000');
 
       const msGraphConfig = {
         clientId: process.env.MICROSOFT_CLIENT_ID!,
@@ -106,9 +107,10 @@ export async function initiateEmailConnection(provider: string) {
     if (provider === 'gmail') {
       // Use environment variable or fallback to localhost for development
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
-          : 'http://localhost:3000';
+          : 'http://localhost:3000');
 
       const gmailConfig = {
         clientId: process.env.GOOGLE_CLIENT_ID!,
