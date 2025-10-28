@@ -167,12 +167,12 @@ async function detectMicrosoftFolders(account: any): Promise<DetectedFolder[]> {
   // Recursive function to fetch folder and all its children
   async function fetchFolderAndChildren(folderId?: string): Promise<any[]> {
     let allFolders: any[] = [];
-    
+
     // Build the URL - root folders if no folderId provided
-    const baseUrl = folderId 
+    const baseUrl = folderId
       ? `/me/mailFolders/${folderId}/childFolders`
       : '/me/mailFolders';
-    
+
     let nextLink = `${baseUrl}?$top=100`;
 
     // Fetch all folders at this level with pagination
@@ -199,7 +199,9 @@ async function detectMicrosoftFolders(account: any): Promise<DetectedFolder[]> {
   // Start fetching from root folders
   const allFolders = await fetchFolderAndChildren();
 
-  console.log(`📁 Found ${allFolders.length} Microsoft folders (including nested)`);
+  console.log(
+    `📁 Found ${allFolders.length} Microsoft folders (including nested)`
+  );
 
   return allFolders.map((folder: any) => {
     const detectedType = detectFolderType(folder.displayName, 'microsoft');

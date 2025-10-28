@@ -27,18 +27,18 @@ const client = postgres(connectionString, {
   max: process.env.DATABASE_URL ? (isServerless ? 1 : 10) : 0,
   idle_timeout: isServerless ? 20 : 30,
   connect_timeout: 10,
-  
+
   // Force SSL in production for security and compatibility
   ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
-  
+
   // Connection metadata
   connection: {
     application_name: 'imbox-email-client',
   },
-  
+
   // Suppress notices to reduce noise in logs
   onnotice: () => {},
-  
+
   // For connection pooler compatibility (if using port 6543)
   prepare: false,
 });

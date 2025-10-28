@@ -40,13 +40,10 @@ export async function GET() {
   // Check if DATABASE_URL is configured
   if (process.env.DATABASE_URL) {
     results.database.configured = true;
-    
+
     // Show connection string (with password masked)
     const connStr = process.env.DATABASE_URL;
-    results.database.connectionString = connStr.replace(
-      /:[^@]+@/,
-      ':****@'
-    );
+    results.database.connectionString = connStr.replace(/:[^@]+@/, ':****@');
   }
 
   // Check Supabase configuration
@@ -69,23 +66,22 @@ export async function GET() {
     const userCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(users);
-    
+
     results.database.userCount = Number(userCount[0]?.count || 0);
     results.database.connected = true;
-
   } catch (error) {
     results.database.connected = false;
-    results.database.error = error instanceof Error ? error.message : String(error);
+    results.database.error =
+      error instanceof Error ? error.message : String(error);
   }
 
   // Return status code based on database connection
   const statusCode = results.database.connected ? 200 : 503;
 
-  return NextResponse.json(results, { 
+  return NextResponse.json(results, {
     status: statusCode,
     headers: {
       'Cache-Control': 'no-store, max-age=0',
-    }
+    },
   });
 }
-

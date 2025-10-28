@@ -16,7 +16,7 @@ import {
 /**
  * Helper function to categorize emails based on folder name
  * Maps folder names to VALID email_category enum values ONLY
- * 
+ *
  * Valid values: 'inbox', 'sent', 'drafts', 'junk', 'outbox', 'deleted'
  */
 function categorizeFolderName(folderName: string): string {
@@ -24,7 +24,7 @@ function categorizeFolderName(folderName: string): string {
 
   // Primary categories (exact match to enum)
   if (normalized === 'inbox') return 'inbox';
-  
+
   // Spam/Junk → junk (enum uses 'junk', not 'spam')
   if (
     normalized === 'spam' ||
@@ -32,7 +32,7 @@ function categorizeFolderName(folderName: string): string {
     normalized === 'junkemail'
   )
     return 'junk';
-  
+
   // Archive → deleted (closest match in enum)
   if (normalized === 'archive' || normalized === 'archived') return 'deleted';
 
@@ -49,7 +49,7 @@ function categorizeFolderName(folderName: string): string {
     normalized === 'deleted'
   )
     return 'deleted';
-  
+
   // Outbox → outbox
   if (normalized === 'outbox') return 'outbox';
 
