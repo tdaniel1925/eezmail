@@ -164,19 +164,42 @@ async function detectMicrosoftFolders(account: any): Promise<DetectedFolder[]> {
     },
   });
 
-  // Fetch all folders with pagination support
-  // Microsoft Graph API defaults to 10 items, so we need to request more and handle pagination
-  let allFolders: any[] = [];
-  let nextLink = '/me/mailFolders?$top=100&includeHiddenFolders=true';
+  // Recursive function to fetch folder and all its children
+  async function fetchFolderAndChildren(folderId?: string): Promise<any[]> {
+    let allFolders: any[] = [];
+    
+    // Build the URL - root folders if no folderId provided
+    const baseUrl = folderId 
+      ? `/me/mailFolders/${folderId}/childFolders`
+      : '/me/mailFolders';
+    
+    let nextLink = `${baseUrl}?$top=100`;
 
-  while (nextLink) {
-    const response = await client.api(nextLink).get();
-    const folders = response.value || [];
-    allFolders = allFolders.concat(folders);
+    // Fetch all folders at this level with pagination
+    while (nextLink) {
+      const response = await client.api(nextLink).get();
+      const folders = response.value || [];
+      allFolders = allFolders.concat(folders);
 
-    // Check for pagination
-    nextLink = response['@odata.nextLink'] || null;
+      // Check for pagination
+      nextLink = response['@odata.nextLink'] || null;
+    }
+
+    // Recursively fetch children for each folder
+    for (const folder of allFolders) {
+      if (folder.childFolderCount > 0) {
+        const children = await fetchFolderAndChildren(folder.id);
+        allFolders = allFolders.concat(children);
+      }
+    }
+
+    return allFolders;
   }
+
+  // Start fetching from root folders
+  const allFolders = await fetchFolderAndChildren();
+
+  console.log(`📁 Found ${allFolders.length} Microsoft folders (including nested)`);
 
   return allFolders.map((folder: any) => {
     const detectedType = detectFolderType(folder.displayName, 'microsoft');
