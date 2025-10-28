@@ -296,6 +296,7 @@ export const userRoleHierarchyEnum = pgEnum('user_role_hierarchy', [
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
+  name: text('name'), // Combined name field for convenience
   fullName: text('full_name'),
   firstName: text('first_name'),
   lastName: text('last_name'),

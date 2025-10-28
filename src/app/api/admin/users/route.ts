@@ -71,7 +71,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const formattedUsers = allUsers.map((u) => ({
       id: u.id,
       email: u.email,
-      name: u.name,
+      name:
+        u.fullName ||
+        u.name ||
+        `${u.firstName || ''} ${u.lastName || ''}`.trim() ||
+        null,
+      username: u.username,
       role: u.role,
       tier: u.tier,
       isSandboxUser: u.isSandboxUser || false,

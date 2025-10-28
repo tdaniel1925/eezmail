@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 /**
  * Server action for login
@@ -22,18 +22,35 @@ export async function loginAction(formData: FormData) {
     return { error: 'Username must be at least 3 characters' };
   }
 
-  // Look up email from username
+  // Look up email from username (case-insensitive)
   let email: string;
   try {
+    const normalizedUsername = username.toLowerCase().trim();
     const user = await db.query.users.findFirst({
-      where: eq(users.username, username.toLowerCase()),
+      where: sql`LOWER(${users.username}) = ${normalizedUsername}`,
       columns: {
         email: true,
+        username: true,
       },
     });
 
     if (!user) {
       console.error('[SERVER AUTH] Username not found:', username);
+
+      // Try to find similar usernames for debugging
+      const allUsers = await db
+        .select({
+          email: users.email,
+          username: users.username,
+        })
+        .from(users)
+        .limit(10);
+
+      console.log(
+        '[SERVER AUTH] Available users (first 10):',
+        allUsers.map((u) => ({ email: u.email, username: u.username }))
+      );
+
       return {
         error:
           'Username not found. Please check your username or contact support.',
@@ -41,7 +58,12 @@ export async function loginAction(formData: FormData) {
     }
 
     email = user.email;
-    console.log('[SERVER AUTH] Found email for username:', email);
+    console.log(
+      '[SERVER AUTH] Found email for username:',
+      user.username,
+      '->',
+      email
+    );
   } catch (error) {
     console.error('[SERVER AUTH] Error looking up username:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
