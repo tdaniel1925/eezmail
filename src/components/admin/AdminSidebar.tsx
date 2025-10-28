@@ -24,6 +24,9 @@ import {
   Mail,
   Bell,
   CreditCard,
+  Brain,
+  MessageSquare,
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +45,14 @@ const debugSection = [
   { name: 'Connection Test', href: '/admin/debug/connection-test', icon: Zap },
   { name: 'Performance', href: '/admin/debug/profiler', icon: Activity },
   { name: 'Log Search', href: '/admin/debug/logs', icon: Bug },
+];
+
+const betaSection = [
+  { name: 'Beta Dashboard', href: '/admin/beta', icon: Brain },
+  { name: 'Beta Users', href: '/admin/beta/users', icon: Users },
+  { name: 'Feedback', href: '/admin/beta/feedback', icon: MessageSquare },
+  { name: 'AI Insights', href: '/admin/beta/insights', icon: Target },
+  { name: 'Analytics', href: '/admin/beta/analytics', icon: BarChart3 },
 ];
 
 const systemSection = [
@@ -115,6 +126,14 @@ export function AdminSidebar() {
             Debug Tools
           </h3>
           {debugSection.map(renderNavItem)}
+        </div>
+
+        {/* Beta Testing Section */}
+        <div className="space-y-1">
+          <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+            Beta Program
+          </h3>
+          {betaSection.map(renderNavItem)}
         </div>
 
         {/* System Section */}
