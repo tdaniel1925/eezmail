@@ -5,8 +5,9 @@ import { eq, and, lt } from 'drizzle-orm';
 
 export interface SyncRequest {
   accountId: string;
-  syncMode: 'initial' | 'incremental';
-  trigger: 'oauth' | 'manual' | 'scheduled' | 'webhook';
+  userId?: string; // Optional - will be fetched from account if not provided
+  syncMode?: 'initial' | 'incremental'; // Optional - will be auto-detected
+  trigger: 'oauth' | 'manual' | 'scheduled' | 'webhook' | 'smart_defaults';
 }
 
 /**
@@ -18,9 +19,9 @@ export async function syncAccount(request: SyncRequest): Promise<{
   runId?: string;
   error?: string;
 }> {
-  const { accountId, syncMode, trigger } = request;
+  const { accountId, syncMode, trigger, userId } = request;
   
-  console.log(`🚀 Sync requested: ${accountId} (${syncMode}, ${trigger})`);
+  console.log(`🚀 Sync requested: ${accountId} (${syncMode || 'auto'}, ${trigger})`);
 
   // 1. Validate account exists
   const account = await db.query.emailAccounts.findFirst({
@@ -31,6 +32,12 @@ export async function syncAccount(request: SyncRequest): Promise<{
     console.error(`❌ Account not found: ${accountId}`);
     return { success: false, error: 'Account not found' };
   }
+
+  // Auto-detect sync mode if not provided
+  const finalSyncMode = syncMode || (account.initialSyncCompleted ? 'incremental' : 'initial');
+  const finalUserId = userId || account.userId;
+
+  console.log(`   Detected sync mode: ${finalSyncMode}`);
 
   // 2. Check if already syncing (prevent duplicate syncs)
   if (account.syncStatus === 'syncing') {
@@ -44,9 +51,9 @@ export async function syncAccount(request: SyncRequest): Promise<{
       name: 'sync/account',
       data: {
         accountId,
-        userId: account.userId,
+        userId: finalUserId,
         provider: account.provider,
-        syncMode,
+        syncMode: finalSyncMode,
         trigger,
         timestamp: Date.now(),
       },
@@ -137,3 +144,9 @@ export async function getSyncStatus(accountId: string): Promise<{
     lastError: account.lastSyncError,
   };
 }
+
+/**
+ * Alias for syncAccount - for backwards compatibility
+ * @deprecated Use syncAccount instead
+ */
+export const triggerSync = syncAccount;

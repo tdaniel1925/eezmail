@@ -28,8 +28,12 @@ const client = postgres(connectionString, {
   idle_timeout: isServerless ? 20 : 30,
   connect_timeout: 10,
 
-  // Force SSL in production for security and compatibility
-  ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+  // Force SSL for Supabase (always required) and production
+  ssl:
+    process.env.DATABASE_URL?.includes('supabase.co') ||
+    process.env.NODE_ENV === 'production'
+      ? 'require'
+      : false,
 
   // Connection metadata
   connection: {

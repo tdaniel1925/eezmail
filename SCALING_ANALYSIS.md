@@ -533,3 +533,4 @@ Month 3: 6,000 users → Breaking
 4. **Switch to Nylas if growing fast** OR need multi-provider support
 
 **You made the right choice to start direct** - you learned the system, saved money early on, and can always migrate to Nylas when it makes sense. 🎉
+

@@ -64,20 +64,39 @@ export class MicrosoftProvider implements SyncProvider {
   }
 
   /**
-   * Fetch all mail folders from Microsoft Graph
+   * Fetch all mail folders from Microsoft Graph with pagination and child folders
    */
   async fetchFolders(): Promise<ProviderFolder[]> {
     console.log('📁 Fetching Microsoft folders...');
+    
+    const allFolders: ProviderFolder[] = [];
+    
+    // Fetch root-level folders with pagination
+    await this.fetchFoldersRecursive('me/mailFolders', allFolders);
+    
+    console.log(`✅ Found ${allFolders.length} total folders`);
+    return allFolders;
+  }
 
-    const response = await fetch(
-      'https://graph.microsoft.com/v1.0/me/mailFolders',
-      {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+  /**
+   * Recursively fetch folders with pagination support
+   */
+  private async fetchFoldersRecursive(
+    url: string, 
+    allFolders: ProviderFolder[],
+    isFullUrl: boolean = false
+  ): Promise<void> {
+    // Build the URL - if it's already a full URL (from @odata.nextLink), use it as-is
+    const fetchUrl = isFullUrl 
+      ? url
+      : `https://graph.microsoft.com/v1.0/${url}?$top=500`;
+
+    const response = await fetch(fetchUrl, {
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -86,15 +105,33 @@ export class MicrosoftProvider implements SyncProvider {
     }
 
     const data = await response.json();
-    const folders: ProviderFolder[] = data.value.map((f: any) => ({
-      id: f.id,
-      name: f.displayName,
-      totalMessages: f.totalItemCount || 0,
-      unreadMessages: f.unreadItemCount || 0,
-    }));
+    
+    // Process current batch of folders
+    for (const f of data.value) {
+      allFolders.push({
+        id: f.id,
+        name: f.displayName,
+        totalMessages: f.totalItemCount || 0,
+        unreadMessages: f.unreadItemCount || 0,
+      });
 
-    console.log(`✅ Found ${folders.length} folders`);
-    return folders;
+      // Recursively fetch child folders for this folder
+      try {
+        await this.fetchFoldersRecursive(
+          `me/mailFolders/${f.id}/childFolders`,
+          allFolders
+        );
+      } catch (error) {
+        // Some folders may not have child folders - that's okay
+        console.log(`   (No child folders for: ${f.displayName})`);
+      }
+    }
+
+    // Handle pagination - if there's a @odata.nextLink, fetch the next page
+    if (data['@odata.nextLink']) {
+      console.log(`   Fetching next page... (${allFolders.length} folders so far)`);
+      await this.fetchFoldersRecursive(data['@odata.nextLink'], allFolders, true);
+    }
   }
 
   /**

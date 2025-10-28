@@ -91,9 +91,9 @@ export function FolderList({
       if (result.success) {
         console.log('✅ Fetched server folders:', result.folders);
 
-        // Filter out folders that are already shown in primary/standard sections
-        // to avoid duplicates (e.g., inbox, sent, drafts, trash, spam, archive)
-        const excludedTypes = [
+        // Filter out ONLY the exact standard folders that are hardcoded
+        // (we show these with icons at the top)
+        const excludedExactTypes = [
           'inbox',
           'sent',
           'drafts',
@@ -101,46 +101,28 @@ export function FolderList({
           'spam',
           'archive',
           'starred',
-        ];
-        const excludedNames = [
-          'inbox',
-          'sent',
-          'drafts',
-          'trash',
-          'spam',
-          'junk',
-          'archive',
-          'archived',
-          'starred',
-          'important',
-          'attachments',
         ];
 
         const uniqueFolders = result.folders.filter((folder) => {
-          // ✅ Use new folderType field if available, fallback to type
           const folderType = (folder.folderType || folder.type).toLowerCase();
-          const normalizedName = folder.name.toLowerCase();
 
-          // Exclude if the type matches a hard-coded folder
-          if (excludedTypes.includes(folderType)) {
-            return false;
-          }
-
-          // Exclude if the name matches a hard-coded folder
-          if (
-            excludedNames.some((excluded) => normalizedName.includes(excluded))
-          ) {
+          // Only exclude if it's an EXACT match to our hardcoded folders
+          if (excludedExactTypes.includes(folderType)) {
             return false;
           }
 
           return true;
         });
 
-        // ✅ Sort by sortOrder if available
+        // ✅ Sort by sortOrder if available, then by name
         const sortedFolders = uniqueFolders.sort((a, b) => {
           const orderA = a.sortOrder ?? 999;
           const orderB = b.sortOrder ?? 999;
-          return orderA - orderB;
+          if (orderA !== orderB) {
+            return orderA - orderB;
+          }
+          // If same order, sort alphabetically by name
+          return a.name.localeCompare(b.name);
         });
 
         // Convert folder names to title case, use displayName if available
@@ -150,8 +132,9 @@ export function FolderList({
         }));
 
         console.log(
-          '📂 Unique server folders after filtering:',
-          titleCaseFolders
+          '📂 Server folders after filtering (showing ALL):',
+          titleCaseFolders.length,
+          'folders'
         );
         setServerFolders(titleCaseFolders);
       } else {
