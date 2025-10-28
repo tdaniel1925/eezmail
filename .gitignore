@@ -32,6 +32,10 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Secret files (never commit!)
+MANUAL_SECRETS_CHECKLIST.md
+YOUR_VERCEL_CONFIG.md
+
 # vercel
 .vercel
 
