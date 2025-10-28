@@ -233,8 +233,8 @@ export const FOLDER_NAME_MAPPINGS: Record<CoreFolderType, string[]> = {
     'Trash.',
     '.Trash',
   ],
-  junk: [
-    // English
+  spam: [
+    // English (includes "junk" variations since spam folders are often called junk)
     'spam',
     'Spam',
     'Junk',
