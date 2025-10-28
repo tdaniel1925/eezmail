@@ -36,6 +36,8 @@ import { HelpCenter } from '@/components/help/HelpCenter';
 import { DangerZone } from '@/components/settings/DangerZone';
 import { VoiceSettings } from '@/components/settings/VoiceSettings';
 import { useSettingsData } from '@/hooks/useSettingsData';
+import { SettingsSearch } from '@/components/settings/SettingsSearch';
+import { ErrorHistory } from '@/components/settings/ErrorHistory';
 
 type SettingsTab =
   | 'account'
@@ -46,13 +48,15 @@ type SettingsTab =
   | 'display'
   | 'notifications'
   | 'security'
-  | 'advanced';
+  | 'advanced'
+  | 'troubleshooting';
 
 interface TabConfig {
   id: SettingsTab;
   label: string;
   icon: React.ElementType;
   description: string;
+  keywords?: string[];
 }
 
 const tabs: TabConfig[] = [
@@ -61,54 +65,70 @@ const tabs: TabConfig[] = [
     label: 'Account',
     icon: User,
     description: 'Profile, password, and preferences',
+    keywords: ['profile', 'user', 'name', 'avatar', 'password', 'security'],
   },
   {
     id: 'email-accounts',
     label: 'Email Accounts',
     icon: Mail,
     description: 'Connect and manage email accounts',
+    keywords: ['email', 'gmail', 'outlook', 'microsoft', 'sync', 'connect'],
   },
   {
     id: 'communication',
     label: 'Communication',
     icon: Mic,
     description: 'SMS, voice messages, and Twilio',
+    keywords: ['sms', 'text', 'voice', 'phone', 'twilio', 'message'],
   },
   {
     id: 'organization',
     label: 'Organization',
     icon: Folder,
     description: 'Folders, signatures, and rules',
+    keywords: ['folder', 'signature', 'rules', 'filters', 'organize'],
   },
   {
     id: 'ai-voice',
     label: 'AI & Voice',
     icon: Sparkles,
     description: 'AI features and voice settings',
+    keywords: ['ai', 'artificial', 'intelligence', 'voice', 'assistant'],
   },
   {
     id: 'display',
     label: 'Display',
     icon: Palette,
     description: 'Theme, layout, and typography',
+    keywords: ['theme', 'dark', 'light', 'appearance', 'ui', 'layout'],
   },
   {
     id: 'notifications',
     label: 'Notifications',
     icon: Bell,
     description: 'Alerts and notification preferences',
+    keywords: ['notifications', 'alerts', 'email', 'push', 'sound'],
   },
   {
     id: 'security',
     label: 'Privacy & Security',
     icon: Shield,
     description: 'Privacy, tracking, and data',
+    keywords: ['privacy', 'security', 'tracking', 'data', 'encryption'],
+  },
+  {
+    id: 'troubleshooting',
+    label: 'Troubleshooting',
+    icon: AlertTriangle,
+    description: 'Error history and sync issues',
+    keywords: ['error', 'errors', 'sync', 'problem', 'issue', 'troubleshoot'],
   },
   {
     id: 'advanced',
     label: 'Advanced',
     icon: SettingsIcon,
     description: 'Billing, help, and danger zone',
+    keywords: ['billing', 'payment', 'subscription', 'help', 'delete'],
   },
 ];
 
@@ -226,6 +246,8 @@ function SettingsPageContent(): JSX.Element {
             accountId={userData.defaultAccountId || ''}
           />
         );
+      case 'troubleshooting':
+        return <ErrorHistory />;
       case 'advanced':
         return (
           <div className="space-y-8">
@@ -275,6 +297,21 @@ function SettingsPageContent(): JSX.Element {
                 Manage your preferences
               </p>
             </div>
+          </div>
+
+          {/* Settings Search */}
+          <div className="mb-6">
+            <SettingsSearch
+              tabs={tabs}
+              onTabSelect={(tabId) => {
+                setActiveTab(tabId as SettingsTab);
+                window.history.pushState(
+                  {},
+                  '',
+                  `/dashboard/settings?tab=${tabId}`
+                );
+              }}
+            />
           </div>
 
           <nav className="space-y-1">

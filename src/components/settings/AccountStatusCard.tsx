@@ -16,6 +16,8 @@ import {
   Link as LinkIcon,
   Trash2,
   Wrench,
+  Clock,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import type { ErrorInfo } from '@/lib/sync/error-handler';
 
 interface AccountStatusCardProps {
   accountId: string;
@@ -35,7 +38,9 @@ interface AccountStatusCardProps {
   lastSyncAt?: Date | null;
   syncProgress?: number;
   syncTotal?: number;
+  syncStage?: string; // Current sync stage (e.g., "Loading folders", "Syncing emails")
   errorMessage?: string | null;
+  errorInfo?: ErrorInfo | null; // Enhanced error information
   isDefault?: boolean;
   emailCount?: number;
   folderCount?: number;
@@ -56,7 +61,9 @@ export function AccountStatusCard({
   lastSyncAt,
   syncProgress = 0,
   syncTotal = 0,
+  syncStage,
   errorMessage,
+  errorInfo,
   isDefault,
   emailCount,
   folderCount,
@@ -70,6 +77,15 @@ export function AccountStatusCard({
   onTroubleshoot,
 }: AccountStatusCardProps) {
   const [showPulse, setShowPulse] = useState(false);
+  const [showTechnicalDetails, setShowTechnicalDetails] = useState(false);
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+
+  console.log('[ACCOUNT_CARD] Rendering with:', {
+    status,
+    errorMessage,
+    errorInfo,
+    syncStage,
+  });
 
   // Show pulse animation when status changes to active
   useEffect(() => {
@@ -79,6 +95,25 @@ export function AccountStatusCard({
       return () => clearTimeout(timer);
     }
   }, [status, lastSyncAt]);
+
+  // Countdown timer for retry
+  useEffect(() => {
+    if (errorInfo?.retryAfter && errorInfo.retryable) {
+      setRetryCountdown(errorInfo.retryAfter);
+
+      const interval = setInterval(() => {
+        setRetryCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [errorInfo]);
 
   const getStatusConfig = () => {
     switch (status) {
@@ -303,22 +338,115 @@ export function AccountStatusCard({
 
       {/* Sync status */}
       <div className="mt-4 space-y-2">
-        {status === 'syncing' && syncTotal > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">
-                Syncing emails...
-              </span>
-              <span className={`font-medium ${config.textColor}`}>
-                {syncProgress} / {syncTotal}
-              </span>
-            </div>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all ${config.color}`}
-                style={{ width: `${(syncProgress / syncTotal) * 100}%` }}
-              />
-            </div>
+        {status === 'syncing' && (
+          <div className="space-y-4">
+            {/* Sync stage indicator */}
+            {syncStage && (
+              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="font-medium">{syncStage}</span>
+              </div>
+            )}
+
+            {/* Progress bar if we have totals */}
+            {syncTotal > 0 && (
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {syncStage || 'Syncing emails...'}
+                  </span>
+                  <span className={`font-medium ${config.textColor}`}>
+                    {syncProgress.toLocaleString()} /{' '}
+                    {syncTotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full transition-all ${config.color}`}
+                    style={{
+                      width: `${Math.min(100, (syncProgress / syncTotal) * 100)}%`,
+                    }}
+                  />
+                </div>
+                {/* Percentage display */}
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                  {Math.round((syncProgress / syncTotal) * 100)}% complete
+                </div>
+              </div>
+            )}
+
+            {/* Detailed sync stages visualization */}
+            {syncTotal > 0 && (
+              <div className="relative pt-4">
+                <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700" />
+                <div
+                  className="absolute top-6 left-0 h-0.5 bg-primary transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (syncProgress / syncTotal) * 100)}%`,
+                  }}
+                />
+
+                <div className="flex justify-between relative">
+                  {[
+                    { label: 'Auth', emoji: '🔗', percentage: 5 },
+                    { label: 'Folders', emoji: '📁', percentage: 15 },
+                    { label: 'Inbox', emoji: '📧', percentage: 50 },
+                    { label: 'Other', emoji: '📬', percentage: 80 },
+                    { label: 'Index', emoji: '🔎', percentage: 95 },
+                  ].map((stage, i) => {
+                    const currentProgress = (syncProgress / syncTotal) * 100;
+                    const isActive = currentProgress >= stage.percentage;
+                    const isCurrent =
+                      currentProgress >= stage.percentage &&
+                      (i === 4 || currentProgress < [5, 15, 50, 80, 95][i + 1]);
+
+                    return (
+                      <div
+                        key={stage.label}
+                        className="flex flex-col items-center"
+                      >
+                        <div
+                          className={cn(
+                            'w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white dark:bg-gray-900 transition-all duration-300',
+                            isActive
+                              ? 'border-primary text-xl'
+                              : 'border-gray-300 dark:border-gray-700 opacity-50',
+                            isCurrent && 'ring-2 ring-primary ring-offset-2'
+                          )}
+                        >
+                          <span className="text-sm">{stage.emoji}</span>
+                        </div>
+                        <span
+                          className={cn(
+                            'text-xs mt-2 font-medium',
+                            isActive
+                              ? 'text-gray-900 dark:text-white'
+                              : 'text-gray-500'
+                          )}
+                        >
+                          {stage.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ETA */}
+            {syncTotal > 0 && (
+              <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 pt-2">
+                <span>
+                  {syncProgress.toLocaleString()} of{' '}
+                  {syncTotal.toLocaleString()} emails
+                </span>
+                <span>
+                  About{' '}
+                  {Math.max(1, Math.ceil((syncTotal - syncProgress) / 25))} min
+                  remaining
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -338,24 +466,77 @@ export function AccountStatusCard({
           </div>
         )}
 
-        {status === 'error' && errorMessage && (
+        {status === 'error' && (errorMessage || errorInfo) && (
           <div className="space-y-3">
-            {/* Error message */}
+            {/* Enhanced Error message with user-friendly text */}
             <div className="flex items-start gap-2 p-3 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
               <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                  Sync Error
+                  {errorInfo?.userMessage || 'Sync Error'}
                 </p>
-                <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                  {errorMessage}
-                </p>
+                {errorInfo?.actionMessage && (
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    {errorInfo.actionMessage}
+                  </p>
+                )}
+                {!errorInfo && errorMessage && (
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    {errorMessage}
+                  </p>
+                )}
+
+                {/* Retry countdown */}
+                {retryCountdown !== null && retryCountdown > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>Auto-retrying in {retryCountdown}s...</span>
+                  </div>
+                )}
+
+                {/* Technical details toggle */}
+                {(errorMessage || errorInfo?.message) && (
+                  <button
+                    onClick={() =>
+                      setShowTechnicalDetails(!showTechnicalDetails)
+                    }
+                    className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    <ChevronRight
+                      className={cn(
+                        'h-3 w-3 transition-transform',
+                        showTechnicalDetails && 'rotate-90'
+                      )}
+                    />
+                    Technical Details
+                  </button>
+                )}
+
+                {/* Collapsible technical details */}
+                {showTechnicalDetails && (
+                  <div className="mt-2 p-2 bg-red-100 dark:bg-red-950/40 rounded text-xs font-mono text-red-800 dark:text-red-200 break-all">
+                    {errorInfo?.message || errorMessage}
+                  </div>
+                )}
+
+                {/* Help link */}
+                {errorInfo?.helpUrl && (
+                  <a
+                    href={errorInfo.helpUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-red-600 dark:text-red-400 hover:underline"
+                  >
+                    Learn more
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
               </div>
             </div>
 
             {/* Recovery actions */}
             <div className="flex flex-wrap items-center gap-2">
-              {onRetry && (
+              {onRetry && !errorInfo?.retryable && (
                 <Button size="sm" variant="outline" onClick={onRetry}>
                   <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
                   Retry Sync
@@ -367,46 +548,19 @@ export function AccountStatusCard({
                   Troubleshoot
                 </Button>
               )}
-              {isPermissionError && onReconnect && (
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onClick={onReconnect}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
-                  Reconnect Account
-                </Button>
-              )}
+              {(isPermissionError || errorInfo?.type === 'auth') &&
+                onReconnect && (
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={onReconnect}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    <LinkIcon className="h-3.5 w-3.5 mr-1.5" />
+                    Reconnect Account
+                  </Button>
+                )}
             </div>
-
-            {/* Permission error guidance (only if no action buttons shown above) */}
-            {isPermissionError && !onReconnect && (
-              <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      Action Required: Reconnect Your Account
-                    </p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                      {provider === 'microsoft'
-                        ? 'Microsoft has revoked or limited access to your account. This typically happens when permissions expire or security settings change.'
-                        : 'Your email provider has revoked access. Please reconnect to restore sync.'}
-                    </p>
-                    <a
-                      href="https://support.microsoft.com/account-billing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-yellow-700 dark:text-yellow-300 hover:underline"
-                    >
-                      Learn more about permissions
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

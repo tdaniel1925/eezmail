@@ -7,6 +7,7 @@ import { ThemeProvider } from 'next-themes';
 import { DatabaseHealthProvider } from '@/components/providers/DatabaseHealthProvider';
 import { SWRProvider } from '@/providers/SWRProvider';
 import { Toaster } from 'sonner';
+import { KeyboardShortcutsModal } from '@/components/ui/keyboard-shortcuts-modal';
 
 const inter = Inter({ subsets: ['latin'] });
 const playfair = Playfair_Display({
@@ -36,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-          {/* Fetch sanitizer removed - using Supabase client configuration instead */}
+        {/* Fetch sanitizer removed - using Supabase client configuration instead */}
       </head>
       <body className={`${inter.className} ${playfair.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
@@ -56,6 +57,7 @@ export default function RootLayout({
                 className: 'sonner-toast-no-animation',
               }}
             />
+            <KeyboardShortcutsModal />
           </SWRProvider>
         </ThemeProvider>
       </body>

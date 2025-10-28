@@ -3,6 +3,7 @@
 ## ✅ Status: NEXT_PUBLIC_APP_URL needs to be set
 
 The test endpoint confirmed:
+
 ```json
 {
   "NEXT_PUBLIC_APP_URL": "NOT SET",
@@ -34,4 +35,3 @@ Then redeploy.
 ```
 
 The `computedUrl` should match your custom domain, not the Vercel deployment URL.
-

@@ -42,9 +42,12 @@ export async function POST(req: NextRequest) {
     if (planId === 'free') {
       if (currentSub?.processor_subscription_id) {
         // Cancel Stripe subscription
-        await stripe.subscriptions.update(currentSub.processor_subscription_id, {
-          cancel_at_period_end: true,
-        });
+        await stripe.subscriptions.update(
+          currentSub.processor_subscription_id,
+          {
+            cancel_at_period_end: true,
+          }
+        );
 
         return NextResponse.json({
           success: true,
@@ -116,7 +119,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Error changing plan:', error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.errors },
@@ -130,4 +133,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

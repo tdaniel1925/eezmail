@@ -21,15 +21,25 @@ export type ErrorType =
 export interface ErrorInfo {
   type: ErrorType;
   message: string;
+  userMessage: string; // User-friendly explanation
+  actionMessage?: string; // What the user should do
   retryable: boolean;
   retryAfter?: number; // seconds
+  helpUrl?: string; // Link to relevant help documentation
 }
 
 /**
  * Classify error type and determine if retryable
+ * Now includes user-friendly messages and recovery guidance
  */
 export function classifyError(error: any): ErrorInfo {
   const message = error?.message || String(error);
+
+  console.log('[ERROR] Classifying error:', {
+    message,
+    status: error?.status,
+    type: typeof error,
+  });
 
   // Network errors
   if (
@@ -42,26 +52,40 @@ export function classifyError(error: any): ErrorInfo {
     return {
       type: 'network',
       message: 'Network connection failed',
+      userMessage:
+        'Unable to connect to the server. Please check your internet connection.',
+      actionMessage:
+        "We'll automatically retry in a moment. If this persists, check your network settings.",
       retryable: true,
+      helpUrl: '/help/troubleshoot-network',
     };
   }
 
-  // Authentication errors
+  // Authentication errors (401, 403)
   if (
     message.includes('401') ||
+    message.includes('403') ||
     message.includes('Unauthorized') ||
+    message.includes('Forbidden') ||
     message.includes('invalid_grant') ||
     message.includes('token') ||
-    error?.status === 401
+    message.includes('Access Denied') ||
+    message.includes('ErrorAccessDenied') ||
+    error?.status === 401 ||
+    error?.status === 403
   ) {
     return {
       type: 'auth',
       message: 'Authentication failed - reconnect account',
+      userMessage:
+        'Your account needs to reconnect. This happens when passwords change or permissions expire.',
+      actionMessage: 'Click "Reconnect Account" to fix this in 30 seconds.',
       retryable: false, // Requires user action
+      helpUrl: '/help/reconnect-account',
     };
   }
 
-  // Rate limiting
+  // Rate limiting (429)
   if (
     message.includes('429') ||
     message.includes('rate limit') ||
@@ -72,30 +96,40 @@ export function classifyError(error: any): ErrorInfo {
       ? parseInt(error.headers['retry-after'])
       : 60;
 
+    const minutes = Math.ceil(retryAfter / 60);
+
     return {
       type: 'rate_limit',
       message: 'Rate limit exceeded',
+      userMessage: `The email provider's servers are busy right now.`,
+      actionMessage: `We'll automatically retry in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}. No action needed.`,
       retryable: true,
       retryAfter,
     };
   }
 
-  // Provider errors (Gmail, Outlook, etc.)
+  // Provider errors (503, service unavailable)
   if (
     message.includes('provider') ||
     message.includes('503') ||
     message.includes('service unavailable') ||
+    message.includes('maintenance') ||
     error?.status === 503
   ) {
     return {
       type: 'provider',
       message: 'Email provider temporarily unavailable',
+      userMessage:
+        'The email provider is temporarily unavailable. This usually resolves within a few minutes.',
+      actionMessage:
+        "We'll automatically retry in 5 minutes. Check the provider status page if this continues.",
       retryable: true,
       retryAfter: 300, // 5 minutes
+      helpUrl: '/help/provider-status',
     };
   }
 
-  // Invalid data errors
+  // Invalid data errors (400)
   if (
     message.includes('400') ||
     message.includes('invalid') ||
@@ -105,7 +139,11 @@ export function classifyError(error: any): ErrorInfo {
     return {
       type: 'invalid_data',
       message: 'Invalid data received',
+      userMessage: 'There was a problem with the sync data format.',
+      actionMessage:
+        'Try reconnecting your account. If this persists, contact support.',
       retryable: false,
+      helpUrl: '/help/sync-errors',
     };
   }
 
@@ -113,6 +151,9 @@ export function classifyError(error: any): ErrorInfo {
   return {
     type: 'unknown',
     message: message || 'Unknown error occurred',
+    userMessage: 'An unexpected error occurred during sync.',
+    actionMessage:
+      "We'll try again automatically. If this persists, try reconnecting your account.",
     retryable: true, // Default to retryable
   };
 }

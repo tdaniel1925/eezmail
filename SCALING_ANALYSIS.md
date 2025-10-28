@@ -13,6 +13,7 @@
 **Current setup:** Perfect
 
 **What works:**
+
 - Direct Microsoft Graph API calls
 - Inngest background jobs
 - PostgreSQL database
@@ -52,9 +53,7 @@ import pLimit from 'p-limit';
 const limit = pLimit(5); // Max 5 concurrent API calls
 
 const folders = await Promise.all(
-  accounts.map(account => 
-    limit(() => fetchFolders(account))
-  )
+  accounts.map((account) => limit(() => fetchFolders(account)))
 );
 ```
 
@@ -79,13 +78,13 @@ await redis.set(`folders:${accountId}`, folders, { ex: 300 });
 // 3. Add batch processing for emails
 async function syncEmailsInBatches(emails: Email[]) {
   const BATCH_SIZE = 100;
-  
+
   for (let i = 0; i < emails.length; i += BATCH_SIZE) {
     const batch = emails.slice(i, i + BATCH_SIZE);
     await db.insert(emailsTable).values(batch);
-    
+
     // Add small delay to avoid overwhelming DB
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 }
 ```
@@ -126,23 +125,24 @@ async function syncEmailsInBatches(emails: Email[]) {
 async function deltaSync(accountId: string) {
   // Get last sync token from database
   const lastSyncToken = await getLastSyncToken(accountId);
-  
+
   // Use Microsoft's delta query
-  const deltaUrl = lastSyncToken 
+  const deltaUrl = lastSyncToken
     ? `/me/mailFolders/inbox/messages/delta?$deltatoken=${lastSyncToken}`
     : `/me/mailFolders/inbox/messages/delta`;
-  
+
   const changes = await graphClient.api(deltaUrl).get();
-  
+
   // Process only new/changed emails
   await processChanges(changes.value);
-  
+
   // Save new delta token
   await saveSyncToken(accountId, changes['@odata.deltaLink']);
 }
 ```
 
 **Impact:**
+
 - Reduces API calls by 90-95%
 - Faster sync times
 - Less database writes
@@ -218,21 +218,21 @@ FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
 class RateLimiter {
   private redis: Redis;
   private maxRequestsPer10Min = 9000; // Leave buffer
-  
+
   async acquireToken(): Promise<boolean> {
     const key = 'ms-graph-rate-limit';
     const count = await this.redis.incr(key);
-    
+
     if (count === 1) {
       await this.redis.expire(key, 600); // 10 minutes
     }
-    
+
     return count <= this.maxRequestsPer10Min;
   }
-  
+
   async waitForToken(): Promise<void> {
     while (!(await this.acquireToken())) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 }
@@ -283,6 +283,7 @@ class RateLimiter {
 ### **1,000 Users**
 
 **Your Current Setup:**
+
 - Supabase: $25/month (Pro plan)
 - Vercel: $20/month (Pro for more resources)
 - Inngest: Free (or $20/month for more jobs)
@@ -290,6 +291,7 @@ class RateLimiter {
 - **Total: ~$75/month**
 
 **With Nylas:**
+
 - Nylas: $199/month (Growth plan, 1,000 users)
 - Supabase: $25/month (smaller, just metadata)
 - Vercel: $20/month
@@ -302,6 +304,7 @@ class RateLimiter {
 ### **5,000 Users**
 
 **Your Current Setup (optimized):**
+
 - Supabase: $599/month (Team plan for performance)
 - Vercel: $100/month (Pro with more resources)
 - Inngest: $99/month (Pro plan)
@@ -310,6 +313,7 @@ class RateLimiter {
 - **Total: ~$928/month**
 
 **With Nylas:**
+
 - Nylas: $999/month (Enterprise plan, 5,000 users)
 - Supabase: $25/month (minimal usage)
 - Vercel: $20/month
@@ -322,12 +326,14 @@ class RateLimiter {
 ### **10,000+ Users**
 
 **Your Current Setup:**
+
 - Would require custom enterprise infrastructure
 - Multiple databases, load balancers, job processors
 - DevOps team to manage
 - **Estimated: $2,000-5,000/month**
 
 **With Nylas:**
+
 - Nylas: $2,000-3,000/month (Enterprise custom)
 - Minimal infrastructure (they handle scaling)
 - **Total: ~$2,500/month**
@@ -338,15 +344,15 @@ class RateLimiter {
 
 ## 📊 Scaling Readiness Matrix
 
-| Factor | 100 Users | 1,000 Users | 5,000 Users | 10,000 Users |
-|--------|-----------|-------------|-------------|--------------|
-| **API Rate Limits** | ✅ Ready | ✅ Ready | ⚠️ Need delta sync | ❌ Need multi-app |
-| **Database** | ✅ Ready | ✅ Ready | ⚠️ Need indexing | ❌ Need sharding |
-| **Background Jobs** | ✅ Ready | ✅ Ready | ⚠️ Need priority | ❌ Need dedicated |
-| **Caching** | ✅ Optional | ⚠️ Recommended | ❌ Required | ❌ Required |
-| **Monitoring** | ✅ Basic | ⚠️ Recommended | ❌ Required | ❌ Required |
-| **Cost Effective** | ✅ Yes | ✅ Yes | ⚠️ Maybe | ❌ No |
-| **Time to Scale** | ✅ 0 weeks | ✅ 1-2 weeks | ⚠️ 4-8 weeks | ❌ 12-24 weeks |
+| Factor              | 100 Users   | 1,000 Users    | 5,000 Users        | 10,000 Users      |
+| ------------------- | ----------- | -------------- | ------------------ | ----------------- |
+| **API Rate Limits** | ✅ Ready    | ✅ Ready       | ⚠️ Need delta sync | ❌ Need multi-app |
+| **Database**        | ✅ Ready    | ✅ Ready       | ⚠️ Need indexing   | ❌ Need sharding  |
+| **Background Jobs** | ✅ Ready    | ✅ Ready       | ⚠️ Need priority   | ❌ Need dedicated |
+| **Caching**         | ✅ Optional | ⚠️ Recommended | ❌ Required        | ❌ Required       |
+| **Monitoring**      | ✅ Basic    | ⚠️ Recommended | ❌ Required        | ❌ Required       |
+| **Cost Effective**  | ✅ Yes      | ✅ Yes         | ⚠️ Maybe           | ❌ No             |
+| **Time to Scale**   | ✅ 0 weeks  | ✅ 1-2 weeks   | ⚠️ 4-8 weeks       | ❌ 12-24 weeks    |
 
 ---
 
@@ -357,6 +363,7 @@ class RateLimiter {
 **Status: ✅ Ready to scale**
 
 **Action items:**
+
 1. ✅ Add basic monitoring (error tracking)
 2. ⚠️ Implement rate limit monitoring
 3. ⚠️ Add database indexes
@@ -373,6 +380,7 @@ class RateLimiter {
 **Status: ⚠️ Requires optimization work**
 
 **Critical implementations:**
+
 1. ❌ **Delta sync** (most important!)
 2. ❌ Redis caching layer
 3. ⚠️ Job prioritization
@@ -392,6 +400,7 @@ class RateLimiter {
 **Decision point:** Stay direct or switch to Nylas?
 
 **Stay Direct:**
+
 - 12-24 weeks of engineering work
 - Hire DevOps engineer
 - Complex infrastructure management
@@ -399,6 +408,7 @@ class RateLimiter {
 - **Only if:** Microsoft-only forever AND have engineering resources
 
 **Switch to Nylas:**
+
 - 2-4 weeks migration
 - Let Nylas handle scaling
 - $2,000-3,000/month (comparable to direct)
@@ -442,18 +452,21 @@ Watch for these signs that your direct implementation is hitting limits:
 ### **My Honest Recommendation:**
 
 **For 0-1,000 users:**
+
 - ✅ **Keep your current implementation**
 - Add basic optimizations (caching, monitoring)
 - Focus on product features and getting users
 - Cost: ~$75/month
 
 **For 1,000-5,000 users:**
+
 - ⚠️ **Evaluate at 500 users**
 - If growing fast + have budget → **Switch to Nylas** ($244-999/month)
 - If growing slowly + technical team → **Optimize current** (4-8 weeks work)
 - Decision factors: Growth rate, engineering resources, multi-provider need
 
 **For 5,000+ users:**
+
 - ✅ **Switch to Nylas unless you have very specific needs**
 - Cost difference is negligible
 - Saves months of engineering work
@@ -464,34 +477,40 @@ Watch for these signs that your direct implementation is hitting limits:
 ## 📈 Growth Scenario Planning
 
 ### **Scenario A: Slow Growth** (100 users/month)
+
 ```
 Month 0: 0 users → Keep current
 Month 6: 600 users → Add caching/monitoring ($85/mo)
 Month 12: 1,200 users → Implement delta sync (2 weeks dev)
 Month 24: 2,400 users → Evaluate Nylas vs optimize
 ```
+
 **Verdict:** Direct implementation works well
 
 ---
 
 ### **Scenario B: Fast Growth** (500 users/month)
+
 ```
 Month 0: 0 users → Keep current
 Month 2: 1,000 users → Hit first scaling issues
 Month 4: 2,000 users → Must optimize NOW
 Month 6: 3,000 users → Consider Nylas seriously
 ```
+
 **Verdict:** Switch to Nylas at Month 6 to avoid technical debt
 
 ---
 
 ### **Scenario C: Viral Growth** (2,000+ users/month)
+
 ```
 Month 0: 0 users → Keep current
 Month 1: 2,000 users → Scaling issues appear
 Month 2: 4,000 users → Overwhelmed
 Month 3: 6,000 users → Breaking
 ```
+
 **Verdict:** Switch to Nylas IMMEDIATELY (or risk outage)
 
 ---
@@ -506,11 +525,11 @@ Month 3: 6,000 users → Breaking
 
 **Break-even point:** Around 5,000 users, Nylas becomes cheaper AND easier than maintaining your own infrastructure.
 
-**My recommendation:** 
+**My recommendation:**
+
 1. **Keep current setup until 500-1,000 users**
 2. **Add monitoring and basic optimizations** ($20-50/month)
 3. **Evaluate Nylas at 1,000 users** based on growth trajectory
 4. **Switch to Nylas if growing fast** OR need multi-provider support
 
 **You made the right choice to start direct** - you learned the system, saved money early on, and can always migrate to Nylas when it makes sense. 🎉
-

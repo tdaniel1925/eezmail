@@ -12,6 +12,7 @@ export default function LoginPage(): JSX.Element {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loginMode, setLoginMode] = useState<'username' | 'email'>('username');
 
   const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
@@ -82,45 +83,63 @@ export default function LoginPage(): JSX.Element {
               </div>
             )}
 
-            {/* Username Input */}
+            {/* Username/Email Input */}
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-900 dark:text-white mb-2"
-              >
-                Username
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  {loginMode === 'username' ? 'Username' : 'Email Address'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLoginMode(
+                      loginMode === 'username' ? 'email' : 'username'
+                    )
+                  }
+                  className="text-xs text-primary hover:text-primary-600 dark:hover:text-primary-400 font-medium transition-colors"
+                >
+                  Use {loginMode === 'username' ? 'email' : 'username'} instead
+                </button>
+              </div>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <User className="h-5 w-5 text-gray-500 dark:text-white/40" />
                 </div>
                 <input
                   id="username"
-                  type="text"
+                  type={loginMode === 'email' ? 'email' : 'text'}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  autoComplete="username"
+                  autoComplete={loginMode === 'email' ? 'email' : 'username'}
                   className="block w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 pl-10 pr-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-white/40 backdrop-blur-md transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20 focus:outline-none"
-                  placeholder="your_username"
+                  placeholder={
+                    loginMode === 'email' ? 'you@example.com' : 'your_username'
+                  }
                 />
               </div>
-              
-              {/* Important Notice */}
-              <div className="mt-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-1">
-                  ⚠️ Username Required
-                </p>
-                <p className="text-xs text-blue-700 dark:text-blue-400">
-                  You must login with your <strong>username</strong>, not your email address.
-                </p>
-                <Link
-                  href="/forgot-username"
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline mt-1 inline-block"
-                >
-                  Forgot your username? Look it up with your email →
-                </Link>
-              </div>
+
+              {/* Important Notice - only show for username mode */}
+              {loginMode === 'username' && (
+                <div className="mt-2 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs text-blue-800 dark:text-blue-300 font-medium mb-1">
+                    ⚠️ Username Required
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-400">
+                    Login with your <strong>username</strong>, not your email
+                    address.
+                  </p>
+                  <Link
+                    href="/forgot-username"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline mt-1 inline-block"
+                  >
+                    Forgot your username? Look it up with your email →
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Password Input */}

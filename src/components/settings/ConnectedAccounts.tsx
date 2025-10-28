@@ -16,6 +16,8 @@ import {
   syncEmailAccount,
   removeEmailAccount,
   setDefaultEmailAccount,
+  disconnectEmailAccount,
+  reconnectEmailAccount,
 } from '@/lib/settings/email-actions';
 import type { EmailAccount } from '@/db/schema';
 import { toast, confirmDialog } from '@/lib/toast';
@@ -23,6 +25,7 @@ import { AccountStatusCard } from './AccountStatusCard';
 import { SyncControlPanel } from '@/components/sync/SyncControlPanel';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { AccountRemovalDialog } from './AccountRemovalDialog';
 
 interface ConnectedAccountsProps {
   accounts: EmailAccount[];
@@ -52,6 +55,13 @@ export function ConnectedAccounts({
     syncing: number;
     completed: number;
   }>({ total: 0, syncing: 0, completed: 0 });
+  const [showRemovalDialog, setShowRemovalDialog] = useState(false);
+  const [accountToRemove, setAccountToRemove] = useState<{
+    id: string;
+    email: string;
+    emailCount: number;
+    folderCount: number;
+  } | null>(null);
 
   // Show success message when account is connected and clean URL
   useEffect(() => {
@@ -61,11 +71,14 @@ export function ConnectedAccounts({
 
     // Show success message
     if (success === 'true' && email) {
-      console.log('✅ Account connected successfully:', email);
+      console.log(
+        '[ACCOUNT_CONNECTION] Account connected successfully:',
+        email
+      );
       toast.success(
         `✅ Account ${decodeURIComponent(email)} connected successfully!`,
         {
-          duration: 3000,
+          duration: 5000, // Increased from 3000
         }
       );
 
@@ -76,8 +89,10 @@ export function ConnectedAccounts({
         '/dashboard/settings?tab=email-accounts'
       );
     } else if (error) {
-      console.error('❌ Connection error:', error);
-      toast.error(`Failed to connect: ${decodeURIComponent(error)}`);
+      console.error('[ACCOUNT_CONNECTION] Connection error:', error);
+      toast.error(`Failed to connect: ${decodeURIComponent(error)}`, {
+        duration: 10000, // Error toasts last longer
+      });
       // Clean URL
       window.history.replaceState(
         {},
@@ -145,35 +160,30 @@ export function ConnectedAccounts({
   }, [expandedAccountId]);
 
   const handleAddAccount = async (provider: string): Promise<void> => {
-    console.log(
-      '🔘 BUTTON CLICKED: handleAddAccount called with provider:',
-      provider
-    );
+    console.log('[ACCOUNT_ADD] Initiating connection for provider:', provider);
 
     try {
-      console.log('📞 Calling initiateEmailConnection...');
+      console.log('[ACCOUNT_ADD] Calling initiateEmailConnection...');
       const result = await initiateEmailConnection(provider);
 
-      console.log('📋 initiateEmailConnection result:', result);
+      console.log('[ACCOUNT_ADD] initiateEmailConnection result:', result);
 
       if (result.success && result.url) {
-        console.log('✅ OAuth URL received, redirecting...');
-        toast.loading('Redirecting to sign in...');
-        // Add delay to see debug messages before redirect
-        console.log(
-          '⏳ Waiting 2 seconds before redirect to see debug messages...'
-        );
-        setTimeout(() => {
-          console.log('🚀 Redirecting to OAuth URL now...');
-          window.location.href = result.url;
-        }, 2000);
+        console.log('[ACCOUNT_ADD] Redirecting to OAuth URL immediately');
+        // Remove artificial delay - redirect immediately for better UX
+        toast.loading('Opening sign-in window...', { duration: 1000 });
+        window.location.href = result.url;
       } else {
-        console.log('❌ OAuth initiation failed:', result.error);
-        toast.error(result.error || 'Failed to start connection');
+        console.log('[ACCOUNT_ADD] OAuth initiation failed:', result.error);
+        toast.error(result.error || 'Failed to start connection', {
+          duration: 10000,
+        });
       }
     } catch (error) {
-      console.error('❌ Error adding account:', error);
-      toast.error('Failed to start connection');
+      console.error('[ACCOUNT_ADD] Error adding account:', error);
+      toast.error('Failed to start connection. Please try again.', {
+        duration: 10000,
+      });
     }
   };
 
@@ -183,46 +193,92 @@ export function ConnectedAccounts({
     const result = await syncEmailAccount(accountId);
 
     if (result.success) {
-      toast.success('Sync started! Refreshing in a moment...');
+      toast.success('Sync started! Refreshing in a moment...', {
+        duration: 5000,
+      });
       // Refresh after a delay
       setTimeout(() => window.location.reload(), 3000);
     } else {
-      toast.error(result.error || 'Failed to sync account');
+      toast.error(result.error || 'Failed to sync account', {
+        duration: 10000,
+      });
     }
 
     setSyncingAccountId(null);
   };
 
   const handleRemove = async (accountId: string): Promise<void> => {
-    const confirmed = await confirmDialog(
-      'Are you sure you want to remove this email account?'
-    );
-    if (!confirmed) {
+    // Find account details
+    const account = accounts.find((a) => a.id === accountId);
+    if (!account) return;
+
+    const stats = accountStats[accountId] || { emailCount: 0, folderCount: 0 };
+
+    // Show enhanced removal dialog
+    setAccountToRemove({
+      id: accountId,
+      email: account.emailAddress || 'Unknown',
+      emailCount: stats.emailCount,
+      folderCount: stats.folderCount,
+    });
+    setShowRemovalDialog(true);
+  };
+
+  const handleConfirmRemoval = async (
+    disconnectOnly: boolean
+  ): Promise<void> => {
+    if (!accountToRemove) return;
+
+    setRemovingAccountId(accountToRemove.id);
+    setShowRemovalDialog(false);
+
+    if (disconnectOnly) {
+      // Disconnect account (pause syncing but keep data)
+      const result = await disconnectEmailAccount(accountToRemove.id);
+
+      if (result.success) {
+        toast.success(
+          'Account disconnected. Syncing paused. You can reconnect anytime.',
+          { duration: 5000 }
+        );
+        setTimeout(() => window.location.reload(), 1000);
+      } else {
+        toast.error(result.error || 'Failed to disconnect account', {
+          duration: 10000,
+        });
+      }
+
+      setRemovingAccountId(null);
+      setAccountToRemove(null);
       return;
     }
 
-    setRemovingAccountId(accountId);
-
-    const result = await removeEmailAccount(accountId);
+    // Full removal
+    const result = await removeEmailAccount(accountToRemove.id);
 
     if (result.success) {
-      toast.success('Account removed successfully!');
+      toast.success('Account removed successfully!', { duration: 5000 });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      toast.error(result.error || 'Failed to remove account');
+      toast.error(result.error || 'Failed to remove account', {
+        duration: 10000,
+      });
     }
 
     setRemovingAccountId(null);
+    setAccountToRemove(null);
   };
 
   const handleSetDefault = async (accountId: string): Promise<void> => {
     const result = await setDefaultEmailAccount(accountId);
 
     if (result.success) {
-      toast.success('Default account updated!');
+      toast.success('Default account updated!', { duration: 5000 });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      toast.error(result.error || 'Failed to set default account');
+      toast.error(result.error || 'Failed to set default account', {
+        duration: 10000,
+      });
     }
   };
 
@@ -231,20 +287,43 @@ export function ConnectedAccounts({
     accountId: string
   ): Promise<void> => {
     try {
-      // First remove the old connection
+      // Check if account is just disconnected (inactive)
+      const account = accounts.find((a) => a.id === accountId);
+      if (account?.status === 'inactive') {
+        // Simply reactivate the account
+        const result = await reconnectEmailAccount(accountId);
+
+        if (result.success) {
+          toast.success('Account reconnected successfully!', {
+            duration: 5000,
+          });
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          toast.error(result.error || 'Failed to reconnect account', {
+            duration: 10000,
+          });
+        }
+        return;
+      }
+
+      // For error status or other cases, remove and re-authenticate
       await removeEmailAccount(accountId);
 
       // Then initiate new connection
       const result = await initiateEmailConnection(provider);
 
       if (result.success && result.url) {
-        toast.loading('Redirecting to reconnect your account...');
+        toast.loading('Redirecting to reconnect your account...', {
+          duration: 1000,
+        });
         window.location.href = result.url;
       } else {
-        toast.error(result.error || 'Failed to start reconnection');
+        toast.error(result.error || 'Failed to start reconnection', {
+          duration: 10000,
+        });
       }
     } catch {
-      toast.error('Failed to reconnect account');
+      toast.error('Failed to reconnect account', { duration: 10000 });
     }
   };
 
@@ -280,10 +359,10 @@ export function ConnectedAccounts({
         }
       }
 
-      toast.success('All accounts synced successfully!');
+      toast.success('All accounts synced successfully!', { duration: 5000 });
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
-      toast.error('Some accounts failed to sync');
+      toast.error('Some accounts failed to sync', { duration: 10000 });
     } finally {
       setBulkSyncProgress({ total: 0, syncing: 0, completed: 0 });
     }
@@ -582,6 +661,22 @@ export function ConnectedAccounts({
           </p>
         </div>
       </Modal>
+
+      {/* Account Removal Dialog */}
+      {accountToRemove && (
+        <AccountRemovalDialog
+          isOpen={showRemovalDialog}
+          onClose={() => {
+            setShowRemovalDialog(false);
+            setAccountToRemove(null);
+          }}
+          onConfirm={handleConfirmRemoval}
+          accountEmail={accountToRemove.email}
+          emailCount={accountToRemove.emailCount}
+          folderCount={accountToRemove.folderCount}
+          draftCount={0}
+        />
+      )}
     </div>
   );
 }

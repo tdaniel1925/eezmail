@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,11 +27,17 @@ import {
   Loader2,
   Mail,
   ShieldAlert,
+  Search,
+  Filter,
+  ChevronDown,
+  ChevronRight,
+  HelpCircle,
 } from 'lucide-react';
 import {
   getFolderTypeDisplay,
   type DetectedFolder,
 } from '@/lib/folders/folder-detection';
+import { cn } from '@/lib/utils';
 
 interface FolderConfirmationProps {
   accountId: string;
@@ -50,6 +56,17 @@ export function FolderConfirmation({
   const [account, setAccount] = useState<any>(null);
   const [folders, setFolders] = useState<DetectedFolder[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // New state for search and filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<'all' | 'important' | 'custom'>(
+    'all'
+  );
+  const [hideEmpty, setHideEmpty] = useState(false);
+  const [showStandard, setShowStandard] = useState(true);
+  const [showCustom, setShowCustom] = useState(true);
+
+  console.log('[FOLDER_CONFIRMATION] Loaded folders:', folders.length);
 
   // Load detected folders
   useEffect(() => {
@@ -164,6 +181,198 @@ export function FolderConfirmation({
     }
   };
 
+  // Bulk actions
+  const handleSelectAllStandard = () => {
+    console.log('[FOLDER_CONFIRMATION] Selecting all standard folders');
+    const standardTypes = [
+      'inbox',
+      'sent',
+      'drafts',
+      'trash',
+      'spam',
+      'archive',
+    ];
+    setFolders((prev) =>
+      prev.map((f) =>
+        standardTypes.includes(f.detectedType) ? { ...f, enabled: true } : f
+      )
+    );
+  };
+
+  const handleDeselectCustom = () => {
+    console.log('[FOLDER_CONFIRMATION] Deselecting custom folders');
+    setFolders((prev) =>
+      prev.map((f) =>
+        f.detectedType === 'custom' ? { ...f, enabled: false } : f
+      )
+    );
+  };
+
+  const handleSelectAll = () => {
+    console.log('[FOLDER_CONFIRMATION] Selecting all folders');
+    setFolders((prev) => prev.map((f) => ({ ...f, enabled: true })));
+  };
+
+  const handleDeselectAll = () => {
+    console.log('[FOLDER_CONFIRMATION] Deselecting all folders');
+    setFolders((prev) => prev.map((f) => ({ ...f, enabled: false })));
+  };
+
+  // Filtered folders based on search and filters
+  const filteredFolders = useMemo(() => {
+    console.log('[FOLDER_CONFIRMATION] Filtering folders:', {
+      searchQuery,
+      filterType,
+      hideEmpty,
+    });
+
+    return folders.filter((folder) => {
+      // Search filter
+      if (
+        searchQuery &&
+        !folder.displayName.toLowerCase().includes(searchQuery.toLowerCase())
+      ) {
+        return false;
+      }
+
+      // Empty folder filter
+      if (hideEmpty && folder.messageCount === 0) {
+        return false;
+      }
+
+      // Type filter
+      const standardTypes = [
+        'inbox',
+        'sent',
+        'drafts',
+        'trash',
+        'spam',
+        'archive',
+      ];
+      const isStandard = standardTypes.includes(folder.detectedType);
+
+      if (
+        filterType === 'important' &&
+        (!isStandard || folder.messageCount === 0)
+      ) {
+        return false;
+      }
+
+      if (filterType === 'custom' && isStandard) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [folders, searchQuery, filterType, hideEmpty]);
+
+  // Separate standard and custom folders for categorization
+  const standardFolders = useMemo(() => {
+    const standardTypes = [
+      'inbox',
+      'sent',
+      'drafts',
+      'trash',
+      'spam',
+      'archive',
+    ];
+    return filteredFolders.filter((f) =>
+      standardTypes.includes(f.detectedType)
+    );
+  }, [filteredFolders]);
+
+  const customFolders = useMemo(() => {
+    const standardTypes = [
+      'inbox',
+      'sent',
+      'drafts',
+      'trash',
+      'spam',
+      'archive',
+    ];
+    return filteredFolders.filter(
+      (f) => !standardTypes.includes(f.detectedType)
+    );
+  }, [filteredFolders]);
+
+  // Render individual folder row
+  const renderFolder = (folder: DetectedFolder) => {
+    const display = getFolderTypeDisplay(folder.detectedType);
+
+    return (
+      <div
+        key={folder.id}
+        className={cn(
+          'flex items-center gap-3 p-3 border rounded-lg transition-all',
+          folder.needsReview
+            ? 'border-orange-300 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-950/30'
+            : 'border-gray-200 dark:border-gray-700 hover:border-primary',
+          !folder.enabled && 'opacity-50'
+        )}
+      >
+        <Checkbox
+          checked={folder.enabled}
+          onCheckedChange={() => handleToggleEnabled(folder.id)}
+        />
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-2xl">{display.icon}</span>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{folder.displayName}</p>
+          <p className="text-sm text-gray-500">
+            {folder.messageCount.toLocaleString()} emails
+            {folder.unreadCount > 0 && ` · ${folder.unreadCount} unread`}
+          </p>
+        </div>
+
+        <Select
+          value={folder.detectedType}
+          onValueChange={(value) => handleTypeChange(folder.id, value)}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="inbox">📥 Inbox</SelectItem>
+            <SelectItem value="sent">📤 Sent</SelectItem>
+            <SelectItem value="drafts">📝 Drafts</SelectItem>
+            <SelectItem value="trash">🗑️ Trash</SelectItem>
+            <SelectItem value="spam">⚠️ Spam</SelectItem>
+            <SelectItem value="archive">📦 Archive</SelectItem>
+            <SelectItem value="starred">⭐ Starred</SelectItem>
+            <SelectItem value="important">❗ Important</SelectItem>
+            <SelectItem value="custom">📁 Custom</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Confidence indicator - replaced % with icons */}
+        <div
+          className="flex-shrink-0"
+          title={`${Math.round(folder.confidence * 100)}% confidence`}
+        >
+          {folder.confidence >= 0.9 ? (
+            <CheckCircle
+              className="h-5 w-5 text-green-500"
+              title="High confidence"
+            />
+          ) : folder.confidence >= 0.7 ? (
+            <AlertCircle
+              className="h-5 w-5 text-yellow-500"
+              title="Medium confidence - review recommended"
+            />
+          ) : (
+            <AlertCircle
+              className="h-5 w-5 text-orange-500"
+              title="Low confidence - please verify"
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const stats = {
     total: folders.length,
     enabled: folders.filter((f) => f.enabled).length,
@@ -223,18 +432,21 @@ export function FolderConfirmation({
               <div className="flex items-start gap-4">
                 <div className="flex-1">
                   <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                    Quick Setup Available
+                    ⚡ Quick Setup Available
                   </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
-                    We can automatically configure standard folders (Inbox,
-                    Sent, Drafts, Archive, Spam, Trash) for you, or you can
-                    customize below.
-                  </p>
+                  <ul className="text-sm text-blue-700 dark:text-blue-300 mb-4 space-y-1">
+                    <li>
+                      ✓ Standard folders (Inbox, Sent, Drafts, Archive, Spam,
+                      Trash)
+                    </li>
+                    <li>✓ Skip custom folder setup</li>
+                    <li>✓ Start syncing in 5 seconds</li>
+                  </ul>
                   <Button
                     onClick={handleUseSmartDefaults}
                     disabled={saving}
-                    variant="outline"
-                    className="w-full border-blue-300 hover:bg-blue-100 dark:border-blue-700 dark:hover:bg-blue-900"
+                    size="lg"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     {saving ? (
                       <>
@@ -291,9 +503,101 @@ export function FolderConfirmation({
               Review & Adjust
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Search and Filter Controls */}
+            <div className="space-y-3">
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search folders..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              {/* Filter buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-1">
+                  <Filter className="h-4 w-4" />
+                  Show:
+                </span>
+                <button
+                  onClick={() => setFilterType('all')}
+                  className={cn(
+                    'px-3 py-1.5 text-sm rounded-full transition-colors',
+                    filterType === 'all'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  )}
+                >
+                  All ({folders.length})
+                </button>
+                <button
+                  onClick={() => setFilterType('important')}
+                  className={cn(
+                    'px-3 py-1.5 text-sm rounded-full transition-colors',
+                    filterType === 'important'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  )}
+                >
+                  Important Only ({standardFolders.length})
+                </button>
+                <button
+                  onClick={() => setFilterType('custom')}
+                  className={cn(
+                    'px-3 py-1.5 text-sm rounded-full transition-colors',
+                    filterType === 'custom'
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  )}
+                >
+                  Custom ({customFolders.length})
+                </button>
+                <label className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full bg-gray-100 dark:bg-gray-800 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
+                  <Checkbox
+                    checked={hideEmpty}
+                    onCheckedChange={(checked) =>
+                      setHideEmpty(checked as boolean)
+                    }
+                  />
+                  <span>Hide empty</span>
+                </label>
+              </div>
+
+              {/* Bulk actions */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Bulk actions:
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSelectAllStandard}
+                >
+                  ✓ Select Standard
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleDeselectCustom}
+                >
+                  ✗ Deselect Custom
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleSelectAll}>
+                  Select All
+                </Button>
+                <Button size="sm" variant="ghost" onClick={handleDeselectAll}>
+                  Deselect All
+                </Button>
+              </div>
+            </div>
+
             {stats.needsReview > 0 && (
-              <div className="mb-4 p-3 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg flex items-start gap-2">
+              <div className="p-3 bg-orange-50 dark:bg-orange-950 border border-orange-200 dark:border-orange-800 rounded-lg flex items-start gap-2">
                 <ShieldAlert className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
                   <p className="font-medium text-orange-900 dark:text-orange-100">
@@ -308,79 +612,81 @@ export function FolderConfirmation({
               </div>
             )}
 
-            <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
-              {folders.map((folder) => {
-                const display = getFolderTypeDisplay(folder.detectedType);
+            {/* Folder count summary */}
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Showing {filteredFolders.length} of {folders.length} folders
+              {searchQuery && ` matching "${searchQuery}"`}
+            </div>
 
-                return (
-                  <div
-                    key={folder.id}
-                    className={`flex items-center gap-3 p-3 border rounded-lg transition-all ${
-                      folder.needsReview
-                        ? 'border-orange-300 dark:border-orange-700 bg-orange-50/50 dark:bg-orange-950/30'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-primary'
-                    } ${!folder.enabled ? 'opacity-50' : ''}`}
+            {/* Categorized folder list */}
+            <div className="space-y-4">
+              {/* Standard folders section */}
+              {standardFolders.length > 0 && showStandard && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowStandard(!showStandard)}
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
                   >
-                    <Checkbox
-                      checked={folder.enabled}
-                      onCheckedChange={() => handleToggleEnabled(folder.id)}
-                    />
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="text-2xl">{display.icon}</span>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">
-                        {folder.displayName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {folder.messageCount.toLocaleString()} emails
-                        {folder.unreadCount > 0 &&
-                          ` · ${folder.unreadCount} unread`}
-                      </p>
-                    </div>
-
-                    <Select
-                      value={folder.detectedType}
-                      onValueChange={(value) =>
-                        handleTypeChange(folder.id, value)
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inbox">📥 Inbox</SelectItem>
-                        <SelectItem value="sent">📤 Sent</SelectItem>
-                        <SelectItem value="drafts">📝 Drafts</SelectItem>
-                        <SelectItem value="trash">🗑️ Trash</SelectItem>
-                        <SelectItem value="spam">⚠️ Spam</SelectItem>
-                        <SelectItem value="archive">📦 Archive</SelectItem>
-                        <SelectItem value="starred">⭐ Starred</SelectItem>
-                        <SelectItem value="important">❗ Important</SelectItem>
-                        <SelectItem value="custom">📁 Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <div className="flex-shrink-0">
-                      {folder.confidence >= 0.9 ? (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      ) : folder.confidence >= 0.7 ? (
-                        <AlertCircle className="h-5 w-5 text-yellow-500" />
-                      ) : (
-                        <AlertCircle className="h-5 w-5 text-orange-500" />
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        !showStandard && '-rotate-90'
                       )}
+                    />
+                    Standard Folders ({standardFolders.length})
+                  </button>
+                  {showStandard && (
+                    <div className="space-y-2 pl-6 max-h-[300px] overflow-y-auto pr-2">
+                      {standardFolders.map((folder) => renderFolder(folder))}
                     </div>
+                  )}
+                </div>
+              )}
 
-                    {folder.confidence < 1.0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {Math.round(folder.confidence * 100)}%
-                      </Badge>
-                    )}
-                  </div>
-                );
-              })}
+              {/* Custom folders section */}
+              {customFolders.length > 0 && (
+                <div className="space-y-2">
+                  <button
+                    onClick={() => setShowCustom(!showCustom)}
+                    className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-primary transition-colors"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        !showCustom && '-rotate-90'
+                      )}
+                    />
+                    Custom Folders ({customFolders.length})
+                    <HelpCircle
+                      className="h-4 w-4 text-gray-400"
+                      title="Custom folders will sync with their original name from your email provider"
+                    />
+                  </button>
+                  {showCustom && (
+                    <div className="space-y-2 pl-6 max-h-[300px] overflow-y-auto pr-2">
+                      {customFolders.map((folder) => renderFolder(folder))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* No results message */}
+              {filteredFolders.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Folder className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No folders match your filters</p>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setFilterType('all');
+                      setHideEmpty(false);
+                    }}
+                    className="text-primary hover:underline text-sm mt-2"
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

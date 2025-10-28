@@ -23,10 +23,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     // Check if requesting additional scopes (incremental auth)
     const searchParams = request.nextUrl.searchParams;
     const additionalScopes = searchParams.get('scopes');
-    
+
     // Default: base + read scopes for initial connection
     let scopeLevels: GmailScopeLevel[] = ['base', 'read'];
-    
+
     // Parse additional scopes if provided (for incremental auth)
     if (additionalScopes) {
       const requested = additionalScopes.split(',') as GmailScopeLevel[];
@@ -74,4 +74,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-
