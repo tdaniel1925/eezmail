@@ -70,13 +70,20 @@ export async function GET(request: NextRequest) {
     console.log('✅ User authenticated:', user.id);
     console.log('🔄 Exchanging code for tokens...');
 
+    // Get the current URL to build redirect URI dynamically
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+    const host = request.headers.get('host') || 'localhost:3000';
+    const currentUrl = `${protocol}://${host}`;
+
     // Initialize Microsoft Graph service
     const msGraphConfig = {
       clientId: process.env.MICROSOFT_CLIENT_ID!,
       clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
       tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
-      redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/microsoft/callback`,
+      redirectUri: `${currentUrl}/api/auth/microsoft/callback`,
     };
+
+    console.log('🔗 Using redirect URI:', msGraphConfig.redirectUri);
 
     const msGraph = new MicrosoftGraphService(msGraphConfig);
 

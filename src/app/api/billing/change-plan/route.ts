@@ -85,6 +85,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create checkout session for new subscription or upgrade
+    // Determine the app URL dynamically
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000');
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
@@ -95,8 +102,8 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings/billing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings/billing?canceled=true`,
+      success_url: `${appUrl}/dashboard/settings/billing?success=true`,
+      cancel_url: `${appUrl}/dashboard/settings/billing?canceled=true`,
       metadata: {
         userId: user.id,
         planId,

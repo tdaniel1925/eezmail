@@ -34,12 +34,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       console.log('🔐 Requesting additional Gmail scopes:', requested);
     }
 
-    // Initialize Gmail service
+    // Initialize Gmail service with dynamic redirect URI
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000');
+
     const gmailConfig = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`,
+      redirectUri: `${appUrl}/api/auth/google/callback`,
     };
+
+    console.log('🔗 Using Gmail redirect URI:', gmailConfig.redirectUri);
 
     const gmail = new GmailService(gmailConfig);
 

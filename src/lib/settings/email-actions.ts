@@ -60,12 +60,21 @@ export async function initiateEmailConnection(provider: string) {
         process.env.MICROSOFT_TENANT_ID || 'common'
       );
 
+      // Use environment variable or fallback to localhost for development
+      // In production (Vercel), NEXT_PUBLIC_APP_URL should be set
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'http://localhost:3000';
+
       const msGraphConfig = {
         clientId: process.env.MICROSOFT_CLIENT_ID!,
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
         tenantId: process.env.MICROSOFT_TENANT_ID || 'common',
-        redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/microsoft/callback`,
+        redirectUri: `${appUrl}/api/auth/microsoft/callback`,
       };
+
+      console.log('🔗 Using redirect URI:', msGraphConfig.redirectUri);
 
       if (!msGraphConfig.clientId || !msGraphConfig.clientSecret) {
         console.log('❌ Microsoft Graph API not configured');
@@ -95,11 +104,19 @@ export async function initiateEmailConnection(provider: string) {
 
     // Handle Gmail API
     if (provider === 'gmail') {
+      // Use environment variable or fallback to localhost for development
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+          ? `https://${process.env.VERCEL_URL}`
+          : 'http://localhost:3000';
+
       const gmailConfig = {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        redirectUri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`,
+        redirectUri: `${appUrl}/api/auth/google/callback`,
       };
+
+      console.log('🔗 Using Gmail redirect URI:', gmailConfig.redirectUri);
 
       if (!gmailConfig.clientId || !gmailConfig.clientSecret) {
         return {
@@ -174,6 +191,88 @@ export async function setDefaultEmailAccount(accountId: string) {
   } catch (error) {
     console.error('Error setting default account:', error);
     return { success: false, error: 'Failed to update default account' };
+  }
+}
+
+/**
+ * Disconnect email account (pause syncing but keep data)
+ */
+export async function disconnectEmailAccount(accountId: string) {
+  console.log('⏸️ Disconnecting email account:', accountId);
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Update account to inactive status
+    await db
+      .update(emailAccounts)
+      .set({
+        status: 'inactive',
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(emailAccounts.id, accountId), eq(emailAccounts.userId, user.id))
+      );
+
+    console.log('✅ Account disconnected successfully');
+
+    revalidatePath('/dashboard/settings');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error disconnecting account:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to disconnect account',
+    };
+  }
+}
+
+/**
+ * Reconnect email account (resume syncing)
+ */
+export async function reconnectEmailAccount(accountId: string) {
+  console.log('▶️ Reconnecting email account:', accountId);
+
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Update account to active status
+    await db
+      .update(emailAccounts)
+      .set({
+        status: 'active',
+        updatedAt: new Date(),
+      })
+      .where(
+        and(eq(emailAccounts.id, accountId), eq(emailAccounts.userId, user.id))
+      );
+
+    console.log('✅ Account reconnected successfully');
+
+    revalidatePath('/dashboard/settings');
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error reconnecting account:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to reconnect account',
+    };
   }
 }
 
