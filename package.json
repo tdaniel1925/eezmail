@@ -20,7 +20,8 @@
     "health-check": "node list-email-accounts.js && node trigger-sync-direct.js",
     "pre-deploy": "npm run type-check && npm run lint && npm run validate",
     "backup:db": "tsx scripts/backup-database.ts",
-    "seed:pricing": "tsx scripts/seed-pricing-tiers.ts"
+    "seed:pricing": "tsx scripts/seed-pricing-tiers.ts",
+    "check:live": "node scripts/check-live-performance.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",

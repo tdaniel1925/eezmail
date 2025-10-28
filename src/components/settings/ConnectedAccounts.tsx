@@ -62,6 +62,10 @@ export function ConnectedAccounts({
     emailCount: number;
     folderCount: number;
   } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error' | 'info' | null;
+    message: string;
+  }>({ type: null, message: '' });
 
   // Show success message when account is connected and clean URL
   useEffect(() => {

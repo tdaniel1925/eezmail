@@ -254,3 +254,4 @@ So it won't be the configuration hell you experienced before.
 **Committed and pushed to GitHub!** All the Nylas V2 improvements are ready if you need them. ✅
 
 
+

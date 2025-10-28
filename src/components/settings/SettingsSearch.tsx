@@ -125,3 +125,4 @@ export function SettingsSearch({ tabs, onTabSelect }: SettingsSearchProps) {
   );
 }
 
+

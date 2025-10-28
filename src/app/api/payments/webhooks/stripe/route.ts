@@ -6,6 +6,10 @@ import { users, organizations } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { addBalance } from '@/lib/billing/pricing';
 import { addAIBalance } from '@/lib/billing/ai-pricing';
+import {
+  sendPaymentFailedEmail,
+  sendFinalPaymentWarningEmail,
+} from '@/lib/email/dunning';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -80,13 +84,15 @@ export async function POST(req: Request) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        console.error('❌ Invoice payment failed:', invoice.id);
-        // TODO: Send email notification to customer
+        await handleInvoicePaymentFailed(invoice);
         break;
       }
 
-      default:
-        console.log(`ℹ️  Unhandled event type: ${event.type}`);
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as Stripe.Subscription;
+        await handleSubscriptionCanceled(subscription);
+        break;
+      }
     }
 
     return NextResponse.json({ received: true });
@@ -212,5 +218,65 @@ async function handleInvoicePayment(invoice: Stripe.Invoice) {
     // TODO: Send invoice email to customer
   } catch (error) {
     console.error('❌ Error handling invoice payment:', error);
+  }
+}
+
+/**
+ * Handle invoice payment failed
+ * Sends dunning emails based on attempt count
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  try {
+    const customerId = invoice.customer as string;
+    const attemptCount = invoice.attempt_count || 0;
+
+    console.error(
+      `❌ Invoice payment failed: ${invoice.id}, attempt: ${attemptCount}`
+    );
+
+    // Get user from Stripe customer ID
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.stripeCustomerId, customerId))
+      .limit(1);
+
+    if (!user) {
+      console.warn('⚠️  Payment failed for unknown customer:', customerId);
+      return;
+    }
+
+    console.log(
+      `💳 Payment failed for user ${user.email}, attempt ${attemptCount}`
+    );
+
+    // Send dunning email based on attempt number
+    if (attemptCount === 1) {
+      // First failure - friendly reminder
+      const nextRetryDate = invoice.next_payment_attempt
+        ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString()
+        : 'in 3 days';
+
+      await sendPaymentFailedEmail(user.email, {
+        customerName: user.firstName || user.name || 'there',
+        amount: (invoice.amount_due / 100).toFixed(2),
+        nextRetryDate,
+        updatePaymentUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?update=true`,
+      });
+
+      console.log(`📧 Sent payment failed email (attempt 1) to ${user.email}`);
+    } else if (attemptCount >= 3) {
+      // Final warning before cancellation
+      await sendFinalPaymentWarningEmail(user.email, {
+        customerName: user.firstName || user.name || 'there',
+        amount: (invoice.amount_due / 100).toFixed(2),
+      });
+
+      console.log(
+        `📧 Sent final payment warning (attempt ${attemptCount}) to ${user.email}`
+      );
+    }
+  } catch (error) {
+    console.error('❌ Error handling invoice payment failed:', error);
   }
 }

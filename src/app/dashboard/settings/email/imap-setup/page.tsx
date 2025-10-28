@@ -14,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/lib/toast';
 import { IMAP_PROVIDERS } from '@/lib/email/imap-providers';
 
 function IMAPSetupPageContent(): JSX.Element {
@@ -41,6 +40,10 @@ function IMAPSetupPageContent(): JSX.Element {
     'idle' | 'testing' | 'success' | 'error'
   >('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [saveStatus, setSaveStatus] = useState<{
+    type: 'success' | 'error' | 'info' | null;
+    message: string;
+  }>({ type: null, message: '' });
 
   const handleProviderChange = (selectedProvider: string) => {
     const providerConfig =
@@ -88,22 +91,16 @@ function IMAPSetupPageContent(): JSX.Element {
 
       if (result.success) {
         setConnectionStatus('success');
-        toast.success('IMAP connection successful!');
       } else {
         setConnectionStatus('error');
         setErrorMessage(result.error || 'Connection failed');
-        toast.error(result.error || 'Connection failed');
       }
     } catch (error) {
       setConnectionStatus('error');
       if (error instanceof Error && error.name === 'AbortError') {
         setErrorMessage('Connection timed out after 35 seconds');
-        toast.error(
-          'Connection timed out - check your credentials and server settings'
-        );
       } else {
         setErrorMessage('Network error occurred');
-        toast.error('Network error occurred');
       }
     } finally {
       setIsConnecting(false);
@@ -112,12 +109,16 @@ function IMAPSetupPageContent(): JSX.Element {
 
   const handleSaveAccount = async () => {
     if (connectionStatus !== 'success') {
-      toast.error('Please test the connection first');
+      setSaveStatus({
+        type: 'error',
+        message: 'Please test the connection first',
+      });
       return;
     }
 
     try {
       setIsConnecting(true);
+      setSaveStatus({ type: null, message: '' });
 
       // Step 1: Save the account
       const response = await fetch('/api/email/imap/save', {
@@ -136,7 +137,10 @@ function IMAPSetupPageContent(): JSX.Element {
       if (result.success) {
         const accountId = result.accountId;
 
-        toast.success('✅ Account saved successfully!');
+        setSaveStatus({
+          type: 'success',
+          message: '✅ Account saved successfully! Redirecting...',
+        });
 
         // Step 2: Get account count to determine folder selection flow
         try {
@@ -146,13 +150,20 @@ function IMAPSetupPageContent(): JSX.Element {
 
           if (totalAccounts === 1) {
             // First account - mandatory folder selection
-            window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&required=true`;
+            setTimeout(() => {
+              window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&required=true`;
+            }, 1000);
           } else if (totalAccounts <= 3) {
             // 2nd-3rd account - optional folder selection
-            window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&optional=true`;
+            setTimeout(() => {
+              window.location.href = `/dashboard/onboarding/folders?accountId=${accountId}&optional=true`;
+            }, 1000);
           } else {
             // 4+ accounts - apply smart defaults and go to inbox
-            toast.info('📁 Configuring folders with smart defaults...');
+            setSaveStatus({
+              type: 'info',
+              message: '📁 Configuring folders with smart defaults...',
+            });
 
             await fetch('/api/folders/smart-defaults', {
               method: 'POST',
@@ -169,14 +180,22 @@ function IMAPSetupPageContent(): JSX.Element {
         } catch (error) {
           console.error('Error with folder setup:', error);
           // Fallback to inbox on error
-          window.location.href = '/dashboard/inbox';
+          setTimeout(() => {
+            window.location.href = '/dashboard/inbox';
+          }, 1000);
         }
       } else {
-        toast.error(result.error || 'Failed to save account');
+        setSaveStatus({
+          type: 'error',
+          message: result.error || 'Failed to save account',
+        });
       }
     } catch (err) {
       console.error('Error saving account:', err);
-      toast.error('Failed to save account');
+      setSaveStatus({
+        type: 'error',
+        message: 'Failed to save account',
+      });
     } finally {
       setIsConnecting(false);
     }
@@ -371,44 +390,83 @@ function IMAPSetupPageContent(): JSX.Element {
               </p>
             </div>
 
-            {/* Connection Status */}
-            {connectionStatus !== 'idle' && (
-              <div className="rounded-lg border p-4">
-                {connectionStatus === 'testing' && (
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                    <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                    <span>
-                      Testing connection (this may take up to 30 seconds)...
-                    </span>
-                  </div>
-                )}
-                {connectionStatus === 'success' && (
-                  <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Connection successful!</span>
-                  </div>
-                )}
-                {connectionStatus === 'error' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                      <AlertCircle className="h-4 w-4" />
-                      <span>{errorMessage}</span>
-                    </div>
-                    {errorMessage.includes('Timed out') && (
-                      <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                        <p className="font-medium mb-1">Possible causes:</p>
-                        <ul className="list-disc list-inside space-y-1 text-xs">
-                          <li>
-                            Wrong password - make sure you&apos;re using an{' '}
-                            <strong>app password</strong>, not your regular
-                            password
-                          </li>
-                          <li>IMAP not enabled in your email settings</li>
-                          <li>Firewall blocking port {formData.port}</li>
-                          <li>Incorrect IMAP server settings</li>
-                        </ul>
+            {/* Status Messages */}
+            {(connectionStatus !== 'idle' || saveStatus.type) && (
+              <div className="space-y-3">
+                {/* Connection Status */}
+                {connectionStatus !== 'idle' && (
+                  <div className="rounded-lg border p-4">
+                    {connectionStatus === 'testing' && (
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                        <span>
+                          Testing connection (this may take up to 30 seconds)...
+                        </span>
                       </div>
                     )}
+                    {connectionStatus === 'success' && (
+                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Connection successful!</span>
+                      </div>
+                    )}
+                    {connectionStatus === 'error' && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                          <AlertCircle className="h-4 w-4" />
+                          <span>{errorMessage}</span>
+                        </div>
+                        {errorMessage.includes('Timed out') && (
+                          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                            <p className="font-medium mb-1">Possible causes:</p>
+                            <ul className="list-disc list-inside space-y-1 text-xs">
+                              <li>
+                                Wrong password - make sure you&apos;re using an{' '}
+                                <strong>app password</strong>, not your regular
+                                password
+                              </li>
+                              <li>IMAP not enabled in your email settings</li>
+                              <li>Firewall blocking port {formData.port}</li>
+                              <li>Incorrect IMAP server settings</li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Save Status */}
+                {saveStatus.type && (
+                  <div
+                    className={`rounded-lg border p-4 ${
+                      saveStatus.type === 'success'
+                        ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
+                        : saveStatus.type === 'error'
+                          ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
+                          : 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center gap-2 ${
+                        saveStatus.type === 'success'
+                          ? 'text-green-600 dark:text-green-400'
+                          : saveStatus.type === 'error'
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-blue-600 dark:text-blue-400'
+                      }`}
+                    >
+                      {saveStatus.type === 'success' && (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                      {saveStatus.type === 'error' && (
+                        <AlertCircle className="h-4 w-4" />
+                      )}
+                      {saveStatus.type === 'info' && (
+                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      )}
+                      <span>{saveStatus.message}</span>
+                    </div>
                   </div>
                 )}
               </div>

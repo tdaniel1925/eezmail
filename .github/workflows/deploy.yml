@@ -32,12 +32,10 @@ jobs:
         run: npm ci
 
       - name: TypeScript type check
-        run: npm run type-check || echo "Type check failed but continuing..."
-        continue-on-error: true
+        run: npm run type-check
 
       - name: Run linter
-        run: npm run lint || echo "Linting failed but continuing..."
-        continue-on-error: true
+        run: npm run lint
 
       - name: Validate deployment readiness
         env:

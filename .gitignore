@@ -36,6 +36,10 @@ yarn-error.log*
 MANUAL_SECRETS_CHECKLIST.md
 YOUR_VERCEL_CONFIG.md
 
+# Database backups
+backups/
+*.sql
+
 # vercel
 .vercel
 

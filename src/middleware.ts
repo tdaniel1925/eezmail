@@ -96,11 +96,12 @@ export async function middleware(request: NextRequest) {
 
   // Debug logging disabled for performance - enable only when debugging
   const enableDebugLogging = false;
-  
-  if (enableDebugLogging && (
-    request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname === '/login'
-  )) {
+
+  if (
+    enableDebugLogging &&
+    (request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname === '/login')
+  ) {
     const allCookies = request.cookies.getAll();
     const supabaseCookies = allCookies.filter(
       (c) => c.name.includes('supabase') || c.name.includes('sb-')

@@ -1,0 +1,48 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    name: Backup Database
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p backups
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          pg_dump "$DATABASE_URL" --no-owner --no-acl -f "backups/backup-$TIMESTAMP.sql"
+
+          # Show backup info
+          ls -lh backups/
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups/*.sql
+          retention-days: 30
+
+      - name: Verify backup
+        run: |
+          if compgen -G "backups/*.sql" > /dev/null; then
+            echo "✅ Backup created successfully"
+            wc -l backups/*.sql
+          else
+            echo "❌ Backup failed - no file created"
+            exit 1
+          fi

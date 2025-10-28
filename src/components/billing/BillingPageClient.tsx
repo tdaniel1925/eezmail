@@ -25,13 +25,26 @@ export default function BillingPageClient() {
   const searchParams = useSearchParams();
   const [showTopUp, setShowTopUp] = useState(false);
   const [topUpType, setTopUpType] = useState<'sms' | 'ai'>('sms');
+  const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
 
   // Check for success/cancel from Stripe redirect
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
+    const update = searchParams.get('update');
     const type = searchParams.get('type');
     const amount = searchParams.get('amount');
+
+    // Check if user needs to update payment method
+    if (update === 'true') {
+      setShowUpdatePrompt(true);
+      toast.error(
+        '⚠️ Payment failed. Please update your payment method to continue.',
+        {
+          duration: 10000,
+        }
+      );
+    }
 
     if (success === 'true') {
       toast.success(
@@ -61,6 +74,35 @@ export default function BillingPageClient() {
 
   return (
     <div className="space-y-8">
+      {/* Payment Update Warning */}
+      {showUpdatePrompt && (
+        <Card className="border-2 border-red-300 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-900">
+              <AlertCircle className="h-5 w-5" />
+              Payment Method Update Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-red-800 mb-4">
+              We were unable to process your recent payment. Please update your
+              payment method to avoid service interruption.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setShowUpdatePrompt(false);
+                toast.info(
+                  'Payment method update feature coming soon. Please contact support for assistance.'
+                );
+              }}
+            >
+              Update Payment Method
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Balance Cards */}
       <div>
         <h2 className="text-2xl font-bold text-slate-900 mb-4">
@@ -181,4 +223,3 @@ export default function BillingPageClient() {
     </div>
   );
 }
-

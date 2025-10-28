@@ -534,3 +534,4 @@ Month 3: 6,000 users → Breaking
 
 **You made the right choice to start direct** - you learned the system, saved money early on, and can always migrate to Nylas when it makes sense. 🎉
 
+
