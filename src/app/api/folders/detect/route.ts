@@ -164,10 +164,21 @@ async function detectMicrosoftFolders(account: any): Promise<DetectedFolder[]> {
     },
   });
 
-  const response = await client.api('/me/mailFolders').get();
-  const folders = response.value || [];
+  // Fetch all folders with pagination support
+  // Microsoft Graph API defaults to 10 items, so we need to request more and handle pagination
+  let allFolders: any[] = [];
+  let nextLink = '/me/mailFolders?$top=100&includeHiddenFolders=true';
 
-  return folders.map((folder: any) => {
+  while (nextLink) {
+    const response = await client.api(nextLink).get();
+    const folders = response.value || [];
+    allFolders = allFolders.concat(folders);
+
+    // Check for pagination
+    nextLink = response['@odata.nextLink'] || null;
+  }
+
+  return allFolders.map((folder: any) => {
     const detectedType = detectFolderType(folder.displayName, 'microsoft');
     const confidence = calculateConfidence(
       folder.displayName,
