@@ -100,8 +100,13 @@ END $$;
 
 -- 6. Sample data verification
 -- =====================================================
-RAISE NOTICE '';
-RAISE NOTICE 'Sample users:';
+DO $$
+BEGIN
+    RAISE NOTICE '';
+    RAISE NOTICE 'Sample users (check results in separate query):';
+END $$;
+
+-- Query sample users
 SELECT 
     email,
     username,
