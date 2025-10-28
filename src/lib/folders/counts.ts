@@ -134,25 +134,15 @@ export async function getScreenerCount(): Promise<number> {
 
 /**
  * Get News Feed count (newsletters, subscriptions)
+ * NOTE: 'newsletter' is not a valid email_category enum value.
+ * Valid values are: inbox, sent, drafts, junk, outbox, deleted
+ * This function returns 0 until the enum is updated or logic is changed.
  */
 export async function getNewsFeedCount(): Promise<number> {
   try {
-    const accountIds = await getUserAccountIds();
-    if (accountIds.length === 0) return 0;
-
-    const result = await db
-      .select({ count: sql<number>`cast(count(*) as integer)` })
-      .from(emails)
-      .where(
-        and(
-          inArray(emails.accountId, accountIds),
-          eq(emails.emailCategory, 'newsletter'),
-          eq(emails.isRead, false),
-          eq(emails.isTrashed, false)
-        )
-      );
-
-    return result[0]?.count || 0;
+    // TODO: Implement newsletter detection using heyView or other fields
+    // The email_category enum does not include 'newsletter'
+    return 0;
   } catch (error) {
     console.error('Error getting news feed count:', error);
     return 0;
