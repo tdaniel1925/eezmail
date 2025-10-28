@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
-import { adminLogs } from '@/db/schema';
+import { adminAuditLog } from '@/db/schema';
 import { lt, sql } from 'drizzle-orm';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -47,14 +47,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Get count before deletion
     const countResult = await db
       .select({ count: sql<number>`count(*)` })
-      .from(adminLogs)
-      .where(lt(adminLogs.createdAt, cutoffDate));
+      .from(adminAuditLog)
+      .where(lt(adminAuditLog.createdAt, cutoffDate));
 
     const deletedCount = Number(countResult[0]?.count || 0);
 
     // Delete old logs
     if (deletedCount > 0) {
-      await db.delete(adminLogs).where(lt(adminLogs.createdAt, cutoffDate));
+      await db
+        .delete(adminAuditLog)
+        .where(lt(adminAuditLog.createdAt, cutoffDate));
     }
 
     return NextResponse.json({
@@ -70,4 +72,3 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-

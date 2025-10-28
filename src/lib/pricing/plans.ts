@@ -1,11 +1,11 @@
 /**
  * Simplified Pricing Plans
- * 
+ *
  * Three-tier seat-based pricing model:
  * - Individual: $45/month (1 user, everything included)
  * - Team: $35/user/month (min 5 users, volume pricing)
  * - Enterprise: $25/user/month (6+ users, best value)
- * 
+ *
  * All plans include unlimited features - SMS billed separately
  */
 
@@ -92,27 +92,30 @@ export type Plan = (typeof PLANS)[PlanId];
 /**
  * Calculate subscription cost based on plan and seats
  */
-export function calculateSubscriptionCost(planId: PlanId, seats: number): number {
+export function calculateSubscriptionCost(
+  planId: PlanId,
+  seats: number
+): number {
   const plan = PLANS[planId];
-  
+
   // Individual: fixed $45 (always 1 seat)
   if (planId === 'individual') {
     return 45;
   }
-  
+
   // Enforce minimum seats
   const actualSeats = Math.max(seats, plan.minSeats || 1);
-  
+
   // Team: $35/user (min 5 users = $175)
   if (planId === 'team') {
     return actualSeats * 35;
   }
-  
+
   // Enterprise: $25/user (min 6 users = $150)
   if (planId === 'enterprise') {
     return actualSeats * 25;
   }
-  
+
   return 0;
 }
 
@@ -142,9 +145,12 @@ export function getPlanByStripePriceId(priceId: string): Plan | null {
 /**
  * Validate seat count for a plan
  */
-export function validateSeats(planId: PlanId, seats: number): { valid: boolean; error?: string; correctedSeats?: number } {
+export function validateSeats(
+  planId: PlanId,
+  seats: number
+): { valid: boolean; error?: string; correctedSeats?: number } {
   const plan = PLANS[planId];
-  
+
   if (seats < (plan.minSeats || 1)) {
     return {
       valid: false,
@@ -152,7 +158,7 @@ export function validateSeats(planId: PlanId, seats: number): { valid: boolean; 
       correctedSeats: plan.minSeats || 1,
     };
   }
-  
+
   if (plan.maxSeats !== null && seats > plan.maxSeats) {
     return {
       valid: false,
@@ -160,7 +166,7 @@ export function validateSeats(planId: PlanId, seats: number): { valid: boolean; 
       correctedSeats: plan.maxSeats,
     };
   }
-  
+
   return { valid: true };
 }
 
@@ -171,15 +177,15 @@ export function getRecommendedPlan(teamSize: number): PlanId {
   if (teamSize === 1) {
     return 'individual';
   }
-  
+
   if (teamSize >= 6) {
     return 'enterprise'; // Best value for 6+ users
   }
-  
+
   if (teamSize >= 5) {
     return 'team'; // Teams start at 5 users
   }
-  
+
   // 2-4 users: recommend Individual for each OR suggest waiting for team plan
   return 'individual';
 }
@@ -190,11 +196,11 @@ export function getRecommendedPlan(teamSize: number): PlanId {
 export function formatPrice(price: number | null, seats?: number): string {
   if (price === null) return 'Custom';
   if (price === 0) return 'Free';
-  
+
   if (seats && seats > 1) {
     return `$${price * seats}/mo for ${seats} users`;
   }
-  
+
   return `$${price}/mo`;
 }
 
@@ -206,3 +212,19 @@ export function formatPricePerSeat(plan: Plan): string {
   return `$${plan.pricePerSeat}/user/mo`;
 }
 
+/**
+ * Get limit value for a specific feature in a plan
+ */
+export function getLimit(planId: PlanId, feature: string): number {
+  // For the simplified pricing model, all plans include unlimited features
+  // Return -1 for unlimited, or specific limits if needed
+  return -1; // Unlimited for all features
+}
+
+/**
+ * Format limit value for display
+ */
+export function formatLimit(limit: number): string {
+  if (limit === -1 || limit === Infinity) return 'Unlimited';
+  return limit.toLocaleString();
+}

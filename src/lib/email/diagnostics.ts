@@ -6,7 +6,7 @@
 import { db } from '@/db';
 import { emailAccounts } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { MicrosoftService } from '@/lib/email/microsoft-graph';
+import { MicrosoftGraphService } from '@/lib/email/microsoft-graph';
 import { GmailService } from '@/lib/email/gmail-api';
 
 export interface DiagnosticResult {
@@ -161,7 +161,7 @@ async function testAPIAccess(
   const start = Date.now();
   try {
     if (account.provider === 'microsoft') {
-      const microsoft = new MicrosoftService({
+      const microsoft = new MicrosoftGraphService({
         clientId: process.env.MICROSOFT_CLIENT_ID!,
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
         tenantId: process.env.MICROSOFT_TENANT_ID!,

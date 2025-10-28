@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { isAdmin } from '@/lib/admin/auth';
 import { db } from '@/db';
-import { adminLogs } from '@/db/schema';
+import { adminAuditLog } from '@/db/schema';
 import { desc, and, eq, gte, sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -51,26 +51,26 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Build query conditions
-    const conditions = [gte(adminLogs.createdAt, sinceDate)];
+    const conditions = [gte(adminAuditLog.createdAt, sinceDate)];
 
     if (level !== 'all') {
-      conditions.push(eq(adminLogs.level, level as any));
+      conditions.push(eq(adminAuditLog.level, level as any));
     }
 
     if (category !== 'all') {
-      conditions.push(eq(adminLogs.category, category));
+      conditions.push(eq(adminAuditLog.category, category));
     }
 
     if (query) {
-      conditions.push(sql`${adminLogs.message} ILIKE ${'%' + query + '%'}`);
+      conditions.push(sql`${adminAuditLog.message} ILIKE ${'%' + query + '%'}`);
     }
 
     // Fetch logs
     const logs = await db
       .select()
-      .from(adminLogs)
+      .from(adminAuditLog)
       .where(and(...conditions))
-      .orderBy(desc(adminLogs.createdAt))
+      .orderBy(desc(adminAuditLog.createdAt))
       .limit(10000); // Larger limit for export
 
     // Convert to JSON
@@ -91,4 +91,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-

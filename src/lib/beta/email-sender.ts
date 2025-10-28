@@ -5,10 +5,22 @@ import { db } from '@/lib/db';
 import { users, betaEmailsSent } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = 'beta@easemail.app';
 const FROM_NAME = 'EaseMail Beta Team';
+
+// Lazy-load Resend client to avoid build-time errors when API key is missing
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+}
 
 /**
  * Generate beta welcome email HTML
@@ -226,8 +238,10 @@ function generateWeeklyUpdateEmailHTML(params: {
   firstName: string;
   updates: string[];
 }): string {
-  const updatesList = params.updates.map((update) => `<li>${update}</li>`).join('');
-  
+  const updatesList = params.updates
+    .map((update) => `<li>${update}</li>`)
+    .join('');
+
   return `
 <!DOCTYPE html>
 <html>
@@ -400,7 +414,11 @@ export async function sendBetaWelcomeEmail(
   tempPassword: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -415,7 +433,7 @@ export async function sendBetaWelcomeEmail(
       expirationDays: 90,
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: '🎉 Welcome to EaseMail Beta Program!',
@@ -455,7 +473,11 @@ export async function sendBetaCreditsLowEmail(
   limit: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -487,7 +509,7 @@ export async function sendBetaCreditsLowEmail(
       limit,
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: `⚠️ Your Beta ${creditType.toUpperCase()} Credits are Running Low`,
@@ -522,7 +544,11 @@ export async function sendBetaCreditsExhaustedEmail(
   creditType: 'sms' | 'ai'
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -533,7 +559,7 @@ export async function sendBetaCreditsExhaustedEmail(
       creditType: creditType === 'sms' ? 'SMS' : 'AI',
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: `🚫 Your Beta ${creditType.toUpperCase()} Credits are Exhausted`,
@@ -568,7 +594,11 @@ export async function sendWeeklyUpdateEmail(
   updates: string[]
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -579,7 +609,7 @@ export async function sendWeeklyUpdateEmail(
       updates,
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: '📰 EaseMail Beta Update - New Features This Week',
@@ -615,7 +645,11 @@ export async function sendFeedbackThanksEmail(
   actionItemCreated: boolean
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -627,7 +661,7 @@ export async function sendFeedbackThanksEmail(
       actionItemCreated,
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: '🙏 Thank You for Your Feedback!',
@@ -661,7 +695,11 @@ export async function sendBetaGraduationEmail(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
 
     if (!user) {
       return { success: false, error: 'User not found' };
@@ -671,7 +709,7 @@ export async function sendBetaGraduationEmail(
       firstName: user.firstName || 'there',
     });
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResendClient().emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: user.email,
       subject: '🎉 Welcome to EaseMail Premium!',

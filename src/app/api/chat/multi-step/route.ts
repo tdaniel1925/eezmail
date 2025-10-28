@@ -10,7 +10,7 @@ import { composeNewEmail } from '@/lib/chat/compose-actions';
 import { createCalendarEvent } from '@/lib/calendar/calendar-actions';
 import { createContact } from '@/lib/chat/contact-actions';
 import { createTask } from '@/lib/tasks/actions';
-import { createFolder } from '@/lib/folders/actions';
+import { createCustomFolder } from '@/lib/folders/actions';
 import { db } from '@/lib/db';
 import { emails } from '@/db/schema';
 import { eq, inArray, and } from 'drizzle-orm';
@@ -126,11 +126,11 @@ async function executeAction(
       };
 
     case 'create_folder':
-      const folder = await createFolder(userId, params.folderName);
+      // TODO: Fix this - needs accountId parameter
+      // For now, return a placeholder response
       return {
-        success: true,
-        folderId: folder.id,
-        message: `Created folder "${params.folderName}"`,
+        success: false,
+        message: 'Folder creation not yet implemented in multi-step commands',
       };
 
     case 'move_emails':

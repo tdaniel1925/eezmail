@@ -221,3 +221,13 @@ export async function getEndpointPerformance(options: {
     errorRate: r.requests > 0 ? Math.round((r.errors / r.requests) * 100) : 0,
   }));
 }
+
+/**
+ * Get API latency metrics for the last N hours
+ */
+export async function getAPILatencyMetrics(
+  hours: number = 24
+): Promise<PerformanceMetrics> {
+  const startDate = new Date(Date.now() - hours * 60 * 60 * 1000);
+  return getPerformanceMetrics({ startDate });
+}
