@@ -92,16 +92,20 @@ export async function GET(request: NextRequest) {
 
     console.log('✅ User profile received:', email);
 
+    // Generate username from email (e.g., tdaniel@example.com -> tdaniel)
+    const usernameFromEmail = email.split('@')[0];
+
     // Ensure user exists in users table
     await db
       .insert(users)
       .values({
         id: user.id,
         email: user.email || email,
+        username: usernameFromEmail, // ← ADDED: Required field
         fullName:
           user.user_metadata?.full_name ||
           profile.displayName ||
-          email.split('@')[0],
+          usernameFromEmail,
       })
       .onConflictDoNothing();
 
@@ -177,8 +181,11 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error('❌ Microsoft callback error:', error);
-    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
+    console.error(
+      '❌ Error stack:',
+      error instanceof Error ? error.stack : 'No stack trace'
+    );
+
     // Log environment variable status (without exposing values)
     console.error('🔍 Environment check:', {
       hasClientId: !!process.env.MICROSOFT_CLIENT_ID,
@@ -186,24 +193,30 @@ export async function GET(request: NextRequest) {
       hasTenantId: !!process.env.MICROSOFT_TENANT_ID,
       hasAppUrl: !!process.env.NEXT_PUBLIC_APP_URL,
     });
-    
+
     let errorMessage = 'Failed to connect Microsoft account';
-    
+
     if (error instanceof Error) {
       errorMessage = error.message;
-      
+
       // Check for common issues and provide helpful messages
-      if (error.message.includes('CLIENT_ID') || error.message.includes('CLIENT_SECRET')) {
-        errorMessage = 'Microsoft OAuth credentials not configured. Please contact support.';
+      if (
+        error.message.includes('CLIENT_ID') ||
+        error.message.includes('CLIENT_SECRET')
+      ) {
+        errorMessage =
+          'Microsoft OAuth credentials not configured. Please contact support.';
       } else if (error.message.includes('token')) {
-        errorMessage = 'Failed to exchange authorization code for access token. Please try again.';
+        errorMessage =
+          'Failed to exchange authorization code for access token. Please try again.';
       } else if (error.message.includes('profile')) {
-        errorMessage = 'Failed to fetch your Microsoft profile. Please try again.';
+        errorMessage =
+          'Failed to fetch your Microsoft profile. Please try again.';
       }
     }
-    
+
     console.error('❌ Redirecting with error:', errorMessage);
-    
+
     return NextResponse.redirect(
       new URL(
         `/dashboard/settings?tab=email-accounts&error=${encodeURIComponent(errorMessage)}`,
