@@ -277,6 +277,8 @@ export const accountTypeEnum = pgEnum('account_type', [
   'team',
   'enterprise',
   'system',
+  'beta', // Beta users
+  'paid', // Regular paid users
 ]);
 
 // Hierarchical Role Enum
@@ -365,6 +367,19 @@ export const users = pgTable('users', {
     enablePause: boolean;
     enablePlayback: boolean;
   }>(),
+
+  // Beta Program Fields
+  betaCredits: jsonb('beta_credits').$type<{
+    sms_limit: number;
+    sms_used: number;
+    ai_limit: number;
+    ai_used: number;
+    reset_date: string; // ISO date string
+  }>(),
+  betaInvitedAt: timestamp('beta_invited_at'),
+  betaExpiresAt: timestamp('beta_expires_at'),
+  betaInvitedBy: uuid('beta_invited_by'),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -4347,6 +4362,88 @@ export const userSettings = pgTable('user_settings', {
 });
 
 // ============================================================================
+// BETA TESTING SYSTEM
+// ============================================================================
+
+/**
+ * Beta Feedback Table
+ * Stores feedback from beta users
+ */
+export const betaFeedback = pgTable('beta_feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'feature_request' | 'bug_report' | 'general'
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  rating: integer('rating'), // 1-5 stars
+  screenshotUrl: text('screenshot_url'),
+  
+  // AI-generated fields
+  sentiment: text('sentiment'), // 'positive' | 'neutral' | 'negative'
+  tags: text('tags').array(), // AI-generated tags
+  priority: text('priority'), // 'low' | 'medium' | 'high'
+  
+  status: text('status').notNull().default('new'), // 'new' | 'reviewing' | 'implemented' | 'wont_fix'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * Beta Action Items Table
+ * AI-generated actionable tasks from feedback
+ */
+export const betaActionItems = pgTable('beta_action_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  priority: text('priority').notNull(), // 'low' | 'medium' | 'high'
+  impactScore: integer('impact_score').notNull(), // 1-10
+  effortEstimate: text('effort_estimate').notNull(), // 'small' | 'medium' | 'large'
+  relatedFeedbackIds: uuid('related_feedback_ids').array(),
+  assignedTo: uuid('assigned_to'), // Admin/dev user ID
+  status: text('status').notNull().default('todo'), // 'todo' | 'in_progress' | 'done' | 'cancelled'
+  generatedByAi: boolean('generated_by_ai').default(true),
+  suggestedSolution: text('suggested_solution'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  completedAt: timestamp('completed_at'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * Beta Analytics Table
+ * Track beta user activity
+ */
+export const betaAnalytics = pgTable('beta_analytics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  eventType: text('event_type').notNull(), // 'login' | 'feature_used' | 'email_sent' | etc.
+  eventData: jsonb('event_data'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Beta Emails Sent Table
+ * Track emails sent to beta users
+ */
+export const betaEmailsSent = pgTable('beta_emails_sent', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  templateName: text('template_name').notNull(),
+  resendId: text('resend_id'),
+  status: text('status').notNull().default('sent'), // 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced'
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  deliveredAt: timestamp('delivered_at'),
+  openedAt: timestamp('opened_at'),
+  clickedAt: timestamp('clicked_at'),
+});
+
+// ============================================================================
 // GDPR & DATA PRIVACY
 // ============================================================================
 
@@ -4410,3 +4507,13 @@ export type DataExportRequest = typeof dataExportRequests.$inferSelect;
 export type NewDataExportRequest = typeof dataExportRequests.$inferInsert;
 export type DataDeletionRequest = typeof dataDeletionRequests.$inferSelect;
 export type NewDataDeletionRequest = typeof dataDeletionRequests.$inferInsert;
+
+// Beta Testing System Types
+export type BetaFeedback = typeof betaFeedback.$inferSelect;
+export type NewBetaFeedback = typeof betaFeedback.$inferInsert;
+export type BetaActionItem = typeof betaActionItems.$inferSelect;
+export type NewBetaActionItem = typeof betaActionItems.$inferInsert;
+export type BetaAnalytic = typeof betaAnalytics.$inferSelect;
+export type NewBetaAnalytic = typeof betaAnalytics.$inferInsert;
+export type BetaEmailSent = typeof betaEmailsSent.$inferSelect;
+export type NewBetaEmailSent = typeof betaEmailsSent.$inferInsert;
