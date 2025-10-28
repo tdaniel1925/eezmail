@@ -128,7 +128,7 @@ export default async function DashboardLayout({
               <SidebarWrapper initialData={sidebarData} />
 
               {/* Column 2: Main Content Area */}
-              <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
+              <main className="flex-1 flex flex-col overflow-y-auto bg-gray-50 dark:bg-gray-900">
                 {/* Onboarding Resume Banner */}
                 {onboardingProgress && (
                   <OnboardingResumeBanner
