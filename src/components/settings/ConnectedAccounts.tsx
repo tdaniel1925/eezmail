@@ -20,12 +20,13 @@ import {
   reconnectEmailAccount,
 } from '@/lib/settings/email-actions';
 import type { EmailAccount } from '@/db/schema';
-import { toast, confirmDialog } from '@/lib/toast';
+import { confirmDialog } from '@/lib/toast';
 import { AccountStatusCard } from './AccountStatusCard';
 import { SyncControlPanel } from '@/components/sync/SyncControlPanel';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { AccountRemovalDialog } from './AccountRemovalDialog';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 interface ConnectedAccountsProps {
   accounts: EmailAccount[];

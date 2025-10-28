@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { InlineMessage } from '@/components/ui/inline-message';
 import { IMAP_PROVIDERS } from '@/lib/email/imap-providers';
 
 function IMAPSetupPageContent(): JSX.Element {
@@ -395,29 +396,24 @@ function IMAPSetupPageContent(): JSX.Element {
               <div className="space-y-3">
                 {/* Connection Status */}
                 {connectionStatus !== 'idle' && (
-                  <div className="rounded-lg border p-4">
+                  <div>
                     {connectionStatus === 'testing' && (
-                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                        <span>
-                          Testing connection (this may take up to 30 seconds)...
-                        </span>
-                      </div>
+                      <InlineMessage
+                        type="info"
+                        message="Testing connection (this may take up to 30 seconds)..."
+                      />
                     )}
                     {connectionStatus === 'success' && (
-                      <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
-                        <CheckCircle className="h-4 w-4" />
-                        <span>Connection successful!</span>
-                      </div>
+                      <InlineMessage
+                        type="success"
+                        message="Connection successful!"
+                      />
                     )}
                     {connectionStatus === 'error' && (
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-                          <AlertCircle className="h-4 w-4" />
-                          <span>{errorMessage}</span>
-                        </div>
+                        <InlineMessage type="error" message={errorMessage} />
                         {errorMessage.includes('Timed out') && (
-                          <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 p-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
                             <p className="font-medium mb-1">Possible causes:</p>
                             <ul className="list-disc list-inside space-y-1 text-xs">
                               <li>
@@ -438,36 +434,7 @@ function IMAPSetupPageContent(): JSX.Element {
 
                 {/* Save Status */}
                 {saveStatus.type && (
-                  <div
-                    className={`rounded-lg border p-4 ${
-                      saveStatus.type === 'success'
-                        ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-                        : saveStatus.type === 'error'
-                          ? 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'
-                          : 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center gap-2 ${
-                        saveStatus.type === 'success'
-                          ? 'text-green-600 dark:text-green-400'
-                          : saveStatus.type === 'error'
-                            ? 'text-red-600 dark:text-red-400'
-                            : 'text-blue-600 dark:text-blue-400'
-                      }`}
-                    >
-                      {saveStatus.type === 'success' && (
-                        <CheckCircle className="h-4 w-4" />
-                      )}
-                      {saveStatus.type === 'error' && (
-                        <AlertCircle className="h-4 w-4" />
-                      )}
-                      {saveStatus.type === 'info' && (
-                        <div className="animate-spin h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full" />
-                      )}
-                      <span>{saveStatus.message}</span>
-                    </div>
-                  </div>
+                  <InlineMessage type={saveStatus.type} message={saveStatus.message} />
                 )}
               </div>
             )}
