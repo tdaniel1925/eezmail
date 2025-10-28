@@ -1,0 +1,46 @@
+# Pricing System Update - Commit Message
+
+```
+feat: Update pricing structure to 4-tier per-user model
+
+BREAKING CHANGES:
+- Pricing page now uses client-side state for billing cycle toggle
+- New 4-tier pricing structure: Individual, Team, Enterprise, Platform
+- All tiers now calculated per-user instead of per-package
+- Trial period extended from 14 to 30 days
+
+New Features:
+- Added Platform tier for 15+ users at $25/user/month
+- Added annual pricing with 20% discount for all tiers
+- Interactive monthly/annual toggle on pricing page
+- Admin-configurable SMS pricing per user/team
+- Database seed script for pricing tiers
+
+Pricing Changes:
+- Individual: $45/month (1 user) - unchanged
+- Team: $35/user/month (2-5 users) - now starts at 2 users instead of 5
+- Enterprise: $30/user/month (6-15 users) - increased from $25 to create clearer pricing ladder
+- Platform: $25/user/month (15+ users) - NEW TIER for large teams
+
+Files Changed:
+- src/app/(marketing)/pricing/page.tsx - Complete rewrite with new structure
+- scripts/seed-pricing-tiers.ts - New database seeding script
+- package.json - Added "seed:pricing" command
+- PRICING_UPDATE_SUMMARY.md - Comprehensive documentation
+
+All Plans Include:
+- Unlimited email accounts, storage, AI features
+- Smart categorization, advanced search, contact intelligence
+- Email scheduling, voice messages, mobile apps
+- SMS at admin-set rate
+- 30-day free trial
+
+Next Steps:
+1. Run `npm run seed:pricing` to populate database
+2. Configure Stripe products and prices
+3. Set up SMS pricing strategy
+4. Test signup flow for all tiers
+
+Co-authored-by: AI Assistant <ai@cursor.com>
+```
+

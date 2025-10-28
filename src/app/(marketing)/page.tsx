@@ -1,5 +1,15 @@
 import Link from 'next/link';
-import { Sparkles, Zap, Calendar, MapPin, ArrowRight, Check, Users, Target, Rocket } from 'lucide-react';
+import {
+  Sparkles,
+  Zap,
+  Calendar,
+  MapPin,
+  ArrowRight,
+  Check,
+  Users,
+  Target,
+  Rocket,
+} from 'lucide-react';
 import { VideoBackground } from '@/components/landing/VideoBackground';
 import { AnimatedCard } from '@/components/landing/AnimatedCard';
 import { MarqueeText } from '@/components/landing/MarqueeText';
@@ -24,39 +34,45 @@ export default function LandingPage() {
     {
       id: '1',
       title: 'What is easeMail?',
-      content: 'easeMail is an AI-powered email client designed for professionals and teams. It combines intelligent automation, semantic search, and productivity features to help you process email 10x faster.',
+      content:
+        'easeMail is an AI-powered email client designed for professionals and teams. It combines intelligent automation, semantic search, and productivity features to help you process email 10x faster.',
     },
     {
       id: '2',
       title: 'How does AI email processing work?',
-      content: 'Our AI automatically categorizes, prioritizes, and summarizes your emails using advanced machine learning. It learns from your behavior to provide increasingly accurate suggestions and automations.',
+      content:
+        'Our AI automatically categorizes, prioritizes, and summarizes your emails using advanced machine learning. It learns from your behavior to provide increasingly accurate suggestions and automations.',
     },
     {
       id: '3',
       title: 'Is my data secure?',
-      content: 'Absolutely. We use enterprise-grade encryption, comply with SOC 2 Type II and GDPR standards, and never sell your data. Your email content is processed securely and never shared with third parties.',
+      content:
+        'Absolutely. We use enterprise-grade encryption, comply with SOC 2 Type II and GDPR standards, and never sell your data. Your email content is processed securely and never shared with third parties.',
     },
     {
       id: '4',
       title: 'What email providers do you support?',
-      content: 'easeMail works with Gmail, Outlook, Office 365, and any IMAP-compatible email provider. We support multiple accounts and unified inbox views.',
+      content:
+        'easeMail works with Gmail, Outlook, Office 365, and any IMAP-compatible email provider. We support multiple accounts and unified inbox views.',
     },
     {
       id: '5',
       title: 'Can I cancel anytime?',
-      content: 'Yes! There are no long-term contracts. You can upgrade, downgrade, or cancel your subscription at any time. Your data remains accessible during your billing period.',
+      content:
+        'Yes! There are no long-term contracts. You can upgrade, downgrade, or cancel your subscription at any time. Your data remains accessible during your billing period.',
     },
     {
       id: '6',
       title: 'Do you offer a free trial?',
-      content: 'Yes! We offer a 14-day free trial with full access to all Professional features. No credit card required to start.',
+      content:
+        'Yes! We offer a 14-day free trial with full access to all Professional features. No credit card required to start.',
     },
   ];
 
   return (
     <>
       <MarketingInteractions />
-      
+
       {/* Hero Section */}
       <VideoBackground
         videoSrc="/landing/video/2.mp4"
@@ -65,7 +81,7 @@ export default function LandingPage() {
       >
         <div className="absolute inset-0 bg-gradient-to-b from-[#1E40AF]/10 to-transparent opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent" />
-        
+
         <div className="relative z-20 min-h-screen flex items-center justify-center">
           <div className="container mx-auto px-6">
             <div className="text-center max-w-5xl mx-auto">
@@ -79,7 +95,8 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-3xl mx-auto">
-                AI-powered email client that saves 10+ hours per week. Built for professionals who demand speed, intelligence, and privacy.
+                AI-powered email client that saves 10+ hours per week. Built for
+                professionals who demand speed, intelligence, and privacy.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -129,7 +146,10 @@ export default function LandingPage() {
       </VideoBackground>
 
       {/* About Section */}
-      <section id="section-about" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section
+        id="section-about"
+        className="bg-slate-950 section-dark text-light py-20 md:py-32"
+      >
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -140,22 +160,30 @@ export default function LandingPage() {
                 Email Productivity, Reimagined
               </h2>
               <p className="text-white/70 text-lg mb-8">
-                easeMail combines cutting-edge AI with intuitive design to transform how professionals manage email. 
-                Process messages 10x faster, never miss important communications, and reclaim your time.
+                easeMail combines cutting-edge AI with intuitive design to
+                transform how professionals manage email. Process messages 10x
+                faster, never miss important communications, and reclaim your
+                time.
               </p>
 
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">AI-powered inbox triage and smart categorization</span>
+                  <span className="text-white/80">
+                    AI-powered inbox triage and smart categorization
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">Semantic search across your entire email history</span>
+                  <span className="text-white/80">
+                    Semantic search across your entire email history
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
                   <Check className="w-6 h-6 text-[#1E40AF] flex-shrink-0 mt-1" />
-                  <span className="text-white/80">Enterprise-grade security and compliance</span>
+                  <span className="text-white/80">
+                    Enterprise-grade security and compliance
+                  </span>
                 </li>
               </ul>
             </div>
@@ -206,7 +234,10 @@ export default function LandingPage() {
       </section>
 
       {/* Why Attend Section */}
-      <section id="section-features" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section
+        id="section-features"
+        className="bg-slate-950 section-dark text-light py-20 md:py-32"
+      >
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
@@ -216,7 +247,8 @@ export default function LandingPage() {
               Built for Productivity
             </h2>
             <p className="text-white/70 text-lg">
-              Experience email management that adapts to your workflow, learns from your behavior, and helps you focus on what matters most.
+              Experience email management that adapts to your workflow, learns
+              from your behavior, and helps you focus on what matters most.
             </p>
           </div>
 
@@ -262,7 +294,10 @@ export default function LandingPage() {
       </section>
 
       {/* Speakers Section */}
-      <section id="section-team" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section
+        id="section-team"
+        className="bg-slate-950 section-dark text-light py-20 md:py-32"
+      >
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
@@ -272,7 +307,8 @@ export default function LandingPage() {
               Meet the Founders
             </h2>
             <p className="text-white/70 text-lg">
-              Built by email power users who were frustrated with existing solutions and decided to create something better.
+              Built by email power users who were frustrated with existing
+              solutions and decided to create something better.
             </p>
           </div>
 
@@ -290,8 +326,12 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">Trent T. Daniel</h3>
-                  <p className="text-white/70 text-sm">Founder, BotMakers Inc.</p>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    Trent T. Daniel
+                  </h3>
+                  <p className="text-white/70 text-sm">
+                    Founder, BotMakers Inc.
+                  </p>
                 </div>
               </div>
             </div>
@@ -309,8 +349,12 @@ export default function LandingPage() {
               <div className="absolute inset-0 bg-gradient-to-br from-[#1E40AF]/0 to-[#1E40AF]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
                 <div className="bg-slate-900/80 backdrop-blur-sm rounded-xl p-4 text-center">
-                  <h3 className="text-xl font-bold text-white mb-1">Sella Hall</h3>
-                  <p className="text-white/70 text-sm">Chief Experience Officer</p>
+                  <h3 className="text-xl font-bold text-white mb-1">
+                    Sella Hall
+                  </h3>
+                  <p className="text-white/70 text-sm">
+                    Chief Experience Officer
+                  </p>
                 </div>
               </div>
             </div>
@@ -322,7 +366,10 @@ export default function LandingPage() {
       <TestimonialsSection />
 
       {/* Pricing Section */}
-      <section id="section-pricing" className="bg-slate-950 section-dark text-light py-20 md:py-32 relative">
+      <section
+        id="section-pricing"
+        className="bg-slate-950 section-dark text-light py-20 md:py-32 relative"
+      >
         <div className="absolute inset-0 opacity-5">
           <Image
             src="/landing/images/background/7.webp"
@@ -336,56 +383,72 @@ export default function LandingPage() {
         <div className="relative z-10 container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="text-[#1E40AF] text-sm font-semibold uppercase tracking-wider mb-4">
-              Pricing Plans
+              Simple Per-User Pricing
             </div>
             <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-              Choose Your Plan
+              One Price, Everything Included
             </h2>
             <p className="text-white/70 text-lg">
-              Start free, upgrade when you're ready. All plans include 14-day free trial. No credit card required.
+              All plans include unlimited features. Pay only per user. 30-day
+              free trial. No credit card required.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             <TicketCard
-              title="Free"
-              price="$0"
+              title="Individual"
+              price="$45"
+              period="/user/mo"
               features={[
-                'Up to 100 emails per month',
-                'Basic AI categorization',
-                'Standard search',
-                'Email support',
-                '1 email account',
+                '1 user',
+                'Unlimited email accounts',
+                'Unlimited storage',
+                'Full AI features',
+                'Priority support',
+                'SMS at custom rate',
               ]}
-              href="/signup"
+              href="/signup?plan=individual"
             />
             <TicketCard
-              title="Professional"
-              price="$49"
+              title="Team"
+              price="$35"
+              period="/user/mo"
               popular
               features={[
-                'Unlimited emails',
-                'Advanced AI features',
-                'Semantic search',
-                'Priority support',
-                'Multiple accounts',
-                'Custom templates',
-                'Advanced analytics',
+                '2-5 users',
+                'Everything in Individual',
+                'Team collaboration',
+                'Shared contacts',
+                'Admin controls',
+                'Save $10/user',
               ]}
-              href="/signup"
+              href="/signup?plan=team"
             />
             <TicketCard
               title="Enterprise"
-              price="Custom"
-              period=""
+              price="$30"
+              period="/user/mo"
               features={[
-                'Everything in Professional',
-                'Dedicated account manager',
-                'Custom integrations',
-                'SLA guarantee',
-                'On-premise deployment',
-                'Advanced security features',
-                'Training & onboarding',
+                '6-15 users',
+                'Everything in Team',
+                'Advanced security',
+                'SSO & SAML',
+                'API access',
+                'Save $15/user',
+              ]}
+              href="/signup?plan=enterprise"
+            />
+            <TicketCard
+              title="Platform"
+              price="$25"
+              period="/user/mo"
+              features={[
+                '15+ users',
+                'Everything in Enterprise',
+                'Custom contracts',
+                'Dedicated support',
+                'White-glove service',
+                'Best value',
               ]}
               href="/contact"
             />
@@ -394,7 +457,10 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="section-faq" className="bg-slate-950 section-dark text-light py-20 md:py-32">
+      <section
+        id="section-faq"
+        className="bg-slate-950 section-dark text-light py-20 md:py-32"
+      >
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <div>
@@ -437,8 +503,9 @@ export default function LandingPage() {
               Start Your Free Trial Today
             </h2>
             <p className="text-white/70 text-lg mb-8">
-              Join thousands of professionals using easeMail to reclaim their time and focus on what matters. 
-              No credit card required. Cancel anytime.
+              Join thousands of professionals using easeMail to reclaim their
+              time and focus on what matters. No credit card required. Cancel
+              anytime.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">

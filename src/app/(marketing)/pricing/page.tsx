@@ -1,75 +1,116 @@
-import Link from 'next/link';
-import { Check, X, ArrowRight, Sparkles, Users } from 'lucide-react';
+'use client';
 
-export const metadata = {
-  title: 'Pricing - Imbox | Seat-Based Pricing That Scales',
-  description: 'Simple seat-based pricing. Individual, Team, or Enterprise - pay only for what you need.',
-};
+import { useState } from 'react';
+import Link from 'next/link';
+import { Check, ArrowRight, Users } from 'lucide-react';
 
 const plans = [
   {
     name: 'Individual',
     price: '$45',
-    period: '/month',
+    annualPrice: '$36',
+    period: '/user/month',
     seats: '1 user',
     pricePerSeat: '$45/user',
-    description: 'Everything you need to supercharge your inbox',
+    annualSavings: '20%',
+    description: 'Perfect for solo professionals',
     features: [
       'Unlimited email accounts',
       'Unlimited storage',
-      'Full AI features (sentiment, summarization, writing assistance)',
+      'Full AI features (sentiment analysis, summarization, writing assistance)',
       'Smart email categorization (Imbox/Feed/Paper Trail)',
       'Advanced search with RAG',
       'Contact intelligence & relationship scoring',
-      'Email scheduling & templates',
-      'Priority support',
+      'Email scheduling & smart templates',
+      'Voice message integration',
+      'Mobile & desktop apps',
+      'SMS at custom admin-set rate',
       'All integrations included',
+      'Priority email support',
     ],
-    cta: 'Start Free Trial',
+    cta: 'Start 30-Day Free Trial',
     ctaLink: '/signup?plan=individual',
     popular: false,
   },
   {
     name: 'Team',
-    price: '$175',
-    period: '/month',
-    seats: 'Minimum 5 users',
+    price: '$35',
+    annualPrice: '$28',
+    period: '/user/month',
+    seats: '2-5 users',
     pricePerSeat: '$35/user',
-    description: 'For growing teams with volume pricing',
+    annualSavings: '20%',
+    minSeats: 2,
+    description: 'For small teams that collaborate',
     features: [
       'Everything in Individual',
+      'Save $10/user vs Individual',
       'Team collaboration features',
       'Shared contacts & labels',
       'Team inbox management',
-      'Admin controls & permissions',
-      'Usage analytics & insights',
-      'Bulk actions & automation',
-      'SMS at cost (pay-as-you-go)',
-      'Volume pricing saves $10/user',
+      'Admin controls & user permissions',
+      'Usage analytics & insights dashboard',
+      'Bulk actions & automation rules',
+      'Shared email templates',
+      'Team activity reporting',
+      'SMS at custom admin-set rate',
+      'Priority email support',
     ],
-    cta: 'Start Free Trial',
+    cta: 'Start 30-Day Free Trial',
     ctaLink: '/signup?plan=team',
     popular: true,
   },
   {
     name: 'Enterprise',
-    price: '$150',
-    period: '/month',
-    seats: 'Minimum 6 users',
-    pricePerSeat: '$25/user',
-    description: 'Best value for large organizations',
+    price: '$30',
+    annualPrice: '$24',
+    period: '/user/month',
+    seats: '6-15 users',
+    pricePerSeat: '$30/user',
+    annualSavings: '20%',
+    minSeats: 6,
+    description: 'Best value for growing organizations',
     features: [
       'Everything in Team',
-      'Best value ($25/user saves $20 vs Individual)',
-      'Custom AI models & training',
+      'Save $15/user vs Individual',
+      'Advanced security & compliance',
       'SSO & SAML authentication',
-      'Advanced security controls',
-      'API access for integrations',
-      'White-label options',
+      'Custom AI model training',
+      'API access for custom integrations',
+      'Advanced workflow automation',
       'Dedicated account manager',
-      '24/7 premium support',
+      'White-label options available',
+      'SMS at custom admin-set rate',
+      '24/7 priority support',
       'SLA guarantees',
-      'Custom contracts available',
+    ],
+    cta: 'Start 30-Day Free Trial',
+    ctaLink: '/signup?plan=enterprise',
+    popular: false,
+  },
+  {
+    name: 'Platform',
+    price: '$25',
+    annualPrice: '$20',
+    period: '/user/month',
+    seats: '15+ users',
+    pricePerSeat: '$25/user',
+    annualSavings: '20%',
+    minSeats: 15,
+    description: 'Maximum value for large teams',
+    features: [
+      'Everything in Enterprise',
+      'Best price - save $20/user vs Individual',
+      'Unlimited user seats',
+      'Custom contract terms',
+      'Volume discount pricing',
+      'Premium onboarding & training',
+      'Custom feature development',
+      'Dedicated technical support',
+      'Advanced security audits',
+      'SMS at custom admin-set rate',
+      'White-glove support',
+      'Custom SLAs',
     ],
     cta: 'Contact Sales',
     ctaLink: '/contact',
@@ -78,6 +119,10 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(
+    'monthly'
+  );
+
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Hero */}
@@ -87,18 +132,45 @@ export default function PricingPage() {
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/5 px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 mb-6">
               <Users className="w-4 h-4" />
-              Simple Seat-Based Pricing
+              Simple Per-User Pricing
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white">
-              Pay Only for{' '}
+              One Price,{' '}
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#1E40AF] to-white">
-                What You Need
+                Everything Included
               </span>
             </h1>
             <p className="text-xl text-slate-300 leading-relaxed mb-8">
-              All plans include unlimited features. Scale up or down based on your team size.
-              No hidden fees, no feature limits.
+              All plans include unlimited everything. Pay only per user. Lower
+              prices as your team grows. 30-day free trial included.
             </p>
+
+            {/* Billing Cycle Toggle */}
+            <div className="inline-flex items-center gap-4 bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md rounded-full p-2">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition ${
+                  billingCycle === 'monthly'
+                    ? 'bg-[#1E40AF] text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('annual')}
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition flex items-center gap-2 ${
+                  billingCycle === 'annual'
+                    ? 'bg-[#1E40AF] text-white'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Annual
+                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full">
+                  Save 20%
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -106,13 +178,13 @@ export default function PricingPage() {
       {/* Pricing Cards with Features */}
       <section className="py-20 bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-6 md:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-3xl backdrop-blur-md p-8 flex flex-col ${
+                className={`rounded-3xl backdrop-blur-md p-6 flex flex-col ${
                   plan.popular
-                    ? 'bg-gradient-to-b from-white/10 to-white/5 ring-2 ring-[#1E40AF]/50 relative'
+                    ? 'bg-gradient-to-b from-white/10 to-white/5 ring-2 ring-[#1E40AF]/50 relative scale-105'
                     : 'bg-slate-900/60 ring-1 ring-white/10'
                 }`}
               >
@@ -124,45 +196,53 @@ export default function PricingPage() {
                   </div>
                 )}
 
-                <div className="mb-8">
-                  <h3 className="text-2xl font-bold mb-2 text-white">{plan.name}</h3>
-                  <p className="text-slate-400 text-sm mb-4">
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-2 text-white">
+                    {plan.name}
+                  </h3>
+                  <p className="text-slate-400 text-xs mb-4">
                     {plan.description}
                   </p>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-5xl font-bold">{plan.price}</span>
-                    {plan.period && (
-                      <span className="text-slate-400">{plan.period}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-400">
-                    <Users className="w-4 h-4" />
-                    <span>{plan.seats}</span>
-                    <span className="text-[#1E40AF] font-medium ml-2">
-                      {plan.pricePerSeat}
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-4xl font-bold text-white">
+                      {billingCycle === 'monthly'
+                        ? plan.price
+                        : plan.annualPrice}
                     </span>
+                    <span className="text-slate-400 text-sm">
+                      {plan.period}
+                    </span>
+                  </div>
+                  {billingCycle === 'annual' && (
+                    <p className="text-xs text-green-400 mb-2">
+                      Save {plan.annualSavings} annually
+                    </p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <Users className="w-3 h-3" />
+                    <span>{plan.seats}</span>
                   </div>
                 </div>
 
-                <ul className="space-y-3 mb-8 flex-1">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm text-slate-200">{feature}</span>
+                <ul className="space-y-2 mb-6 flex-1">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-xs text-slate-200">{feature}</span>
                     </li>
                   ))}
                 </ul>
 
                 <Link
                   href={plan.ctaLink}
-                  className={`w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-base font-semibold transition ${
+                  className={`w-full inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition ${
                     plan.popular
                       ? 'bg-[#1E40AF] text-white hover:bg-[#1E40AF]/90'
                       : 'bg-white/10 text-white ring-1 ring-white/15 hover:bg-white/15'
                   }`}
                 >
                   {plan.cta}
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             ))}
@@ -179,12 +259,13 @@ export default function PricingPage() {
           <div className="space-y-6">
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
               <h3 className="text-lg font-semibold mb-2 text-white">
-                How does seat-based pricing work?
+                How does per-user pricing work?
               </h3>
               <p className="text-slate-400">
-                You pay per user on your account. Individual is $45 for 1 user with everything included.
-                Teams of 5+ users get volume pricing at $35/user ($175/month minimum). 
-                Enterprises with 6+ users pay just $25/user ($150/month minimum).
+                You pay per user on your account. Pricing automatically adjusts
+                based on team size: Individual ($45/user), Team 2-5 users
+                ($35/user), Enterprise 6-15 users ($30/user), or Platform 15+
+                users ($25/user). Save 20% when billed annually.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
@@ -192,9 +273,11 @@ export default function PricingPage() {
                 What's included in all plans?
               </h3>
               <p className="text-slate-400">
-                ALL plans include unlimited email accounts, unlimited storage, full AI features,
-                smart categorization, advanced search, and priority support. There are no feature limits - 
-                you only pay based on the number of users.
+                ALL plans include unlimited email accounts, unlimited storage,
+                full AI features, smart categorization, advanced search, contact
+                intelligence, email scheduling, voice messages, and all
+                integrations. The only difference is the price per user based on
+                team size.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
@@ -202,8 +285,9 @@ export default function PricingPage() {
                 Can I add or remove users anytime?
               </h3>
               <p className="text-slate-400">
-                Yes! You can add or remove users at any time. Your billing will be prorated automatically.
-                If you grow from Individual to Team size, you'll automatically get volume pricing.
+                Yes! You can add or remove users at any time. Your billing will
+                be prorated automatically. If you grow from Individual to Team
+                size, you'll automatically get the lower per-user rate.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
@@ -211,8 +295,9 @@ export default function PricingPage() {
                 How is SMS billed?
               </h3>
               <p className="text-slate-400">
-                SMS is billed separately at cost on a pay-as-you-go basis. You only pay for what you use.
-                Typical cost is around $0.01 per SMS sent.
+                SMS is billed separately at a custom rate set by your admin.
+                This allows flexible pricing based on your usage. Typical SMS
+                costs range from $0.01-$0.02 per message depending on carrier.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
@@ -220,8 +305,8 @@ export default function PricingPage() {
                 Is there a free trial?
               </h3>
               <p className="text-slate-400">
-                Yes! All plans come with a 14-day free trial with full access to all features.
-                No credit card required to start.
+                Yes! All plans come with a 30-day free trial with full access to
+                all features. No credit card required to start your trial.
               </p>
             </div>
             <div className="rounded-2xl bg-slate-900/60 ring-1 ring-white/10 backdrop-blur-md p-6">
@@ -229,8 +314,9 @@ export default function PricingPage() {
                 What payment methods do you accept?
               </h3>
               <p className="text-slate-400">
-                We accept all major credit cards (Visa, Mastercard, Amex) via Stripe or Square.
-                Enterprise customers can also be invoiced directly.
+                We accept all major credit cards (Visa, Mastercard, Amex,
+                Discover) via Stripe or Square. Enterprise and Platform
+                customers can also be invoiced directly with NET 30 terms.
               </p>
             </div>
           </div>
@@ -245,13 +331,14 @@ export default function PricingPage() {
               Ready to Get Started?
             </h2>
             <p className="text-xl text-slate-300 mb-8">
-              Start your 14-day free trial today
+              Start your 30-day free trial today. No credit card required.
             </p>
             <Link
               href="/signup"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-slate-900 px-8 py-4 text-lg font-semibold hover:bg-slate-100 transition"
             >
               Start Free Trial
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
         </div>

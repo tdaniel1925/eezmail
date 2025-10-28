@@ -18,7 +18,9 @@
     "validate": "node validate-deployment.js",
     "test:integration": "jest tests/integration --config jest.config.js",
     "health-check": "node list-email-accounts.js && node trigger-sync-direct.js",
-    "pre-deploy": "npm run type-check && npm run lint && npm run validate"
+    "pre-deploy": "npm run type-check && npm run lint && npm run validate",
+    "backup:db": "tsx scripts/backup-database.ts",
+    "seed:pricing": "tsx scripts/seed-pricing-tiers.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",
