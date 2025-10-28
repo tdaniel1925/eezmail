@@ -7,12 +7,14 @@
 ## 🎯 Why This Time Will Be Different
 
 **Last time's problems:**
+
 - ❌ Configured things in wrong order
 - ❌ Microsoft connector in Nylas Dashboard was empty
 - ❌ Unclear which credentials went where
 - ❌ Poor error messages
 
 **This time:**
+
 - ✅ Clear step-by-step order
 - ✅ Validation script catches issues early
 - ✅ Configuration checklist for each platform
@@ -23,6 +25,7 @@
 ## 📋 Prerequisites
 
 Before starting, have these ready:
+
 - [ ] Nylas account (sign up at https://dashboard.nylas.com)
 - [ ] Azure account (for Microsoft OAuth)
 - [ ] Access to your `.env.local` file
@@ -61,7 +64,7 @@ Before starting, have these ready:
 
 5. **Add Your App's Callback URI:**
    - In Nylas Dashboard → Your App → Settings
-   - Add **Redirect URI**: 
+   - Add **Redirect URI**:
      - Dev: `http://localhost:3000/api/nylas/callback`
      - Prod: `https://yourdomain.com/api/nylas/callback`
    - Click "Save"
@@ -77,12 +80,13 @@ Before starting, have these ready:
    - Navigate to: **Azure Active Directory** → **App registrations**
 
 2. **Create New App Registration:**
+
    ```
    Name: Imbox Email Client (Nylas)
-   
+
    Supported account types:
    "Accounts in any organizational directory and personal Microsoft accounts"
-   
+
    Redirect URI: (Add these NOW)
    ```
 
@@ -101,7 +105,7 @@ Before starting, have these ready:
    - Description: "Nylas Integration"
    - Expires: 24 months
    - Click "Add"
-   - ⚠️  **CRITICAL:** Copy the **Value** immediately (not Secret ID)
+   - ⚠️ **CRITICAL:** Copy the **Value** immediately (not Secret ID)
    - **You cannot see this again!**
 
 6. **Add API Permissions:**
@@ -124,7 +128,7 @@ Before starting, have these ready:
 
 ### Step 3: Configure Nylas Microsoft Provider
 
-**⚠️  THIS IS THE STEP THAT WAS MISSING LAST TIME!**
+**⚠️ THIS IS THE STEP THAT WAS MISSING LAST TIME!**
 
 **Why third?** Now you have Azure credentials to put in Nylas.
 
@@ -135,7 +139,7 @@ Before starting, have these ready:
    - Look for "Microsoft" in the provider list
    - Click "Configure" or "Edit"
 
-3. **⚠️  CRITICAL - Fill in Microsoft Settings:**
+3. **⚠️ CRITICAL - Fill in Microsoft Settings:**
 
    ```
    Client ID: <Your Azure App Client ID from Step 2.4>
@@ -171,17 +175,17 @@ Before starting, have these ready:
    NYLAS_API_URI=https://api.us.nylas.com  # or .eu.nylas.com
    NYLAS_CLIENT_ID=<your_nylas_client_id_from_step_1>
    NYLAS_CLIENT_SECRET=<your_nylas_client_secret_from_step_1>
-   
+
    # Azure App (for reference, Nylas handles this internally now)
    AZURE_CLIENT_ID=<your_azure_client_id_from_step_2>
    AZURE_CLIENT_SECRET=<your_azure_client_secret_from_step_2>
    AZURE_TENANT_ID=common
-   
+
    # Your App URL (already exists, verify it's correct)
    NEXT_PUBLIC_APP_URL=http://localhost:3000  # or https://yourdomain.com
    ```
 
-3. **⚠️  Important:**
+3. **⚠️ Important:**
    - No extra spaces
    - No quotes around values
    - API Key starts with `nylas_`
@@ -282,8 +286,9 @@ import { nylasClient } from '@/lib/nylas/client';
 
 export async function GET(request: NextRequest) {
   try {
-    const provider = request.nextUrl.searchParams.get('provider') || 'microsoft';
-    
+    const provider =
+      request.nextUrl.searchParams.get('provider') || 'microsoft';
+
     const authUrl = nylasClient.auth.urlForOAuth2({
       clientId: process.env.NYLAS_CLIENT_ID!,
       redirectUri: `${process.env.NEXT_PUBLIC_APP_URL}/api/nylas/callback`,
@@ -313,7 +318,7 @@ import { emailAccounts } from '@/db/schema';
 export async function GET(request: NextRequest) {
   try {
     const code = request.nextUrl.searchParams.get('code');
-    
+
     if (!code) {
       return NextResponse.redirect(
         `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?error=no_code`
@@ -330,7 +335,7 @@ export async function GET(request: NextRequest) {
 
     // Get user info
     const user = await nylasClient.auth.currentUser();
-    
+
     // Save to database
     await db.insert(emailAccounts).values({
       userId: user.id, // Get from your auth system
@@ -362,7 +367,7 @@ export async function GET(request: NextRequest) {
    ```bash
    # Kill existing server
    Get-Process -Name node | Stop-Process -Force
-   
+
    # Start fresh
    npm run dev
    ```
@@ -409,6 +414,7 @@ Before considering setup complete, verify:
 **Cause:** Missing Nylas API key or incorrect URL
 
 **Fix:**
+
 1. Run validation script: `npm run setup:nylas`
 2. Check `NYLAS_API_KEY` is set and starts with `nylas_`
 3. Check `NYLAS_API_URI` is correct region
@@ -420,6 +426,7 @@ Before considering setup complete, verify:
 **Cause:** Step 3 was skipped (THIS WAS YOUR ISSUE LAST TIME!)
 
 **Fix:**
+
 1. Go to Nylas Dashboard → Integrations → Microsoft
 2. Enter your Azure app credentials:
    - Client ID
@@ -435,6 +442,7 @@ Before considering setup complete, verify:
 **Cause:** Azure redirect URIs don't include Nylas callback
 
 **Fix:**
+
 1. Go to Azure Portal → Your App → Authentication
 2. Ensure BOTH URIs are added:
    - `https://api.us.nylas.com/v3/connect/callback`
@@ -449,6 +457,7 @@ Before considering setup complete, verify:
 **Cause:** Wrong Azure credentials in Nylas Dashboard
 
 **Fix:**
+
 1. Go to Azure Portal → Your App
 2. Copy **Application (client) ID** again
 3. Generate new **Client secret** if needed
@@ -460,13 +469,13 @@ Before considering setup complete, verify:
 
 ## 🎯 Key Differences From Last Time
 
-| Last Time | This Time |
-|-----------|-----------|
-| ❌ No clear order | ✅ Step-by-step order |
-| ❌ Microsoft connector empty | ✅ Explicitly configure in Step 3 |
-| ❌ No validation | ✅ Validation script catches issues |
-| ❌ Unclear error messages | ✅ Clear fixes for each error |
-| ❌ 3+ hours debugging | ✅ 30 minutes setup + testing |
+| Last Time                    | This Time                           |
+| ---------------------------- | ----------------------------------- |
+| ❌ No clear order            | ✅ Step-by-step order               |
+| ❌ Microsoft connector empty | ✅ Explicitly configure in Step 3   |
+| ❌ No validation             | ✅ Validation script catches issues |
+| ❌ Unclear error messages    | ✅ Clear fixes for each error       |
+| ❌ 3+ hours debugging        | ✅ 30 minutes setup + testing       |
 
 ---
 
@@ -492,4 +501,3 @@ Once OAuth is working:
 ---
 
 **Remember:** The key is doing Step 3 (Configure Nylas Microsoft Provider) correctly. This was missing last time and caused all the problems!
-
