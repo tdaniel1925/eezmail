@@ -206,6 +206,54 @@ Importance Score: 85/100
 - Cost management rules
 Importance Score: 70/100
 $END$
+
+# main-overview
+## Development Guidelines
+- Only modify code directly relevant to the specific request. Avoid changing unrelated functionality.
+- Never replace code with placeholders like `# ... rest of the processing ...`. Always include complete code.
+- Break problems into smaller steps. Think through each step separately before implementing.
+- Always provide a complete PLAN with REASONING based on evidence from code and logs before making changes.
+- Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
+Email Platform Business Logic Architecture:
+1. Core Email Processing (Importance: 95/100)
+- Intelligent email categorization system with AI-powered screening
+- Custom threading implementation with relationship analysis
+- Voice message integration with silence detection
+- Provider-agnostic synchronization with delta optimization
+- Automated task and action item extraction
+2. Security & Monitoring (Importance: 90/100)
+- Advanced phishing detection with multi-factor analysis
+- Risk scoring for incoming emails and attachments
+- Proactive monitoring for VIP and urgent emails
+- Relationship-based sender trust scoring
+3. AI Integration System (Importance: 85/100)
+- Context-aware email composition assistance
+- Smart reply generation with tone matching
+- Thread summarization and key point extraction
+- Contact relationship intelligence
+4. Communication Management (Importance: 85/100)
+- Multi-channel messaging orchestration (email, SMS, voice)
+- Intelligent rate limiting with provider-specific rules
+- Contact relationship scoring and interaction tracking
+- Timeline-based communication history
+5. Platform Administration (Importance: 80/100)
+- Multi-tier pricing with usage-based billing
+- Trial credit management for dual services (SMS/AI)
+- Organization vs individual billing logic
+- Usage tracking and quota management
+Key Integration Points:
+- Email Provider Integration (src/lib/sync/email-sync-service.ts)
+- AI Processing Pipeline (src/lib/ai/email-analyzer.ts)
+- Security Analysis System (src/lib/security/phishing-detector.ts)
+- Communication Router (src/lib/communication/rate-limiter.ts)
+Core Business Workflows:
+1. Email screening and categorization
+2. AI-powered content analysis
+3. Security threat detection
+4. Contact relationship management
+5. Usage-based billing
+This system implements a sophisticated email platform with emphasis on intelligent processing, security, and AI assistance. The architecture supports complex email workflows while maintaining provider independence.
+$END$
 # === END USER INSTRUCTIONS ===
 
 
@@ -220,53 +268,54 @@ $END$
 - Explain your OBSERVATIONS clearly, then provide REASONING to identify the exact issue. Add console logs when needed to gather more information.
 
 
-Email Platform Business Logic Architecture:
+Email Management Platform with AI Integration
 
-1. Core Email Processing (Importance: 95/100)
-- Intelligent email categorization system with AI-powered screening
-- Custom threading implementation with relationship analysis
-- Voice message integration with silence detection
-- Provider-agnostic synchronization with delta optimization
-- Automated task and action item extraction
+## Core Business Components
 
-2. Security & Monitoring (Importance: 90/100)
-- Advanced phishing detection with multi-factor analysis
-- Risk scoring for incoming emails and attachments
-- Proactive monitoring for VIP and urgent emails
-- Relationship-based sender trust scoring
+### Email Intelligence System (95/100)
+`src/lib/ai/context-analyzer.ts`
+- AI-powered email classification with Hey-inspired categorization
+- Thread analysis with sentiment detection and action item extraction
+- Smart context selection using vector embeddings
+- Proactive monitoring for VIP emails and urgent communications
 
-3. AI Integration System (Importance: 85/100)
-- Context-aware email composition assistance
-- Smart reply generation with tone matching
-- Thread summarization and key point extraction
-- Contact relationship intelligence
+### Sync Orchestration (90/100)
+`src/lib/sync/sync-orchestrator.ts`
+- Multi-provider email sync with delta tracking
+- Provider-specific sync strategies and rate limiting
+- Intelligent folder mapping across email services
+- Sync health monitoring with auto-recovery
 
-4. Communication Management (Importance: 85/100)
-- Multi-channel messaging orchestration (email, SMS, voice)
-- Intelligent rate limiting with provider-specific rules
-- Contact relationship scoring and interaction tracking
-- Timeline-based communication history
+### Contact Intelligence (85/100)
+`src/lib/contacts/relationship-analyzer.ts`
+- Communication pattern analysis for relationship scoring
+- Automated contact categorization and grouping
+- Response time tracking and priority detection
+- Timeline-based interaction history
 
-5. Platform Administration (Importance: 80/100)
-- Multi-tier pricing with usage-based billing
-- Trial credit management for dual services (SMS/AI)
-- Organization vs individual billing logic
-- Usage tracking and quota management
+### Privacy Management (85/100)
+`src/lib/privacy/data-management.ts`
+- GDPR-compliant data handling workflows
+- Automated data retention and deletion policies
+- Smart anonymization rules for audit trails
+- Data export package generation
 
-Key Integration Points:
-- Email Provider Integration (src/lib/sync/email-sync-service.ts)
-- AI Processing Pipeline (src/lib/ai/email-analyzer.ts)
-- Security Analysis System (src/lib/security/phishing-detector.ts)
-- Communication Router (src/lib/communication/rate-limiter.ts)
+### Voice Message System (80/100)
+`src/lib/audio/compress-audio.ts`
+- Voice message processing with silence detection
+- Format optimization for email attachments
+- Quality tiering based on subscription level
+- Auto-transcription integration
 
-Core Business Workflows:
-1. Email screening and categorization
-2. AI-powered content analysis
-3. Security threat detection
-4. Contact relationship management
-5. Usage-based billing
+## Integration Architecture
 
-This system implements a sophisticated email platform with emphasis on intelligent processing, security, and AI assistance. The architecture supports complex email workflows while maintaining provider independence.
+The platform connects these components through:
+- RAG-based context sharing between AI services
+- Unified contact timeline across communication channels
+- Central sync coordination for multiple email providers
+- Integrated privacy controls across all data operations
+
+Business logic centralizes around intelligent email processing with AI augmentation, sophisticated contact relationship management, and compliance-aware data handling.
 
 $END$
 

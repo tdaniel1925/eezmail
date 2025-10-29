@@ -16,7 +16,10 @@ import {
 import { eq, and, gt, lt } from 'drizzle-orm';
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
-import { detectFolderType } from '@/lib/folders/folder-mapper';
+import {
+  detectFolderType,
+  shouldSyncByDefault,
+} from '@/lib/folders/folder-mapper';
 
 // ============================================================================
 // IMAP SYNC FUNCTION
@@ -181,7 +184,7 @@ export const syncImapAccount = inngest.createFunction(
                     folderType,
                     messageCount: 0,
                     unreadCount: 0,
-                    syncEnabled: true,
+                    syncEnabled: shouldSyncByDefault(folderType), // FIXED - uses logic
                     lastSyncedAt: new Date(),
                   })
                   .returning();

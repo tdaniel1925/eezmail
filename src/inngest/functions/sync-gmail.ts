@@ -15,7 +15,10 @@ import {
 } from '@/db/schema';
 import { eq, and, gt, lt } from 'drizzle-orm';
 import { google } from 'googleapis';
-import { detectFolderType } from '@/lib/folders/folder-mapper';
+import {
+  detectFolderType,
+  shouldSyncByDefault,
+} from '@/lib/folders/folder-mapper';
 
 // ============================================================================
 // GMAIL SYNC FUNCTION
@@ -156,7 +159,7 @@ export const syncGmailAccount = inngest.createFunction(
                 folderType,
                 messageCount: label.messagesTotal || 0,
                 unreadCount: label.messagesUnread || 0,
-                syncEnabled: true,
+                syncEnabled: shouldSyncByDefault(folderType), // FIXED - uses logic
                 lastSyncedAt: new Date(),
               })
               .returning();

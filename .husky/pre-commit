@@ -1,0 +1,27 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+# Check for direct shouldSyncByDefault usage with folder name
+if grep -r "shouldSyncByDefault.*folder\.name\|shouldSyncByDefault.*folder\.displayName\|shouldSyncByDefault.*label\.name" src/inngest/ src/lib/sync/ src/app/api/folders/; then
+  echo "❌ ERROR: Direct shouldSyncByDefault() call with folder name detected!"
+  echo "   Use getFolderConfiguration() from folder-config-service.ts instead"
+  exit 1
+fi
+
+# Check for hardcoded syncEnabled: true in folder creation
+if grep -B 5 "\.insert(emailFolders)" src/inngest/ src/app/api/folders/ | grep "syncEnabled: true"; then
+  echo "❌ ERROR: Hardcoded 'syncEnabled: true' detected in folder creation!"
+  echo "   Use shouldSyncByDefault(folderType) instead"
+  exit 1
+fi
+
+# Check for wrong field name 'enabled' instead of 'syncEnabled'
+if grep -B 5 "\.insert(emailFolders)" src/inngest/ | grep "enabled:.*shouldSyncByDefault"; then
+  echo "❌ ERROR: Wrong field name 'enabled' detected! Should be 'syncEnabled'"
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+

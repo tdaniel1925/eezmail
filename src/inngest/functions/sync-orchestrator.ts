@@ -103,6 +103,8 @@ export const syncOrchestrator = inngest.createFunction(
 
         // Upsert folders to database
         for (const folder of providerFolders) {
+          const folderType = detectFolderType(folder.name); // Store the result
+
           await db
             .insert(emailFolders)
             .values({
@@ -110,10 +112,11 @@ export const syncOrchestrator = inngest.createFunction(
               userId,
               externalId: folder.id,
               name: folder.name,
-              type: detectFolderType(folder.name),
+              type: folderType, // Use stored value
+              folderType: folderType, // Add standardized field
               messageCount: folder.totalMessages,
               unreadCount: folder.unreadMessages,
-              enabled: shouldSyncByDefault(folder.name),
+              syncEnabled: shouldSyncByDefault(folderType), // FIXED: correct field + correct param
               createdAt: new Date(),
               updatedAt: new Date(),
             } as any)
@@ -122,6 +125,7 @@ export const syncOrchestrator = inngest.createFunction(
               set: {
                 messageCount: folder.totalMessages,
                 unreadCount: folder.unreadMessages,
+                folderType: folderType, // Update type if changed
                 updatedAt: new Date(),
               },
             });
@@ -131,10 +135,33 @@ export const syncOrchestrator = inngest.createFunction(
         return providerFolders;
       });
 
-      // Step 5: Sync emails from each folder
+      // Step 5: Sync emails from enabled folders only
       let totalSynced = 0;
 
+      // Get folder records from database to check enabled status
+      const folderRecords = await db
+        .select()
+        .from(emailFolders)
+        .where(eq(emailFolders.accountId, accountId));
+
+      const folderMap = new Map(folderRecords.map((f) => [f.externalId, f]));
+
       for (const folder of folders) {
+        const folderRecord = folderMap.get(folder.id);
+        const folderType = detectFolderType(folder.name);
+
+        // Skip if sync disabled
+        if (folderRecord && !folderRecord.syncEnabled) {
+          console.log(`⏭️ Skipping disabled folder: ${folder.name}`);
+          continue;
+        }
+
+        // Skip spam/trash by default
+        if (folderType === 'spam' || folderType === 'trash') {
+          console.log(`⏭️ Skipping ${folder.name} (${folderType})`);
+          continue;
+        }
+
         const synced = await step.run(`sync-folder-${folder.id}`, async () => {
           return await syncFolderEmails(
             syncProvider,
@@ -230,7 +257,9 @@ async function syncFolderEmails(
 
   // Get cursor for incremental sync
   const cursor =
-    syncMode === 'incremental' ? folderRecord.syncCursor || undefined : undefined;
+    syncMode === 'incremental'
+      ? folderRecord.syncCursor || undefined
+      : undefined;
 
   let totalSynced = 0;
   let hasMore = true;
@@ -238,8 +267,11 @@ async function syncFolderEmails(
 
   // Pagination loop
   while (hasMore) {
-    const { emails: providerEmails, nextCursor: newCursor, hasMore: more } =
-      await provider.fetchEmails(folder.id, nextCursor);
+    const {
+      emails: providerEmails,
+      nextCursor: newCursor,
+      hasMore: more,
+    } = await provider.fetchEmails(folder.id, nextCursor);
 
     console.log(`   Batch: ${providerEmails.length} emails`);
 
@@ -320,9 +352,9 @@ function categorizeFolderToCategory(folderName: string): string {
   if (normalized === 'sent' || normalized === 'sent items') return 'sent';
   if (normalized === 'drafts') return 'drafts';
   if (normalized === 'junk' || normalized === 'spam') return 'junk';
-  if (normalized === 'trash' || normalized === 'deleted items') return 'deleted';
+  if (normalized === 'trash' || normalized === 'deleted items')
+    return 'deleted';
   if (normalized === 'outbox') return 'outbox';
 
   return 'inbox'; // Default
 }
-

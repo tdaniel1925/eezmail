@@ -8,7 +8,7 @@ import {
   type EmailDraft,
   type NewEmailDraft,
 } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 export interface DraftData {
   to?: string;
@@ -284,21 +284,27 @@ export async function deleteOldDrafts(daysOld: number = 30): Promise<{
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
+    // Find old drafts
     const oldDrafts = await db.query.emailDrafts.findMany({
       where: and(
-        eq(emailDrafts.userId, user.id)
-        // lastSaved < cutoffDate
+        eq(emailDrafts.userId, user.id),
+        sql`${emailDrafts.lastSaved} < ${cutoffDate}` // ✅ Fixed: Now filters by date
       ),
       columns: { id: true },
     });
 
+    // Delete old drafts if any found
     if (oldDrafts.length > 0) {
-      await db.delete(emailDrafts).where(
-        and(
-          eq(emailDrafts.userId, user.id)
-          // lastSaved < cutoffDate
-        )
-      );
+      const oldDraftIds = oldDrafts.map((d) => d.id);
+
+      await db
+        .delete(emailDrafts)
+        .where(
+          and(
+            eq(emailDrafts.userId, user.id),
+            sql`${emailDrafts.id} IN (${oldDraftIds.join(',')})`
+          )
+        );
     }
 
     return { success: true, deletedCount: oldDrafts.length };

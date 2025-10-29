@@ -154,6 +154,17 @@ Return as valid JSON with "subject" and "body" fields.`,
 
     // Body already includes signature from AI, no need to append
 
+    // ✅ Update onboarding progress (AI reply tried)
+    try {
+      const { updateOnboardingProgress } = await import(
+        '@/lib/onboarding/actions'
+      );
+      await updateOnboardingProgress(user.id, { aiReplyTried: true });
+    } catch (error) {
+      // Non-critical: Don't fail the request if onboarding update fails
+      console.log('Onboarding update skipped:', error);
+    }
+
     // If isDraft, return just the reply text for the Reply Later feature
     if (isDraft) {
       return NextResponse.json({

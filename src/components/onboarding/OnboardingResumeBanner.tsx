@@ -26,43 +26,39 @@ export function OnboardingResumeBanner({
     return null;
   }
 
-  // Calculate progress percentage
+  // Calculate progress percentage (simplified to 3 steps)
   const calculateProgress = () => {
     let completed = 0;
-    const total = 11; // Total steps in onboarding
+    const total = 3; // Only 3 essential steps
 
     if (progress.emailConnected) completed++;
     if (progress.signatureConfigured) completed++;
-    if (progress.profileCompleted) completed++;
     if (progress.aiReplyTried) completed++;
-    if (progress.smartInboxViewed) completed++;
-    if (progress.keyboardShortcutsLearned) completed++;
-    if (progress.contactsExplored) completed++;
-    if (progress.automationCreated) completed++;
-    if (progress.voiceFeatureTried) completed++;
-    if (progress.chatbotUsed) completed++;
-    if (progress.foldersConfigured) completed++;
 
-    return Math.round((completed / total) * 100);
-  };
-
-  // Determine where to send the user based on current step
-  const getResumeUrl = () => {
-    const step = progress.onboardingStep || 'account_connection';
-
-    const stepUrls: Record<string, string> = {
-      account_connection: '/dashboard/settings?tab=email-accounts',
-      folder_selection: '/dashboard/onboarding', // Will need account ID
-      profile_setup: '/dashboard/settings/profile',
-      complete: '/dashboard',
+    return {
+      percent: Math.round((completed / total) * 100),
+      completed,
+      total,
     };
-
-    return stepUrls[step] || '/dashboard/onboarding';
   };
 
-  const progressPercent = calculateProgress();
+  // Determine where to send the user based on what's incomplete
+  const getResumeUrl = () => {
+    if (!progress.emailConnected) {
+      return '/dashboard/settings?tab=email-accounts';
+    }
+    if (!progress.signatureConfigured) {
+      return '/dashboard/settings?tab=signatures';
+    }
+    if (!progress.aiReplyTried) {
+      return '/dashboard/inbox';
+    }
+    return '/dashboard';
+  };
 
-  // Only show banner if progress is between 1-99%
+  const { percent: progressPercent, completed, total } = calculateProgress();
+
+  // Only show banner if progress is between 1-99% (has started but not done)
   if (progressPercent === 0 || progressPercent === 100) {
     return null;
   }
@@ -81,11 +77,10 @@ export function OnboardingResumeBanner({
               </div>
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  Continue Your Setup
+                  Quick Setup - {completed}/{total} Complete
                 </h3>
                 <p className="text-xs text-gray-600 dark:text-gray-400">
-                  You're {progressPercent}% complete - finish setting up your
-                  account
+                  Finish setting up your account to unlock full features
                 </p>
               </div>
             </div>

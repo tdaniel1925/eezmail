@@ -785,6 +785,14 @@ export const emailAccounts = pgTable(
     smtpPassword: text('smtp_password'),
     smtpUseSsl: boolean('smtp_use_ssl').default(true),
 
+    // Aurinko integration (IMAP and alternative providers)
+    aurinkoAccountId: text('aurinko_account_id'),
+    aurinkoAccessToken: text('aurinko_access_token'),
+    aurinkoRefreshToken: text('aurinko_refresh_token'),
+    aurinkoProvider: text('aurinko_provider'), // 'Gmail', 'Office365', 'IMAP', etc.
+    useAurinko: boolean('use_aurinko').default(false),
+    aurinkoTokenExpiresAt: timestamp('aurinko_token_expires_at'),
+
     // Sync state
     status: emailAccountStatusEnum('status').notNull().default('active'),
     lastSyncAt: timestamp('last_sync_at'),
@@ -4379,12 +4387,12 @@ export const betaFeedback = pgTable('beta_feedback', {
   description: text('description').notNull(),
   rating: integer('rating'), // 1-5 stars
   screenshotUrl: text('screenshot_url'),
-  
+
   // AI-generated fields
   sentiment: text('sentiment'), // 'positive' | 'neutral' | 'negative'
   tags: text('tags').array(), // AI-generated tags
   priority: text('priority'), // 'low' | 'medium' | 'high'
-  
+
   status: text('status').notNull().default('new'), // 'new' | 'reviewing' | 'implemented' | 'wont_fix'
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

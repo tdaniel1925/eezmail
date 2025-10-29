@@ -10,6 +10,7 @@ import { emailAccounts, emails } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { GmailService } from './gmail-api';
 import { MicrosoftGraphService } from './microsoft-graph';
+import { sendViaAurinko } from '@/lib/aurinko/send-email';
 import { createClient } from '@/lib/supabase/server';
 
 export interface SendEmailParams {
@@ -69,7 +70,24 @@ export async function sendEmail(
       };
     }
 
-    // Route to appropriate provider
+    // ✨ NEW: Route to Aurinko if it's an Aurinko account
+    if (account.useAurinko && account.aurinkoAccessToken) {
+      console.log('🔵 Sending via Aurinko...');
+      return await sendViaAurinko(account.id, {
+        to: params.to,
+        cc: params.cc,
+        bcc: params.bcc,
+        subject: params.subject,
+        body: params.body,
+        isHtml: params.isHtml || false,
+        attachments: params.attachments,
+        inReplyTo: params.replyToMessageId,
+        threadId: params.threadId,
+      });
+    }
+
+    // Route to appropriate provider for direct integrations
+    console.log('🟢 Sending via direct integration (Gmail/Microsoft)...');
     switch (account.provider) {
       case 'gmail':
         return await sendViaGmail(account, params);
@@ -129,7 +147,8 @@ async function sendViaGmail(
     console.error('Gmail send error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to send via Gmail',
+      error:
+        error instanceof Error ? error.message : 'Failed to send via Gmail',
     };
   }
 }
@@ -171,9 +190,7 @@ async function sendViaMicrosoft(
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : 'Failed to send via Microsoft',
+        error instanceof Error ? error.message : 'Failed to send via Microsoft',
     };
   }
 }
@@ -229,4 +246,3 @@ async function saveSentEmail(
     // Don't fail the send if we can't save it
   }
 }
-

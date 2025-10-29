@@ -673,6 +673,12 @@ export function getDefaultSyncDaysBack(folderType: CoreFolderType): number {
 
 /**
  * Determines if a folder should sync by default
+ *
+ * @internal DO NOT CALL DIRECTLY IN NEW CODE
+ * Use getFolderConfiguration() from folder-config-service.ts instead
+ * This ensures all folder configuration logic stays centralized
+ *
+ * Existing direct usage is being migrated to the centralized service.
  */
 export function shouldSyncByDefault(folderType: CoreFolderType): boolean {
   // Don't sync trash and spam by default to save resources

@@ -463,7 +463,7 @@ export function EmailComposer({
 
           // Find contacts for all recipients
           const contactMap = await findContactsByEmails(allRecipients);
-          const emailId = result.emailId || 'unknown';
+          const emailId = result.messageId || 'unknown'; // ✅ Now uses actual messageId
 
           // Log email sent to each contact
           const logPromises = Object.entries(contactMap).map(
@@ -533,10 +533,18 @@ export function EmailComposer({
 
         onClose();
       } else {
+        // ✅ Show inline error to user
         console.error('Failed to send email:', result.error);
+        alert(
+          `Failed to send email: ${result.error || 'Unknown error'}. Please try again.`
+        );
       }
     } catch (error) {
       console.error('Failed to send email:', error);
+      // ✅ Show inline error to user
+      alert(
+        `Failed to send email: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`
+      );
     } finally {
       setIsSending(false);
     }

@@ -1,5 +1,5 @@
 ---
-description: Analyze AI integration patterns including sentiment analysis, writing suggestions, thread summarization, and context management
+description: Defines AI integration patterns for email analysis, writing assistance, summarization and context management
 ---
 
 # === USER INSTRUCTIONS ===
@@ -68,59 +68,108 @@ Key Business Rules:
 - Smart compose maintains professional tone standards
 - Context building prioritizes recent relevant interactions
 $END$
-# === END USER INSTRUCTIONS ===
 
+---
+description: Analyze AI integration patterns including sentiment analysis, writing suggestions, thread summarization, and context management
+---
 # ai-integration
-
 ## Core AI Integration Components
-
 ### 1. Writing Assistance Pipeline (95/100)
 src/lib/ai/writing-assistance.ts
 - Real-time professional tone adaptation
 - Context-aware writing suggestions
 - Custom prompt engineering for email context
 - Integration with RAG for personalized style matching
-
 ### 2. Sentiment Analysis Engine (90/100)
 src/lib/ai/sentiment-analyzer.ts
 - Custom email sentiment scoring (-100 to +100)
 - Multi-dimensional analysis (urgency, formality, emotion)
 - Thread-level sentiment tracking
 - Contact relationship context integration
-
 ### 3. Thread Intelligence System (85/100)
 src/lib/ai/thread-analyzer.ts
 - Smart conversation summarization
 - Key point extraction with citation linking 
 - Action item detection with priority scoring
 - Decision tracking across thread history
-
 ### 4. Context Management (90/100)
 src/lib/ai/context-manager.ts
 - Sophisticated pronoun resolution for email threads
 - Entity tracking across multiple messages
 - Relationship graph maintenance
 - Smart context windowing based on relevance
-
 ### 5. Smart Compose Integration (85/100)
 src/lib/ai/smart-compose.ts
 - Professional email completion suggestions
 - Contact-aware salutation generation
 - Custom signature integration
 - Thread-aware response suggestions
-
 ### 6. AI Caching System (80/100)
 src/lib/ai/response-cache.ts
 - Domain-specific caching for AI responses
 - Smart invalidation based on thread updates
 - Partial response reuse for similar contexts
 - Performance optimization for common patterns
-
 Core Workflows:
 1. Real-time writing assistance with tone matching
 2. Thread-aware context building for AI responses
 3. Intelligent summarization with key point extraction
 4. Smart suggestion generation with relationship context
+$END$
+# === END USER INSTRUCTIONS ===
+
+# ai-integration
+
+## Core AI Integration Components
+
+1. Email Intelligence System
+File: src/lib/ai/contact-intelligence.ts
+Importance Score: 95/100
+- Implements sophisticated contact analysis pipeline
+- Analyzes communication patterns and response behaviors  
+- Generates relationship strength scoring and VIP detection
+- Extracts meeting patterns and preferred communication times
+
+2. Writing Assistant
+File: src/components/email/AIReplyModal.tsx
+Importance Score: 90/100
+- Context-aware email reply generation
+- Progressive refinement through question-based approach
+- Integration with email signature and quoted text
+- Tone matching based on recipient relationship
+
+3. Thread Analysis 
+File: src/components/ai/ThreadSummaryTab.tsx
+Importance Score: 85/100
+- Extracts key decisions and action items from email threads
+- Identifies unresolved questions and required responses
+- Analyzes sentiment patterns across conversations
+- Maps participant relationships and engagement
+
+4. Smart Context Management
+File: src/lib/rag/context-builder.ts
+Importance Score: 90/100
+- Implements RAG (Retrieval Augmented Generation) for email context
+- Selects relevant context based on semantic similarity
+- Maintains conversation history for coherent responses
+- Handles context windowing for long email threads
+
+5. Writing Suggestions Engine
+File: src/lib/ai/suggestions.ts
+Importance Score: 85/100
+- Real-time writing analysis and suggestions
+- Professional tone recommendations
+- Grammar and style improvement suggestions
+- Context-aware vocabulary enhancements
+
+Core Integration Patterns:
+- Progressive AI assistance throughout email workflow
+- Context-aware content generation using RAG
+- Multi-stage processing pipelines for analysis
+- Hybrid approaches combining rules and AI models
+- Smart categorization and prioritization systems
+
+The system implements sophisticated email intelligence with deep AI integration for analysis, writing assistance, and relationship management.
 
 $END$
 

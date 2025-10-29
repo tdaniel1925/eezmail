@@ -44,7 +44,10 @@ export function SMSComposerModal({
     }
 
     if (message.length > MAX_LENGTH) {
-      setStatusMessage({ type: 'error', text: `Message is too long (${message.length}/${MAX_LENGTH} characters)` });
+      setStatusMessage({
+        type: 'error',
+        text: `Message is too long (${message.length}/${MAX_LENGTH} characters)`,
+      });
       return;
     }
 
@@ -55,35 +58,37 @@ export function SMSComposerModal({
       const result = await sendContactSMS(contactId, message);
 
       if (result.success) {
-        setStatusMessage({ 
-          type: 'success', 
-          text: `✅ SMS sent successfully to ${recipientName}! Delivery status will be tracked.` 
+        setStatusMessage({
+          type: 'success',
+          text: `✅ SMS sent successfully to ${recipientName}! Delivery status will be tracked.`,
         });
         setMessage('');
-        
+
         // Check delivery status after 5 seconds
         if (result.messageSid) {
           setTimeout(async () => {
             try {
-              const statusResponse = await fetch(`/api/twilio/sms-status/${result.messageSid}`);
+              const statusResponse = await fetch(
+                `/api/twilio/sms-status/${result.messageSid}`
+              );
               const statusData = await statusResponse.json();
-              
+
               if (statusData.success) {
                 const status = statusData.status;
                 if (status === 'delivered') {
-                  setStatusMessage({ 
-                    type: 'success', 
-                    text: `✅ SMS delivered to ${recipientName}!` 
+                  setStatusMessage({
+                    type: 'success',
+                    text: `✅ SMS delivered to ${recipientName}!`,
                   });
                 } else if (status === 'failed' || status === 'undelivered') {
-                  setStatusMessage({ 
-                    type: 'error', 
-                    text: `❌ SMS failed to deliver: ${statusData.errorMessage || 'Unknown error'}` 
+                  setStatusMessage({
+                    type: 'error',
+                    text: `❌ SMS failed to deliver: ${statusData.errorMessage || 'Unknown error'}`,
                   });
                 } else {
-                  setStatusMessage({ 
-                    type: 'success', 
-                    text: `📤 SMS ${status} - waiting for delivery confirmation...` 
+                  setStatusMessage({
+                    type: 'success',
+                    text: `📤 SMS ${status} - waiting for delivery confirmation...`,
                   });
                 }
               }
@@ -92,18 +97,24 @@ export function SMSComposerModal({
             }
           }, 5000);
         }
-        
-        // Auto-close after 3 seconds if delivered
+
+        // Auto-close after 7 seconds (AFTER status check completes at 5s)
         setTimeout(() => {
           onClose();
           setStatusMessage(null);
-        }, 3000);
+        }, 7000); // ✅ Fixed: Close after status check
       } else {
-        setStatusMessage({ type: 'error', text: result.error || 'Failed to send SMS' });
+        setStatusMessage({
+          type: 'error',
+          text: result.error || 'Failed to send SMS',
+        });
       }
     } catch (error) {
       console.error('SMS send error:', error);
-      setStatusMessage({ type: 'error', text: 'Failed to send SMS. Please try again.' });
+      setStatusMessage({
+        type: 'error',
+        text: 'Failed to send SMS. Please try again.',
+      });
     } finally {
       setIsSending(false);
     }
@@ -187,8 +198,8 @@ export function SMSComposerModal({
                   remaining < 0
                     ? 'text-red-600'
                     : remaining < 20
-                    ? 'text-yellow-600'
-                    : 'text-gray-600 dark:text-gray-400'
+                      ? 'text-yellow-600'
+                      : 'text-gray-600 dark:text-gray-400'
                 }`}
               >
                 {remaining} / {MAX_LENGTH}

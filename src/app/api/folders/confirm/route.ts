@@ -11,6 +11,7 @@ import { db } from '@/db';
 import { emailAccounts, emailFolders, folderMappings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import type { CoreFolderType } from '@/db/schema';
+import { shouldSyncByDefault } from '@/lib/folders/folder-mapper';
 
 interface ConfirmedFolder {
   id: string;
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
             name: folder.name,
             externalId: folder.id,
             type: folder.confirmedType, // Original type
-            folderType: folder.confirmedType, // Standardized type
+            folderType: folder.confirmedType as any, // Standardized type
             displayName: folder.displayName,
             isSystemFolder: [
               'inbox',
@@ -98,7 +99,9 @@ export async function POST(request: NextRequest) {
             ].includes(folder.confirmedType),
             messageCount: folder.messageCount,
             unreadCount: folder.unreadCount,
-            syncEnabled: true,
+            syncEnabled: shouldSyncByDefault(
+              folder.confirmedType as CoreFolderType
+            ), // FIXED
             lastSyncedAt: new Date(),
           })
           .returning();

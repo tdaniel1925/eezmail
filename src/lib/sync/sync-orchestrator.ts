@@ -2,6 +2,7 @@ import { inngest } from '@/inngest/client';
 import { db } from '@/lib/db';
 import { emailAccounts } from '@/db/schema';
 import { eq, and, lt } from 'drizzle-orm';
+import { syncAurinkoEmails } from '@/lib/aurinko/sync-service';
 
 export interface SyncRequest {
   accountId: string;
@@ -12,7 +13,7 @@ export interface SyncRequest {
 
 /**
  * Unified Sync Orchestrator - THE ONLY entry point for email sync
- * Triggers Inngest durable workflows for reliable sync
+ * Routes to either Aurinko (for IMAP) or Inngest (for Gmail/Microsoft)
  */
 export async function syncAccount(request: SyncRequest): Promise<{
   success: boolean;
@@ -20,8 +21,10 @@ export async function syncAccount(request: SyncRequest): Promise<{
   error?: string;
 }> {
   const { accountId, syncMode, trigger, userId } = request;
-  
-  console.log(`🚀 Sync requested: ${accountId} (${syncMode || 'auto'}, ${trigger})`);
+
+  console.log(
+    `🚀 Sync requested: ${accountId} (${syncMode || 'auto'}, ${trigger})`
+  );
 
   // 1. Validate account exists
   const account = await db.query.emailAccounts.findFirst({
@@ -33,8 +36,31 @@ export async function syncAccount(request: SyncRequest): Promise<{
     return { success: false, error: 'Account not found' };
   }
 
+  // ✨ NEW: Route to Aurinko if it's an Aurinko account
+  if (account.useAurinko) {
+    console.log('🔵 Routing to Aurinko sync service...');
+    try {
+      const result = await syncAurinkoEmails(accountId);
+      return {
+        success: result.success,
+        error: result.error,
+        runId: `aurinko-${Date.now()}`, // Fake run ID for consistency
+      };
+    } catch (error) {
+      console.error('❌ Aurinko sync failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Aurinko sync failed',
+      };
+    }
+  }
+
+  // Original logic for Gmail/Microsoft via Inngest
+  console.log('🟢 Routing to Inngest sync (Gmail/Microsoft)...');
+
   // Auto-detect sync mode if not provided
-  const finalSyncMode = syncMode || (account.initialSyncCompleted ? 'incremental' : 'initial');
+  const finalSyncMode =
+    syncMode || (account.initialSyncCompleted ? 'incremental' : 'initial');
   const finalUserId = userId || account.userId;
 
   console.log(`   Detected sync mode: ${finalSyncMode}`);
@@ -62,8 +88,8 @@ export async function syncAccount(request: SyncRequest): Promise<{
     // Only update status AFTER Inngest confirms receipt
     await db
       .update(emailAccounts)
-      .set({ 
-        syncStatus: 'syncing', 
+      .set({
+        syncStatus: 'syncing',
         syncProgress: 0,
         updatedAt: new Date(),
       } as any)
@@ -88,7 +114,9 @@ export async function syncAccount(request: SyncRequest): Promise<{
 export async function resetStuckSyncs(): Promise<number> {
   const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
-  console.log(`🔍 Checking for stuck syncs older than ${tenMinutesAgo.toISOString()}`);
+  console.log(
+    `🔍 Checking for stuck syncs older than ${tenMinutesAgo.toISOString()}`
+  );
 
   const stuckAccounts = await db
     .update(emailAccounts)
@@ -103,10 +131,16 @@ export async function resetStuckSyncs(): Promise<number> {
         lt(emailAccounts.updatedAt, tenMinutesAgo)
       )
     )
-    .returning({ id: emailAccounts.id, emailAddress: emailAccounts.emailAddress });
+    .returning({
+      id: emailAccounts.id,
+      emailAddress: emailAccounts.emailAddress,
+    });
 
   if (stuckAccounts.length > 0) {
-    console.log(`✅ Reset ${stuckAccounts.length} stuck sync(s):`, stuckAccounts.map(a => a.emailAddress));
+    console.log(
+      `✅ Reset ${stuckAccounts.length} stuck sync(s):`,
+      stuckAccounts.map((a) => a.emailAddress)
+    );
   } else {
     console.log('✅ No stuck syncs found');
   }

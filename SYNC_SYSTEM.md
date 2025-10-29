@@ -1,5 +1,52 @@
 # Email Sync System Architecture
 
+## ⚠️ CRITICAL: Folder Configuration Rules
+
+### The ONLY Correct Way to Configure Folders
+
+When creating folders in the database, you MUST follow these rules:
+
+1. **Field name is `syncEnabled`** (NOT `enabled`)
+2. **Never hardcode `syncEnabled: true`**
+3. **Always use:** `syncEnabled: shouldSyncByDefault(folderType)`
+4. **Parameter must be CoreFolderType** (NOT `folder.name`)
+
+### Correct Pattern:
+
+```typescript
+const folderType = detectFolderType(folder.name, provider);
+
+await db.insert(emailFolders).values({
+  // ... other fields
+  syncEnabled: shouldSyncByDefault(folderType), // ✅ CORRECT
+  // ...
+});
+```
+
+### Wrong Patterns (DO NOT USE):
+
+```typescript
+enabled: shouldSyncByDefault(folder.name),      // ❌ WRONG FIELD + WRONG PARAM
+syncEnabled: true,                               // ❌ HARDCODED
+syncEnabled: shouldSyncByDefault(folder.name),   // ❌ WRONG PARAM TYPE
+```
+
+### Files That Create Folders (ALL MUST FOLLOW RULES):
+
+1. src/inngest/functions/sync-orchestrator.ts
+2. src/inngest/functions/sync-microsoft.ts
+3. src/inngest/functions/sync-gmail.ts
+4. src/inngest/functions/sync-imap.ts
+5. src/app/api/folders/confirm/route.ts
+
+### Tests Enforce This:
+
+- Pre-commit hooks block incorrect patterns
+- CI/CD validates on every PR
+- Integration tests verify consistency
+
+---
+
 ## Overview
 
 The email sync system is a complete overhaul designed for 100% reliability. It handles Microsoft, Gmail, and IMAP accounts with:
@@ -32,11 +79,13 @@ const result = await syncAccount({
 ```
 
 **Key Functions**:
+
 - `syncAccount(request)`: Triggers an Inngest durable workflow
 - `resetStuckSyncs()`: Resets accounts stuck in "syncing" for >10 minutes
 - `getSyncStatus(accountId)`: Returns current sync status
 
 **Responsibilities**:
+
 1. Validate account exists
 2. Prevent duplicate syncs (check if already syncing)
 3. Send event to Inngest
@@ -55,7 +104,10 @@ export interface SyncProvider {
   name: string;
   refreshToken(): Promise<string>;
   fetchFolders(): Promise<ProviderFolder[]>;
-  fetchEmails(folderId: string, cursor?: string): Promise<{
+  fetchEmails(
+    folderId: string,
+    cursor?: string
+  ): Promise<{
     emails: ProviderEmail[];
     nextCursor?: string;
     hasMore: boolean;
@@ -93,6 +145,7 @@ export interface SyncProvider {
 **Event**: `sync/account`
 
 **Steps**:
+
 1. **Get Account**: Fetch account from database
 2. **Initialize Provider**: Route to Microsoft/Gmail/IMAP
 3. **Refresh Token**: Check expiry, refresh if needed
@@ -101,12 +154,14 @@ export interface SyncProvider {
 6. **Mark Complete**: Update account status to `idle`
 
 **Error Handling**:
+
 - Automatic retries (3 attempts)
 - Error classification (auth, rate limit, network, etc.)
 - Account status updated on failure
 - Inngest handles exponential backoff
 
 **Concurrency**:
+
 - Max 5 accounts syncing simultaneously
 - One sync per account at a time (prevents race conditions)
 
@@ -139,10 +194,12 @@ Endpoint that runs periodically to ensure system health.
 **Endpoint**: `GET /api/sync/health`
 
 **Actions**:
+
 - Resets stuck syncs (accounts in "syncing" > 10 minutes)
 - Returns sync statistics
 
 **Response**:
+
 ```json
 {
   "healthy": true,
@@ -211,6 +268,7 @@ Scheduled Trigger → syncAccount({ syncMode: 'incremental' })
 ### 1. **Stuck Sync Recovery**
 
 Accounts can get stuck in "syncing" if:
+
 - Server crashes during sync
 - Inngest restarts
 - Network timeout
@@ -262,6 +320,7 @@ For incremental syncs, use delta links/cursors:
 ### `email_accounts`
 
 Key columns for sync:
+
 - `sync_status`: `'idle' | 'syncing'`
 - `sync_progress`: 0-100 (percentage)
 - `initial_sync_completed`: boolean
@@ -274,6 +333,7 @@ Key columns for sync:
 ### `email_folders`
 
 Key columns for sync:
+
 - `sync_cursor`: Folder-specific delta link
 - `last_sync_at`: Folder-specific sync timestamp
 - `enabled`: Whether to sync this folder
@@ -281,6 +341,7 @@ Key columns for sync:
 ### `emails`
 
 All synced emails with:
+
 - `message_id`: Unique identifier
 - `provider_id`: Provider-specific ID
 - `folder_id`: Reference to `email_folders`
@@ -295,6 +356,7 @@ All synced emails with:
 **URL**: http://localhost:8288 (dev) or Inngest Cloud (production)
 
 **What to Monitor**:
+
 - Active sync runs
 - Failed syncs (red)
 - Retry attempts
@@ -303,6 +365,7 @@ All synced emails with:
 ### Console Logs
 
 Key log messages:
+
 - `✅ Sync triggered successfully! Run ID: <id>`
 - `🔍 Checking for stuck syncs older than <timestamp>`
 - `✅ Token refreshed successfully`
@@ -315,6 +378,7 @@ Key log messages:
 ### Environment Variables
 
 **Required**:
+
 - `NEXT_PUBLIC_APP_URL`: https://easemail.app
 - `MICROSOFT_CLIENT_ID`: Azure App ID
 - `MICROSOFT_CLIENT_SECRET`: Azure App Secret
@@ -332,6 +396,7 @@ Key log messages:
 ### Azure/Google OAuth
 
 Ensure redirect URIs match:
+
 - Microsoft: `https://easemail.app/api/auth/microsoft/callback`
 - Google: `https://easemail.app/api/auth/google/callback`
 
@@ -351,6 +416,7 @@ await resetStuckSyncs();
 ### Issue: No emails syncing
 
 **Checklist**:
+
 1. Check Inngest is running: http://localhost:8288
 2. Verify `sync/account` event triggered (console logs)
 3. Check Inngest dashboard for errors
@@ -360,6 +426,7 @@ await resetStuckSyncs();
 ### Issue: "Token refresh failed"
 
 **Solution**: User must reconnect account:
+
 1. Set account status to `error`
 2. Show "Reconnect Account" button in settings
 3. User goes through OAuth flow again
@@ -369,6 +436,7 @@ await resetStuckSyncs();
 **Cause**: Cursor not saved or conflict on unique constraint
 
 **Solution**:
+
 - Ensure `onConflictDoUpdate` in email insert
 - Check `messageId` is unique per account
 
@@ -409,16 +477,17 @@ await resetStuckSyncs();
 ## Support
 
 For issues:
+
 1. Check console logs
 2. Review Inngest dashboard
 3. Run health check endpoint
 4. Check database sync status
 
 For questions:
+
 - Review this documentation
 - Check provider API documentation (Microsoft Graph, Gmail API)
 
 ---
 
-*Last Updated: 2025*
-
+_Last Updated: 2025_

@@ -103,7 +103,7 @@ export async function sendEmailAction(params: {
   isHtml?: boolean;
   scheduledFor?: Date;
   draftId?: string;
-}): Promise<{ success: boolean; error?: string }> {
+}): Promise<{ success: boolean; error?: string; messageId?: string }> {
   try {
     const supabase = await createClient();
     const {
@@ -160,7 +160,10 @@ export async function sendEmailAction(params: {
       console.log('Deleting draft:', params.draftId);
     }
 
-    return { success: true };
+    return {
+      success: true,
+      messageId: result.messageId, // ✅ Return messageId for timeline logging
+    };
   } catch (error) {
     console.error('Error sending email:', error);
     return {

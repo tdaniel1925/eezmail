@@ -20,7 +20,7 @@ import { getSMSRate, chargeSMS } from '@/lib/billing/pricing';
 export async function sendContactSMS(
   contactId: string,
   message: string
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; messageSid?: string }> {
   try {
     // Auth check
     const supabase = await createClient();
@@ -58,39 +58,42 @@ export async function sendContactSMS(
 
     const phone = phoneRecord.phone;
 
+    // Send SMS via Twilio FIRST (before charging)
+    const result = await sendSMS(user.id, phone, message, contactId);
+
+    if (!result.success) {
+      // No charge if SMS failed to send
+      console.error('❌ SMS failed to send:', result.error);
+      return { success: false, error: result.error };
+    }
+
     // Get SMS rate for this user
     const rate = await getSMSRate(user.id);
     console.log(`📤 SMS rate for user ${user.id}: $${rate}`);
 
-    // Charge for SMS BEFORE sending
+    // Charge for SMS AFTER successful send
     const chargeResult = await chargeSMS(user.id, rate, {
       contactId,
       phoneNumber: phone,
+      messageSid: result.messageSid,
     });
 
     if (!chargeResult.success) {
-      console.error('❌ Failed to charge for SMS:', chargeResult.error);
-      return {
-        success: false,
-        error: chargeResult.error || 'Insufficient balance to send SMS',
-      };
-    }
-
-    console.log(
-      `✅ SMS charged: $${chargeResult.amount} from ${chargeResult.chargedFrom}`
-    );
-
-    // Send SMS via Twilio
-    const result = await sendSMS(user.id, phone, message, contactId);
-
-    if (!result.success) {
-      // Refund the charge if SMS failed
-      // TODO: Implement refund logic
+      // SMS sent but charge failed - log for manual review
       console.error(
-        '❌ SMS failed to send, but already charged:',
-        result.error
+        '⚠️ SMS sent successfully but charge failed:',
+        chargeResult.error
       );
-      return { success: false, error: result.error };
+      console.error(
+        '⚠️ Manual billing review needed for messageSid:',
+        result.messageSid
+      );
+      // Still return success since SMS was sent
+      // Admin can review and bill manually later
+    } else {
+      console.log(
+        `✅ SMS charged: $${chargeResult.amount} from ${chargeResult.chargedFrom}`
+      );
     }
 
     // Add to timeline
@@ -104,14 +107,20 @@ export async function sendContactSMS(
         messageLength: message?.length || 0,
         deliveryStatus: 'queued',
         sentAt: new Date(),
-        cost: chargeResult.amount,
-        chargedFrom: chargeResult.chargedFrom,
+        cost: chargeResult.success ? chargeResult.amount : 0,
+        chargedFrom: chargeResult.success
+          ? chargeResult.chargedFrom
+          : 'pending_manual_review',
+        chargeStatus: chargeResult.success ? 'charged' : 'charge_failed',
       },
     });
 
     console.log(`✅ SMS sent to contact ${contactId} at ${phone}`);
 
-    return { success: true };
+    return {
+      success: true,
+      messageSid: result.messageSid, // ✅ Return messageSid for status tracking
+    };
   } catch (error) {
     console.error('❌ Error sending SMS:', error);
     return {

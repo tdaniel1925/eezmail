@@ -1,5 +1,5 @@
 ---
-description: Specifications for multi-provider email synchronization system including delta sync, threading logic and provider optimizations.
+description: Specifies the email sync architecture, including delta sync strategies, threading logic, and provider-specific optimizations
 ---
 
 # === USER INSTRUCTIONS ===
@@ -61,16 +61,15 @@ Folder synchronization rules:
 - Auto-creation of system folders
 - Cross-provider folder normalization
 $END$
-# === END USER INSTRUCTIONS ===
 
+---
+description: Specifications for multi-provider email synchronization system including delta sync, threading logic and provider optimizations.
+---
 # sync-architecture
-
 Multi-Provider Email Sync System implements sophisticated provider-agnostic email synchronization:
-
 ## Core Sync Engine
 Location: src/lib/sync/sync-orchestrator.ts
 Importance Score: 95/100
-
 - Delta-based sync strategy using provider-specific cursors
 - Parallel sync across multiple email providers (Gmail, Microsoft, IMAP)
 - Adaptive rate limiting with provider quotas:
@@ -79,22 +78,18 @@ Importance Score: 95/100
   - IMAP: Provider-configurable
 - Cursor-based incremental sync with failure recovery
 - Cross-provider thread ID mapping and conversation grouping
-
 ## Provider Adapters 
 Location: src/lib/providers/*
 Importance Score: 85/100
-
 Provider-specific sync implementations:
 - Gmail history API integration for change detection
 - Microsoft Graph delta query handling
 - IMAP IDLE support for real-time updates
 - Custom folder mapping between providers
 - Unified thread ID generation system
-
 ## Sync State Management
 Location: src/lib/sync/sync-state.ts
 Importance Score: 80/100
-
 - Multi-stage sync state machine:
   - Initial Sync
   - Delta Sync
@@ -103,17 +98,73 @@ Importance Score: 80/100
 - Folder-level sync status monitoring
 - Sync interruption recovery system
 - Cross-provider consistency validation
-
 ## Threading Service
 Location: src/lib/sync/threading-service.ts
 Importance Score: 90/100
-
 - RFC 5322 compliant email threading
 - Cross-provider thread detection
 - In-Reply-To and References header analysis
 - Conversation participant tracking
 - Thread relationship mapping
 - Timeline-based thread organization
+$END$
+# === END USER INSTRUCTIONS ===
+
+# sync-architecture
+
+## Core Sync Components
+
+### Delta Sync Engine
+Importance Score: 95/100
+
+Location: `src/lib/sync/sync-orchestrator.ts`
+- Provider-specific delta sync implementation for Gmail, Microsoft, IMAP
+- Cursor-based incremental sync with completion validation
+- Auto-recovery system for interrupted syncs after 10 minutes
+- Rate limiting per provider:
+  - Gmail: 250 requests/second
+  - Microsoft: 240 requests/minute
+  - IMAP: Provider-specific limits
+
+### Threading System
+Importance Score: 90/100
+
+Location: `src/lib/email/thread-service.ts`
+- Cross-provider thread reconstruction
+- Subject-based thread grouping with fuzzy matching
+- Timeline preservation across multiple accounts
+- Reference header parsing with provider-specific adaptations
+
+### Sync State Management
+Importance Score: 85/100
+
+Location: `src/inngest/functions/sync-microsoft.ts`
+- Multi-stage sync pipeline:
+  - Initial sync with folder discovery
+  - Delta sync with change tracking
+  - Folder-level checkpointing
+  - Duplicate detection during auto-sync
+  - Cross-provider state normalization
+
+### Folder Mapping System
+Importance Score: 88/100
+
+Location: `src/lib/providers/folder-mapper.ts`
+- Intelligent folder categorization across providers
+- Custom confidence scoring for folder type detection
+- Provider-specific folder hierarchy normalization
+- System vs custom folder differentiation
+
+### Health Monitoring
+Importance Score: 82/100
+
+Location: `src/lib/sync/health-checker.ts`
+- Account sync health scoring system
+- Progressive backoff for failing accounts
+- Auto-repair triggers based on sync metrics
+- Provider-specific error classification
+
+The sync architecture implements a sophisticated multi-provider email synchronization system with emphasis on reliability, consistency, and efficient delta syncing. Key innovations include the cross-provider threading system and intelligent folder mapping with confidence scoring.
 
 $END$
 

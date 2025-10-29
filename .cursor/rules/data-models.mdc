@@ -1,5 +1,5 @@
 ---
-description: Used for documenting data model implementations including emails, contacts, threads and folder structures
+description: Defines core data model specifications for an AI-enhanced email platform focusing on threading, contacts, and organization.
 ---
 
 # === USER INSTRUCTIONS ===
@@ -54,23 +54,21 @@ Key relationships:
 - Folders contain multiple Threads
 - Screening Rules apply to multiple Senders
 $END$
-# === END USER INSTRUCTIONS ===
 
+---
+description: Used for documenting data model implementations including emails, contacts, threads and folder structures
+---
 # data-models
-
 ## Email Threading Model
 Importance Score: 95/100
-
 Key Data Structures:
 - Thread grouping using References and In-Reply-To headers
 - Participant tracking with role classification (From, To, CC, BCC)
 - Timeline-based conversation visualization
 - Cross-provider thread ID normalization
 - Custom email relationship mapping
-
 ## Contact Relationship Model 
 Importance Score: 90/100
-
 Data Architecture:
 - Bi-directional contact relationship tracking
 - Communication pattern analysis
@@ -78,20 +76,16 @@ Data Architecture:
 - Interaction strength scoring
 - VIP status determination logic
 - Group membership tracking
-
 ## Folder Organization Model
 Importance Score: 85/100
-
 Core Structure:
 - Provider-agnostic folder hierarchy
 - Smart folder categorization (Imbox/Feed/Paper Trail)
 - Custom folder type detection
 - Cross-provider folder mapping
 - Nested folder relationship tracking
-
 ## Timeline Event Model
 Importance Score: 80/100
-
 Event Types:
 - Email interactions (send/receive/read)
 - Voice message exchanges
@@ -99,10 +93,8 @@ Event Types:
 - Meeting invitations
 - Task assignments
 - Follow-up reminders
-
 ## Email Classification Model
 Importance Score: 85/100
-
 Classification Rules:
 - Sender trust scoring system
 - Content-based categorization
@@ -110,10 +102,8 @@ Classification Rules:
 - Priority determination
 - Action item extraction
 - Meeting detection logic
-
 ## Security Classification Model
 Importance Score: 90/100
-
 Security Attributes:
 - Phishing risk indicators
 - Sender verification status
@@ -121,6 +111,76 @@ Security Attributes:
 - Content risk scoring
 - Domain reputation metrics
 - Historical threat patterns
+$END$
+# === END USER INSTRUCTIONS ===
+
+# data-models
+
+## Email Threading Model
+Importance Score: 95/100
+
+Key data structures in `src/types/email-thread.ts`:
+- Thread entity with conversation history tracking
+- Multi-participant relationship mapping
+- Timeline-based message ordering
+- Custom metadata for AI analysis results
+- Thread state management (read/unread, archived, snoozed)
+
+## Contact Relationship Model
+Importance Score: 90/100
+
+Implementation in `src/lib/models/contact.ts`:
+- Bidirectional relationship tracking between contacts
+- Communication frequency analysis
+- Response time patterns
+- Interaction strength scoring (0-100)
+- Custom grouping/tagging system
+
+## Timeline Event Model
+Importance Score: 85/100
+
+Located in `src/types/timeline-event.ts`:
+- Unified timeline tracking across:
+  - Email interactions
+  - Meeting schedules
+  - Voice messages
+  - System events
+- Event categorization system
+- Priority scoring mechanism
+
+## Folder Organization Model
+Importance Score: 80/100
+
+Found in `src/lib/models/folder.ts`:
+- Hey-style folder categorization:
+  - Imbox (priority inbox)
+  - Feed (newsletters)
+  - Paper Trail (receipts/automation)
+- Custom folder type detection
+- Provider-agnostic folder mapping
+- Sync state tracking
+
+## Email Analysis Results Model
+Importance Score: 85/100
+
+Defined in `src/types/ai-analysis.ts`:
+- Structured storage for AI analysis results:
+  - Sentiment scores
+  - Action items
+  - Key points
+  - Follow-up requirements
+- Version tracking for multiple analyses
+- Context preservation system
+
+## Email Metadata Model
+Importance Score: 75/100
+
+Implementation in `src/lib/models/email-metadata.ts`:
+- Extended email attribution data
+- Custom header tracking
+- Provider-specific metadata mapping
+- Sync state management
+- Cache invalidation tracking
 
 $END$
 

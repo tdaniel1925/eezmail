@@ -17,24 +17,19 @@ export function OnboardingNavLink() {
       if (response.ok) {
         const data = await response.json();
 
-        const totalSteps = 11;
+        // Simplified: Only 3 essential steps now
+        const totalSteps = 3;
         const completedSteps = [
           data.emailConnected,
           data.signatureConfigured,
-          data.profileCompleted,
           data.aiReplyTried,
-          data.smartInboxViewed,
-          data.keyboardShortcutsLearned,
-          data.contactsExplored,
-          data.automationCreated,
-          data.voiceFeatureTried,
-          data.chatbotUsed,
-          data.onboardingCompleted,
         ].filter(Boolean).length;
 
         const percent = Math.round((completedSteps / totalSteps) * 100);
         setProgress(percent);
-        setIsComplete(data.onboardingCompleted);
+        setIsComplete(
+          data.onboardingCompleted || completedSteps === totalSteps
+        );
         setIsDismissed(data.dismissedOnboarding);
       }
     }
@@ -68,7 +63,3 @@ export function OnboardingNavLink() {
     </Link>
   );
 }
-
-
-
-

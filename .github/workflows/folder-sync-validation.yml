@@ -1,0 +1,51 @@
+name: Folder Sync Validation
+
+on:
+  push:
+    paths:
+      - 'src/inngest/functions/**'
+      - 'src/lib/sync/**'
+      - 'src/lib/folders/**'
+      - 'src/app/api/folders/**'
+  pull_request:
+    paths:
+      - 'src/inngest/functions/**'
+      - 'src/lib/sync/**'
+      - 'src/lib/folders/**'
+      - 'src/app/api/folders/**'
+
+jobs:
+  validate-folder-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for incorrect shouldSyncByDefault usage
+        run: |
+          if grep -r "shouldSyncByDefault.*folder\.name\|shouldSyncByDefault.*label\.name" src/inngest/ src/lib/sync/ src/app/api/folders/; then
+            echo "ERROR: Direct shouldSyncByDefault() call with folder name detected!"
+            exit 1
+          fi
+
+      - name: Check for hardcoded syncEnabled
+        run: |
+          if grep -B 5 "\.insert(emailFolders)" src/inngest/ src/app/api/folders/ | grep "syncEnabled: true"; then
+            echo "ERROR: Hardcoded syncEnabled: true detected!"
+            exit 1
+          fi
+
+      - name: Run folder sync tests
+        run: npm run test:folder-sync
+
+      - name: Run all tests
+        run: npm test

@@ -129,6 +129,16 @@ export async function createSignature(data: SignatureData) {
       })
       .returning();
 
+    // 🎯 Update onboarding progress (signature created)
+    try {
+      const { updateOnboardingProgress } = await import(
+        '@/lib/onboarding/actions'
+      );
+      await updateOnboardingProgress(user.id, { signatureConfigured: true });
+    } catch (error) {
+      console.log('Onboarding update skipped:', error);
+    }
+
     revalidatePath('/dashboard/settings');
 
     return { success: true, signature };
@@ -208,6 +218,16 @@ export async function updateSignature(
         )
       )
       .returning();
+
+    // 🎯 Update onboarding progress (signature configured)
+    try {
+      const { updateOnboardingProgress } = await import(
+        '@/lib/onboarding/actions'
+      );
+      await updateOnboardingProgress(user.id, { signatureConfigured: true });
+    } catch (error) {
+      console.log('Onboarding update skipped:', error);
+    }
 
     revalidatePath('/dashboard/settings');
 

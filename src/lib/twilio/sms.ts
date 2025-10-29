@@ -20,7 +20,10 @@ export interface SendSMSResult {
   success: boolean;
   messageSid?: string;
   error?: string;
+  errorCode?: string; // Twilio error code (21408, 21610, etc.)
+  errorDetails?: string; // Detailed error message
   rateLimited?: boolean;
+  retryAfter?: number; // Seconds to wait before retry
 }
 
 /**
@@ -33,20 +36,43 @@ export async function sendSMS(
   contactId?: string
 ): Promise<SendSMSResult> {
   try {
-    // Check if user should bypass quota (sandbox users)
+    // 1. VALIDATE PHONE FIRST (before any processing)
+    const formattedTo = formatPhoneNumber(to);
+
+    console.log('📱 SMS Phone Validation:', {
+      originalPhone: to,
+      formattedPhone: formattedTo,
+      isValid: validateE164PhoneNumber(formattedTo),
+    });
+
+    if (!validateE164PhoneNumber(formattedTo)) {
+      return {
+        success: false,
+        error: `Invalid phone number format: ${to}. Must be in E.164 format (e.g., +14155552671)`,
+        errorCode: 'INVALID_PHONE_FORMAT',
+      };
+    }
+
+    // 2. Check if user should bypass quota (sandbox users)
     const bypassQuota = await shouldBypassQuota(userId, 'sms');
 
-    // Check rate limit only for non-sandbox users
+    // 3. Check rate limit only for non-sandbox users
     if (!bypassQuota) {
       const rateCheck = await checkRateLimit(userId, 'sms');
 
       if (!rateCheck.allowed) {
         // Log rate limited attempt
-        await logCommunicationUsage(userId, 'sms', to, 'rate_limited', {
-          contactId,
-          messagePreview: message ? message.substring(0, 50) : '',
-          errorMessage: rateCheck.reason,
-        });
+        await logCommunicationUsage(
+          userId,
+          'sms',
+          formattedTo,
+          'rate_limited',
+          {
+            contactId,
+            messagePreview: message ? message.substring(0, 50) : '',
+            errorMessage: rateCheck.reason,
+          }
+        );
 
         return {
           success: false,
@@ -56,23 +82,6 @@ export async function sendSMS(
       }
     } else {
       console.log(`🧪 [Sandbox] Bypassing SMS rate limit for user ${userId}`);
-    }
-
-    // Format and validate phone number
-    const formattedTo = formatPhoneNumber(to);
-
-    console.log('📱 SMS Debug:', {
-      originalPhone: to,
-      formattedPhone: formattedTo,
-      isValid: validateE164PhoneNumber(formattedTo),
-      isSandboxUser: bypassQuota,
-    });
-
-    if (!validateE164PhoneNumber(formattedTo)) {
-      return {
-        success: false,
-        error: `Invalid phone number format: ${to}. Must be in E.164 format (e.g., +14155552671)`,
-      };
     }
 
     // Get appropriate Twilio client (sandbox, custom, or system)
@@ -137,16 +146,41 @@ export async function sendSMS(
   } catch (error: any) {
     console.error('SMS send error:', error);
 
-    // Log failed attempt
+    // Extract Twilio error code and details
+    const errorCode = error.code || error.status;
+    const errorMessage = error.message || 'Failed to send SMS';
+
+    // Map Twilio error codes to user-friendly messages
+    let userMessage = errorMessage;
+    if (errorCode === 21408) {
+      userMessage =
+        'Phone number not verified. For Twilio trial accounts, you must verify the recipient number first.';
+    } else if (errorCode === 21610) {
+      userMessage = 'Phone number is unreachable or invalid.';
+    } else if (errorCode === 21614) {
+      userMessage = 'Invalid phone number format.';
+    } else if (errorCode === 30003) {
+      userMessage = 'Message queue is full. Please try again in a few moments.';
+    } else if (errorCode === 30005) {
+      userMessage = 'Unknown destination phone number.';
+    } else if (errorCode === 30006) {
+      userMessage =
+        'Landline or unreachable carrier. SMS not supported for this number.';
+    }
+
+    // Log failed attempt with error details
     await logCommunicationUsage(userId, 'sms', to, 'failed', {
       contactId,
       messagePreview: message ? message.substring(0, 50) : '',
-      errorMessage: error.message || 'Unknown error',
+      errorMessage,
+      errorCode: errorCode?.toString(),
     });
 
     return {
       success: false,
-      error: error.message || 'Failed to send SMS',
+      error: userMessage,
+      errorCode: errorCode?.toString(),
+      errorDetails: errorMessage,
     };
   }
 }
@@ -160,6 +194,7 @@ export async function sendBulkSMS(
   message: string
 ): Promise<{
   success: boolean;
+  error?: string;
   results: Array<{
     phone: string;
     success: boolean;
@@ -177,6 +212,8 @@ export async function sendBulkSMS(
   if (recipients.length > 50) {
     return {
       success: false,
+      error:
+        'Bulk SMS is limited to 50 recipients per send. Please split into smaller batches.',
       results: [],
       summary: {
         total: recipients.length,

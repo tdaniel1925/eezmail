@@ -399,6 +399,17 @@ Reply:`;
       finalReply = `${finalReply}\n${userSignature.textContent.trim()}`;
     }
 
+    // ✅ Update onboarding progress (AI reply tried)
+    try {
+      const { updateOnboardingProgress } = await import(
+        '@/lib/onboarding/actions'
+      );
+      await updateOnboardingProgress(user.id, { aiReplyTried: true });
+    } catch (error) {
+      // Non-critical: Don't fail the request if onboarding update fails
+      console.log('Onboarding update skipped:', error);
+    }
+
     return NextResponse.json({
       success: true,
       reply: finalReply,
