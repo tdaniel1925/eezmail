@@ -68,6 +68,16 @@ export function ConnectedAccounts({
     message: string;
   }>({ type: null, message: '' });
 
+  // Auto-clear success messages after 5 seconds
+  useEffect(() => {
+    if (statusMessage.type === 'success') {
+      const timer = setTimeout(() => {
+        setStatusMessage({ type: null, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
+
   // Show success message when account is connected and clean URL
   useEffect(() => {
     const success = searchParams.get('success');
@@ -80,12 +90,10 @@ export function ConnectedAccounts({
         '[ACCOUNT_CONNECTION] Account connected successfully:',
         email
       );
-      toast.success(
-        `✅ Account ${decodeURIComponent(email)} connected successfully!`,
-        {
-          duration: 5000, // Increased from 3000
-        }
-      );
+      setStatusMessage({
+        type: 'success',
+        message: `✅ Account ${decodeURIComponent(email)} connected successfully!`,
+      });
 
       // Clean URL using proper React state management
       window.history.replaceState(
@@ -95,8 +103,9 @@ export function ConnectedAccounts({
       );
     } else if (error) {
       console.error('[ACCOUNT_CONNECTION] Connection error:', error);
-      toast.error(`Failed to connect: ${decodeURIComponent(error)}`, {
-        duration: 10000, // Error toasts last longer
+      setStatusMessage({
+        type: 'error',
+        message: `Failed to connect: ${decodeURIComponent(error)}`,
       });
       // Clean URL
       window.history.replaceState(
@@ -175,19 +184,23 @@ export function ConnectedAccounts({
 
       if (result.success && result.url) {
         console.log('[ACCOUNT_ADD] Redirecting to OAuth URL immediately');
-        // Remove artificial delay - redirect immediately for better UX
-        toast.loading('Opening sign-in window...', { duration: 1000 });
+        setStatusMessage({
+          type: 'info',
+          message: 'Opening sign-in window...',
+        });
         window.location.href = result.url;
       } else {
         console.log('[ACCOUNT_ADD] OAuth initiation failed:', result.error);
-        toast.error(result.error || 'Failed to start connection', {
-          duration: 10000,
+        setStatusMessage({
+          type: 'error',
+          message: result.error || 'Failed to start connection',
         });
       }
     } catch (error) {
       console.error('[ACCOUNT_ADD] Error adding account:', error);
-      toast.error('Failed to start connection. Please try again.', {
-        duration: 10000,
+      setStatusMessage({
+        type: 'error',
+        message: 'Failed to start connection. Please try again.',
       });
     }
   };
@@ -198,14 +211,16 @@ export function ConnectedAccounts({
     const result = await syncEmailAccount(accountId);
 
     if (result.success) {
-      toast.success('Sync started! Refreshing in a moment...', {
-        duration: 5000,
+      setStatusMessage({
+        type: 'success',
+        message: 'Sync started! Refreshing in a moment...',
       });
       // Refresh after a delay
       setTimeout(() => window.location.reload(), 3000);
     } else {
-      toast.error(result.error || 'Failed to sync account', {
-        duration: 10000,
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to sync account',
       });
     }
 
@@ -242,14 +257,16 @@ export function ConnectedAccounts({
       const result = await disconnectEmailAccount(accountToRemove.id);
 
       if (result.success) {
-        toast.success(
-          'Account disconnected. Syncing paused. You can reconnect anytime.',
-          { duration: 5000 }
-        );
+        setStatusMessage({
+          type: 'success',
+          message:
+            'Account disconnected. Syncing paused. You can reconnect anytime.',
+        });
         setTimeout(() => window.location.reload(), 1000);
       } else {
-        toast.error(result.error || 'Failed to disconnect account', {
-          duration: 10000,
+        setStatusMessage({
+          type: 'error',
+          message: result.error || 'Failed to disconnect account',
         });
       }
 
@@ -262,11 +279,15 @@ export function ConnectedAccounts({
     const result = await removeEmailAccount(accountToRemove.id);
 
     if (result.success) {
-      toast.success('Account removed successfully!', { duration: 5000 });
+      setStatusMessage({
+        type: 'success',
+        message: 'Account removed successfully!',
+      });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      toast.error(result.error || 'Failed to remove account', {
-        duration: 10000,
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to remove account',
       });
     }
 
@@ -278,11 +299,15 @@ export function ConnectedAccounts({
     const result = await setDefaultEmailAccount(accountId);
 
     if (result.success) {
-      toast.success('Default account updated!', { duration: 5000 });
+      setStatusMessage({
+        type: 'success',
+        message: 'Default account updated!',
+      });
       setTimeout(() => window.location.reload(), 1000);
     } else {
-      toast.error(result.error || 'Failed to set default account', {
-        duration: 10000,
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to set default account',
       });
     }
   };
@@ -299,13 +324,15 @@ export function ConnectedAccounts({
         const result = await reconnectEmailAccount(accountId);
 
         if (result.success) {
-          toast.success('Account reconnected successfully!', {
-            duration: 5000,
+          setStatusMessage({
+            type: 'success',
+            message: 'Account reconnected successfully!',
           });
           setTimeout(() => window.location.reload(), 1000);
         } else {
-          toast.error(result.error || 'Failed to reconnect account', {
-            duration: 10000,
+          setStatusMessage({
+            type: 'error',
+            message: result.error || 'Failed to reconnect account',
           });
         }
         return;
@@ -318,17 +345,22 @@ export function ConnectedAccounts({
       const result = await initiateEmailConnection(provider);
 
       if (result.success && result.url) {
-        toast.loading('Redirecting to reconnect your account...', {
-          duration: 1000,
+        setStatusMessage({
+          type: 'info',
+          message: 'Redirecting to reconnect your account...',
         });
         window.location.href = result.url;
       } else {
-        toast.error(result.error || 'Failed to start reconnection', {
-          duration: 10000,
+        setStatusMessage({
+          type: 'error',
+          message: result.error || 'Failed to start reconnection',
         });
       }
     } catch {
-      toast.error('Failed to reconnect account', { duration: 10000 });
+      setStatusMessage({
+        type: 'error',
+        message: 'Failed to reconnect account',
+      });
     }
   };
 
@@ -364,10 +396,16 @@ export function ConnectedAccounts({
         }
       }
 
-      toast.success('All accounts synced successfully!', { duration: 5000 });
+      setStatusMessage({
+        type: 'success',
+        message: 'All accounts synced successfully!',
+      });
       setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
-      toast.error('Some accounts failed to sync', { duration: 10000 });
+      setStatusMessage({
+        type: 'error',
+        message: 'Some accounts failed to sync',
+      });
     } finally {
       setBulkSyncProgress({ total: 0, syncing: 0, completed: 0 });
     }
@@ -403,6 +441,15 @@ export function ConnectedAccounts({
           Connect and manage your email accounts
         </p>
       </div>
+
+      {/* Status Message */}
+      {statusMessage.type && (
+        <InlineMessage
+          type={statusMessage.type}
+          message={statusMessage.message}
+          onDismiss={() => setStatusMessage({ type: null, message: '' })}
+        />
+      )}
 
       {/* Connected Accounts */}
       <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-md p-6">

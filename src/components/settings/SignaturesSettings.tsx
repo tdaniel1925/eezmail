@@ -13,8 +13,9 @@ import {
   toggleSignature,
   type SignatureData,
 } from '@/lib/settings/signature-actions';
-import { toast, confirmDialog } from '@/lib/toast';
+import { confirmDialog } from '@/lib/toast';
 import type { EmailSignature } from '@/db/schema';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 // Signature templates for quick setup
 const SIGNATURE_TEMPLATES = [
@@ -59,6 +60,20 @@ export function SignaturesSettings(): JSX.Element {
   const [showTemplates, setShowTemplates] = useState(true);
   const [editingSignature, setEditingSignature] =
     useState<EmailSignature | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error' | 'info' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  // Auto-clear success messages after 5 seconds
+  useEffect(() => {
+    if (statusMessage.type === 'success') {
+      const timer = setTimeout(() => {
+        setStatusMessage({ type: null, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   useEffect(() => {
     loadSignatures();
@@ -105,30 +120,48 @@ export function SignaturesSettings(): JSX.Element {
 
     const result = await deleteSignature(signatureId);
     if (result.success) {
-      toast.success('Signature deleted successfully');
+      setStatusMessage({
+        type: 'success',
+        message: 'Signature deleted successfully',
+      });
       loadSignatures();
     } else {
-      toast.error(result.error || 'Failed to delete signature');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to delete signature',
+      });
     }
   };
 
   const handleSetDefault = async (signatureId: string) => {
     const result = await setDefaultSignature(signatureId);
     if (result.success) {
-      toast.success('Default signature updated');
+      setStatusMessage({
+        type: 'success',
+        message: 'Default signature updated',
+      });
       loadSignatures();
     } else {
-      toast.error(result.error || 'Failed to set default signature');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to set default signature',
+      });
     }
   };
 
   const handleToggle = async (signatureId: string, isEnabled: boolean) => {
     const result = await toggleSignature(signatureId, isEnabled);
     if (result.success) {
-      toast.success(`Signature ${isEnabled ? 'enabled' : 'disabled'}`);
+      setStatusMessage({
+        type: 'success',
+        message: `Signature ${isEnabled ? 'enabled' : 'disabled'}`,
+      });
       loadSignatures();
     } else {
-      toast.error(result.error || 'Failed to toggle signature');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to toggle signature',
+      });
     }
   };
 
@@ -159,6 +192,15 @@ export function SignaturesSettings(): JSX.Element {
           </Button>
         </div>
       </div>
+
+      {/* Status Message */}
+      {statusMessage.type && (
+        <InlineMessage
+          type={statusMessage.type}
+          message={statusMessage.message}
+          onDismiss={() => setStatusMessage({ type: null, message: '' })}
+        />
+      )}
 
       {/* Quick Templates */}
       {showTemplates && signatures.length === 0 && (
@@ -301,10 +343,16 @@ export function SignaturesSettings(): JSX.Element {
             setShowModal(false);
             setEditingSignature(null);
           }}
-          onSave={async () => {
+          onSave={async (success: boolean, message: string) => {
             setShowModal(false);
             setEditingSignature(null);
-            loadSignatures();
+            setStatusMessage({
+              type: success ? 'success' : 'error',
+              message,
+            });
+            if (success) {
+              loadSignatures();
+            }
           }}
         />
       )}
@@ -315,7 +363,7 @@ export function SignaturesSettings(): JSX.Element {
 interface SignatureModalProps {
   signature: EmailSignature | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (success: boolean, message: string) => void;
 }
 
 function SignatureModal({ signature, onClose, onSave }: SignatureModalProps) {
@@ -338,14 +386,14 @@ function SignatureModal({ signature, onClose, onSave }: SignatureModalProps) {
     setSaving(false);
 
     if (result.success) {
-      toast.success(
+      onSave(
+        true,
         signature
           ? 'Signature updated successfully'
           : 'Signature created successfully'
       );
-      onSave();
     } else {
-      toast.error(result.error || 'Failed to save signature');
+      onSave(false, result.error || 'Failed to save signature');
     }
   };
 

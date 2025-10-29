@@ -25,8 +25,9 @@ import {
   type RuleCondition,
   type RuleAction,
 } from '@/lib/settings/rule-actions';
-import { toast, confirmDialog } from '@/lib/toast';
+import { confirmDialog } from '@/lib/toast';
 import type { EmailRule } from '@/db/schema';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 const FIELD_OPTIONS = [
   { value: 'from', label: 'From' },
@@ -148,6 +149,20 @@ export function RulesSettings(): JSX.Element {
   const [showModal, setShowModal] = useState(false);
   const [showTemplates, setShowTemplates] = useState(true);
   const [editingRule, setEditingRule] = useState<EmailRule | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error' | 'info' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  // Auto-clear success messages after 5 seconds
+  useEffect(() => {
+    if (statusMessage.type === 'success') {
+      const timer = setTimeout(() => {
+        setStatusMessage({ type: null, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   useEffect(() => {
     loadRules();
@@ -194,20 +209,32 @@ export function RulesSettings(): JSX.Element {
 
     const result = await deleteRule(ruleId);
     if (result.success) {
-      toast.success('Rule deleted successfully');
+      setStatusMessage({
+        type: 'success',
+        message: 'Rule deleted successfully',
+      });
       loadRules();
     } else {
-      toast.error(result.error || 'Failed to delete rule');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to delete rule',
+      });
     }
   };
 
   const handleToggle = async (ruleId: string, isEnabled: boolean) => {
     const result = await toggleRule(ruleId, isEnabled);
     if (result.success) {
-      toast.success(`Rule ${isEnabled ? 'enabled' : 'disabled'}`);
+      setStatusMessage({
+        type: 'success',
+        message: `Rule ${isEnabled ? 'enabled' : 'disabled'}`,
+      });
       loadRules();
     } else {
-      toast.error(result.error || 'Failed to toggle rule');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to toggle rule',
+      });
     }
   };
 
@@ -260,6 +287,15 @@ export function RulesSettings(): JSX.Element {
           </Button>
         </div>
       </div>
+
+      {/* Status Message */}
+      {statusMessage.type && (
+        <InlineMessage
+          type={statusMessage.type}
+          message={statusMessage.message}
+          onDismiss={() => setStatusMessage({ type: null, message: '' })}
+        />
+      )}
 
       {/* Info Banner */}
       <div className="rounded-lg border border-blue-500 bg-blue-50 dark:bg-blue-900/20 p-4">
@@ -457,10 +493,16 @@ export function RulesSettings(): JSX.Element {
             setShowModal(false);
             setEditingRule(null);
           }}
-          onSave={async () => {
+          onSave={async (success: boolean, message: string) => {
             setShowModal(false);
             setEditingRule(null);
-            loadRules();
+            setStatusMessage({
+              type: success ? 'success' : 'error',
+              message,
+            });
+            if (success) {
+              loadRules();
+            }
           }}
         />
       )}
@@ -471,7 +513,7 @@ export function RulesSettings(): JSX.Element {
 interface RuleModalProps {
   rule: EmailRule | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (success: boolean, message: string) => void;
 }
 
 function RuleModal({ rule, onClose, onSave }: RuleModalProps) {
@@ -558,12 +600,12 @@ function RuleModal({ rule, onClose, onSave }: RuleModalProps) {
     setSaving(false);
 
     if (result.success) {
-      toast.success(
+      onSave(
+        true,
         rule ? 'Rule updated successfully' : 'Rule created successfully'
       );
-      onSave();
     } else {
-      toast.error(result.error || 'Failed to save rule');
+      onSave(false, result.error || 'Failed to save rule');
     }
   };
 

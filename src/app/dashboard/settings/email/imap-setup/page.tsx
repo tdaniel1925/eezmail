@@ -434,7 +434,10 @@ function IMAPSetupPageContent(): JSX.Element {
 
                 {/* Save Status */}
                 {saveStatus.type && (
-                  <InlineMessage type={saveStatus.type} message={saveStatus.message} />
+                  <InlineMessage
+                    type={saveStatus.type}
+                    message={saveStatus.message}
+                  />
                 )}
               </div>
             )}

@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Phone, Eye, EyeOff, Loader2, Check, X, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
+import { InlineMessage } from '@/components/ui/inline-message';
 import {
   getUserCommunicationSettings,
   updateCommunicationSettings,
@@ -42,6 +42,20 @@ export function CommunicationSettings() {
   const [isTesting, setIsTesting] = useState(false);
   const [isLoadingNumbers, setIsLoadingNumbers] = useState(false);
   const [availableNumbers, setAvailableNumbers] = useState<TwilioPhoneNumber[]>([]);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: 'success' | 'error' | 'info' | null;
+    message: string;
+  }>({ type: null, message: '' });
+
+  // Auto-clear success messages after 5 seconds
+  useEffect(() => {
+    if (statusMessage.type === 'success') {
+      const timer = setTimeout(() => {
+        setStatusMessage({ type: null, message: '' });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [statusMessage]);
 
   // Load settings on mount
   useEffect(() => {
@@ -57,14 +71,20 @@ export function CommunicationSettings() {
       setLimits(result.limits);
       setAccountSidMasked(result.settings.accountSidMasked || '');
     } else {
-      toast.error('Failed to load settings');
+      setStatusMessage({
+        type: 'error',
+        message: 'Failed to load settings',
+      });
     }
     setIsLoading(false);
   };
 
   const fetchTwilioNumbers = async () => {
     if (!settings.twilioAccountSid || !settings.twilioAuthToken) {
-      toast.error('Please enter Account SID and Auth Token first');
+      setStatusMessage({
+        type: 'error',
+        message: 'Please enter Account SID and Auth Token first',
+      });
       return;
     }
 
@@ -82,17 +102,29 @@ export function CommunicationSettings() {
       if (data.success && data.phoneNumbers) {
         setAvailableNumbers(data.phoneNumbers);
         if (data.phoneNumbers.length === 0) {
-          toast.info('No A2P certified numbers found in your Twilio account');
+          setStatusMessage({
+            type: 'info',
+            message: 'No A2P certified numbers found in your Twilio account',
+          });
         } else {
-          toast.success(`Found ${data.phoneNumbers.length} phone number(s)`);
+          setStatusMessage({
+            type: 'success',
+            message: `Found ${data.phoneNumbers.length} phone number(s)`,
+          });
         }
       } else {
-        toast.error(data.error || 'Failed to fetch phone numbers');
+        setStatusMessage({
+          type: 'error',
+          message: data.error || 'Failed to fetch phone numbers',
+        });
         setAvailableNumbers([]);
       }
     } catch (error) {
       console.error('Error fetching Twilio numbers:', error);
-      toast.error('Failed to fetch phone numbers');
+      setStatusMessage({
+        type: 'error',
+        message: 'Failed to fetch phone numbers',
+      });
       setAvailableNumbers([]);
     } finally {
       setIsLoadingNumbers(false);
@@ -101,7 +133,10 @@ export function CommunicationSettings() {
 
   const handleTestCredentials = async () => {
     if (!settings.twilioAccountSid || !settings.twilioAuthToken) {
-      toast.error('Please enter Account SID and Auth Token');
+      setStatusMessage({
+        type: 'error',
+        message: 'Please enter Account SID and Auth Token',
+      });
       return;
     }
 
@@ -114,11 +149,17 @@ export function CommunicationSettings() {
     );
 
     if (result.success) {
-      toast.success('Twilio credentials are valid!');
+      setStatusMessage({
+        type: 'success',
+        message: 'Twilio credentials are valid!',
+      });
       // Automatically fetch available numbers on successful credential test
       await fetchTwilioNumbers();
     } else {
-      toast.error(result.error || 'Invalid credentials');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Invalid credentials',
+      });
     }
 
     setIsTesting(false);
@@ -126,7 +167,10 @@ export function CommunicationSettings() {
 
   const handleSave = async () => {
     if (settings.useCustomTwilio && (!settings.twilioAccountSid || !settings.twilioAuthToken)) {
-      toast.error('Please provide Twilio credentials or disable custom Twilio');
+      setStatusMessage({
+        type: 'error',
+        message: 'Please provide Twilio credentials or disable custom Twilio',
+      });
       return;
     }
 
@@ -135,10 +179,16 @@ export function CommunicationSettings() {
     const result = await updateCommunicationSettings(settings);
 
     if (result.success) {
-      toast.success('Settings saved successfully');
+      setStatusMessage({
+        type: 'success',
+        message: 'Settings saved successfully',
+      });
       await loadSettings(); // Reload to get masked values
     } else {
-      toast.error(result.error || 'Failed to save settings');
+      setStatusMessage({
+        type: 'error',
+        message: result.error || 'Failed to save settings',
+      });
     }
 
     setIsSaving(false);
@@ -162,6 +212,17 @@ export function CommunicationSettings() {
           Configure SMS and voice call settings
         </p>
       </div>
+
+      {/* Status Message */}
+      {statusMessage.type && (
+        <div className="mb-6">
+          <InlineMessage
+            type={statusMessage.type}
+            message={statusMessage.message}
+            onDismiss={() => setStatusMessage({ type: null, message: '' })}
+          />
+        </div>
+      )}
 
       <div className="space-y-6">
         {/* Twilio Integration */}
